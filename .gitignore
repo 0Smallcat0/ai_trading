@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.envs/
+data/
+results/
+.ipynb_checkpoints/
+.DS_Store
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# VSCode/PyCharm
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtualenv/Poetry
+.venv/
+env/
+venv/
+poetry.lock
+
+# dotenv
+.env
+.env.*
+
+# Data/Results
+data/cache/
+data/history/
+results/
+
+# Logs
+*.log
+
+# MCP/自動產生
+.mcp/
+.cursor/
+.roo/
+
+# Custom ignored folder
+open_source_libs/
+
+node_modules/

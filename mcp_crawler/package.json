@@ -1,0 +1,9 @@
+{
+  "name": "mcp-crawler",
+  "version": "1.0.0",
+  "main": "server.cjs",
+  "type": "commonjs",
+  "dependencies": {
+    "rss-parser": "^3.13.0"
+  }
+}
