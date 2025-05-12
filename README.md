@@ -9,6 +9,8 @@
 
 ---
 
+目前開發進度:Todo_list.md
+
 ### 一、專案背景與市場趨勢
 
 當今的股票交易市場正經歷數位化轉型，交易方式已從傳統人工操作轉向技術驅動的自動化交易。根據研究數據，高頻算法交易在2017年已占NSE股權交易量的30%，並成為計算與分析創新的主要驅動力。隨著機器學習和人工智能技術的進步，市場對能夠整合多維數據、自動生成交易決策的系統需求日益增長。
@@ -119,6 +121,8 @@ AI 驅動之智慧股票交易決策代理人（AI Trading Agent）
 ## <a name="english-version"></a>English Version
 
 ---
+
+Current development progress: Todo_list.md
 
 ### I. Project Background and Market Trends
 
