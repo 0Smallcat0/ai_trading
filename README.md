@@ -1,17 +1,28 @@
-AI 股票自動交易系統開發計劃書
+# AI 股票自動交易系統開發計劃書 / AI Stock Automated Trading System Development Proposal
 
-近年來，算法交易已成為金融市場的標準配置。截至2024年9月，美國股票交易中有80%是通過自動化系統完成的，而在全球外匯市場，自動交易占比也已超過60%。這種市場轉變反映了投資者對這類系統的信任度與需求正在增長。本計劃書旨在完善原有AI股票交易系統框架，打造一個更全面、更智能的自動化交易解決方案。
+[👉 前往繁體中文版本](#繁體中文版本)  
+[👉 Go to English Version](#english-version)
 
 ---
 
-## 一、專案背景與市場趨勢
+## <a name="繁體中文版本"></a>繁體中文版本
+
+---
+
+### 一、專案背景與市場趨勢
+
 當今的股票交易市場正經歷數位化轉型，交易方式已從傳統人工操作轉向技術驅動的自動化交易。根據研究數據，高頻算法交易在2017年已占NSE股權交易量的30%，並成為計算與分析創新的主要驅動力。隨著機器學習和人工智能技術的進步，市場對能夠整合多維數據、自動生成交易決策的系統需求日益增長。
 
-## 二、專案名稱與核心目標
-### 專案名稱
+---
+
+### 二、專案名稱與核心目標
+
+#### 專案名稱
+
 AI 驅動之智慧股票交易決策代理人（AI Trading Agent）
 
-### 核心目標
+#### 核心目標
+
 - 能主動學習與調整策略
 - 支援自動化排程與錯誤監控
 - 結合多面向數據（基本面、技術面、新聞情緒）
@@ -19,204 +30,72 @@ AI 驅動之智慧股票交易決策代理人（AI Trading Agent）
 - 最終能每日回報「買賣股票的時機、決定採用哪些策略與資金分配」
 - 實現社會責任投資(SRI)的理念，納入道德和社會責任因素
 
-## 三、系統架構設計
-### 1. 市場數據適配器（Market Data Adapter）
-- 連接交易系統與交易所或數據供應商
-- 接收實時市場數據並轉換成標準格式
-- 處理結構化與非結構化數據源
-- 實現低延遲數據處理機制
+---
 
-### 2. 複雜事件處理引擎（Complex Event Processing Engine）
-- 作為系統核心，處理市場數據並檢測交易機會
-- 執行策略引擎生成的交易邏輯
-- 即時分析市場走勢，生成交易信號
-- 支持多種策略並行處理
+### 三、系統架構設計
 
-### 3. 策略引擎與AI模組
-- 實現多樣化交易策略（動量、均值回歸、基本面等）
-- 整合機器學習與深度學習模型進行預測
-- 使用集成學習框架結合多種模型
-- 實施遺傳算法(GA)優化策略參數
+1. 市場數據適配器（Market Data Adapter）
+2. 複雜事件處理引擎（Complex Event Processing Engine）
+3. 策略引擎與AI模組
+4. 訂單路由系統（Order Routing System）
+5. 風險管理與資金分配模組
+6. 使用者介面與視覺化系統
+7. 自動化控制與排程系統（n8n）
 
-### 4. 訂單路由系統（Order Routing System）
-- 構建訂單，確定最佳執行路徑
-- 處理多種訂單類型及回報管理
-- 實現交易執行算法（TWAP、VWAP等）
-- 交易成本優化與滑點控制
+---
 
-### 5. 風險管理與資金分配模組
-- 實時風險監控與限額管理
-- 實施平均值-VaR投資組合優化模型
-- 執行資金管理策略（風險平價、最小方差等）
-- 止損止盈動態調整機制
+### 四、AI模型與機器學習策略
 
-### 6. 使用者介面與視覺化系統
-- Jupyter Notebook交互式分析環境
-- Streamlit實時監控儀表板
-- 策略績效視覺化展示
-- 交易決策解釋功能
+1. 深度強化學習架構
+2. 集成學習與高級預測模型
+3. 情感分析與文本挖掘
+4. 自適應學習與優化機制
 
-### 7. 自動化控制與排程系統（n8n）
-- 管理系統各組件的工作流程
-- 定時執行數據採集與策略運行
-- 異常監控與告警機制
-- 系統狀態監測與日誌管理
+---
 
-## 四、AI模型與機器學習策略
-### 1. 深度強化學習架構
-- 採用Actor-Critic架構處理投資組合優化問題
-- 應用基於Quantile Regression的分布式回報學習
-- 使用多進程方法（如Ape-x）加速深度強化學習訓練
-- 集成不同時間尺度的市場數據進行決策
+### 五、數據處理架構
 
-### 2. 集成學習與高級預測模型
-- 結合多個SOTA機器學習策略形成集成模型
-- 使用遺傳算法(GA)優化交易策略參數
-- 整合時序模型（LSTM、Transformer）分析價格走勢
-- 使用大型語言模型分析市場情緒和新聞事件
+1. 數據源與採集模塊
+2. 特徵工程與數據預處理
+3. 數據質量管理與即時處理
 
-### 3. 情感分析與文本挖掘
-- 分析社交媒體和新聞的非結構化文本數據
-- 使用先進的文本分析技術提高預測準確性
-- 事件驅動型信號生成
-- 結合傳統交易信號與情感分析結果
+---
 
-### 4. 自適應學習與優化機制
-- 實時策略評估與動態調整
-- 市場環境識別與適應性調整
-- 增量學習以適應市場變化
-- 超參數自動調優框架
+### 六、交易策略模組
 
-## 五、數據處理架構
-### 1. 數據源與採集模塊
-- 結構化市場數據：股價、交易量、財報數據等
-- 非結構化數據：新聞、社交媒體、公司公告
-- 宏觀經濟指標與政策因素
-- 行業與板塊資訊
+1. 核心策略庫
+2. 策略測試與評估框架
+3. 策略組合與資產配置
 
-### 2. 特徵工程與數據預處理
-- 技術指標生成與選擇（移動平均、MACD、RSI等）
-- 基本面數據標準化與異常處理
-- 文本特徵提取與情感分析
-- 時間序列特徵處理
+---
 
-### 3. 數據質量管理與即時處理
-- 數據驗證與清洗流程
-- 分佈式數據處理架構
-- 即時數據處理與低延遲設計
-- 數據存儲與檢索優化
+### 七、風險管理與執行控制
 
-## 六、交易策略模組
-### 1. 核心策略庫
-- 動量策略（Momentum）
-- 均值回歸（Mean Reversion）
-- 統計套利策略
-- 基本面多因子模型
-- 事件驅動策略
+1. 風險評估與監控
+2. 執行質量管理
+3. 系統安全與穩定性
 
-### 2. 策略測試與評估框架
-- 回測系統設計與實現
-- 性能評估指標（夏普比率、最大回撤、勝率等）
-- 蒙特卡洛模擬與壓力測試
-- 策略參數優化方法
+---
 
-### 3. 策略組合與資產配置
-- 多策略組合框架
-- 風險平價資產配置
-- 最小方差投資組合
-- 因子暴露控制
+### 八、系統性能優化
 
-## 七、風險管理與執行控制
-### 1. 風險評估與監控
-- VaR（Value at Risk）計算與監控
-- 即時風險暴露分析
-- 市場流動性風險評估
-- 尾部風險管理
+1. 低延遲架構設計
+2. 並行計算與分佈式處理
+3. 系統監控與維護
 
-### 2. 執行質量管理
-- 訂單執行分析與優化
-- 實施線性變換函數實現做空交易
-- 滑點控制與成本管理
-- 交易頻率與節奏調整
+---
 
-### 3. 系統安全與穩定性
-- 交易限額管理
-- 異常交易檢測
-- 系統故障容錯機制
-- 交易連續性保障
+### 九、未來擴充展望
 
-## 八、系統性能優化
-### 1. 低延遲架構設計
-- 採用事件驅動架構（EDA）
-- 實現高效數據處理管道
-- 優化系統間通訊
-- 硬件加速方案評估
+1. 多市場擴展
+2. 進階AI模型整合
+3. 社會責任投資功能
+4. 機構級功能擴展
 
-### 2. 並行計算與分佈式處理
-- 多進程並行計算架構
-- 使用多進程方法（如Ape-x）加速AI模型訓練
-- 分佈式計算框架應用
-- 計算資源動態分配
+---
 
-### 3. 系統監控與維護
-- 全面監控面板設計
-- 性能瓶頸識別與排除
-- 系統日誌管理
-- 自動化測試與部署
+### 十、技術棧與工具
 
-## 九、執行進度與階段性規劃
-- **第1階段：資料基礎設施建設（T+2週）**
-    - 建立市場數據適配器
-    - 實現各類數據源接入
-    - 設計數據預處理流程
-    - 建立數據庫架構
-- **第2階段：策略與AI模型實現（T+4週）**
-    - 開發核心策略庫
-    - 實現機器學習模型
-    - 構建情感分析模組
-    - 建立回測框架
-- **第3階段：交易執行與風控系統（T+6週）**
-    - 開發訂單路由系統
-    - 實現風險管理模組
-    - 建立資金分配機制
-    - 構建執行質量分析工具
-- **第4階段：使用者介面與自動化（T+8週）**
-    - 開發Jupyter操作介面
-    - 構建Streamlit視覺化儀表板
-    - 實現n8n自動化流程
-    - 系統整合與測試
-- **第5階段：系統優化與實盤測試（T+10週）**
-    - 性能優化與壓力測試
-    - 實盤模擬環境測試
-    - 策略微調與優化
-    - 系統穩定性驗證
-
-## 十、未來擴充展望
-### 1. 多市場擴展
-- 支持港股、美股等不同市場
-- 跨市場套利策略
-- 全球資產配置模型
-- 多幣種風險管理
-
-### 2. 進階AI模型整合
-- 接入最新的大型語言模型（GPT系列）
-- 開發多模態AI決策系統
-- 實現量化模型自生成框架
-- 強化學習與市場微觀結構研究
-
-### 3. 社會責任投資功能
-- 整合ESG因素評估
-- 開發社會責任投資(SRI)策略
-- 倫理決策框架實現
-- 可持續投資分析工具
-
-### 4. 機構級功能擴展
-- 多賬戶管理能力
-- 合規與監管報告生成
-- API生態系統建設
-- 商業級安全架構
-
-## 十一、技術棧與工具
 - 核心語言：Python
 - 數據處理：Pandas, NumPy, Dask
 - 機器學習：TensorFlow, PyTorch, Scikit-learn
@@ -229,10 +108,121 @@ AI 驅動之智慧股票交易決策代理人（AI Trading Agent）
 
 ---
 
-## 結論
+### 結論
+
 本計劃書結合了最新的算法交易研究成果與業界最佳實踐，提出了一個完整、可行的AI股票自動交易系統架構。通過整合市場數據適配器、複雜事件處理引擎、AI決策模型、訂單路由系統等核心組件，並加入低延遲設計、風險管理與多策略融合等先進特性，本系統將能夠實現高效、穩定且智能的自動化交易功能。
 
 透過分階段實施計劃，本系統將逐步從數據基礎設施建設，到策略與AI模型實現，再到交易執行與風控系統建設，最終完成整體系統的優化與實盤驗證，為使用者提供一個先進、可靠的AI驅動股票交易決策代理人。
 
 ---
 
+## <a name="english-version"></a>English Version
+
+---
+
+### I. Project Background and Market Trends
+
+Today's stock trading market is undergoing digital transformation, shifting from manual to technology-driven automated trading. According to research, high-frequency algorithmic trading accounted for 30% of NSE equity trading volume in 2017, becoming a primary driver of analytical innovation. With the rise of machine learning and AI, demand for systems capable of integrating multidimensional data and autonomously generating trade decisions continues to grow.
+
+---
+
+### II. Project Name and Core Objectives
+
+#### Project Name
+
+AI-Powered Intelligent Stock Trading Decision Agent (AI Trading Agent)
+
+#### Core Objectives
+
+- Learn and adjust strategies autonomously
+- Support automated scheduling and error monitoring
+- Integrate multifaceted data (fundamental, technical, news sentiment)
+- Provide visual interfaces and backtesting evaluation
+- Deliver daily reports on stock buy/sell timing, strategy selection, and capital allocation
+- Implement SRI (Socially Responsible Investment) principles, incorporating ethical and social responsibility factors
+
+---
+
+### III. System Architecture Design
+
+1. Market Data Adapter
+2. Complex Event Processing Engine
+3. Strategy Engine and AI Module
+4. Order Routing System
+5. Risk Management and Capital Allocation Module
+6. User Interface and Visualization System
+7. Automation and Scheduling System (n8n)
+
+---
+
+### IV. AI Models and Machine Learning Strategies
+
+1. Deep Reinforcement Learning Framework
+2. Ensemble Learning and Advanced Prediction Models
+3. Sentiment Analysis and Text Mining
+4. Adaptive Learning and Optimization
+
+---
+
+### V. Data Processing Architecture
+
+1. Data Sources and Collection Module
+2. Feature Engineering and Preprocessing
+3. Data Quality Management and Real-time Processing
+
+---
+
+### VI. Trading Strategy Modules
+
+1. Core Strategy Library
+2. Strategy Testing and Evaluation Framework
+3. Strategy Portfolio and Asset Allocation
+
+---
+
+### VII. Risk Management and Execution Control
+
+1. Risk Assessment and Monitoring
+2. Execution Quality Management
+3. System Security and Stability
+
+---
+
+### VIII. System Performance Optimization
+
+1. Low Latency Architecture
+2. Parallel and Distributed Computing
+3. System Monitoring and Maintenance
+
+---
+
+### IX. Future Expansion Outlook
+
+1. Multi-Market Expansion
+2. Advanced AI Model Integration
+3. Socially Responsible Investment Functions
+4. Institutional-Grade Feature Expansion
+
+---
+
+### X. Tech Stack and Tools
+
+- Core language: Python
+- Data processing: Pandas, NumPy, Dask
+- Machine learning: TensorFlow, PyTorch, Scikit-learn
+- Financial analysis: TA-Lib, Pyfolio, Zipline
+- Database: SQLite, MongoDB
+- Frontend interface: Jupyter, Streamlit, Dash
+- Visualization: Matplotlib, Plotly
+- Automation: n8n
+- External integration: Broker API, MCP
+
+---
+
+### Conclusion
+
+This proposal integrates cutting-edge research and best practices in algorithmic trading, presenting a complete and feasible AI stock trading system. By incorporating components like the market data adapter, event processing engine, AI decision models, and order routing system, along with low-latency design, risk management, and multi-strategy integration, the system aims to deliver efficient, stable, and intelligent automated trading.
+
+Through phased development, the system will evolve from foundational data infrastructure, to AI strategy and execution control, and finally to full system optimization and live validation, providing users with an advanced and reliable AI-powered stock trading agent.
+
+---
