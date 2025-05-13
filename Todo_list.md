@@ -22,46 +22,46 @@
   - [X] Set up GitHub Actions for CI/CD pipeline
   - [X] Aim for ≥80% test coverage on key modules
 
-[ ] 1.2 Design and implement database schema (src/database/schema.py)
+[X] 1.2 Design and implement database schema (src/database/schema.py)
 - Time-series data table design
-  - [ ] Support multiple time granularities (Tick/1Min/Daily)
-  - [ ] Create composite indexes (timestamp + symbol)
+  - [X] Support multiple time granularities (Tick/1Min/Daily)
+  - [X] Create composite indexes (timestamp + symbol)
 - Data storage optimization
-  - [ ] Implement data sharding strategy
-  - [ ] Compress historical data using Parquet/Arrow format
+  - [X] Implement data sharding strategy
+  - [X] Compress historical data using Parquet/Arrow format
 - Data integrity mechanisms
-  - [ ] Build CHECKSUM verification procedures
-  - [ ] Enforce foreign key constraints and transaction management
+  - [X] Build CHECKSUM verification procedures
+  - [X] Enforce foreign key constraints and transaction management
 
-[ ] 1.3 Develop data ingestion module (src/core/data_ingest.py, src/core/mcp_data_ingest.py)
+[X] 1.3 Develop data ingestion module (src/core/data_ingest.py, src/core/mcp_data_ingest.py)
 - Multi-source integration
-  - [ ] Implement adapters for Yahoo/MCP/broker APIs
-  - [ ] Standardize output data format
+  - [X] Implement adapters for Yahoo/MCP/broker APIs
+  - [X] Standardize output data format
 - Real-time streaming
-  - [ ] Implement WebSocket auto-reconnection
-  - [ ] Add backpressure control mechanism
+  - [X] Implement WebSocket auto-reconnection
+  - [X] Add backpressure control mechanism
 - API management and fault tolerance
-  - [ ] Request rate limiter
-  - [ ] Automatic failover mechanism for data sources
+  - [X] Request rate limiter
+  - [X] Automatic failover mechanism for data sources
 
-[ ] 1.4 Implement historical data backfill and validation (src/core/historical_backfill.py)
+[X] 1.4 Implement historical data backfill and validation (src/core/historical_backfill.py)
 - Batch processing optimization
-  - [ ] Time-sliced parallel downloading
-  - [ ] Identify incremental updates
+  - [X] Time-sliced parallel downloading
+  - [X] Identify incremental updates
 - Data validation
-  - [ ] Time-series continuity check
-  - [ ] Automated outlier tagging system
+  - [X] Time-series continuity check
+  - [X] Automated outlier tagging system
 
-[ ] 1.5 Data cleaning and preprocessing module (src/core/features.py)
+[X] 1.5 Data cleaning and preprocessing module (src/core/features.py)
 - Feature engineering framework
-  - [ ] Modularized technical indicator computation (MACD, RSI, Bollinger Bands)
-  - [ ] Rolling window feature generator
+  - [X] Modularized technical indicator computation (MACD, RSI, Bollinger Bands)
+  - [X] Rolling window feature generator
 - Data cleaning flow
-  - [ ] Outlier detection and treatment (Z-score/IQR)
-  - [ ] Missing value imputation (time series interpolation/ML-based)
+  - [X] Outlier detection and treatment (Z-score/IQR)
+  - [X] Missing value imputation (time series interpolation/ML-based)
 - Distributed processing
-  - [ ] Reserve integration hooks for Dask/Ray
-  - [ ] Implement memory chunking mechanism
+  - [X] Reserve integration hooks for Dask/Ray
+  - [X] Implement memory chunking mechanism
 
 ---
 

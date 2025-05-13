@@ -46,12 +46,49 @@ def query_to_dataframe(session: Session, query) -> pd.DataFrame:
     if not result:
         return pd.DataFrame()
 
-    # 獲取列名
-    columns = list(result[0]._mapping.keys())
+    # 檢查是否為 ORM 對象
+    if hasattr(result[0], "_mapping"):
+        # 獲取列名
+        columns = list(result[0]._mapping.keys())
 
-    # 轉換為 DataFrame
-    df = pd.DataFrame(result, columns=columns)
-    return df
+        # 檢查是否為單一 ORM 對象
+        if len(columns) == 1 and isinstance(result[0][0], Base):
+            # 將 ORM 對象轉換為字典列表
+            data = []
+            for row in result:
+                orm_obj = row[0]
+                # 獲取 ORM 對象的屬性
+                obj_dict = {}
+                for c in orm_obj.__table__.columns:
+                    value = getattr(orm_obj, c.name)
+                    # 處理枚舉類型
+                    if hasattr(value, "value"):
+                        obj_dict[c.name] = value.value
+                    else:
+                        obj_dict[c.name] = value
+                data.append(obj_dict)
+
+            # 創建 DataFrame
+            if data:
+                return pd.DataFrame(data)
+            else:
+                return pd.DataFrame()
+        else:
+            # 一般情況，直接使用 _mapping
+            data = []
+            for row in result:
+                row_dict = {}
+                for key, value in row._mapping.items():
+                    # 處理枚舉類型
+                    if hasattr(value, "value"):
+                        row_dict[key] = value.value
+                    else:
+                        row_dict[key] = value
+                data.append(row_dict)
+            return pd.DataFrame(data)
+    else:
+        # 非 ORM 對象，直接轉換
+        return pd.DataFrame(result)
 
 
 def save_to_parquet(

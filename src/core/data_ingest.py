@@ -5,41 +5,69 @@
 並進行必要的預處理，為後續的特徵計算和策略研究提供基礎資料。
 
 主要功能：
-- 從台灣證券交易所和櫃買中心爬取股票資料
-- 爬取財務報表資料
-- 爬取除權息資料
-- 爬取月營收資料
-- 資料預處理和清洗
+- 從多種來源獲取股票資料（Yahoo Finance、Alpha Vantage、FinMind、券商 API）
+- 支援多種資料類型（價格、成交量、財務報表、技術指標）
+- 實現 WebSocket 自動重連和背壓控制
+- 提供請求速率限制和自動故障轉移機制
+- 資料標準化和清洗
 """
 
-from src.data_sources.twse_crawler import twse_crawler
-
-# from use_perplexity_crawler import init_database, crawl_market_info
 import datetime
-import pandas as pd
+import logging
 import os
+import queue
 import sqlite3
-from tqdm import tqdm
-import yfinance as yf
-from FinMind.data import DataLoader
-from alpha_vantage.timeseries import TimeSeries
-from alpha_vantage.techindicators import TechIndicators
-from alpha_vantage.fundamentaldata import FundamentalData
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Any, Optional, Union, Tuple, Callable
 
-sys.path.append("..")
+import pandas as pd
+from tqdm import tqdm
 
-# 移除自引用的導入語句
+# 資料來源適配器
+from src.data_sources.twse_crawler import twse_crawler
+from src.data_sources.yahoo_adapter import YahooFinanceAdapter
+from src.data_sources.broker_adapter import SimulatedBrokerAdapter
+from src.data_sources.market_data_adapter import MarketDataAdapter
+
+# 工具模組
+from src.core.rate_limiter import RateLimiter, AdaptiveRateLimiter
+from src.core.websocket_client import WebSocketClient
+
+# 資料庫模組
+from src.database.schema import (
+    MarketDaily,
+    MarketMinute,
+    MarketTick,
+    MarketType,
+    TimeGranularity,
+    init_db,
+)
+from src.database.parquet_utils import (
+    query_to_dataframe,
+    save_to_parquet,
+    read_from_parquet,
+    create_market_data_shard,
+)
+
+# 配置模組
+from src.config import DATA_DIR, CACHE_DIR, LOGS_DIR
+
+# 設定日誌
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler(os.path.join(LOGS_DIR, "data_ingest.log"))
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 # 設定資料存放路徑
-DATA_DIR = os.getenv("DATA_DIR", "data")
 HISTORY_DIR = os.path.join(DATA_DIR, "history")
 ITEMS_DIR = os.path.join(HISTORY_DIR, "items")
 TABLES_DIR = os.path.join(HISTORY_DIR, "tables")
 FINANCIAL_STATEMENT_DIR = os.path.join(HISTORY_DIR, "financial_statement")
-CACHE_DIR = os.path.join(DATA_DIR, "cache")
 DB_PATH = os.path.join(DATA_DIR, "market_data.db")
 
 # 確保目錄存在
@@ -49,12 +77,561 @@ os.makedirs(ITEMS_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 os.makedirs(FINANCIAL_STATEMENT_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(LOGS_DIR, exist_ok=True)
 
 # API 金鑰
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
+FINMIND_API_KEY = os.getenv("FINMIND_API_KEY", "")
+BROKER_API_KEY = os.getenv("BROKER_API_KEY", "")
+BROKER_API_SECRET = os.getenv("BROKER_API_SECRET", "")
 
 # 記錄日期範圍的檔案
 date_range_record_file = os.path.join(HISTORY_DIR, "date_range.pickle")
+
+
+class DataIngestionManager:
+    """
+    資料擷取管理器
+
+    負責協調不同資料來源的資料擷取，並提供統一的介面。
+    支援多種資料來源、自動重連、背壓控制和故障轉移。
+    """
+
+    def __init__(
+        self,
+        use_cache: bool = True,
+        cache_expiry_days: int = 1,
+        max_workers: int = 5,
+        rate_limit_max_calls: int = 60,
+        rate_limit_period: int = 60,
+    ):
+        """
+        初始化資料擷取管理器
+
+        Args:
+            use_cache: 是否使用快取
+            cache_expiry_days: 快取過期天數
+            max_workers: 最大工作執行緒數
+            rate_limit_max_calls: 速率限制最大請求數
+            rate_limit_period: 速率限制時間段（秒）
+        """
+        self.use_cache = use_cache
+        self.cache_expiry_days = cache_expiry_days
+        self.max_workers = max_workers
+
+        # 初始化資料來源適配器
+        self.adapters = {}
+        self.init_adapters()
+
+        # 初始化速率限制器
+        self.rate_limiter = AdaptiveRateLimiter(
+            max_calls=rate_limit_max_calls,
+            period=rate_limit_period,
+            retry_count=3,
+            retry_backoff=2.0,
+            jitter=0.1,
+        )
+
+        # 初始化 WebSocket 客戶端
+        self.websocket_clients = {}
+
+        # 初始化資料處理隊列和背壓控制
+        self.data_queue = queue.Queue(maxsize=1000)
+        self.is_processing = False
+        self.processing_thread = None
+
+        # 初始化故障轉移機制
+        self.source_priorities = {
+            "price": ["yahoo", "finmind", "alpha_vantage", "broker"],
+            "fundamental": ["finmind", "yahoo", "alpha_vantage"],
+            "news": ["mcp", "finmind", "yahoo"],
+        }
+        self.source_status = {
+            "yahoo": True,
+            "finmind": True,
+            "alpha_vantage": True,
+            "broker": True,
+            "mcp": True,
+        }
+
+        # 統計信息
+        self.stats = {
+            "requests_total": 0,
+            "requests_success": 0,
+            "requests_failed": 0,
+            "data_points_total": 0,
+            "source_usage": {
+                "yahoo": 0,
+                "finmind": 0,
+                "alpha_vantage": 0,
+                "broker": 0,
+                "mcp": 0,
+            },
+        }
+
+        logger.info("資料擷取管理器初始化完成")
+
+    def init_adapters(self):
+        """初始化所有資料來源適配器"""
+        # Yahoo Finance 適配器
+        self.adapters["yahoo"] = YahooFinanceAdapter(
+            use_cache=self.use_cache,
+            cache_expiry_days=self.cache_expiry_days,
+        )
+
+        # 模擬券商適配器
+        self.adapters["broker"] = SimulatedBrokerAdapter(
+            api_key=BROKER_API_KEY,
+            api_secret=BROKER_API_SECRET,
+            use_cache=self.use_cache,
+            cache_expiry_days=self.cache_expiry_days,
+        )
+
+        logger.info("資料來源適配器初始化完成")
+
+    def get_historical_data(
+        self,
+        symbols: Union[str, List[str]],
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        interval: str = "1d",
+        source: Optional[str] = None,
+        use_cache: Optional[bool] = None,
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        獲取歷史價格資料
+
+        Args:
+            symbols: 股票代碼或代碼列表
+            start_date: 開始日期，格式為 'YYYY-MM-DD'
+            end_date: 結束日期，格式為 'YYYY-MM-DD'
+            interval: 時間間隔，如 '1d', '1h', '5m' 等
+            source: 資料來源，如果為 None 則自動選擇
+            use_cache: 是否使用快取，如果為 None 則使用類別設定
+
+        Returns:
+            Dict[str, pd.DataFrame]: 股票代碼到歷史價格資料的映射
+        """
+        # 使用速率限制器
+        with self.rate_limiter:
+            # 更新統計信息
+            self.stats["requests_total"] += 1
+
+            # 轉換單一股票代碼為列表
+            if isinstance(symbols, str):
+                symbols = [symbols]
+
+            # 如果未指定資料來源，使用故障轉移機制
+            if source is None:
+                source = self._get_best_source("price")
+
+            # 檢查資料來源是否可用
+            if not self.source_status.get(source, False):
+                logger.warning(f"資料來源 {source} 不可用，嘗試使用備用來源")
+                source = self._get_best_source("price")
+
+            try:
+                # 獲取適配器
+                adapter = self.adapters.get(source)
+                if not adapter:
+                    logger.error(f"找不到資料來源 {source} 的適配器")
+                    self.stats["requests_failed"] += 1
+                    return {}
+
+                # 獲取資料
+                if len(symbols) == 1:
+                    # 單一股票
+                    df = adapter.get_historical_data(
+                        symbols[0], start_date, end_date, interval, use_cache
+                    )
+                    result = {symbols[0]: df} if not df.empty else {}
+                else:
+                    # 多個股票
+                    if hasattr(adapter, "get_multiple_historical_data"):
+                        result = adapter.get_multiple_historical_data(
+                            symbols,
+                            start_date,
+                            end_date,
+                            interval,
+                            use_cache,
+                            self.max_workers,
+                        )
+                    else:
+                        # 使用執行緒池並行獲取資料
+                        result = {}
+                        with ThreadPoolExecutor(
+                            max_workers=self.max_workers
+                        ) as executor:
+                            future_to_symbol = {
+                                executor.submit(
+                                    adapter.get_historical_data,
+                                    symbol,
+                                    start_date,
+                                    end_date,
+                                    interval,
+                                    use_cache,
+                                ): symbol
+                                for symbol in symbols
+                            }
+
+                            for future in as_completed(future_to_symbol):
+                                symbol = future_to_symbol[future]
+                                try:
+                                    data = future.result()
+                                    if not data.empty:
+                                        result[symbol] = data
+                                except Exception as e:
+                                    logger.error(
+                                        f"獲取 {symbol} 的歷史資料時發生錯誤: {e}"
+                                    )
+
+                # 更新統計信息
+                self.stats["requests_success"] += 1
+                self.stats["source_usage"][source] += 1
+                self.stats["data_points_total"] += sum(
+                    len(df) for df in result.values()
+                )
+
+                # 報告成功
+                self.rate_limiter.report_success()
+
+                return result
+
+            except Exception as e:
+                logger.error(f"獲取歷史價格資料時發生錯誤: {e}")
+                self.stats["requests_failed"] += 1
+
+                # 報告失敗
+                self.rate_limiter.report_failure()
+
+                # 標記資料來源為不可用
+                self.source_status[source] = False
+
+                # 嘗試使用備用來源
+                if source != self._get_best_source("price"):
+                    logger.info(f"嘗試使用備用來源獲取資料")
+                    return self.get_historical_data(
+                        symbols, start_date, end_date, interval, None, use_cache
+                    )
+
+                return {}
+
+    def get_quote(
+        self, symbols: Union[str, List[str]], source: Optional[str] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        獲取即時報價
+
+        Args:
+            symbols: 股票代碼或代碼列表
+            source: 資料來源，如果為 None 則自動選擇
+
+        Returns:
+            Dict[str, Dict[str, Any]]: 股票代碼到即時報價的映射
+        """
+        # 使用速率限制器
+        with self.rate_limiter:
+            # 更新統計信息
+            self.stats["requests_total"] += 1
+
+            # 轉換單一股票代碼為列表
+            if isinstance(symbols, str):
+                symbols = [symbols]
+
+            # 如果未指定資料來源，使用故障轉移機制
+            if source is None:
+                source = self._get_best_source("price")
+
+            # 檢查資料來源是否可用
+            if not self.source_status.get(source, False):
+                logger.warning(f"資料來源 {source} 不可用，嘗試使用備用來源")
+                source = self._get_best_source("price")
+
+            try:
+                # 獲取適配器
+                adapter = self.adapters.get(source)
+                if not adapter:
+                    logger.error(f"找不到資料來源 {source} 的適配器")
+                    self.stats["requests_failed"] += 1
+                    return {}
+
+                # 獲取資料
+                result = {}
+                for symbol in symbols:
+                    try:
+                        quote = adapter.get_quote(symbol)
+                        if quote:
+                            result[symbol] = quote
+                    except Exception as e:
+                        logger.error(f"獲取 {symbol} 的即時報價時發生錯誤: {e}")
+
+                # 更新統計信息
+                self.stats["requests_success"] += 1
+                self.stats["source_usage"][source] += 1
+                self.stats["data_points_total"] += len(result)
+
+                # 報告成功
+                self.rate_limiter.report_success()
+
+                return result
+
+            except Exception as e:
+                logger.error(f"獲取即時報價時發生錯誤: {e}")
+                self.stats["requests_failed"] += 1
+
+                # 報告失敗
+                self.rate_limiter.report_failure()
+
+                # 標記資料來源為不可用
+                self.source_status[source] = False
+
+                # 嘗試使用備用來源
+                if source != self._get_best_source("price"):
+                    logger.info(f"嘗試使用備用來源獲取資料")
+                    return self.get_quote(symbols, None)
+
+                return {}
+
+    def connect_websocket(
+        self,
+        symbols: Union[str, List[str]],
+        on_message: Callable[[str], None],
+        source: str = "broker",
+    ) -> bool:
+        """
+        連接 WebSocket 獲取即時資料
+
+        Args:
+            symbols: 股票代碼或代碼列表
+            on_message: 收到消息時的回調函數
+            source: 資料來源
+
+        Returns:
+            bool: 是否成功連接
+        """
+        # 轉換單一股票代碼為列表
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        # 檢查資料來源是否可用
+        if not self.source_status.get(source, False):
+            logger.warning(f"資料來源 {source} 不可用，嘗試使用備用來源")
+            source = self._get_best_source("price")
+
+        try:
+            # 根據資料來源選擇 WebSocket URL
+            if source == "broker":
+                url = "wss://api.broker.com/ws"
+            else:
+                logger.error(f"資料來源 {source} 不支援 WebSocket")
+                return False
+
+            # 創建 WebSocket 客戶端
+            client_id = f"{source}_{'-'.join(symbols)}"
+
+            # 檢查是否已存在相同的客戶端
+            if client_id in self.websocket_clients:
+                logger.info(f"WebSocket 客戶端 {client_id} 已存在，關閉舊連接")
+                self.websocket_clients[client_id].close()
+
+            # 定義回調函數
+            def on_message_with_backpressure(message):
+                """添加背壓控制的消息回調"""
+                try:
+                    # 檢查隊列大小，實現背壓控制
+                    if self.data_queue.qsize() >= self.data_queue.maxsize * 0.9:
+                        logger.warning(
+                            f"消息隊列接近滿載 ({self.data_queue.qsize()}/{self.data_queue.maxsize})，可能需要增加處理速度"
+                        )
+
+                    # 將消息放入隊列
+                    self.data_queue.put((message, on_message), block=False)
+
+                except queue.Full:
+                    logger.error("消息隊列已滿，丟棄消息")
+
+            def on_error(error):
+                """錯誤回調"""
+                logger.error(f"WebSocket 錯誤: {error}")
+                self.source_status[source] = False
+
+            def on_open():
+                """連接建立回調"""
+                logger.info(f"WebSocket 連接已建立，訂閱 {symbols}")
+                # 訂閱股票
+                client = self.websocket_clients[client_id]
+                client.send({"action": "subscribe", "symbols": symbols})
+
+            # 創建 WebSocket 客戶端
+            client = WebSocketClient(
+                url=url,
+                on_message=on_message_with_backpressure,
+                on_error=on_error,
+                on_open=on_open,
+                reconnect_interval=5.0,
+                max_reconnect_attempts=10,
+                backoff_factor=1.5,
+                jitter=0.1,
+                max_queue_size=1000,
+            )
+
+            # 儲存客戶端
+            self.websocket_clients[client_id] = client
+
+            # 啟動處理線程
+            if not self.is_processing:
+                self.is_processing = True
+                self.processing_thread = threading.Thread(
+                    target=self._process_messages, daemon=True
+                )
+                self.processing_thread.start()
+
+            # 連接 WebSocket
+            client.connect()
+
+            return True
+
+        except Exception as e:
+            logger.error(f"連接 WebSocket 時發生錯誤: {e}")
+            self.source_status[source] = False
+            return False
+
+    def disconnect_websocket(
+        self, symbols: Union[str, List[str]], source: str = "broker"
+    ) -> bool:
+        """
+        斷開 WebSocket 連接
+
+        Args:
+            symbols: 股票代碼或代碼列表
+            source: 資料來源
+
+        Returns:
+            bool: 是否成功斷開
+        """
+        # 轉換單一股票代碼為列表
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        # 生成客戶端 ID
+        client_id = f"{source}_{'-'.join(symbols)}"
+
+        # 檢查客戶端是否存在
+        if client_id not in self.websocket_clients:
+            logger.warning(f"WebSocket 客戶端 {client_id} 不存在")
+            return False
+
+        try:
+            # 關閉 WebSocket 客戶端
+            client = self.websocket_clients[client_id]
+            client.close()
+
+            # 移除客戶端
+            del self.websocket_clients[client_id]
+
+            return True
+
+        except Exception as e:
+            logger.error(f"斷開 WebSocket 連接時發生錯誤: {e}")
+            return False
+
+    def _process_messages(self):
+        """處理消息隊列中的消息"""
+        while self.is_processing:
+            try:
+                # 從隊列中獲取消息，設置超時以便定期檢查 is_processing 標誌
+                try:
+                    message, callback = self.data_queue.get(timeout=0.1)
+
+                    # 處理消息
+                    callback(message)
+
+                    # 標記任務完成
+                    self.data_queue.task_done()
+
+                except queue.Empty:
+                    # 隊列為空，繼續等待
+                    continue
+
+            except Exception as e:
+                logger.error(f"處理消息時發生錯誤: {e}")
+                time.sleep(0.1)  # 避免在錯誤情況下過度消耗 CPU
+
+    def _get_best_source(self, data_type: str) -> str:
+        """
+        獲取最佳資料來源
+
+        根據優先級和可用性選擇最佳資料來源。
+
+        Args:
+            data_type: 資料類型，如 'price', 'fundamental', 'news'
+
+        Returns:
+            str: 最佳資料來源
+        """
+        # 獲取資料類型的優先級列表
+        priorities = self.source_priorities.get(data_type, [])
+
+        # 按優先級檢查資料來源是否可用
+        for source in priorities:
+            if self.source_status.get(source, False) and source in self.adapters:
+                return source
+
+        # 如果沒有可用的資料來源，返回第一個
+        if priorities:
+            logger.warning(f"沒有可用的資料來源，使用 {priorities[0]}")
+            return priorities[0]
+
+        # 如果沒有優先級列表，返回 'yahoo'
+        return "yahoo"
+
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        獲取統計信息
+
+        Returns:
+            Dict[str, Any]: 統計信息
+        """
+        stats = self.stats.copy()
+        stats["queue_size"] = self.data_queue.qsize()
+        stats["websocket_clients"] = len(self.websocket_clients)
+        stats["source_status"] = self.source_status.copy()
+        return stats
+
+    def reset_source_status(self, source: Optional[str] = None):
+        """
+        重置資料來源狀態
+
+        Args:
+            source: 資料來源，如果為 None 則重置所有資料來源
+        """
+        if source is None:
+            # 重置所有資料來源
+            for src in self.source_status:
+                self.source_status[src] = True
+        else:
+            # 重置指定資料來源
+            self.source_status[source] = True
+
+        logger.info(f"已重置資料來源狀態: {self.source_status}")
+
+    def close(self):
+        """關閉資料擷取管理器"""
+        logger.info("正在關閉資料擷取管理器")
+
+        # 關閉所有 WebSocket 客戶端
+        for client_id, client in list(self.websocket_clients.items()):
+            try:
+                client.close()
+            except Exception as e:
+                logger.error(f"關閉 WebSocket 客戶端 {client_id} 時發生錯誤: {e}")
+
+        # 停止處理線程
+        self.is_processing = False
+        if self.processing_thread and self.processing_thread.is_alive():
+            self.processing_thread.join(timeout=5.0)
+
+        logger.info("資料擷取管理器已關閉")
 
 
 def import_or_install(package):
