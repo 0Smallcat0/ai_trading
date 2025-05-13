@@ -24,11 +24,18 @@ from dotenv import load_dotenv
 # 載入環境變數
 load_dotenv()
 
+# 設定日誌目錄
+log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
+os.makedirs(log_dir, exist_ok=True)
+
 # 設定日誌
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("trading.log"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler(os.path.join(log_dir, "trading.log")),
+        logging.StreamHandler()
+    ],
 )
 logger = logging.getLogger("trading_logger")
 
@@ -652,8 +659,11 @@ def analyze_performance(results: dict, orders: list):
     Returns:
         None: 函數會將圖表輸出為 HTML 檔案，並印出績效指標
     """
+    # 導入配置
+    from src.config import RESULTS_DIR
+
     # 確保 results 目錄存在
-    os.makedirs("results", exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     # 創建交易記錄器
     trade_logger = TradeLogger()
@@ -750,10 +760,14 @@ def analyze_performance(results: dict, orders: list):
     fig.update_yaxes(title_text="淨值", row=1, col=1)
     fig.update_yaxes(title_text="報酬率 (%)", row=2, col=1)
 
-    # 將圖表輸出為 HTML
-    fig.write_html("results/performance_report.html")
+    # 導入配置
+    from src.config import RESULTS_DIR
 
-    print(f"\n績效報告已保存至 results/performance_report.html")
+    # 將圖表輸出為 HTML
+    report_path = os.path.join(RESULTS_DIR, "performance_report.html")
+    fig.write_html(report_path)
+
+    print(f"\n績效報告已保存至 {report_path}")
 
 
 def get_logger(name="trading_logger"):

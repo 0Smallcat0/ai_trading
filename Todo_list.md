@@ -20,7 +20,7 @@
 - Testing framework and CI/CD
   - [X] Use pytest to build unit tests for core modules
   - [X] Set up GitHub Actions for CI/CD pipeline
-  - [ ] Aim for ≥80% test coverage on key modules
+  - [X] Aim for ≥80% test coverage on key modules
 
 [ ] 1.2 Design and implement database schema (src/database/schema.py)
 - Time-series data table design

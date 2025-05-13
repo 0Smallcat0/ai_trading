@@ -12,6 +12,7 @@
 """
 
 import time
+import os
 import pandas as pd
 import logging
 import threading
@@ -30,11 +31,18 @@ import gc
 # 載入環境變數
 load_dotenv()
 
+# 設定日誌目錄
+log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
+os.makedirs(log_dir, exist_ok=True)
+
 # 設定日誌
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("event_monitor.log"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler(os.path.join(log_dir, "event_monitor.log")),
+        logging.StreamHandler()
+    ],
 )
 logger = logging.getLogger("event_monitor")
 
