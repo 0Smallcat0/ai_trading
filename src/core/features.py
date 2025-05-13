@@ -11,7 +11,7 @@
 
 import pandas as pd
 import copy
-from .data_ingest import load_data
+from src.core.data_ingest import load_data
 import logging
 
 

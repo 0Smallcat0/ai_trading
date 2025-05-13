@@ -18,7 +18,7 @@ import shioaji
 import asyncio
 from datetime import datetime
 from dotenv import load_dotenv
-from .utils import retry
+from src.utils.utils import retry
 
 # 載入環境變數
 load_dotenv()

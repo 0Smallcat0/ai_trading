@@ -19,14 +19,14 @@ import seaborn as sns
 from scipy import stats
 
 try:
-    from .data_ingest import load_data
+    from src.core.data_ingest import load_data
 except ImportError as e:
     raise ImportError(
         "無法匯入 .data_ingest，請確認你在 package 結構下執行，或設置 PYTHONPATH。錯誤："
         + str(e)
     )
 try:
-    from .utils import align_timeseries
+    from src.utils.utils import align_timeseries
 except ImportError as e:
     raise ImportError(
         "無法匯入 .utils，請確認你在 package 結構下執行，或設置 PYTHONPATH。錯誤："

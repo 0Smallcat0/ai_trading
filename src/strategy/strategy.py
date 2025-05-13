@@ -19,22 +19,7 @@ import logging
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
-
-try:
-    from .data_ingest import load_data
-except ImportError as e:
-    logger = logging.getLogger("strategy")
-    if not logger.hasHandlers():
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-    logger.error(
-        f"無法匯入 .data_ingest，請確認 package 結構與 PYTHONPATH 設定。錯誤: {e}"
-    )
-    raise
+from src.core.data_ingest import load_data
 
 # 集中管理 log 訊息，方便多語系擴充
 LOG_MSGS = {

@@ -12,8 +12,8 @@
 - 資料預處理和清洗
 """
 
-from .data_sources.twse_crawler import twse_crawler
-from use_perplexity_crawler import init_database, crawl_market_info
+from src.data_sources.twse_crawler import twse_crawler
+# from use_perplexity_crawler import init_database, crawl_market_info
 import datetime
 import pandas as pd
 import os
@@ -214,25 +214,6 @@ def update_data(start_date=None, end_date=None, data_types=None):
         date = date.date()
 
         if "price" in data_types:
-            twe_news = crawl_market_info(
-                "台灣股市",
-                start_date=date.strftime("%Y-%m-%d"),
-                end_date=date.strftime("%Y-%m-%d"),
-            )
-            otc_news = crawl_market_info(
-                "台灣股市",
-                start_date=date.strftime("%Y-%m-%d"),
-                end_date=date.strftime("%Y-%m-%d"),
-            )
-            if twe_news or otc_news:
-                news = pd.DataFrame(twe_news + otc_news)
-                news_file = os.path.join(TABLES_DIR, "market_news.pkl")
-                if os.path.exists(news_file):
-                    old_news = pd.read_pickle(news_file)
-                    news = pd.concat([old_news, news])
-                    news = news[~news.index.duplicated(keep="last")]
-                news.to_pickle(news_file)
-
             twe_price = twse_crawler.price_twe(date)
             otc_price = twse_crawler.price_otc(date)
             if not twe_price.empty or not otc_price.empty:
@@ -283,22 +264,6 @@ def update_data(start_date=None, end_date=None, data_types=None):
                 )
 
         if "monthly_report" in data_types and date.day <= 10:
-            news_monthly_report = crawl_market_info(
-                "台灣股市月報",
-                start_date=date.strftime("%Y-%m-01"),
-                end_date=date.strftime("%Y-%m-%d"),
-            )
-            if news_monthly_report:
-                news_monthly_df = pd.DataFrame(news_monthly_report)
-                news_monthly_file = os.path.join(TABLES_DIR, "monthly_news.pkl")
-                if os.path.exists(news_monthly_file):
-                    old_monthly_news = pd.read_pickle(news_monthly_file)
-                    news_monthly_df = pd.concat([old_monthly_news, news_monthly_df])
-                    news_monthly_df = news_monthly_df[
-                        ~news_monthly_df.index.duplicated(keep="last")
-                    ]
-                news_monthly_df.to_pickle(news_monthly_file)
-
             monthly_report = twse_crawler.month_revenue(None, date)
             if not monthly_report.empty:
                 monthly_report_file = os.path.join(TABLES_DIR, "monthly_report.pkl")
@@ -590,9 +555,6 @@ def schedule_fetch(
     Returns:
         apscheduler.schedulers.background.BackgroundScheduler: 排程器
     """
-    # 初始化資料庫
-    init_database()
-
     # 初始化排程器
     scheduler = BackgroundScheduler()
 

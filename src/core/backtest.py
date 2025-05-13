@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 import warnings
 import os
 import backtrader as bt
-from .data_ingest import load_data
-from .utils import align_timeseries
+from src.core.data_ingest import load_data
+from src.utils.utils import align_timeseries
+from src.data_sources.twse_crawler import twse_crawler
 
 
 def _detect_close_col(df):

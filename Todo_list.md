@@ -19,7 +19,7 @@
   - [X] Configure pylint for static code analysis
 - Testing framework and CI/CD
   - [X] Use pytest to build unit tests for core modules
-  - [ ] Set up GitHub Actions for CI/CD pipeline
+  - [X] Set up GitHub Actions for CI/CD pipeline
   - [ ] Aim for ≥80% test coverage on key modules
 
 [ ] 1.2 Design and implement database schema (src/database/schema.py)
@@ -108,6 +108,7 @@
 - [ ] Develop sentiment/news data collector (if applicable)
 - [ ] Set up scheduled tasks (daily/hourly auto-fetch)
 - [ ] Implement error handling and retry mechanism
+- [ ] The main workflow will use custom Python crawlers for core financial news sources, with Maxun platform as a supplementary and backup solution for difficult or frequently changing websites.
 
 [ ] 2.8 Data storage and validation
 - [ ] Design database schema (expand market_data.db or use PostgreSQL/InfluxDB)
