@@ -43,7 +43,7 @@ class MCPCrawler:
         """
         self.server_process = None
         self.is_running = False
-        
+
         # 如果自動啟動，則啟動 MCP 爬蟲服務
         if auto_start:
             self.start_server()
@@ -71,14 +71,14 @@ class MCPCrawler:
 
             # 啟動 MCP 爬蟲服務器
             logger.info(f"啟動 MCP 爬蟲服務器: {MCP_SERVER_SCRIPT}")
-            
+
             # 使用非阻塞方式啟動服務器
             self.server_process = subprocess.Popen(
                 ["node", MCP_SERVER_SCRIPT],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd=os.path.dirname(MCP_SERVER_SCRIPT)
+                cwd=os.path.dirname(MCP_SERVER_SCRIPT),
             )
 
             # 等待服務器啟動
@@ -212,9 +212,7 @@ def get_crawler() -> MCPCrawler:
 
 
 def crawl_stock_news(
-    stock_id: str,
-    days: int = 7,
-    fulltext: bool = False
+    stock_id: str, days: int = 7, fulltext: bool = False
 ) -> List[Dict[str, Any]]:
     """
     爬取股票相關新聞的便捷函數
@@ -230,10 +228,10 @@ def crawl_stock_news(
     crawler = get_crawler()
     start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
     end_date = datetime.now().strftime("%Y-%m-%d")
-    
+
     return crawler.crawl_news(
         query=f"{stock_id} 股票",
         start_date=start_date,
         end_date=end_date,
-        fulltext=fulltext
+        fulltext=fulltext,
     )

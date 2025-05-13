@@ -25,7 +25,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 設定日誌目錄
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
+log_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs"
+)
 os.makedirs(log_dir, exist_ok=True)
 
 # 設定日誌
@@ -34,7 +36,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(os.path.join(log_dir, "trading.log")),
-        logging.StreamHandler()
+        logging.StreamHandler(),
     ],
 )
 logger = logging.getLogger("trading_logger")

@@ -22,9 +22,26 @@ from datetime import datetime, date, timezone
 from typing import Dict, Any, Optional, List, Union
 
 from sqlalchemy import (
-    Column, String, Float, Integer, Date, DateTime, Boolean, Text,
-    ForeignKey, Index, UniqueConstraint, CheckConstraint, Enum,
-    Table, MetaData, JSON, LargeBinary, func, event, DDL
+    Column,
+    String,
+    Float,
+    Integer,
+    Date,
+    DateTime,
+    Boolean,
+    Text,
+    ForeignKey,
+    Index,
+    UniqueConstraint,
+    CheckConstraint,
+    Enum,
+    Table,
+    MetaData,
+    JSON,
+    LargeBinary,
+    func,
+    event,
+    DDL,
 )
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import declarative_base, relationship
@@ -33,9 +50,11 @@ from sqlalchemy.schema import CreateTable
 # type: ignore[misc, valid-type]
 Base = declarative_base()
 
+
 # 定義時間粒度枚舉
 class TimeGranularity(enum.Enum):
     """時間粒度枚舉"""
+
     TICK = "tick"
     MIN_1 = "1min"
     MIN_5 = "5min"
@@ -47,15 +66,18 @@ class TimeGranularity(enum.Enum):
     WEEK_1 = "1week"
     MONTH_1 = "1month"
 
+
 # 定義市場類型枚舉
 class MarketType(enum.Enum):
     """市場類型枚舉"""
+
     STOCK = "stock"
     FUTURES = "futures"
     FOREX = "forex"
     CRYPTO = "crypto"
     INDEX = "index"
     OPTION = "option"
+
 
 # 定義基礎市場資料模型 Mixin
 class MarketDataMixin:
@@ -67,7 +89,9 @@ class MarketDataMixin:
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(20), nullable=False, index=True, comment="交易標的代碼")
-    market_type = Column(Enum(MarketType), nullable=False, index=True, comment="市場類型")
+    market_type = Column(
+        Enum(MarketType), nullable=False, index=True, comment="市場類型"
+    )
 
     # OHLCV 基本欄位
     open = Column(Float, comment="開盤價")
@@ -82,8 +106,15 @@ class MarketDataMixin:
     checksum = Column(String(64), comment="資料校驗碼")
 
     # 資料管理欄位
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), comment="資料更新時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="資料更新時間",
+    )
 
     def calculate_checksum(self) -> str:
         """計算資料校驗碼"""
@@ -93,7 +124,7 @@ class MarketDataMixin:
             "high": self.high,
             "low": self.low,
             "close": self.close,
-            "volume": self.volume
+            "volume": self.volume,
         }
         data_str = json.dumps(data, sort_keys=True)
         return hashlib.sha256(data_str.encode()).hexdigest()
@@ -109,6 +140,7 @@ class MarketTick(Base, MarketDataMixin):
 
     記錄每筆交易的詳細資訊，包括價格、成交量、買賣方向等。
     """
+
     __tablename__ = "market_tick"
 
     timestamp = Column(DateTime, nullable=False, comment="交易時間戳")
@@ -122,7 +154,7 @@ class MarketTick(Base, MarketDataMixin):
     # 創建複合索引 (symbol + timestamp)
     __table_args__ = (
         Index("ix_market_tick_symbol_timestamp", "symbol", "timestamp"),
-        {"comment": "市場 Tick 資料表，記錄每筆交易的詳細資訊"}
+        {"comment": "市場 Tick 資料表，記錄每筆交易的詳細資訊"},
     )
 
 
@@ -133,6 +165,7 @@ class MarketMinute(Base, MarketDataMixin):
 
     記錄分鐘級別的 K 線資料，支援 1 分鐘、5 分鐘、15 分鐘等多種時間粒度。
     """
+
     __tablename__ = "market_minute"
 
     timestamp = Column(DateTime, nullable=False, comment="K線時間戳")
@@ -144,8 +177,13 @@ class MarketMinute(Base, MarketDataMixin):
     # 創建複合索引 (symbol + timestamp + granularity)
     __table_args__ = (
         Index("ix_market_minute_symbol_timestamp", "symbol", "timestamp"),
-        Index("ix_market_minute_symbol_granularity_timestamp", "symbol", "granularity", "timestamp"),
-        {"comment": "市場分鐘資料表，記錄分鐘級別的 K 線資料"}
+        Index(
+            "ix_market_minute_symbol_granularity_timestamp",
+            "symbol",
+            "granularity",
+            "timestamp",
+        ),
+        {"comment": "市場分鐘資料表，記錄分鐘級別的 K 線資料"},
     )
 
 
@@ -156,6 +194,7 @@ class MarketDaily(Base, MarketDataMixin):
 
     記錄日線級別的 K 線資料，包括開高低收、成交量、技術指標等。
     """
+
     __tablename__ = "market_daily"
 
     date = Column(Date, nullable=False, comment="交易日期")
@@ -172,7 +211,7 @@ class MarketDaily(Base, MarketDataMixin):
     __table_args__ = (
         Index("ix_market_daily_symbol_date", "symbol", "date"),
         UniqueConstraint("symbol", "date", name="uq_market_daily_symbol_date"),
-        {"comment": "市場日線資料表，記錄日線級別的 K 線資料"}
+        {"comment": "市場日線資料表，記錄日線級別的 K 線資料"},
     )
 
 
@@ -183,6 +222,7 @@ class Fundamental(Base):
 
     記錄公司的基本面資料，如財務報表、股本結構、股利政策等。
     """
+
     __tablename__ = "fundamental"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -210,14 +250,21 @@ class Fundamental(Base):
 
     # 資料管理欄位
     data_source = Column(String(50), comment="資料來源")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), comment="資料更新時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="資料更新時間",
+    )
 
     # 創建複合索引 (symbol + date)
     __table_args__ = (
         Index("ix_fundamental_symbol_date", "symbol", "date"),
         UniqueConstraint("symbol", "date", name="uq_fundamental_symbol_date"),
-        {"comment": "基本面資料表，記錄公司的基本面資料"}
+        {"comment": "基本面資料表，記錄公司的基本面資料"},
     )
 
     def __repr__(self):
@@ -231,6 +278,7 @@ class TechnicalIndicator(Base):
 
     記錄各種技術指標的計算結果，如 MACD、RSI、布林帶等。
     """
+
     __tablename__ = "technical_indicator"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -256,14 +304,21 @@ class TechnicalIndicator(Base):
     obv = Column(Float, comment="能量潮指標")
 
     # 資料管理欄位
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), comment="資料更新時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="資料更新時間",
+    )
 
     # 創建複合索引 (symbol + date)
     __table_args__ = (
         Index("ix_technical_indicator_symbol_date", "symbol", "date"),
         UniqueConstraint("symbol", "date", name="uq_technical_indicator_symbol_date"),
-        {"comment": "技術指標資料表，記錄各種技術指標的計算結果"}
+        {"comment": "技術指標資料表，記錄各種技術指標的計算結果"},
     )
 
     def __repr__(self):
@@ -277,6 +332,7 @@ class NewsSentiment(Base):
 
     記錄與特定股票相關的新聞情緒分析結果。
     """
+
     __tablename__ = "news_sentiment"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -294,13 +350,20 @@ class NewsSentiment(Base):
     news_sources = Column(JSON, comment="新聞來源列表")
 
     # 資料管理欄位
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), comment="資料更新時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="資料更新時間",
+    )
 
     # 創建複合索引 (symbol + date)
     __table_args__ = (
         Index("ix_news_sentiment_symbol_date", "symbol", "date"),
-        {"comment": "新聞情緒資料表，記錄與特定股票相關的新聞情緒分析結果"}
+        {"comment": "新聞情緒資料表，記錄與特定股票相關的新聞情緒分析結果"},
     )
 
     def __repr__(self):
@@ -314,6 +377,7 @@ class TradeRecord(Base):
 
     記錄系統執行的所有交易，包括買入、賣出、持倉等資訊。
     """
+
     __tablename__ = "trade_record"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -340,13 +404,15 @@ class TradeRecord(Base):
     profit_loss_pct = Column(Float, comment="損益百分比")
 
     # 資料管理欄位
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
 
     # 創建索引
     __table_args__ = (
         Index("ix_trade_record_timestamp", "timestamp"),
         Index("ix_trade_record_symbol_timestamp", "symbol", "timestamp"),
-        {"comment": "交易記錄表，記錄系統執行的所有交易"}
+        {"comment": "交易記錄表，記錄系統執行的所有交易"},
     )
 
     def __repr__(self):
@@ -360,13 +426,16 @@ class SystemLog(Base):
 
     記錄系統運行過程中的各種日誌，包括錯誤、警告、資訊等。
     """
+
     __tablename__ = "system_log"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False, index=True, comment="日誌時間戳")
 
     # 日誌資訊
-    level = Column(String(10), nullable=False, comment="日誌級別 (INFO/WARNING/ERROR/CRITICAL)")
+    level = Column(
+        String(10), nullable=False, comment="日誌級別 (INFO/WARNING/ERROR/CRITICAL)"
+    )
     module = Column(String(50), comment="模組名稱")
     message = Column(Text, nullable=False, comment="日誌訊息")
 
@@ -377,7 +446,7 @@ class SystemLog(Base):
     # 創建索引
     __table_args__ = (
         Index("ix_system_log_level_timestamp", "level", "timestamp"),
-        {"comment": "系統日誌表，記錄系統運行過程中的各種日誌"}
+        {"comment": "系統日誌表，記錄系統運行過程中的各種日誌"},
     )
 
     def __repr__(self):
@@ -391,6 +460,7 @@ class DataShard(Base):
 
     記錄資料分片的相關資訊，用於管理大型資料集的分片策略。
     """
+
     __tablename__ = "data_shard"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -413,13 +483,20 @@ class DataShard(Base):
     is_compressed = Column(Boolean, default=False, comment="是否已壓縮")
 
     # 資料管理欄位
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), comment="資料更新時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="資料更新時間",
+    )
 
     # 創建索引
     __table_args__ = (
         Index("ix_data_shard_table_shard", "table_name", "shard_id"),
-        {"comment": "資料分片表，記錄資料分片的相關資訊"}
+        {"comment": "資料分片表，記錄資料分片的相關資訊"},
     )
 
     def __repr__(self):
@@ -433,6 +510,7 @@ class DataChecksum(Base):
 
     記錄資料的校驗碼，用於驗證資料的完整性和一致性。
     """
+
     __tablename__ = "data_checksum"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -444,14 +522,16 @@ class DataChecksum(Base):
     checksum_fields = Column(JSON, comment="參與校驗的欄位")
 
     # 資料管理欄位
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間")
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="資料建立時間"
+    )
     verified_at = Column(DateTime, comment="最後驗證時間")
     is_valid = Column(Boolean, comment="是否有效")
 
     # 創建索引
     __table_args__ = (
         Index("ix_data_checksum_table_record", "table_name", "record_id"),
-        {"comment": "資料校驗表，記錄資料的校驗碼"}
+        {"comment": "資料校驗表，記錄資料的校驗碼"},
     )
 
     def __repr__(self):
@@ -465,6 +545,7 @@ class DatabaseVersion(Base):
 
     記錄資料庫結構的版本資訊，用於管理資料庫結構的變更。
     """
+
     __tablename__ = "database_version"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -472,14 +553,18 @@ class DatabaseVersion(Base):
 
     # 版本資訊
     description = Column(Text, comment="版本描述")
-    applied_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), comment="應用時間")
+    applied_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="應用時間"
+    )
 
     # 變更資訊
     changes = Column(JSON, comment="變更內容")
     applied_by = Column(String(50), comment="應用者")
 
     def __repr__(self):
-        return f"<DatabaseVersion(version={self.version}, applied_at={self.applied_at})>"
+        return (
+            f"<DatabaseVersion(version={self.version}, applied_at={self.applied_at})>"
+        )
 
 
 # 添加資料庫事件監聽器，用於自動計算校驗碼
@@ -519,6 +604,7 @@ def init_db(engine):
 
     # 初始化資料庫版本
     from sqlalchemy.orm import Session
+
     with Session(engine) as session:
         # 檢查是否已有版本記錄
         version_exists = session.query(DatabaseVersion).first() is not None
@@ -527,8 +613,12 @@ def init_db(engine):
             initial_version = DatabaseVersion(
                 version="1.0.0",
                 description="初始資料庫結構",
-                changes={"tables_created": [table.name for table in Base.metadata.sorted_tables]},
-                applied_by="system"
+                changes={
+                    "tables_created": [
+                        table.name for table in Base.metadata.sorted_tables
+                    ]
+                },
+                applied_by="system",
             )
             session.add(initial_version)
             session.commit()
@@ -552,7 +642,9 @@ def create_data_shard(session, table_name, start_date, end_date, shard_key="date
         DataShard: 創建的資料分片記錄
     """
     # 生成分片 ID
-    shard_id = f"{table_name}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
+    shard_id = (
+        f"{table_name}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
+    )
 
     # 創建分片記錄
     shard = DataShard(
@@ -562,7 +654,7 @@ def create_data_shard(session, table_name, start_date, end_date, shard_key="date
         start_date=start_date,
         end_date=end_date,
         file_format="parquet",
-        compression="snappy"
+        compression="snappy",
     )
 
     session.add(shard)

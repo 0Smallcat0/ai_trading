@@ -22,8 +22,12 @@ from sqlalchemy.orm import Session
 
 from src.config import DATA_DIR
 from src.database.schema import (
-    Base, MarketDaily, MarketMinute, MarketTick, 
-    DataShard, create_data_shard
+    Base,
+    MarketDaily,
+    MarketMinute,
+    MarketTick,
+    DataShard,
+    create_data_shard,
 )
 
 
@@ -41,20 +45,20 @@ def query_to_dataframe(session: Session, query) -> pd.DataFrame:
     result = session.execute(query).fetchall()
     if not result:
         return pd.DataFrame()
-    
+
     # 獲取列名
     columns = list(result[0]._mapping.keys())
-    
+
     # 轉換為 DataFrame
     df = pd.DataFrame(result, columns=columns)
     return df
 
 
 def save_to_parquet(
-    df: pd.DataFrame, 
-    file_path: str, 
+    df: pd.DataFrame,
+    file_path: str,
     compression: str = "snappy",
-    partition_cols: Optional[List[str]] = None
+    partition_cols: Optional[List[str]] = None,
 ) -> str:
     """
     將 DataFrame 儲存為 Parquet 格式
@@ -70,32 +74,26 @@ def save_to_parquet(
     """
     # 確保目錄存在
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    
+
     # 轉換為 PyArrow Table
     table = pa.Table.from_pandas(df)
-    
+
     # 儲存為 Parquet 格式
     if partition_cols:
         pq.write_to_dataset(
-            table, 
-            root_path=file_path, 
+            table,
+            root_path=file_path,
             partition_cols=partition_cols,
-            compression=compression
+            compression=compression,
         )
     else:
-        pq.write_table(
-            table, 
-            file_path, 
-            compression=compression
-        )
-    
+        pq.write_table(table, file_path, compression=compression)
+
     return file_path
 
 
 def read_from_parquet(
-    file_path: str, 
-    columns: Optional[List[str]] = None,
-    filters: Optional[List] = None
+    file_path: str, columns: Optional[List[str]] = None, filters: Optional[List] = None
 ) -> pd.DataFrame:
     """
     從 Parquet 檔案讀取資料
@@ -122,7 +120,7 @@ def create_market_data_shard(
     start_date: date,
     end_date: date,
     symbols: Optional[List[str]] = None,
-    compression: str = "snappy"
+    compression: str = "snappy",
 ) -> Tuple[DataShard, str]:
     """
     創建市場資料分片並儲存為 Parquet 格式
@@ -140,7 +138,7 @@ def create_market_data_shard(
     """
     # 構建查詢
     query = select(table_class)
-    
+
     # 根據資料表類別選擇日期欄位
     if table_class == MarketDaily:
         date_column = table_class.date
@@ -148,42 +146,41 @@ def create_market_data_shard(
     else:
         date_column = func.date(table_class.timestamp)
         date_format = "%Y%m%d"
-    
+
     # 添加日期範圍條件
-    query = query.where(and_(
-        date_column >= start_date,
-        date_column <= end_date
-    ))
-    
+    query = query.where(and_(date_column >= start_date, date_column <= end_date))
+
     # 添加股票代碼條件
     if symbols:
         query = query.where(table_class.symbol.in_(symbols))
-    
+
     # 查詢資料
     df = query_to_dataframe(session, query)
-    
+
     if df.empty:
         raise ValueError(f"沒有找到符合條件的資料: {start_date} - {end_date}")
-    
+
     # 生成檔案路徑
     table_name = table_class.__tablename__
     date_range = f"{start_date.strftime(date_format)}_{end_date.strftime(date_format)}"
-    
+
     if symbols and len(symbols) <= 5:
         symbol_str = "_".join(symbols)
         file_name = f"{table_name}_{date_range}_{symbol_str}.parquet"
     else:
         file_name = f"{table_name}_{date_range}.parquet"
-    
+
     file_path = os.path.join(DATA_DIR, "parquet", table_name, file_name)
-    
+
     # 儲存為 Parquet 格式
     save_to_parquet(df, file_path, compression=compression)
-    
+
     # 創建資料分片記錄
     shard_key = "date" if table_class == MarketDaily else "timestamp"
-    shard = create_data_shard(session, table_name, start_date, end_date, shard_key=shard_key)
-    
+    shard = create_data_shard(
+        session, table_name, start_date, end_date, shard_key=shard_key
+    )
+
     # 更新分片記錄
     shard.file_path = file_path
     shard.file_format = "parquet"
@@ -191,13 +188,13 @@ def create_market_data_shard(
     shard.row_count = len(df)
     shard.file_size_bytes = os.path.getsize(file_path)
     shard.is_compressed = True
-    
+
     # 如果有股票代碼條件，記錄在分片記錄中
     if symbols:
         shard.shard_id = f"{table_name}_{date_range}_{'_'.join(symbols[:3])}"
-    
+
     session.commit()
-    
+
     return shard, file_path
 
 
@@ -205,7 +202,7 @@ def load_from_shard(
     session: Session,
     shard_id: str,
     columns: Optional[List[str]] = None,
-    filters: Optional[List] = None
+    filters: Optional[List] = None,
 ) -> pd.DataFrame:
     """
     從資料分片讀取資料
@@ -221,12 +218,12 @@ def load_from_shard(
     """
     # 查詢分片記錄
     shard = session.query(DataShard).filter_by(shard_id=shard_id).first()
-    
+
     if not shard:
         raise ValueError(f"找不到分片記錄: {shard_id}")
-    
+
     if not shard.file_path or not os.path.exists(shard.file_path):
         raise ValueError(f"找不到分片檔案: {shard.file_path}")
-    
+
     # 讀取 Parquet 檔案
     return read_from_parquet(shard.file_path, columns=columns, filters=filters)

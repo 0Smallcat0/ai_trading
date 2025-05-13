@@ -47,8 +47,12 @@ REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))  # 請求超時時間�
 RETRY_COUNT = int(os.getenv("RETRY_COUNT", "3"))  # 重試次數
 
 # 監控設定
-PRICE_ANOMALY_THRESHOLD = float(os.getenv("PRICE_ANOMALY_THRESHOLD", "0.05"))  # 價格異常閾值
-VOLUME_ANOMALY_THRESHOLD = float(os.getenv("VOLUME_ANOMALY_THRESHOLD", "3.0"))  # 成交量異常閾值
+PRICE_ANOMALY_THRESHOLD = float(
+    os.getenv("PRICE_ANOMALY_THRESHOLD", "0.05")
+)  # 價格異常閾值
+VOLUME_ANOMALY_THRESHOLD = float(
+    os.getenv("VOLUME_ANOMALY_THRESHOLD", "3.0")
+)  # 成交量異常閾值
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "60"))  # 檢查間隔（秒）
 
 # 其他設定

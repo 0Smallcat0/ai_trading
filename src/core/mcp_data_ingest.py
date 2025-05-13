@@ -34,13 +34,39 @@ def analyze_market_sentiment(news_df):
             - negative_count (int): 負面新聞數量
     """
     if news_df.empty:
-        return {"sentiment": "neutral", "score": 0, "count": 0, "positive_count": 0, "negative_count": 0}
+        return {
+            "sentiment": "neutral",
+            "score": 0,
+            "count": 0,
+            "positive_count": 0,
+            "negative_count": 0,
+        }
 
     # 檢查是否有情緒欄位
     if "sentiment" not in news_df.columns:
         # 如果沒有情緒欄位，嘗試使用標題和內容進行簡單的情緒分析
-        positive_words = ["漲", "上升", "增長", "獲利", "成長", "突破", "利多", "看好", "樂觀"]
-        negative_words = ["跌", "下降", "虧損", "衰退", "破產", "危機", "利空", "看壞", "悲觀"]
+        positive_words = [
+            "漲",
+            "上升",
+            "增長",
+            "獲利",
+            "成長",
+            "突破",
+            "利多",
+            "看好",
+            "樂觀",
+        ]
+        negative_words = [
+            "跌",
+            "下降",
+            "虧損",
+            "衰退",
+            "破產",
+            "危機",
+            "利空",
+            "看壞",
+            "悲觀",
+        ]
 
         # 計算正面和負面詞彙出現的次數
         pos = 0
