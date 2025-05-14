@@ -65,71 +65,71 @@
 
 ---
 
-[ ] 2.1 Research and select preliminary trading indicators
-- [ ] Technical indicators: SMA, EMA, MACD, RSI, Bollinger Bands, OBV, ATR
-- [ ] Fundamental indicators: EPS growth, P/E, P/B
-- [ ] Sentiment/topic-based indicators (if applicable)
-- [ ] Standardize and compare indicators
+[X] 2.1 Research and select preliminary trading indicators
+- [X] Technical indicators: SMA, EMA, MACD, RSI, Bollinger Bands, OBV, ATR
+- [X] Fundamental indicators: EPS growth, P/E, P/B
+- [X] Sentiment/topic-based indicators (if applicable)
+- [X] Standardize and compare indicators
 
-[ ] 2.2 Implement signal generator (src/core/signal_gen.py)
-- [ ] Integrate technical indicator calculations
-- [ ] Design signal generation logic (breakout/crossover/divergence)
-- [ ] Output signals for backtesting periods
-- [ ] Build unit tests for signal module
+[X] 2.2 Implement signal generator (src/core/signal_gen.py)
+- [X] Integrate technical indicator calculations
+- [X] Design signal generation logic (breakout/crossover/divergence)
+- [X] Output signals for backtesting periods
+- [X] Build unit tests for signal module
 
-[ ] 2.3 Develop backtest engine (src/core/backtest.py)
-- [ ] Build strategy execution loop (including capital/position tracking)
-- [ ] Integrate data simulator and historical data reader
-- [ ] Output strategy performance metrics (return, Sharpe, max drawdown)
-- [ ] Consider using open_source_libs/backtrader/ as core engine
-- [ ] Support multi-strategy switching and comparison
+[X] 2.3 Develop backtest engine (src/core/backtest.py)
+- [X] Build strategy execution loop (including capital/position tracking)
+- [X] Integrate data simulator and historical data reader
+- [X] Output strategy performance metrics (return, Sharpe, max drawdown)
+- [X] Consider using open_source_libs/backtrader/ as core engine
+- [X] Support multi-strategy switching and comparison
 
-[ ] 2.4 Develop portfolio management module (src/core/portfolio.py)
-- [ ] Build asset allocation logic (equal weight, risk parity, etc.)
-- [ ] Simulate multi-asset holding dynamics
-- [ ] Record portfolio states and transaction logs per period
+[X] 2.4 Develop portfolio management module (src/core/portfolio.py)
+- [X] Build asset allocation logic (equal weight, risk parity, etc.)
+- [X] Simulate multi-asset holding dynamics
+- [X] Record portfolio states and transaction logs per period
 
-[ ] 2.5 Implement risk control module (src/core/risk_control.py)
-- [ ] Define stop-loss/take-profit rules
-- [ ] Configure capital allocation ratio
-- [ ] Calculate risk metrics (e.g. VaR, volatility)
-- [ ] Support risk control at strategy and portfolio levels
+[X] 2.5 Implement risk control module (src/core/risk_control.py)
+- [X] Define stop-loss/take-profit rules
+- [X] Configure capital allocation ratio
+- [X] Calculate risk metrics (e.g. VaR, volatility)
+- [X] Support risk control at strategy and portfolio levels
 
-[ ] 2.6 Data source research and collection
-- [ ] Research available stock market APIs (Yahoo, Alpha Vantage, Finnhub, broker APIs)
-- [ ] Research financial statement sources and structure
-- [ ] Research news sentiment data (if included)
-- [ ] Confirm data update frequency and historical coverage
+[X] 2.6 Data source research and collection
+- [X] Research available stock market APIs (Yahoo, Alpha Vantage, Finnhub, broker APIs)
+- [X] Research financial statement sources and structure
+- [X] Research news sentiment data (if included)
+- [X] Confirm data update frequency and historical coverage
 
-[ ] 2.7 Build data collection system
-- [ ] Develop daily/minute K-line data collector
-- [ ] Implement real-time quote API connector
-- [ ] Develop financial statement collector
-- [ ] Develop sentiment/news data collector (if applicable)
-- [ ] Set up scheduled tasks (daily/hourly auto-fetch)
-- [ ] Implement error handling and retry mechanism
-- [ ] The main workflow will use custom Python crawlers for core financial news sources, with Maxun platform as a supplementary and backup solution for difficult or frequently changing websites.
+[X] 2.7 Build data collection system
+- [X] Develop daily/minute K-line data collector
+- [X] Implement real-time quote API connector
+- [X] Develop financial statement collector
+- [X] Develop sentiment/news data collector (if applicable)
+- [X] Set up scheduled tasks (daily/hourly auto-fetch)
+- [X] Implement error handling and retry mechanism
+- [X] The main workflow will use custom Python crawlers for core financial news sources, with Maxun platform as a supplementary and backup solution for difficult or frequently changing websites.
 
-[ ] 2.8 Data storage and validation
-- [ ] Design database schema (expand market_data.db or use PostgreSQL/InfluxDB)
-- [ ] Build data write and ingestion pipelines
-- [ ] Implement data quality checks (continuity, nulls, etc.)
-- [ ] Configure data backup and restore mechanism
-- [ ] Manage data versioning and change tracking
+[X] 2.8 Data storage and validation
+- [X] Design database schema (expand market_data.db or use PostgreSQL/InfluxDB)
+- [X] Build data write and ingestion pipelines
+- [X] Implement data quality checks (continuity, nulls, etc.)
+- [X] Configure data backup and restore mechanism
+- [X] Manage data versioning and change tracking
 
-[ ] 2.9 Data cleaning and processing
-- [ ] Handle missing values (imputation, deletion, etc.)
-- [ ] Handle outliers (Z-score, capping)
-- [ ] Standardize prices and apply adjusted-close logic
-- [ ] Design cleaning workflow and modular scripts
+[X] 2.9 Data cleaning and processing
+- [X] Handle missing values (imputation, deletion, etc.)
+- [X] Handle outliers (Z-score, capping)
+- [X] Standardize prices and apply adjusted-close logic
+- [X] Design cleaning workflow and modular scripts
 
-[ ] 2.10 Feature engineering and governance
-- [ ] Calculate indicators: SMA, RSI, MACD, Bollinger Bands, OBV, ATR
-- [ ] Extract financial features (P/E, EPS growth, etc.)
-- [ ] Extract sentiment features (topics, sentiment scores, etc.)
-- [ ] Standardize and transform features (Z-score, Min-Max)
-- [ ] Perform feature selection and dimensionality reduction (PCA, RFE)
-- [ ] Build feature store and versioning (can integrate with MLflow)
+[X] 2.10 Feature engineering and governance
+- [X] Calculate indicators: SMA, RSI, MACD, Bollinger Bands, OBV, ATR
+- [X] Extract financial features (P/E, EPS growth, etc.)
+- [X] Extract sentiment features (topics, sentiment scores, etc.)
+- [X] Standardize and transform features (Z-score, Min-Max)
+- [X] Perform feature selection and dimensionality reduction (PCA, RFE)
+- [X] Build feature store and versioning (can integrate with MLflow)
 
 ---
 

@@ -344,18 +344,47 @@ class RiskManager:
 class PositionSizer:
     """部位大小計算類，用於計算交易部位大小"""
 
-    def __init__(self, risk_per_trade=0.01):
+    def __init__(self, risk_per_trade=0.01, position_sizing_method="risk_based"):
         """
         初始化部位大小計算器
 
         Args:
             risk_per_trade (float): 每筆交易的風險（佔總資金的比例）
+            position_sizing_method (str): 部位大小計算方法，可選 'risk_based'（風險基礎）,
+                                         'equal_weight'（等權重）, 'kelly'（凱利公式）
         """
         self.risk_per_trade = risk_per_trade
+        self.position_sizing_method = position_sizing_method
 
-    def calculate_position_size(self, portfolio_value, entry_price, stop_loss_price):
+    def calculate_position_size(self, portfolio_value, entry_price, stop_loss_price,
+                               win_rate=None, reward_risk_ratio=None):
         """
         計算部位大小
+
+        Args:
+            portfolio_value (float): 投資組合價值
+            entry_price (float): 進場價格
+            stop_loss_price (float): 停損價格
+            win_rate (float, optional): 勝率，用於凱利公式計算
+            reward_risk_ratio (float, optional): 獎風險比，用於凱利公式計算
+
+        Returns:
+            float: 部位大小（股數）
+        """
+        if self.position_sizing_method == "risk_based":
+            return self._risk_based_position_size(portfolio_value, entry_price, stop_loss_price)
+        elif self.position_sizing_method == "equal_weight":
+            return self._equal_weight_position_size(portfolio_value, entry_price)
+        elif self.position_sizing_method == "kelly":
+            if win_rate is None or reward_risk_ratio is None:
+                raise ValueError("使用凱利公式計算部位大小需要提供勝率和獎風險比")
+            return self._kelly_position_size(portfolio_value, win_rate, reward_risk_ratio)
+        else:
+            raise ValueError(f"不支援的部位大小計算方法: {self.position_sizing_method}")
+
+    def _risk_based_position_size(self, portfolio_value, entry_price, stop_loss_price):
+        """
+        基於風險的部位大小計算
 
         Args:
             portfolio_value (float): 投資組合價值
@@ -376,6 +405,52 @@ class PositionSizer:
 
         return position_size
 
+    def _equal_weight_position_size(self, portfolio_value, entry_price, num_positions=10):
+        """
+        等權重部位大小計算
+
+        Args:
+            portfolio_value (float): 投資組合價值
+            entry_price (float): 進場價格
+            num_positions (int): 預計持有的部位數量
+
+        Returns:
+            float: 部位大小（股數）
+        """
+        # 計算每個部位的資金
+        position_value = portfolio_value / num_positions
+
+        # 計算股數
+        shares = position_value / entry_price if entry_price > 0 else 0
+
+        return shares
+
+    def _kelly_position_size(self, portfolio_value, win_rate, reward_risk_ratio):
+        """
+        凱利公式部位大小計算
+
+        Args:
+            portfolio_value (float): 投資組合價值
+            win_rate (float): 勝率
+            reward_risk_ratio (float): 獎風險比
+
+        Returns:
+            float: 部位大小（佔總資金的比例）
+        """
+        # 凱利公式: f* = (p * b - q) / b
+        # 其中 p 是勝率，q 是敗率 (1-p)，b 是獎風險比
+
+        q = 1 - win_rate
+        kelly_fraction = (win_rate * reward_risk_ratio - q) / reward_risk_ratio
+
+        # 限制凱利比例在 0 到 1 之間
+        kelly_fraction = max(0, min(kelly_fraction, 1))
+
+        # 通常使用半凱利或四分之一凱利以降低風險
+        kelly_fraction = kelly_fraction * 0.5  # 半凱利
+
+        return portfolio_value * kelly_fraction
+
 
 class StopLossStrategy:
     """停損策略類，用於實現各種停損策略"""
@@ -385,15 +460,29 @@ class StopLossStrategy:
         初始化停損策略
 
         Args:
-            strategy_type (str): 策略類型，可選 'fixed', 'trailing', 'atr'
-            **params: 策略參數
+            strategy_type (str): 停損策略類型，可選 'fixed'（固定百分比）,
+                               'trailing'（追蹤停損）, 'atr'（ATR停損）,
+                               'time_based'（時間停損）
+            **params: 策略參數，根據策略類型不同而不同
+                - fixed: stop_loss_pct (float) - 停損百分比
+                - trailing: stop_loss_pct (float) - 停損百分比
+                - atr: atr_multiple (float) - ATR倍數
+                - time_based: max_days (int) - 最大持有天數
         """
         self.strategy_type = strategy_type
         self.params = params
 
-    def calculate_stop_loss(
-        self, entry_price, current_price=None, high_price=None, atr=None
-    ):
+        # 設置預設參數
+        if strategy_type == "fixed" and "stop_loss_pct" not in params:
+            self.params["stop_loss_pct"] = 0.05
+        elif strategy_type == "trailing" and "stop_loss_pct" not in params:
+            self.params["stop_loss_pct"] = 0.05
+        elif strategy_type == "atr" and "atr_multiple" not in params:
+            self.params["atr_multiple"] = 2.0
+        elif strategy_type == "time_based" and "max_days" not in params:
+            self.params["max_days"] = 20
+
+    def calculate_stop_loss(self, entry_price, current_price=None, high_price=None, atr=None, entry_date=None, current_date=None):
         """
         計算停損價格
 
@@ -402,40 +491,102 @@ class StopLossStrategy:
             current_price (float, optional): 當前價格
             high_price (float, optional): 最高價格
             atr (float, optional): 平均真實範圍
+            entry_date (datetime.date, optional): 進場日期
+            current_date (datetime.date, optional): 當前日期
 
         Returns:
             float: 停損價格
         """
         if self.strategy_type == "fixed":
-            # 固定百分比停損
-            stop_loss_pct = self.params.get("stop_loss_pct", 0.05)
-            return entry_price * (1 - stop_loss_pct)
-
+            return self._fixed_stop_loss(entry_price)
         elif self.strategy_type == "trailing":
-            # 追蹤停損
-            stop_loss_pct = self.params.get("stop_loss_pct", 0.05)
-
-            if high_price is None or current_price is None:
-                return entry_price * (1 - stop_loss_pct)
-
-            # 計算追蹤停損價格
-            trailing_stop = high_price * (1 - stop_loss_pct)
-
-            # 返回較高的停損價格
-            return max(trailing_stop, entry_price * (1 - stop_loss_pct))
-
+            return self._trailing_stop_loss(entry_price, high_price)
         elif self.strategy_type == "atr":
-            # ATR 停損
-            atr_multiplier = self.params.get("atr_multiplier", 2)
-
-            if atr is None:
-                return entry_price * 0.95  # 預設停損
-
-            # 計算 ATR 停損價格
-            return entry_price - atr_multiplier * atr
-
+            return self._atr_stop_loss(entry_price, atr)
+        elif self.strategy_type == "time_based":
+            return self._time_based_stop_loss(entry_price, current_price, entry_date, current_date)
         else:
             raise ValueError(f"不支援的停損策略類型: {self.strategy_type}")
+
+    def _fixed_stop_loss(self, entry_price):
+        """
+        固定百分比停損
+
+        Args:
+            entry_price (float): 進場價格
+
+        Returns:
+            float: 停損價格
+        """
+        stop_loss_pct = self.params.get("stop_loss_pct", 0.05)
+        return entry_price * (1 - stop_loss_pct)
+
+    def _trailing_stop_loss(self, entry_price, high_price):
+        """
+        追蹤停損
+
+        Args:
+            entry_price (float): 進場價格
+            high_price (float): 最高價格
+
+        Returns:
+            float: 停損價格
+        """
+        stop_loss_pct = self.params.get("stop_loss_pct", 0.05)
+
+        if high_price is None:
+            return entry_price * (1 - stop_loss_pct)
+
+        # 計算追蹤停損價格
+        trailing_stop = high_price * (1 - stop_loss_pct)
+
+        # 返回較高的停損價格
+        return max(trailing_stop, entry_price * (1 - stop_loss_pct))
+
+    def _atr_stop_loss(self, entry_price, atr):
+        """
+        ATR停損
+
+        Args:
+            entry_price (float): 進場價格
+            atr (float): 平均真實範圍
+
+        Returns:
+            float: 停損價格
+        """
+        atr_multiple = self.params.get("atr_multiple", 2.0)
+
+        if atr is None:
+            return entry_price * 0.95  # 預設停損
+
+        return entry_price - (atr * atr_multiple)
+
+    def _time_based_stop_loss(self, entry_price, current_price, entry_date, current_date):
+        """
+        時間停損
+
+        Args:
+            entry_price (float): 進場價格
+            current_price (float): 當前價格
+            entry_date (datetime.date): 進場日期
+            current_date (datetime.date): 當前日期
+
+        Returns:
+            float: 停損價格或 None（表示不需要停損）
+        """
+        max_days = self.params.get("max_days", 20)
+
+        if entry_date is None or current_date is None:
+            return None
+
+        # 計算持有天數
+        holding_days = (current_date - entry_date).days
+
+        # 如果超過最大持有天數，則返回當前價格（觸發停損）
+        if holding_days >= max_days:
+            return current_price
+
+        return None  # 不需要停損
 
 
 class StopProfitStrategy:
@@ -446,65 +597,359 @@ class StopProfitStrategy:
         初始化停利策略
 
         Args:
-            strategy_type (str): 策略類型，可選 'fixed', 'trailing', 'risk_reward'
-            **params: 策略參數
+            strategy_type (str): 停利策略類型，可選 'fixed'（固定百分比）,
+                               'trailing'（追蹤停利）, 'risk_reward'（風險報酬比）,
+                               'target'（目標價格）
+            **params: 策略參數，根據策略類型不同而不同
+                - fixed: stop_profit_pct (float) - 停利百分比
+                - trailing: stop_profit_pct (float) - 停利百分比
+                - risk_reward: risk_reward_ratio (float) - 風險報酬比
+                - target: target_price (float) - 目標價格
         """
         self.strategy_type = strategy_type
         self.params = params
 
-    def calculate_stop_profit(
-        self, entry_price, stop_loss_price=None, current_price=None, high_price=None
-    ):
+        # 設置預設參數
+        if strategy_type == "fixed" and "stop_profit_pct" not in params:
+            self.params["stop_profit_pct"] = 0.1
+        elif strategy_type == "trailing" and "stop_profit_pct" not in params:
+            self.params["stop_profit_pct"] = 0.1
+        elif strategy_type == "risk_reward" and "risk_reward_ratio" not in params:
+            self.params["risk_reward_ratio"] = 2.0
+
+    def calculate_stop_profit(self, entry_price, current_price=None, high_price=None, stop_loss_price=None):
         """
         計算停利價格
 
         Args:
             entry_price (float): 進場價格
-            stop_loss_price (float, optional): 停損價格
             current_price (float, optional): 當前價格
             high_price (float, optional): 最高價格
+            stop_loss_price (float, optional): 停損價格，用於風險報酬比計算
 
         Returns:
             float: 停利價格
         """
         if self.strategy_type == "fixed":
-            # 固定百分比停利
-            stop_profit_pct = self.params.get("stop_profit_pct", 0.1)
-            return entry_price * (1 + stop_profit_pct)
-
+            return self._fixed_stop_profit(entry_price)
         elif self.strategy_type == "trailing":
-            # 追蹤停利
-            stop_profit_pct = self.params.get("stop_profit_pct", 0.1)
-            trailing_pct = self.params.get("trailing_pct", 0.05)
-
-            if high_price is None or current_price is None:
-                return entry_price * (1 + stop_profit_pct)
-
-            # 檢查是否達到停利目標
-            if high_price >= entry_price * (1 + stop_profit_pct):
-                # 計算追蹤停利價格
-                trailing_stop = high_price * (1 - trailing_pct)
-
-                # 返回較低的停利價格
-                return min(trailing_stop, entry_price * (1 + stop_profit_pct))
-            else:
-                return entry_price * (1 + stop_profit_pct)
-
+            return self._trailing_stop_profit(entry_price, high_price, current_price)
         elif self.strategy_type == "risk_reward":
-            # 風險報酬比停利
-            risk_reward_ratio = self.params.get("risk_reward_ratio", 2)
-
-            if stop_loss_price is None:
-                return entry_price * 1.1  # 預設停利
-
-            # 計算風險
-            risk = entry_price - stop_loss_price
-
-            # 計算停利價格
-            return entry_price + risk * risk_reward_ratio
-
+            return self._risk_reward_stop_profit(entry_price, stop_loss_price)
+        elif self.strategy_type == "target":
+            return self._target_stop_profit()
         else:
             raise ValueError(f"不支援的停利策略類型: {self.strategy_type}")
+
+    def _fixed_stop_profit(self, entry_price):
+        """
+        固定百分比停利
+
+        Args:
+            entry_price (float): 進場價格
+
+        Returns:
+            float: 停利價格
+        """
+        stop_profit_pct = self.params.get("stop_profit_pct", 0.1)
+        return entry_price * (1 + stop_profit_pct)
+
+    def _trailing_stop_profit(self, entry_price, high_price, current_price):
+        """
+        追蹤停利
+
+        Args:
+            entry_price (float): 進場價格
+            high_price (float): 最高價格
+            current_price (float): 當前價格
+
+        Returns:
+            float: 停利價格
+        """
+        stop_profit_pct = self.params.get("stop_profit_pct", 0.1)
+
+        if high_price is None or current_price is None:
+            return entry_price * (1 + stop_profit_pct)
+
+        # 如果當前價格已經達到停利條件
+        if current_price >= entry_price * (1 + stop_profit_pct):
+            # 計算追蹤停利價格（從最高價回落一定比例）
+            trailing_stop = high_price * (1 - stop_profit_pct * 0.3)
+
+            # 如果追蹤停利價格高於原始停利價格，則使用追蹤停利
+            if trailing_stop > entry_price * (1 + stop_profit_pct):
+                return trailing_stop
+
+        # 否則使用固定百分比停利
+        return entry_price * (1 + stop_profit_pct)
+
+    def _risk_reward_stop_profit(self, entry_price, stop_loss_price):
+        """
+        風險報酬比停利
+
+        Args:
+            entry_price (float): 進場價格
+            stop_loss_price (float): 停損價格
+
+        Returns:
+            float: 停利價格
+        """
+        risk_reward_ratio = self.params.get("risk_reward_ratio", 2.0)
+
+        if stop_loss_price is None:
+            return entry_price * 1.1  # 預設停利
+
+        # 計算風險
+        risk = entry_price - stop_loss_price
+
+        # 計算停利價格
+        return entry_price + risk * risk_reward_ratio
+
+    def _target_stop_profit(self):
+        """
+        目標價格停利
+
+        Returns:
+            float: 停利價格
+        """
+        target_price = self.params.get("target_price")
+
+        if target_price is None:
+            raise ValueError("使用目標價格停利策略需要提供 target_price 參數")
+
+        return target_price
+
+
+class RiskMetricsCalculator:
+    """風險指標計算類，用於計算各種風險指標"""
+
+    def __init__(self):
+        """初始化風險指標計算器"""
+        pass
+
+    def calculate_var(self, returns, confidence_level=0.95, method="historical"):
+        """
+        計算風險值 (Value at Risk, VaR)
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            confidence_level (float): 信心水平，例如 0.95 表示 95%
+            method (str): 計算方法，可選 'historical'（歷史模擬法）,
+                         'parametric'（參數法）, 'monte_carlo'（蒙特卡洛模擬法）
+
+        Returns:
+            float: 風險值 (VaR)
+        """
+        if method == "historical":
+            # 歷史模擬法
+            return self._historical_var(returns, confidence_level)
+        elif method == "parametric":
+            # 參數法
+            return self._parametric_var(returns, confidence_level)
+        elif method == "monte_carlo":
+            # 蒙特卡洛模擬法
+            return self._monte_carlo_var(returns, confidence_level)
+        else:
+            raise ValueError(f"不支援的 VaR 計算方法: {method}")
+
+    def _historical_var(self, returns, confidence_level):
+        """
+        使用歷史模擬法計算 VaR
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            confidence_level (float): 信心水平
+
+        Returns:
+            float: 風險值 (VaR)
+        """
+        # 排序收益率
+        sorted_returns = returns.sort_values()
+
+        # 計算分位數
+        var_percentile = 1 - confidence_level
+
+        # 計算 VaR
+        var = -sorted_returns.quantile(var_percentile)
+
+        return var
+
+    def _parametric_var(self, returns, confidence_level):
+        """
+        使用參數法計算 VaR
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            confidence_level (float): 信心水平
+
+        Returns:
+            float: 風險值 (VaR)
+        """
+        # 計算均值和標準差
+        mu = returns.mean()
+        sigma = returns.std()
+
+        # 計算 z 值
+        z = stats.norm.ppf(confidence_level)
+
+        # 計算 VaR
+        var = -(mu + z * sigma)
+
+        return var
+
+    def _monte_carlo_var(self, returns, confidence_level, n_sims=10000):
+        """
+        使用蒙特卡洛模擬法計算 VaR
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            confidence_level (float): 信心水平
+            n_sims (int): 模擬次數
+
+        Returns:
+            float: 風險值 (VaR)
+        """
+        # 計算均值和標準差
+        mu = returns.mean()
+        sigma = returns.std()
+
+        # 生成隨機收益率
+        random_returns = np.random.normal(mu, sigma, n_sims)
+
+        # 排序收益率
+        sorted_returns = np.sort(random_returns)
+
+        # 計算分位數
+        var_percentile = 1 - confidence_level
+        var_index = int(n_sims * var_percentile)
+
+        # 計算 VaR
+        var = -sorted_returns[var_index]
+
+        return var
+
+    def calculate_cvar(self, returns, confidence_level=0.95):
+        """
+        計算條件風險值 (Conditional Value at Risk, CVaR)
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            confidence_level (float): 信心水平，例如 0.95 表示 95%
+
+        Returns:
+            float: 條件風險值 (CVaR)
+        """
+        # 排序收益率
+        sorted_returns = returns.sort_values()
+
+        # 計算分位數
+        var_percentile = 1 - confidence_level
+
+        # 計算 VaR
+        var = -sorted_returns.quantile(var_percentile)
+
+        # 計算 CVaR
+        cvar = -sorted_returns[sorted_returns <= -var].mean()
+
+        return cvar
+
+    def calculate_volatility(self, returns, window=None, annualize=True, trading_days=252):
+        """
+        計算波動率
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            window (int, optional): 窗口大小，如果為 None 則計算整個序列的波動率
+            annualize (bool): 是否年化
+            trading_days (int): 一年的交易日數
+
+        Returns:
+            float or pandas.Series: 波動率
+        """
+        if window is None:
+            # 計算整個序列的波動率
+            volatility = returns.std()
+
+            # 年化波動率
+            if annualize:
+                volatility = volatility * np.sqrt(trading_days)
+        else:
+            # 計算滾動波動率
+            volatility = returns.rolling(window=window).std()
+
+            # 年化波動率
+            if annualize:
+                volatility = volatility * np.sqrt(trading_days)
+
+        return volatility
+
+    def calculate_max_drawdown(self, equity_curve):
+        """
+        計算最大回撤
+
+        Args:
+            equity_curve (pandas.Series): 權益曲線
+
+        Returns:
+            float: 最大回撤
+        """
+        # 計算累積最大值
+        running_max = equity_curve.cummax()
+
+        # 計算回撤
+        drawdown = equity_curve / running_max - 1
+
+        # 計算最大回撤
+        max_drawdown = drawdown.min()
+
+        return abs(max_drawdown)
+
+    def calculate_sharpe_ratio(self, returns, risk_free_rate=0.0, trading_days=252):
+        """
+        計算夏普比率
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            risk_free_rate (float): 無風險利率
+            trading_days (int): 一年的交易日數
+
+        Returns:
+            float: 夏普比率
+        """
+        # 計算年化收益率
+        annual_return = returns.mean() * trading_days
+
+        # 計算年化波動率
+        annual_volatility = returns.std() * np.sqrt(trading_days)
+
+        # 計算夏普比率
+        sharpe_ratio = (annual_return - risk_free_rate) / annual_volatility if annual_volatility > 0 else 0
+
+        return sharpe_ratio
+
+    def calculate_sortino_ratio(self, returns, risk_free_rate=0.0, trading_days=252):
+        """
+        計算索提諾比率
+
+        Args:
+            returns (pandas.Series): 收益率序列
+            risk_free_rate (float): 無風險利率
+            trading_days (int): 一年的交易日數
+
+        Returns:
+            float: 索提諾比率
+        """
+        # 計算年化收益率
+        annual_return = returns.mean() * trading_days
+
+        # 計算下行波動率
+        downside_returns = returns[returns < 0]
+        downside_volatility = downside_returns.std() * np.sqrt(trading_days) if len(downside_returns) > 0 else 0
+
+        # 計算索提諾比率
+        sortino_ratio = (annual_return - risk_free_rate) / downside_volatility if downside_volatility > 0 else 0
+
+        return sortino_ratio
 
 
 def filter_signals(

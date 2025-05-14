@@ -10,10 +10,25 @@
 - 均值回歸策略訊號生成
 - 新聞情緒策略訊號生成
 - 多策略訊號合併
+- 訊號輸出與回測整合
+- 技術指標整合
 """
 
 import pandas as pd
+import numpy as np
 import logging
+import warnings
+from typing import Dict, List, Union, Optional, Tuple
+import matplotlib.pyplot as plt
+
+# 嘗試導入 indicators 模組
+try:
+    from src.core.indicators import TechnicalIndicators, FundamentalIndicators, SentimentIndicators
+    from src.core.indicators import evaluate_indicator_efficacy, generate_trading_signals
+    INDICATORS_AVAILABLE = True
+except ImportError as e:
+    warnings.warn(f"無法匯入 indicators 模組，部分功能將無法使用: {e}")
+    INDICATORS_AVAILABLE = False
 
 # 集中管理 log 訊息，方便多語系擴充
 LOG_MSGS = {
@@ -25,6 +40,9 @@ LOG_MSGS = {
     "no_signal": "沒有可用的訊號，請先生成訊號",
     "unknown_strategy": "權重中包含未知的策略",
     "talib_missing": "未安裝 talib，將使用自定義 RSI 計算，建議安裝 talib 以提升效能與準確度。",
+    "indicators_missing": "未安裝 indicators 模組，部分功能將無法使用",
+    "no_indicators": "缺少指標資料，無法生成訊號",
+    "export_error": "匯出訊號時發生錯誤: {error}",
 }
 
 # 設定日誌
@@ -60,6 +78,39 @@ class SignalGenerator:
 
         # 初始化訊號字典
         self.signals = {}
+
+        # 初始化技術指標
+        self.tech_indicators = None
+        self.fund_indicators = None
+        self.sent_indicators = None
+
+        # 初始化指標資料
+        self.indicators_data = {}
+
+        # 如果有價格資料且 indicators 模組可用，初始化技術指標
+        if INDICATORS_AVAILABLE:
+            if self.price_data is not None:
+                try:
+                    self.tech_indicators = TechnicalIndicators(self.price_data)
+                except Exception as e:
+                    logger.warning(f"初始化技術指標時發生錯誤: {e}")
+                    self.tech_indicators = None
+
+            # 如果有財務資料，初始化基本面指標
+            if self.financial_data is not None:
+                try:
+                    self.fund_indicators = FundamentalIndicators(self.financial_data)
+                except Exception as e:
+                    logger.warning(f"初始化基本面指標時發生錯誤: {e}")
+                    self.fund_indicators = None
+
+            # 如果有新聞資料，初始化情緒指標
+            if self.news_data is not None:
+                try:
+                    self.sent_indicators = SentimentIndicators(self.news_data)
+                except Exception as e:
+                    logger.warning(f"初始化情緒指標時發生錯誤: {e}")
+                    self.sent_indicators = None
 
     def generate_basic(
         self, pe_threshold=15, pb_threshold=1.5, dividend_yield_threshold=3.0
@@ -335,17 +386,31 @@ class SignalGenerator:
 
         return combined_signals
 
-    def generate_all_signals(self):
+    def generate_all_signals(self, include_advanced=True):
         """
         生成所有策略訊號
+
+        Args:
+            include_advanced (bool): 是否包含進階策略訊號（突破、交叉、背離）
 
         Returns:
             dict: 包含所有策略訊號的字典
         """
+        # 生成基本策略訊號
         self.generate_basic()
         self.generate_momentum()
         self.generate_reversion()
         self.generate_sentiment()
+
+        # 生成進階策略訊號
+        if include_advanced:
+            self.generate_breakout_signals()
+            self.generate_crossover_signals()
+            self.generate_divergence_signals()
+
+            # 如果 indicators 模組可用，使用它生成訊號
+            if INDICATORS_AVAILABLE and self.tech_indicators is not None:
+                self.generate_with_indicators()
 
         return self.signals
 
@@ -377,3 +442,438 @@ class SignalGenerator:
                 }
 
         return pd.DataFrame(stats).T
+
+    def generate_breakout_signals(self, window=20, threshold_pct=0.02):
+        """
+        生成突破策略訊號
+
+        基於價格突破前期高點或跌破前期低點生成訊號
+
+        Args:
+            window (int): 尋找前期高低點的窗口大小
+            threshold_pct (float): 突破閾值百分比，價格超過前期高點或低點此百分比視為有效突破
+
+        Returns:
+            pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
+        """
+        if self.price_data is None:
+            logger.warning(LOG_MSGS["no_price"].format(strategy="突破"))
+            return pd.DataFrame()
+
+        # 確保價格資料有 'close' 列
+        if "close" not in self.price_data.columns:
+            logger.warning(LOG_MSGS["no_close"])
+            return pd.DataFrame()
+
+        # 初始化訊號
+        signals = pd.DataFrame(index=self.price_data.index)
+        signals["signal"] = 0
+
+        # 計算突破訊號
+        price_data = self.price_data.copy()
+
+        # 對每個股票分別計算
+        for stock_id in price_data.index.get_level_values(0).unique():
+            stock_price = price_data.loc[stock_id]["close"]
+
+            # 計算前期高點和低點
+            high_point = stock_price.rolling(window=window).max()
+            low_point = stock_price.rolling(window=window).min()
+
+            # 計算突破閾值
+            high_threshold = high_point * (1 + threshold_pct)
+            low_threshold = low_point * (1 - threshold_pct)
+
+            # 生成突破訊號
+            # 價格突破前期高點，買入
+            signals.loc[(stock_id, stock_price.index[stock_price > high_threshold]), "signal"] = 1
+            # 價格跌破前期低點，賣出
+            signals.loc[(stock_id, stock_price.index[stock_price < low_threshold]), "signal"] = -1
+
+        # 儲存訊號
+        self.signals["breakout"] = signals
+
+        return signals
+
+    def generate_crossover_signals(self, fast_period=5, slow_period=20, signal_type="ma"):
+        """
+        生成交叉策略訊號
+
+        基於快線與慢線交叉生成訊號
+
+        Args:
+            fast_period (int): 快線週期
+            slow_period (int): 慢線週期
+            signal_type (str): 訊號類型，可選 'ma'（移動平均線）, 'ema'（指數移動平均線）, 'macd'（MACD）
+
+        Returns:
+            pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
+        """
+        if self.price_data is None:
+            logger.warning(LOG_MSGS["no_price"].format(strategy="交叉"))
+            return pd.DataFrame()
+
+        # 確保價格資料有 'close' 列
+        if "close" not in self.price_data.columns:
+            logger.warning(LOG_MSGS["no_close"])
+            return pd.DataFrame()
+
+        # 初始化訊號
+        signals = pd.DataFrame(index=self.price_data.index)
+        signals["signal"] = 0
+
+        # 計算交叉訊號
+        price_data = self.price_data.copy()
+
+        # 對每個股票分別計算
+        for stock_id in price_data.index.get_level_values(0).unique():
+            stock_price = price_data.loc[stock_id]["close"]
+
+            if signal_type == "ma":
+                # 計算移動平均線
+                fast_line = stock_price.rolling(window=fast_period).mean()
+                slow_line = stock_price.rolling(window=slow_period).mean()
+            elif signal_type == "ema":
+                # 計算指數移動平均線
+                fast_line = stock_price.ewm(span=fast_period, adjust=False).mean()
+                slow_line = stock_price.ewm(span=slow_period, adjust=False).mean()
+            elif signal_type == "macd":
+                # 計算 MACD
+                fast_ema = stock_price.ewm(span=fast_period, adjust=False).mean()
+                slow_ema = stock_price.ewm(span=slow_period, adjust=False).mean()
+                macd = fast_ema - slow_ema
+                signal_line = macd.ewm(span=9, adjust=False).mean()
+                fast_line = macd
+                slow_line = signal_line
+            else:
+                logger.warning(f"未知的訊號類型: {signal_type}")
+                return pd.DataFrame()
+
+            # 計算交叉
+            crossover = (fast_line.shift(1) < slow_line.shift(1)) & (fast_line > slow_line)
+            crossunder = (fast_line.shift(1) > slow_line.shift(1)) & (fast_line < slow_line)
+
+            # 生成交叉訊號
+            signals.loc[(stock_id, stock_price.index[crossover]), "signal"] = 1  # 金叉，買入
+            signals.loc[(stock_id, stock_price.index[crossunder]), "signal"] = -1  # 死叉，賣出
+
+        # 儲存訊號
+        self.signals["crossover"] = signals
+
+        return signals
+
+    def generate_divergence_signals(self, period=14, divergence_window=5):
+        """
+        生成背離策略訊號
+
+        基於價格與技術指標（如 RSI）之間的背離生成訊號
+
+        Args:
+            period (int): RSI 計算週期
+            divergence_window (int): 尋找背離的窗口大小
+
+        Returns:
+            pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
+        """
+        if self.price_data is None:
+            logger.warning(LOG_MSGS["no_price"].format(strategy="背離"))
+            return pd.DataFrame()
+
+        # 確保價格資料有 'close' 列
+        if "close" not in self.price_data.columns:
+            logger.warning(LOG_MSGS["no_close"])
+            return pd.DataFrame()
+
+        # 初始化訊號
+        signals = pd.DataFrame(index=self.price_data.index)
+        signals["signal"] = 0
+
+        # 計算背離訊號
+        price_data = self.price_data.copy()
+
+        # 對每個股票分別計算
+        for stock_id in price_data.index.get_level_values(0).unique():
+            stock_price = price_data.loc[stock_id]["close"]
+
+            # 計算 RSI
+            delta = stock_price.diff()
+            gain = delta.where(delta > 0, 0).rolling(window=period).mean()
+            loss = -delta.where(delta < 0, 0).rolling(window=period).mean()
+            rs = gain / loss
+            rsi = 100 - (100 / (1 + rs))
+
+            # 尋找價格高點和低點
+            price_highs = pd.Series(False, index=stock_price.index)
+            price_lows = pd.Series(False, index=stock_price.index)
+
+            # 尋找 RSI 高點和低點
+            rsi_highs = pd.Series(False, index=rsi.index)
+            rsi_lows = pd.Series(False, index=rsi.index)
+
+            # 計算價格和 RSI 的高點和低點
+            for i in range(divergence_window, len(stock_price)):
+                window_price = stock_price.iloc[i-divergence_window:i]
+                window_rsi = rsi.iloc[i-divergence_window:i]
+
+                # 檢查是否為價格高點或低點
+                if np.argmax(window_price.values) == divergence_window - 1:
+                    price_highs.iloc[i] = True
+                if np.argmin(window_price.values) == divergence_window - 1:
+                    price_lows.iloc[i] = True
+
+                # 檢查是否為 RSI 高點或低點
+                if np.argmax(window_rsi.values) == divergence_window - 1:
+                    rsi_highs.iloc[i] = True
+                if np.argmin(window_rsi.values) == divergence_window - 1:
+                    rsi_lows.iloc[i] = True
+
+            # 檢測頂背離（價格創新高但 RSI 未創新高）
+            bearish_divergence = price_highs & ~rsi_highs
+
+            # 檢測底背離（價格創新低但 RSI 未創新低）
+            bullish_divergence = price_lows & ~rsi_lows
+
+            # 生成背離訊號
+            signals.loc[(stock_id, stock_price.index[bullish_divergence]), "signal"] = 1  # 底背離，買入
+            signals.loc[(stock_id, stock_price.index[bearish_divergence]), "signal"] = -1  # 頂背離，賣出
+
+        # 儲存訊號
+        self.signals["divergence"] = signals
+
+        return signals
+
+    def generate_with_indicators(self, signal_rules=None):
+        """
+        使用 indicators 模組生成訊號
+
+        Args:
+            signal_rules (dict, optional): 訊號規則，如果為 None，則使用預設規則
+
+        Returns:
+            pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
+        """
+        if not INDICATORS_AVAILABLE:
+            logger.warning(LOG_MSGS["indicators_missing"])
+            return pd.DataFrame()
+
+        if self.price_data is None:
+            logger.warning(LOG_MSGS["no_price"].format(strategy="指標"))
+            return pd.DataFrame()
+
+        if self.tech_indicators is None:
+            logger.warning("技術指標未初始化，無法生成訊號")
+            return pd.DataFrame()
+
+        # 初始化訊號
+        signals = pd.DataFrame(index=self.price_data.index)
+        signals["signal"] = 0
+
+        # 對每個股票分別計算
+        for stock_id in self.price_data.index.get_level_values(0).unique():
+            stock_price = self.price_data.loc[stock_id]["close"]
+
+            # 計算 RSI
+            delta = stock_price.diff()
+            gain = delta.where(delta > 0, 0).rolling(window=14).mean()
+            loss = -delta.where(delta < 0, 0).rolling(window=14).mean()
+            rs = gain / loss
+            rsi = 100 - (100 / (1 + rs))
+
+            # 計算 SMA
+            sma_20 = stock_price.rolling(window=20).mean()
+            sma_50 = stock_price.rolling(window=50).mean()
+
+            # 計算 MACD
+            ema_12 = stock_price.ewm(span=12, adjust=False).mean()
+            ema_26 = stock_price.ewm(span=26, adjust=False).mean()
+            macd = ema_12 - ema_26
+            signal_line = macd.ewm(span=9, adjust=False).mean()
+
+            # 生成 RSI 訊號
+            signals.loc[(stock_id, rsi.index[rsi < 30]), "signal"] += 1  # 超賣，買入
+            signals.loc[(stock_id, rsi.index[rsi > 70]), "signal"] -= 1  # 超買，賣出
+
+            # 生成 SMA 交叉訊號
+            crossover = (sma_20.shift(1) < sma_50.shift(1)) & (sma_20 > sma_50)
+            crossunder = (sma_20.shift(1) > sma_50.shift(1)) & (sma_20 < sma_50)
+            signals.loc[(stock_id, sma_20.index[crossover]), "signal"] += 1  # 金叉，買入
+            signals.loc[(stock_id, sma_20.index[crossunder]), "signal"] -= 1  # 死叉，賣出
+
+            # 生成 MACD 訊號
+            macd_crossover = (macd.shift(1) < signal_line.shift(1)) & (macd > signal_line)
+            macd_crossunder = (macd.shift(1) > signal_line.shift(1)) & (macd < signal_line)
+            signals.loc[(stock_id, macd.index[macd_crossover]), "signal"] += 1  # 金叉，買入
+            signals.loc[(stock_id, macd.index[macd_crossunder]), "signal"] -= 1  # 死叉，賣出
+
+        # 標準化訊號
+        signals["signal"] = signals["signal"].apply(
+            lambda x: 1 if x > 0 else (-1 if x < 0 else 0)
+        )
+
+        # 儲存訊號
+        self.signals["indicators"] = signals
+
+        return signals
+
+    def export_signals_for_backtest(self, strategy=None, output_format="dataframe"):
+        """
+        匯出訊號以供回測使用
+
+        Args:
+            strategy (str, optional): 要匯出的策略，如果為 None，則匯出合併訊號
+            output_format (str): 輸出格式，可選 'dataframe', 'csv', 'json'
+
+        Returns:
+            pandas.DataFrame 或 str: 訊號資料或檔案路徑
+        """
+        if not self.signals:
+            logger.warning(LOG_MSGS["no_signal"])
+            return pd.DataFrame()
+
+        # 如果沒有指定策略，使用合併訊號
+        if strategy is None:
+            signals = self.combine_signals()
+        elif strategy in self.signals:
+            signals = self.signals[strategy]
+        else:
+            logger.warning(f"未知的策略: {strategy}")
+            return pd.DataFrame()
+
+        # 確保訊號資料有正確的格式
+        if "signal" not in signals.columns:
+            logger.warning("訊號資料缺少 'signal' 列")
+            return pd.DataFrame()
+
+        # 轉換訊號格式以符合回測引擎要求
+        backtest_signals = signals.copy()
+
+        # 將訊號轉換為 buy_signal 和 sell_signal
+        backtest_signals["buy_signal"] = (backtest_signals["signal"] == 1).astype(int)
+        backtest_signals["sell_signal"] = (backtest_signals["signal"] == -1).astype(int)
+
+        # 根據輸出格式匯出
+        try:
+            if output_format == "dataframe":
+                return backtest_signals
+            elif output_format == "csv":
+                file_path = f"signals_{strategy or 'combined'}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                backtest_signals.to_csv(file_path)
+                return file_path
+            elif output_format == "json":
+                file_path = f"signals_{strategy or 'combined'}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.json"
+                backtest_signals.to_json(file_path)
+                return file_path
+            else:
+                logger.warning(f"未知的輸出格式: {output_format}")
+                return backtest_signals
+        except Exception as e:
+            logger.error(LOG_MSGS["export_error"].format(error=str(e)))
+            return pd.DataFrame()
+
+    def plot_signals(self, strategy=None, start_date=None, end_date=None, figsize=(12, 8)):
+        """
+        繪製訊號圖表
+
+        Args:
+            strategy (str, optional): 要繪製的策略，如果為 None，則繪製合併訊號
+            start_date (str, optional): 開始日期
+            end_date (str, optional): 結束日期
+            figsize (tuple): 圖表大小
+
+        Returns:
+            matplotlib.figure.Figure: 圖表物件
+        """
+        if not self.signals:
+            logger.warning(LOG_MSGS["no_signal"])
+            return None
+
+        # 如果沒有指定策略，使用合併訊號
+        if strategy is None:
+            signals = self.combine_signals()
+            strategy_name = "Combined"
+        elif strategy in self.signals:
+            signals = self.signals[strategy]
+            strategy_name = strategy
+        else:
+            logger.warning(f"未知的策略: {strategy}")
+            return None
+
+        # 確保訊號資料有正確的格式
+        if "signal" not in signals.columns:
+            logger.warning("訊號資料缺少 'signal' 列")
+            return None
+
+        # 如果沒有價格資料，無法繪製圖表
+        if self.price_data is None:
+            logger.warning(LOG_MSGS["no_price"].format(strategy="圖表"))
+            return None
+
+        # 確保價格資料有 'close' 列
+        if "close" not in self.price_data.columns:
+            logger.warning(LOG_MSGS["no_close"])
+            return None
+
+        # 篩選日期範圍
+        if start_date is not None or end_date is not None:
+            mask = pd.Series(True, index=signals.index)
+            if start_date is not None:
+                start_date = pd.Timestamp(start_date)
+                mask = mask & (signals.index.get_level_values('date') >= start_date)
+            if end_date is not None:
+                end_date = pd.Timestamp(end_date)
+                mask = mask & (signals.index.get_level_values('date') <= end_date)
+            signals = signals[mask]
+
+        # 創建圖表
+        fig, axes = plt.subplots(len(signals.index.get_level_values(0).unique()), 1, figsize=figsize)
+
+        # 如果只有一支股票，將 axes 轉換為列表
+        if len(signals.index.get_level_values(0).unique()) == 1:
+            axes = [axes]
+
+        # 繪製每支股票的訊號
+        for i, stock_id in enumerate(signals.index.get_level_values(0).unique()):
+            ax = axes[i]
+
+            # 獲取股票價格和訊號
+            stock_price = self.price_data.loc[stock_id]["close"]
+            stock_signals = signals.loc[stock_id]
+
+            # 繪製價格
+            ax.plot(stock_price.index, stock_price.values, label="Price")
+
+            # 繪製買入訊號
+            buy_signals = stock_signals[stock_signals["signal"] == 1]
+            if not buy_signals.empty:
+                ax.scatter(
+                    buy_signals.index,
+                    stock_price.loc[buy_signals.index],
+                    marker="^",
+                    color="green",
+                    s=100,
+                    label="Buy Signal"
+                )
+
+            # 繪製賣出訊號
+            sell_signals = stock_signals[stock_signals["signal"] == -1]
+            if not sell_signals.empty:
+                ax.scatter(
+                    sell_signals.index,
+                    stock_price.loc[sell_signals.index],
+                    marker="v",
+                    color="red",
+                    s=100,
+                    label="Sell Signal"
+                )
+
+            # 設置圖表標題和標籤
+            ax.set_title(f"{stock_id} - {strategy_name} Strategy")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Price")
+            ax.legend()
+            ax.grid(True)
+
+        # 調整佈局
+        plt.tight_layout()
+
+        return fig

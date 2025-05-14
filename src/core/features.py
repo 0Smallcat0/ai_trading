@@ -23,7 +23,15 @@ from scipy import stats
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 from sklearn.decomposition import PCA
-from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.feature_selection import SelectKBest, f_regression, RFE
+from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.ensemble import RandomForestRegressor
+import matplotlib.pyplot as plt
+import seaborn as sns
+import joblib
+import os
+import json
+from datetime import datetime
 
 # 導入相關模組
 try:
@@ -927,6 +935,269 @@ class FeatureCalculator:
 
         return features_df[~extreme_cases]
 
+    def select_features(self, features_df, target_df=None, method="f_regression", k=10):
+        """
+        特徵選擇
+
+        使用不同的特徵選擇方法選擇最重要的特徵。
+
+        Args:
+            features_df (pandas.DataFrame): 特徵資料框架
+            target_df (pandas.Series, optional): 目標變數，如果為 None 則使用未來收益率
+            method (str): 特徵選擇方法，可選 'f_regression', 'rfe', 'lasso'
+            k (int): 要選擇的特徵數量
+
+        Returns:
+            tuple: (pandas.DataFrame, object) 選擇後的特徵和選擇器
+        """
+        if features_df.empty:
+            return features_df, None
+
+        # 如果沒有提供目標變數，則使用未來收益率
+        if target_df is None:
+            if "price" in self.data_dict:
+                price_df = self.data_dict["price"]
+                if "收盤價" in price_df.columns:
+                    # 計算未來 1 天收益率
+                    target_df = price_df["收盤價"].pct_change(1).shift(-1)
+                else:
+                    logging.warning("無法找到收盤價欄位，無法計算未來收益率")
+                    return features_df, None
+            else:
+                logging.warning("無法找到價格資料，無法計算未來收益率")
+                return features_df, None
+
+        # 確保 features_df 和 target_df 有相同的索引
+        common_index = features_df.index.intersection(target_df.index)
+        if len(common_index) == 0:
+            logging.warning("特徵和目標變數沒有共同的索引")
+            return features_df, None
+
+        features_df = features_df.loc[common_index]
+        target_df = target_df.loc[common_index]
+
+        # 移除包含 NaN 的行
+        mask = ~features_df.isna().any(axis=1) & ~target_df.isna()
+        features_df = features_df[mask]
+        target_df = target_df[mask]
+
+        if len(features_df) == 0:
+            logging.warning("清理 NaN 後沒有剩餘資料")
+            return pd.DataFrame(), None
+
+        # 選擇特徵
+        if method == "f_regression":
+            # 使用 F 檢定選擇特徵
+            selector = SelectKBest(f_regression, k=min(k, features_df.shape[1]))
+            X_new = selector.fit_transform(features_df, target_df)
+
+            # 獲取選擇的特徵名稱
+            selected_features = features_df.columns[selector.get_support()]
+
+        elif method == "rfe":
+            # 使用遞迴特徵消除
+            estimator = LinearRegression()
+            selector = RFE(estimator, n_features_to_select=min(k, features_df.shape[1]))
+            X_new = selector.fit_transform(features_df, target_df)
+
+            # 獲取選擇的特徵名稱
+            selected_features = features_df.columns[selector.get_support()]
+
+        elif method == "lasso":
+            # 使用 Lasso 正則化選擇特徵
+            selector = Lasso(alpha=0.01)
+            selector.fit(features_df, target_df)
+
+            # 獲取非零係數的特徵
+            selected_features = features_df.columns[selector.coef_ != 0]
+
+            # 如果選擇的特徵太多，則只保留係數絕對值最大的 k 個
+            if len(selected_features) > k:
+                coef_abs = np.abs(selector.coef_)
+                top_k_idx = np.argsort(coef_abs)[-k:]
+                selected_features = features_df.columns[top_k_idx]
+
+            X_new = features_df[selected_features].values
+
+        else:
+            logging.warning(f"不支援的特徵選擇方法: {method}")
+            return features_df, None
+
+        # 創建包含選擇特徵的資料框架
+        selected_df = pd.DataFrame(X_new, index=features_df.index, columns=selected_features)
+
+        return selected_df, selector
+
+    def reduce_dimensions(self, features_df, n_components=None, method="pca", variance_ratio=0.95):
+        """
+        降維
+
+        使用不同的降維方法減少特徵維度。
+
+        Args:
+            features_df (pandas.DataFrame): 特徵資料框架
+            n_components (int, optional): 要保留的組件數量，如果為 None 則自動決定
+            method (str): 降維方法，目前只支援 'pca'
+            variance_ratio (float): 要保留的方差比例，只在 n_components 為 None 時使用
+
+        Returns:
+            tuple: (pandas.DataFrame, object) 降維後的特徵和降維器
+        """
+        if features_df.empty:
+            return features_df, None
+
+        # 移除包含 NaN 的行
+        features_df = features_df.dropna()
+
+        if len(features_df) == 0:
+            logging.warning("清理 NaN 後沒有剩餘資料")
+            return pd.DataFrame(), None
+
+        # 如果沒有指定組件數量，則自動決定
+        if n_components is None:
+            n_components = min(features_df.shape[1], features_df.shape[0])
+
+        # 降維
+        if method == "pca":
+            # 使用 PCA 降維
+            reducer = PCA(n_components=n_components)
+            X_reduced = reducer.fit_transform(features_df)
+
+            # 如果指定了方差比例，則選擇能解釋該比例方差的最小組件數量
+            if n_components is None and variance_ratio < 1.0:
+                cumulative_variance = np.cumsum(reducer.explained_variance_ratio_)
+                n_components = np.argmax(cumulative_variance >= variance_ratio) + 1
+
+                # 重新擬合 PCA
+                reducer = PCA(n_components=n_components)
+                X_reduced = reducer.fit_transform(features_df)
+
+            # 創建降維後的資料框架
+            columns = [f"PC{i+1}" for i in range(X_reduced.shape[1])]
+            reduced_df = pd.DataFrame(X_reduced, index=features_df.index, columns=columns)
+
+        else:
+            logging.warning(f"不支援的降維方法: {method}")
+            return features_df, None
+
+        return reduced_df, reducer
+
+    def calculate_feature_importance(self, features_df, target_df=None, method="random_forest"):
+        """
+        計算特徵重要性
+
+        使用不同的方法計算特徵的重要性。
+
+        Args:
+            features_df (pandas.DataFrame): 特徵資料框架
+            target_df (pandas.Series, optional): 目標變數，如果為 None 則使用未來收益率
+            method (str): 計算方法，可選 'random_forest', 'linear', 'correlation'
+
+        Returns:
+            pandas.Series: 特徵重要性
+        """
+        if features_df.empty:
+            return pd.Series()
+
+        # 如果沒有提供目標變數，則使用未來收益率
+        if target_df is None:
+            if "price" in self.data_dict:
+                price_df = self.data_dict["price"]
+                if "收盤價" in price_df.columns:
+                    # 計算未來 1 天收益率
+                    target_df = price_df["收盤價"].pct_change(1).shift(-1)
+                else:
+                    logging.warning("無法找到收盤價欄位，無法計算未來收益率")
+                    return pd.Series()
+            else:
+                logging.warning("無法找到價格資料，無法計算未來收益率")
+                return pd.Series()
+
+        # 確保 features_df 和 target_df 有相同的索引
+        common_index = features_df.index.intersection(target_df.index)
+        if len(common_index) == 0:
+            logging.warning("特徵和目標變數沒有共同的索引")
+            return pd.Series()
+
+        features_df = features_df.loc[common_index]
+        target_df = target_df.loc[common_index]
+
+        # 移除包含 NaN 的行
+        mask = ~features_df.isna().any(axis=1) & ~target_df.isna()
+        features_df = features_df[mask]
+        target_df = target_df[mask]
+
+        if len(features_df) == 0:
+            logging.warning("清理 NaN 後沒有剩餘資料")
+            return pd.Series()
+
+        # 計算特徵重要性
+        if method == "random_forest":
+            # 使用隨機森林計算特徵重要性
+            model = RandomForestRegressor(n_estimators=100, random_state=42)
+            model.fit(features_df, target_df)
+            importance = pd.Series(model.feature_importances_, index=features_df.columns)
+
+        elif method == "linear":
+            # 使用線性回歸係數的絕對值作為特徵重要性
+            model = LinearRegression()
+            model.fit(features_df, target_df)
+            importance = pd.Series(np.abs(model.coef_), index=features_df.columns)
+
+        elif method == "correlation":
+            # 使用與目標變數的相關性絕對值作為特徵重要性
+            importance = features_df.corrwith(target_df).abs()
+
+        else:
+            logging.warning(f"不支援的特徵重要性計算方法: {method}")
+            return pd.Series()
+
+        # 標準化重要性，使其總和為 1
+        importance = importance / importance.sum()
+
+        return importance.sort_values(ascending=False)
+
+    def plot_feature_importance(self, importance, top_n=20, figsize=(12, 8), save_path=None):
+        """
+        繪製特徵重要性圖
+
+        Args:
+            importance (pandas.Series): 特徵重要性
+            top_n (int): 顯示前幾個重要的特徵
+            figsize (tuple): 圖形大小
+            save_path (str, optional): 保存圖形的路徑，如果為 None 則不保存
+
+        Returns:
+            matplotlib.figure.Figure: 圖形物件
+        """
+        if len(importance) == 0:
+            logging.warning("沒有特徵重要性資料可供繪圖")
+            return None
+
+        # 只顯示前 top_n 個特徵
+        if len(importance) > top_n:
+            importance = importance.iloc[:top_n]
+
+        # 創建圖形
+        fig, ax = plt.subplots(figsize=figsize)
+
+        # 繪製水平條形圖
+        importance.sort_values().plot(kind='barh', ax=ax)
+
+        # 設置標題和標籤
+        ax.set_title(f'Top {top_n} Feature Importance', fontsize=16)
+        ax.set_xlabel('Importance', fontsize=14)
+        ax.set_ylabel('Feature', fontsize=14)
+
+        # 調整佈局
+        plt.tight_layout()
+
+        # 保存圖形
+        if save_path is not None:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+
+        return fig
+
 
 def process_chunk(
     chunk, calculator, normalize=True, remove_extremes=True, clean_data=True
@@ -970,6 +1241,16 @@ def compute_features(
     clean_data=True,
     use_distributed=False,
     chunk_size=10000,
+    feature_selection=False,
+    feature_selection_method="f_regression",
+    feature_selection_k=10,
+    dimensionality_reduction=False,
+    dimensionality_reduction_method="pca",
+    n_components=None,
+    variance_ratio=0.95,
+    save_to_feature_store=False,
+    feature_name="combined_features",
+    feature_tags=None,
 ):
     """
     計算特徵的主函數
@@ -982,6 +1263,16 @@ def compute_features(
         clean_data (bool): 是否清理資料
         use_distributed (bool): 是否使用分散式處理
         chunk_size (int): 記憶體分塊大小
+        feature_selection (bool): 是否進行特徵選擇
+        feature_selection_method (str): 特徵選擇方法，可選 'f_regression', 'rfe', 'lasso'
+        feature_selection_k (int): 要選擇的特徵數量
+        dimensionality_reduction (bool): 是否進行降維
+        dimensionality_reduction_method (str): 降維方法，目前只支援 'pca'
+        n_components (int, optional): 要保留的組件數量，如果為 None 則自動決定
+        variance_ratio (float): 要保留的方差比例，只在 n_components 為 None 時使用
+        save_to_feature_store (bool): 是否保存到特徵存儲
+        feature_name (str): 特徵名稱，只在 save_to_feature_store 為 True 時使用
+        feature_tags (List[str], optional): 特徵標籤，只在 save_to_feature_store 為 True 時使用
 
     Returns:
         pandas.DataFrame: 計算好的特徵資料框架
@@ -997,31 +1288,95 @@ def compute_features(
     # 檢查是否使用分散式處理
     if use_distributed:
         if DASK_AVAILABLE:
-            return _compute_features_with_dask(
+            features = _compute_features_with_dask(
                 calculator, normalize, remove_extremes, clean_data, chunk_size
             )
         elif RAY_AVAILABLE:
-            return _compute_features_with_ray(
+            features = _compute_features_with_ray(
                 calculator, normalize, remove_extremes, clean_data, chunk_size
             )
         else:
             logging.warning("無法使用分散式處理，將使用標準處理方式")
+            # 使用標準處理方式
+            features = calculator.combine_features()
 
-    # 使用標準處理方式
-    # 計算特徵
-    features = calculator.combine_features()
+            # 清理資料
+            if clean_data and not features.empty:
+                features, _ = calculator.data_cleaner.clean_data(features)
 
-    # 清理資料
-    if clean_data and not features.empty:
-        features, _ = calculator.data_cleaner.clean_data(features)
+            # 標準化特徵
+            if normalize and not features.empty:
+                _, features = calculator.normalize_features(features)
 
-    # 標準化特徵
-    if normalize and not features.empty:
-        _, features = calculator.normalize_features(features)
+            # 刪除極端值
+            if remove_extremes and not features.empty:
+                features = calculator.drop_extreme_values(features)
+    else:
+        # 使用標準處理方式
+        features = calculator.combine_features()
 
-    # 刪除極端值
-    if remove_extremes and not features.empty:
-        features = calculator.drop_extreme_values(features)
+        # 清理資料
+        if clean_data and not features.empty:
+            features, _ = calculator.data_cleaner.clean_data(features)
+
+        # 標準化特徵
+        if normalize and not features.empty:
+            _, features = calculator.normalize_features(features)
+
+        # 刪除極端值
+        if remove_extremes and not features.empty:
+            features = calculator.drop_extreme_values(features)
+
+    # 特徵選擇
+    if feature_selection and not features.empty:
+        selected_features, selector = calculator.select_features(
+            features, method=feature_selection_method, k=feature_selection_k
+        )
+        if not selected_features.empty:
+            features = selected_features
+            logging.info(f"已選擇 {len(selected_features.columns)} 個特徵")
+        else:
+            logging.warning("特徵選擇失敗，將使用原始特徵")
+
+    # 降維
+    if dimensionality_reduction and not features.empty:
+        reduced_features, reducer = calculator.reduce_dimensions(
+            features, n_components=n_components, method=dimensionality_reduction_method,
+            variance_ratio=variance_ratio
+        )
+        if not reduced_features.empty:
+            features = reduced_features
+            if hasattr(reducer, 'explained_variance_ratio_'):
+                explained_variance = sum(reducer.explained_variance_ratio_)
+                logging.info(f"降維後保留了 {explained_variance:.2%} 的方差")
+            logging.info(f"降維後特徵維度: {features.shape}")
+        else:
+            logging.warning("降維失敗，將使用原始特徵")
+
+    # 保存到特徵存儲
+    if save_to_feature_store and not features.empty:
+        try:
+            from src.core.feature_store import FeatureStore
+            feature_store = FeatureStore()
+            metadata = {
+                "start_date": start_date.isoformat() if start_date else None,
+                "end_date": end_date.isoformat() if end_date else None,
+                "normalize": normalize,
+                "remove_extremes": remove_extremes,
+                "clean_data": clean_data,
+                "feature_selection": feature_selection,
+                "feature_selection_method": feature_selection_method if feature_selection else None,
+                "dimensionality_reduction": dimensionality_reduction,
+                "dimensionality_reduction_method": dimensionality_reduction_method if dimensionality_reduction else None,
+                "n_components": n_components,
+                "variance_ratio": variance_ratio,
+            }
+            version = feature_store.save_features(
+                features, feature_name, metadata=metadata, tags=feature_tags
+            )
+            logging.info(f"特徵已保存到特徵存儲，版本: {version}")
+        except Exception as e:
+            logging.error(f"保存到特徵存儲時發生錯誤: {e}")
 
     return features
 

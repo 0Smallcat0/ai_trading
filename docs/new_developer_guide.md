@@ -21,14 +21,46 @@
 - **backtest.py**: 回測引擎，用於模擬交易策略的歷史表現
 - **data_api.py**: 資料 API，提供統一的資料存取介面
 - **data_ingest.py**: 資料擷取，負責從各種來源獲取資料
+  - 從多種來源獲取股票資料（Yahoo Finance、Alpha Vantage、FinMind、券商 API）
+  - 支援多種資料類型（價格、成交量、財務報表、技術指標）
+  - 實現 WebSocket 自動重連和背壓控制
+  - 提供請求速率限制和自動故障轉移機制
+  - 資料標準化和清洗
+  - 支援定時更新和資料快取
 - **event_monitor.py**: 事件監控，監控市場事件和異常情況
 - **executor.py**: 執行器，負責執行交易訂單
 - **features.py**: 特徵工程，處理和生成交易特徵
+  - 技術指標計算（RSI、MACD、KD 等）
+  - 基本面指標計算（ROE、ROA、EPS 等）
+  - 特徵工程和資料轉換
+  - 資料清理與預處理
+  - 分散式處理支援（Dask、Ray）
+  - 特徵選擇與降維
+  - 特徵重要性計算與視覺化
 - **logger.py**: 日誌記錄，記錄交易活動和系統運行狀態
 - **mcp_data_ingest.py**: MCP 資料擷取，從 MCP 獲取資料
 - **portfolio.py**: 投資組合管理，管理資產配置和持倉
+  - 資產配置邏輯（等權重、風險平價、最大夏普比率、最小方差等）
+  - 多資產持倉動態模擬
+  - 投資組合狀態與交易日誌記錄
+  - 投資組合優化與再平衡
+  - 績效評估與視覺化
+  - 多策略投資組合整合
 - **risk_control.py**: 風險控制，管理交易風險
+  - 停損/停利規則實現
+  - 資金配置與部位規模控制
+  - 風險指標計算（VaR、CVaR、波動率等）
+  - 策略與投資組合層級風險控制
+  - 風險預算與風險平價
+  - 動態風險調整與極端情境測試
 - **signal_gen.py**: 信號生成，生成交易信號
+  - 基本面策略訊號生成
+  - 動量策略訊號生成
+  - 均值回歸策略訊號生成
+  - 新聞情緒策略訊號生成
+  - 多策略訊號合併與權重調整
+  - 訊號評估與視覺化
+  - 訊號過濾與優化
 
 ### 資料來源模組 (src/data_sources/)
 
@@ -88,6 +120,10 @@
 
 **主要類別**：
 - `Backtest`: 回測類，用於回測交易策略
+- `MarketDataSimulator`: 市場數據模擬器，用於生成模擬數據和異常情境
+- `SignalStrategy`: Backtrader 策略類，用於實現基於訊號的交易策略
+- `HybridBacktest`: 混合型回測引擎，支援新聞情感因子注入
+- `MultiStrategyBacktest`: 多策略回測類，用於比較多個策略的表現
 
 **主要函數**：
 - `run(signals, weights=None)`: 執行回測
@@ -103,8 +139,15 @@
 **輔助函數**：
 - `backtest_strategy()`: 便捷的回測函數
 - `run_backtest()`: 執行回測並返回詳細結果
+- `run_with_backtrader()`: 使用 Backtrader 框架執行回測
 - `calculate_sharpe()`: 計算夏普比率
 - `calculate_max_drawdown()`: 計算最大回撤
+
+**特色功能**：
+- 支援多種市場情境模擬（崩盤、流動性不足、高波動性）
+- 支援多策略比較和報告生成
+- 整合 Backtrader 框架提供更豐富的回測功能
+- 支援新聞情感因子注入的混合型回測
 
 ### src/core/signal_gen.py
 
@@ -112,6 +155,9 @@
 
 **主要類別**：
 - `SignalGenerator`: 信號產生器類別
+- `SignalEvaluator`: 信號評估器類別，用於評估信號的質量
+- `SignalOptimizer`: 信號優化器類別，用於優化信號參數
+- `SignalFilter`: 信號過濾器類別，用於過濾低質量信號
 
 **主要方法**：
 - `generate_basic()`: 生成基本面策略信號
@@ -139,6 +185,26 @@
   - 參數：
     - `weights`: 各策略權重字典
   - 回傳：合併後的信號 DataFrame
+- `evaluate_signals()`: 評估信號質量
+  - 參數：
+    - `signals`: 信號 DataFrame
+    - `price_data`: 價格資料
+    - `metrics`: 評估指標列表
+  - 回傳：評估結果字典
+- `optimize_parameters()`: 優化策略參數
+  - 參數：
+    - `strategy`: 策略名稱
+    - `param_grid`: 參數網格
+    - `price_data`: 價格資料
+    - `metric`: 優化指標
+  - 回傳：最佳參數字典
+
+**特色功能**：
+- 支援多種策略類型（基本面、動量、均值回歸、新聞情緒）
+- 信號質量評估和優化
+- 多策略信號合併與權重調整
+- 信號視覺化和統計分析
+- 時間序列分析和模式識別
 
 ### src/database/schema.py
 
