@@ -16,23 +16,25 @@ logger = logging.getLogger("execution.broker")
 
 class OrderStatus(Enum):
     """訂單狀態列舉"""
-    PENDING = "pending"           # 等待中
-    SUBMITTED = "submitted"       # 已提交
-    FILLED = "filled"             # 已成交
+
+    PENDING = "pending"  # 等待中
+    SUBMITTED = "submitted"  # 已提交
+    FILLED = "filled"  # 已成交
     PARTIALLY_FILLED = "partially_filled"  # 部分成交
-    CANCELLED = "cancelled"       # 已取消
-    REJECTED = "rejected"         # 已拒絕
-    EXPIRED = "expired"           # 已過期
+    CANCELLED = "cancelled"  # 已取消
+    REJECTED = "rejected"  # 已拒絕
+    EXPIRED = "expired"  # 已過期
 
 
 class OrderType(Enum):
     """訂單類型列舉"""
-    MARKET = "market"             # 市價單
-    LIMIT = "limit"               # 限價單
-    STOP = "stop"                 # 停損單
-    STOP_LIMIT = "stop_limit"     # 停損限價單
-    IOC = "ioc"                   # 立即成交否則取消
-    FOK = "fok"                   # 全部成交否則取消
+
+    MARKET = "market"  # 市價單
+    LIMIT = "limit"  # 限價單
+    STOP = "stop"  # 停損單
+    STOP_LIMIT = "stop_limit"  # 停損限價單
+    IOC = "ioc"  # 立即成交否則取消
+    FOK = "fok"  # 全部成交否則取消
 
 
 class Order:
@@ -109,7 +111,7 @@ class Order:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Order':
+    def from_dict(cls, data: Dict[str, Any]) -> "Order":
         """從字典創建訂單"""
         order = cls(
             stock_id=data["stock_id"],
@@ -139,7 +141,7 @@ class BrokerBase(ABC):
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
         account_id: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化券商 API

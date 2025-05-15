@@ -17,9 +17,11 @@ from collections import deque
 
 from src.core.logger import logger
 
+
 # Define Role enum here to avoid circular imports
 class Role(str, Enum):
     """用戶角色枚舉"""
+
     ADMIN = "admin"  # 管理員
     MANAGER = "manager"  # 經理
     TRADER = "trader"  # 交易員
@@ -29,6 +31,7 @@ class Role(str, Enum):
 
 class LimitType(str, Enum):
     """限制類型枚舉"""
+
     DAILY_ORDER_COUNT = "daily_order_count"  # 每日訂單數量
     DAILY_TRADE_VOLUME = "daily_trade_volume"  # 每日交易量
     MAX_ORDER_SIZE = "max_order_size"  # 最大訂單規模
@@ -206,15 +209,13 @@ class OrderLimits:
                 },
                 "role_limits": {
                     role.value: {
-                        limit_type.value: value
-                        for limit_type, value in limits.items()
+                        limit_type.value: value for limit_type, value in limits.items()
                     }
                     for role, limits in self.role_limits.items()
                 },
                 "user_limits": {
                     username: {
-                        limit_type.value: value
-                        for limit_type, value in limits.items()
+                        limit_type.value: value for limit_type, value in limits.items()
                     }
                     for username, limits in self.user_limits.items()
                 },
@@ -230,7 +231,9 @@ class OrderLimits:
             logger.error(f"保存訂單限制配置時發生錯誤: {e}")
             return False
 
-    def get_user_limit(self, username: str, limit_type: LimitType, roles: List[Role] = None) -> Any:
+    def get_user_limit(
+        self, username: str, limit_type: LimitType, roles: List[Role] = None
+    ) -> Any:
         """
         獲取用戶限制
 
@@ -254,9 +257,9 @@ class OrderLimits:
                 if role in self.role_limits and limit_type in self.role_limits[role]:
                     role_limit = self.role_limits[role][limit_type]
                     if max_limit is None or (
-                        isinstance(role_limit, (int, float)) and
-                        isinstance(max_limit, (int, float)) and
-                        role_limit > max_limit
+                        isinstance(role_limit, (int, float))
+                        and isinstance(max_limit, (int, float))
+                        and role_limit > max_limit
                     ):
                         max_limit = role_limit
 
@@ -322,18 +325,24 @@ class OrderLimits:
         order_amount = quantity * price
 
         # 檢查限制交易的股票
-        restricted_symbols = self.get_user_limit(username, LimitType.RESTRICTED_SYMBOLS, roles)
+        restricted_symbols = self.get_user_limit(
+            username, LimitType.RESTRICTED_SYMBOLS, roles
+        )
         if restricted_symbols:
             if "*" in restricted_symbols or symbol in restricted_symbols:
                 return False, f"股票 {symbol} 被限制交易"
 
         # 檢查每日訂單數量
-        daily_order_count = self.get_user_limit(username, LimitType.DAILY_ORDER_COUNT, roles)
+        daily_order_count = self.get_user_limit(
+            username, LimitType.DAILY_ORDER_COUNT, roles
+        )
         if self.user_order_counts[username] >= daily_order_count:
             return False, f"超過每日訂單數量限制 ({daily_order_count})"
 
         # 檢查每日交易量
-        daily_trade_volume = self.get_user_limit(username, LimitType.DAILY_TRADE_VOLUME, roles)
+        daily_trade_volume = self.get_user_limit(
+            username, LimitType.DAILY_TRADE_VOLUME, roles
+        )
         if self.user_trade_volumes[username] + order_amount > daily_trade_volume:
             return False, f"超過每日交易量限制 ({daily_trade_volume})"
 

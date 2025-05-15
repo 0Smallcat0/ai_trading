@@ -18,15 +18,15 @@ from .event_correlation import EventCorrelator
 from .anomaly_detector import AnomalyDetector
 
 __all__ = [
-    'Event',
-    'EventType',
-    'EventSeverity',
-    'EventSource',
-    'EventBus',
-    'EventProcessor',
-    'EventStore',
-    'EventFilter',
-    'EventAggregator',
-    'EventCorrelator',
-    'AnomalyDetector',
+    "Event",
+    "EventType",
+    "EventSeverity",
+    "EventSource",
+    "EventBus",
+    "EventProcessor",
+    "EventStore",
+    "EventFilter",
+    "EventAggregator",
+    "EventCorrelator",
+    "AnomalyDetector",
 ]

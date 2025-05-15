@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 class UserModel(BaseModel):
     """用戶模型"""
+
     username: str
     email: Optional[str] = None
     disabled: Optional[bool] = None
@@ -21,6 +22,7 @@ class UserModel(BaseModel):
 
 class TokenModel(BaseModel):
     """令牌模型"""
+
     access_token: str
     token_type: str
     expires_in: int
@@ -29,6 +31,7 @@ class TokenModel(BaseModel):
 
 class OrderType(str, Enum):
     """訂單類型"""
+
     MARKET = "market"
     LIMIT = "limit"
     STOP = "stop"
@@ -37,12 +40,14 @@ class OrderType(str, Enum):
 
 class OrderSide(str, Enum):
     """訂單方向"""
+
     BUY = "buy"
     SELL = "sell"
 
 
 class OrderStatus(str, Enum):
     """訂單狀態"""
+
     PENDING = "pending"
     FILLED = "filled"
     PARTIALLY_FILLED = "partially_filled"
@@ -52,6 +57,7 @@ class OrderStatus(str, Enum):
 
 class TradeRequestModel(BaseModel):
     """交易請求模型"""
+
     symbol: str
     order_type: OrderType
     side: OrderSide
@@ -65,6 +71,7 @@ class TradeRequestModel(BaseModel):
 
 class TradeResponseModel(BaseModel):
     """交易響應模型"""
+
     order_id: str
     symbol: str
     order_type: OrderType
@@ -84,6 +91,7 @@ class TradeResponseModel(BaseModel):
 
 class PositionModel(BaseModel):
     """倉位模型"""
+
     symbol: str
     quantity: float
     average_price: float
@@ -98,6 +106,7 @@ class PositionModel(BaseModel):
 
 class PortfolioModel(BaseModel):
     """投資組合模型"""
+
     portfolio_id: str
     name: str
     cash: float
@@ -114,6 +123,7 @@ class PortfolioModel(BaseModel):
 
 class StrategyType(str, Enum):
     """策略類型"""
+
     TREND_FOLLOWING = "trend_following"
     MEAN_REVERSION = "mean_reversion"
     MOMENTUM = "momentum"
@@ -125,6 +135,7 @@ class StrategyType(str, Enum):
 
 class StrategyStatus(str, Enum):
     """策略狀態"""
+
     ACTIVE = "active"
     PAUSED = "paused"
     STOPPED = "stopped"
@@ -133,6 +144,7 @@ class StrategyStatus(str, Enum):
 
 class StrategyModel(BaseModel):
     """策略模型"""
+
     strategy_id: str
     name: str
     description: Optional[str] = None
@@ -147,6 +159,7 @@ class StrategyModel(BaseModel):
 
 class BacktestRequestModel(BaseModel):
     """回測請求模型"""
+
     strategy_id: str
     start_date: datetime
     end_date: datetime
@@ -158,6 +171,7 @@ class BacktestRequestModel(BaseModel):
 
 class BacktestResponseModel(BaseModel):
     """回測響應模型"""
+
     backtest_id: str
     strategy_id: str
     start_date: datetime
@@ -178,6 +192,7 @@ class BacktestResponseModel(BaseModel):
 
 class MarketDataRequestModel(BaseModel):
     """市場數據請求模型"""
+
     symbols: List[str]
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -187,6 +202,7 @@ class MarketDataRequestModel(BaseModel):
 
 class MarketDataResponseModel(BaseModel):
     """市場數據響應模型"""
+
     symbol: str
     interval: str
     data: List[Dict[str, Any]]
@@ -194,6 +210,7 @@ class MarketDataResponseModel(BaseModel):
 
 class SystemStatusModel(BaseModel):
     """系統狀態模型"""
+
     status: str
     version: str
     uptime: int
@@ -207,6 +224,7 @@ class SystemStatusModel(BaseModel):
 
 class WorkflowRequestModel(BaseModel):
     """工作流請求模型"""
+
     name: str
     template: Optional[str] = None
     active: bool = False
@@ -215,6 +233,7 @@ class WorkflowRequestModel(BaseModel):
 
 class WorkflowResponseModel(BaseModel):
     """工作流響應模型"""
+
     workflow_id: str
     name: str
     active: bool
@@ -228,12 +247,14 @@ class WorkflowResponseModel(BaseModel):
 
 class WorkflowExecutionRequestModel(BaseModel):
     """工作流執行請求模型"""
+
     workflow_id: str
     data: Dict[str, Any] = {}
 
 
 class WorkflowExecutionResponseModel(BaseModel):
     """工作流執行響應模型"""
+
     execution_id: str
     workflow_id: str
     status: str
@@ -244,6 +265,7 @@ class WorkflowExecutionResponseModel(BaseModel):
 
 class SignalGenerationRequestModel(BaseModel):
     """訊號生成請求模型"""
+
     strategy_id: str
     symbols: List[str]
     parameters: Dict[str, Any] = {}
@@ -253,6 +275,7 @@ class SignalGenerationRequestModel(BaseModel):
 
 class SignalGenerationResponseModel(BaseModel):
     """訊號生成響應模型"""
+
     strategy_id: str
     signals: List[Dict[str, Any]]
     generated_at: datetime

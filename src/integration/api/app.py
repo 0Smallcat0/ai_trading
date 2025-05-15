@@ -12,8 +12,21 @@ import uvicorn
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime, timedelta
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Security, BackgroundTasks, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
+from fastapi import (
+    FastAPI,
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    Security,
+    BackgroundTasks,
+    Request,
+)
+from fastapi.security import (
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
+    SecurityScopes,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -35,7 +48,7 @@ from .models import (
     PortfolioModel,
     StrategyModel,
     BacktestRequestModel,
-    BacktestResponseModel
+    BacktestResponseModel,
 )
 from .routes import (
     auth_router,
@@ -46,7 +59,7 @@ from .routes import (
     market_data_router,
     system_router,
     workflow_router,
-    signal_router
+    signal_router,
 )
 
 # 創建API路由器
@@ -108,7 +121,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
             # 移除過期的請求
             self.requests[client_ip] = [
-                timestamp for timestamp in self.requests[client_ip]
+                timestamp
+                for timestamp in self.requests[client_ip]
                 if now - timestamp <= self.window_size
             ]
 
@@ -120,8 +134,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     content={
                         "status": "error",
                         "code": 429,
-                        "message": "請求過於頻繁，請稍後再試"
-                    }
+                        "message": "請求過於頻繁，請稍後再試",
+                    },
                 )
 
             # 記錄請求
@@ -196,7 +210,7 @@ def create_app() -> FastAPI:
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
-        openapi_url="/openapi.json"
+        openapi_url="/openapi.json",
     )
 
     # 添加可信主機中間件
@@ -241,7 +255,7 @@ def create_app() -> FastAPI:
             "version": "1.0.0",
             "docs_url": "/docs",
             "redoc_url": "/redoc",
-            "openapi_url": "/openapi.json"
+            "openapi_url": "/openapi.json",
         }
 
     # 添加健康檢查路由
@@ -256,7 +270,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "timestamp": datetime.now().isoformat(),
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
     # 添加錯誤處理
@@ -272,11 +286,7 @@ def create_app() -> FastAPI:
         Returns:
             Dict: 錯誤響應
         """
-        return {
-            "status": "error",
-            "code": exc.status_code,
-            "message": exc.detail
-        }
+        return {"status": "error", "code": exc.status_code, "message": exc.detail}
 
     @app.exception_handler(Exception)
     async def general_exception_handler(request, exc):
@@ -293,11 +303,7 @@ def create_app() -> FastAPI:
         # 記錄錯誤
         logger.error(f"API錯誤: {exc}")
 
-        return {
-            "status": "error",
-            "code": 500,
-            "message": "內部服務器錯誤"
-        }
+        return {"status": "error", "code": 500, "message": "內部服務器錯誤"}
 
     return app
 
@@ -339,7 +345,7 @@ if __name__ == "__main__":
         reload=True,
         factory=True,
         ssl_keyfile=ssl_keyfile,
-        ssl_certfile=ssl_certfile
+        ssl_certfile=ssl_certfile,
     )
 
     logger.info(f"API 服務器已啟動: {'https' if use_tls else 'http'}://0.0.0.0:{port}")

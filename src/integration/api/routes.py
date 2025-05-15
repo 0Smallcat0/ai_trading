@@ -32,11 +32,12 @@ from .models import (
     WorkflowRequestModel,
     WorkflowResponseModel,
     SignalGenerationRequestModel,
-    SignalGenerationResponseModel
+    SignalGenerationResponseModel,
 )
 
 # 創建認證路由
 auth_router = APIRouter()
+
 
 @auth_router.post("/token", response_model=TokenModel)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -61,24 +62,25 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"sub": user.username, "scopes": form_data.scopes},
-        expires_delta=access_token_expires
+        expires_delta=access_token_expires,
     )
 
     return TokenModel(
         access_token=access_token,
         token_type="bearer",
         expires_in=1800,  # 30分鐘
-        scopes=form_data.scopes
+        scopes=form_data.scopes,
     )
 
 
 # 創建交易路由
 trade_router = APIRouter()
 
+
 @trade_router.post("/orders", response_model=TradeResponseModel)
 async def create_order(
     trade_request: TradeRequestModel,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     創建訂單
@@ -105,13 +107,13 @@ async def create_order(
         filled_quantity=0,
         created_at=datetime.now(),
         strategy_id=trade_request.strategy_id,
-        tags=trade_request.tags
+        tags=trade_request.tags,
     )
+
 
 @trade_router.get("/orders/{order_id}", response_model=TradeResponseModel)
 async def get_order(
-    order_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    order_id: str, current_user: UserModel = Security(get_current_user, scopes=["read"])
 ):
     """
     獲取訂單
@@ -140,15 +142,16 @@ async def get_order(
         created_at=datetime.now() - timedelta(hours=1),
         updated_at=datetime.now(),
         strategy_id="strategy-123",
-        tags=["momentum", "tech"]
+        tags=["momentum", "tech"],
     )
+
 
 @trade_router.get("/orders", response_model=List[TradeResponseModel])
 async def list_orders(
     status: Optional[str] = None,
     symbol: Optional[str] = None,
     strategy_id: Optional[str] = None,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     列出訂單
@@ -180,7 +183,7 @@ async def list_orders(
             created_at=datetime.now() - timedelta(hours=1),
             updated_at=datetime.now(),
             strategy_id="strategy-123",
-            tags=["momentum", "tech"]
+            tags=["momentum", "tech"],
         ),
         TradeResponseModel(
             order_id="order-123457",
@@ -193,14 +196,15 @@ async def list_orders(
             filled_quantity=0,
             created_at=datetime.now() - timedelta(minutes=30),
             strategy_id="strategy-123",
-            tags=["momentum", "tech"]
-        )
+            tags=["momentum", "tech"],
+        ),
     ]
+
 
 @trade_router.delete("/orders/{order_id}", response_model=Dict[str, Any])
 async def cancel_order(
     order_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     取消訂單
@@ -215,15 +219,12 @@ async def cancel_order(
     # 這裡應該調用交易系統的API來取消訂單
     # 為了示例，我們返回一個模擬的響應
 
-    return {
-        "order_id": order_id,
-        "status": "cancelled",
-        "message": "訂單已取消"
-    }
+    return {"order_id": order_id, "status": "cancelled", "message": "訂單已取消"}
 
 
 # 創建投資組合路由
 portfolio_router = APIRouter()
+
 
 @portfolio_router.get("", response_model=List[PortfolioModel])
 async def list_portfolios(
@@ -254,14 +255,15 @@ async def list_portfolios(
             total_pl_percent=0.1,
             positions=[],
             created_at=datetime.now() - timedelta(days=30),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
     ]
+
 
 @portfolio_router.get("/{portfolio_id}", response_model=PortfolioModel)
 async def get_portfolio(
     portfolio_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     獲取投資組合
@@ -288,18 +290,19 @@ async def get_portfolio(
         total_pl_percent=0.1,
         positions=[],
         created_at=datetime.now() - timedelta(days=30),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
 
 
 # 創建策略路由
 strategy_router = APIRouter()
 
+
 @strategy_router.get("", response_model=List[StrategyModel])
 async def list_strategies(
     status: Optional[str] = None,
     type: Optional[str] = None,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     列出策略
@@ -322,25 +325,23 @@ async def list_strategies(
             description="基於價格動量的交易策略",
             type="momentum",
             status="active",
-            parameters={
-                "lookback_period": 20,
-                "threshold": 0.05
-            },
+            parameters={"lookback_period": 20, "threshold": 0.05},
             symbols=["AAPL", "MSFT", "GOOG"],
             created_at=datetime.now() - timedelta(days=10),
             updated_at=datetime.now(),
             performance={
                 "total_return": 0.15,
                 "sharpe_ratio": 1.2,
-                "max_drawdown": 0.05
-            }
+                "max_drawdown": 0.05,
+            },
         )
     ]
+
 
 @strategy_router.get("/{strategy_id}", response_model=StrategyModel)
 async def get_strategy(
     strategy_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     獲取策略
@@ -361,24 +362,18 @@ async def get_strategy(
         description="基於價格動量的交易策略",
         type="momentum",
         status="active",
-        parameters={
-            "lookback_period": 20,
-            "threshold": 0.05
-        },
+        parameters={"lookback_period": 20, "threshold": 0.05},
         symbols=["AAPL", "MSFT", "GOOG"],
         created_at=datetime.now() - timedelta(days=10),
         updated_at=datetime.now(),
-        performance={
-            "total_return": 0.15,
-            "sharpe_ratio": 1.2,
-            "max_drawdown": 0.05
-        }
+        performance={"total_return": 0.15, "sharpe_ratio": 1.2, "max_drawdown": 0.05},
     )
+
 
 @strategy_router.post("/{strategy_id}/start", response_model=Dict[str, Any])
 async def start_strategy(
     strategy_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     啟動策略
@@ -393,16 +388,13 @@ async def start_strategy(
     # 這裡應該調用交易系統的API來啟動策略
     # 為了示例，我們返回一個模擬的響應
 
-    return {
-        "strategy_id": strategy_id,
-        "status": "active",
-        "message": "策略已啟動"
-    }
+    return {"strategy_id": strategy_id, "status": "active", "message": "策略已啟動"}
+
 
 @strategy_router.post("/{strategy_id}/stop", response_model=Dict[str, Any])
 async def stop_strategy(
     strategy_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     停止策略
@@ -417,21 +409,18 @@ async def stop_strategy(
     # 這裡應該調用交易系統的API來停止策略
     # 為了示例，我們返回一個模擬的響應
 
-    return {
-        "strategy_id": strategy_id,
-        "status": "stopped",
-        "message": "策略已停止"
-    }
+    return {"strategy_id": strategy_id, "status": "stopped", "message": "策略已停止"}
 
 
 # 創建回測路由
 backtest_router = APIRouter()
 
+
 @backtest_router.post("", response_model=BacktestResponseModel)
 async def create_backtest(
     backtest_request: BacktestRequestModel,
     background_tasks: BackgroundTasks,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     創建回測
@@ -465,13 +454,14 @@ async def create_backtest(
         win_rate=0.0,  # 尚未完成
         profit_factor=0.0,  # 尚未完成
         created_at=datetime.now(),
-        status="running"
+        status="running",
     )
+
 
 @backtest_router.get("/{backtest_id}", response_model=BacktestResponseModel)
 async def get_backtest(
     backtest_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     獲取回測
@@ -502,17 +492,18 @@ async def get_backtest(
         profit_factor=2.0,
         created_at=datetime.now() - timedelta(days=1),
         status="completed",
-        results_url="/api/backtest/backtest-123/results"
+        results_url="/api/backtest/backtest-123/results",
     )
 
 
 # 創建市場數據路由
 market_data_router = APIRouter()
 
+
 @market_data_router.post("", response_model=List[MarketDataResponseModel])
 async def get_market_data(
     market_data_request: MarketDataRequestModel,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     獲取市場數據
@@ -540,7 +531,7 @@ async def get_market_data(
                         "high": 105.0,
                         "low": 99.0,
                         "close": 103.0,
-                        "volume": 1000000
+                        "volume": 1000000,
                     },
                     {
                         "timestamp": datetime(2020, 1, 2),
@@ -548,9 +539,9 @@ async def get_market_data(
                         "high": 108.0,
                         "low": 102.0,
                         "close": 107.0,
-                        "volume": 1200000
-                    }
-                ]
+                        "volume": 1200000,
+                    },
+                ],
             )
         )
 
@@ -559,6 +550,7 @@ async def get_market_data(
 
 # 創建系統路由
 system_router = APIRouter()
+
 
 @system_router.get("/status", response_model=SystemStatusModel)
 async def get_system_status(
@@ -585,12 +577,13 @@ async def get_system_status(
         disk_usage=50.0,
         active_strategies=5,
         pending_orders=2,
-        last_update=datetime.now()
+        last_update=datetime.now(),
     )
 
 
 # 創建工作流路由
 workflow_router = APIRouter()
+
 
 @workflow_router.get("", response_model=List[WorkflowResponseModel])
 async def list_workflows(
@@ -634,16 +627,17 @@ async def list_workflows(
                 last_execution=last_execution,
                 execution_count=execution_count,
                 success_count=success_count,
-                error_count=error_count
+                error_count=error_count,
             )
         )
 
     return response
 
+
 @workflow_router.post("", response_model=WorkflowResponseModel)
 async def create_workflow(
     workflow_request: WorkflowRequestModel,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     創建工作流
@@ -659,27 +653,27 @@ async def create_workflow(
     if workflow_request.template:
         # 從模板創建工作流
         workflow = workflow_manager.create_workflow_from_template(
-            workflow_request.template,
-            workflow_request.name
+            workflow_request.template, workflow_request.name
         )
     else:
         # 創建空工作流
-        workflow = workflow_manager.create_workflow({
-            "name": workflow_request.name,
-            "nodes": [],
-            "connections": {},
-            "active": workflow_request.active,
-            "settings": {
-                "saveManualExecutions": True,
-                "callerPolicy": "workflowsFromSameOwner"
-            },
-            "tags": []
-        })
+        workflow = workflow_manager.create_workflow(
+            {
+                "name": workflow_request.name,
+                "nodes": [],
+                "connections": {},
+                "active": workflow_request.active,
+                "settings": {
+                    "saveManualExecutions": True,
+                    "callerPolicy": "workflowsFromSameOwner",
+                },
+                "tags": [],
+            }
+        )
 
     if not workflow:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="創建工作流失敗"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="創建工作流失敗"
         )
 
     # 如果需要激活工作流
@@ -695,13 +689,14 @@ async def create_workflow(
         updated_at=workflow.get("updatedAt"),
         execution_count=0,
         success_count=0,
-        error_count=0
+        error_count=0,
     )
+
 
 @workflow_router.get("/{workflow_id}", response_model=WorkflowResponseModel)
 async def get_workflow(
     workflow_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["read"])
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
 ):
     """
     獲取工作流
@@ -718,8 +713,7 @@ async def get_workflow(
 
     if not workflow:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"工作流 {workflow_id} 不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"工作流 {workflow_id} 不存在"
         )
 
     # 獲取執行列表
@@ -745,13 +739,14 @@ async def get_workflow(
         last_execution=last_execution,
         execution_count=execution_count,
         success_count=success_count,
-        error_count=error_count
+        error_count=error_count,
     )
+
 
 @workflow_router.delete("/{workflow_id}", response_model=Dict[str, Any])
 async def delete_workflow(
     workflow_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     刪除工作流
@@ -768,8 +763,7 @@ async def delete_workflow(
 
     if not workflow:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"工作流 {workflow_id} 不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"工作流 {workflow_id} 不存在"
         )
 
     # 刪除工作流
@@ -778,19 +772,20 @@ async def delete_workflow(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"刪除工作流 {workflow_id} 失敗"
+            detail=f"刪除工作流 {workflow_id} 失敗",
         )
 
     return {
         "workflow_id": workflow_id,
         "success": True,
-        "message": f"工作流 {workflow_id} 已刪除"
+        "message": f"工作流 {workflow_id} 已刪除",
     }
+
 
 @workflow_router.post("/{workflow_id}/activate", response_model=Dict[str, Any])
 async def activate_workflow(
     workflow_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     激活工作流
@@ -807,8 +802,7 @@ async def activate_workflow(
 
     if not workflow:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"工作流 {workflow_id} 不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"工作流 {workflow_id} 不存在"
         )
 
     # 激活工作流
@@ -817,19 +811,20 @@ async def activate_workflow(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"激活工作流 {workflow_id} 失敗"
+            detail=f"激活工作流 {workflow_id} 失敗",
         )
 
     return {
         "workflow_id": workflow_id,
         "success": True,
-        "message": f"工作流 {workflow_id} 已激活"
+        "message": f"工作流 {workflow_id} 已激活",
     }
+
 
 @workflow_router.post("/{workflow_id}/deactivate", response_model=Dict[str, Any])
 async def deactivate_workflow(
     workflow_id: str,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     停用工作流
@@ -846,8 +841,7 @@ async def deactivate_workflow(
 
     if not workflow:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"工作流 {workflow_id} 不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"工作流 {workflow_id} 不存在"
         )
 
     # 停用工作流
@@ -856,20 +850,23 @@ async def deactivate_workflow(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"停用工作流 {workflow_id} 失敗"
+            detail=f"停用工作流 {workflow_id} 失敗",
         )
 
     return {
         "workflow_id": workflow_id,
         "success": True,
-        "message": f"工作流 {workflow_id} 已停用"
+        "message": f"工作流 {workflow_id} 已停用",
     }
 
-@workflow_router.post("/{workflow_id}/execute", response_model=WorkflowExecutionResponseModel)
+
+@workflow_router.post(
+    "/{workflow_id}/execute", response_model=WorkflowExecutionResponseModel
+)
 async def execute_workflow(
     workflow_id: str,
     execution_request: Optional[WorkflowExecutionRequestModel] = None,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     執行工作流
@@ -887,20 +884,18 @@ async def execute_workflow(
 
     if not workflow:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"工作流 {workflow_id} 不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"工作流 {workflow_id} 不存在"
         )
 
     # 執行工作流
     execution = workflow_manager.execute_workflow(
-        workflow_id,
-        execution_request.data if execution_request else {}
+        workflow_id, execution_request.data if execution_request else {}
     )
 
     if not execution:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"執行工作流 {workflow_id} 失敗"
+            detail=f"執行工作流 {workflow_id} 失敗",
         )
 
     # 轉換為響應模型
@@ -910,17 +905,18 @@ async def execute_workflow(
         status=execution.get("status", "unknown"),
         started_at=execution.get("startedAt", datetime.now()),
         finished_at=execution.get("finishedAt"),
-        data=execution.get("data", {})
+        data=execution.get("data", {}),
     )
 
 
 # 創建訊號生成路由
 signal_router = APIRouter()
 
+
 @signal_router.post("/generate", response_model=SignalGenerationResponseModel)
 async def generate_trading_signals(
     signal_request: SignalGenerationRequestModel,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     生成交易訊號
@@ -944,7 +940,7 @@ async def generate_trading_signals(
             symbols=symbols,
             parameters=parameters,
             start_date=signal_request.start_date,
-            end_date=signal_request.end_date
+            end_date=signal_request.end_date,
         )
 
         # 轉換為列表格式
@@ -955,36 +951,40 @@ async def generate_trading_signals(
 
             # 添加到訊號列表
             for record in signal_dict:
-                signal_list.append({
-                    "symbol": symbol,
-                    "date": record.get("date", datetime.now()),
-                    "buy_signal": bool(record.get("buy_signal", 0)),
-                    "sell_signal": bool(record.get("sell_signal", 0)),
-                    "close_price": float(record.get("close", 0)),
-                    "indicators": {
-                        k: v for k, v in record.items()
-                        if k not in ["date", "buy_signal", "sell_signal", "close"]
+                signal_list.append(
+                    {
+                        "symbol": symbol,
+                        "date": record.get("date", datetime.now()),
+                        "buy_signal": bool(record.get("buy_signal", 0)),
+                        "sell_signal": bool(record.get("sell_signal", 0)),
+                        "close_price": float(record.get("close", 0)),
+                        "indicators": {
+                            k: v
+                            for k, v in record.items()
+                            if k not in ["date", "buy_signal", "sell_signal", "close"]
+                        },
                     }
-                })
+                )
 
         # 返回響應
         return SignalGenerationResponseModel(
             strategy_id=strategy_id,
             signals=signal_list,
             generated_at=datetime.now(),
-            parameters=parameters
+            parameters=parameters,
         )
     except Exception as e:
         logger.error(f"生成交易訊號時發生錯誤: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"生成交易訊號失敗: {str(e)}"
+            detail=f"生成交易訊號失敗: {str(e)}",
         )
+
 
 @signal_router.post("/execute", response_model=Dict[str, Any])
 async def execute_trading_signals(
     signal_request: SignalGenerationRequestModel,
-    current_user: UserModel = Security(get_current_user, scopes=["write"])
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
 ):
     """
     執行交易訊號
@@ -1008,7 +1008,7 @@ async def execute_trading_signals(
             symbols=symbols,
             parameters=parameters,
             start_date=signal_request.start_date,
-            end_date=signal_request.end_date
+            end_date=signal_request.end_date,
         )
 
         # 創建執行器
@@ -1018,7 +1018,7 @@ async def execute_trading_signals(
         if not executor.connect():
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="連接券商API失敗"
+                detail="連接券商API失敗",
             )
 
         try:
@@ -1029,7 +1029,7 @@ async def execute_trading_signals(
                 "strategy_id": strategy_id,
                 "success": True,
                 "order_ids": order_ids,
-                "message": f"已執行 {len(order_ids)} 個訂單"
+                "message": f"已執行 {len(order_ids)} 個訂單",
             }
         finally:
             # 斷開連接
@@ -1038,7 +1038,7 @@ async def execute_trading_signals(
         logger.error(f"執行交易訊號時發生錯誤: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"執行交易訊號失敗: {str(e)}"
+            detail=f"執行交易訊號失敗: {str(e)}",
         )
 
 
@@ -1057,6 +1057,7 @@ async def run_backtest(backtest_id: str):
 
     # 模擬回測運行時間
     import asyncio
+
     await asyncio.sleep(10)
 
     logger.info(f"回測完成: {backtest_id}")

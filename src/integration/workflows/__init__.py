@@ -10,15 +10,15 @@ from .templates import (
     strategy_execution_workflow,
     portfolio_rebalance_workflow,
     risk_monitoring_workflow,
-    reporting_workflow
+    reporting_workflow,
 )
 
 __all__ = [
-    'WorkflowManager',
-    'workflow_manager',
-    'get_market_data_workflow',
-    'strategy_execution_workflow',
-    'portfolio_rebalance_workflow',
-    'risk_monitoring_workflow',
-    'reporting_workflow'
+    "WorkflowManager",
+    "workflow_manager",
+    "get_market_data_workflow",
+    "strategy_execution_workflow",
+    "portfolio_rebalance_workflow",
+    "risk_monitoring_workflow",
+    "reporting_workflow",
 ]

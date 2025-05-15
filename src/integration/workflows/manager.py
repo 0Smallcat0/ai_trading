@@ -168,7 +168,9 @@ class WorkflowManager:
             logger.error(f"創建工作流時發生錯誤: {e}")
             return None
 
-    def update_workflow(self, workflow_id: str, workflow: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update_workflow(
+        self, workflow_id: str, workflow: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """
         更新工作流
 
@@ -298,7 +300,9 @@ class WorkflowManager:
             logger.error(f"停用工作流時發生錯誤: {e}")
             return False
 
-    def execute_workflow(self, workflow_id: str, data: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def execute_workflow(
+        self, workflow_id: str, data: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         執行工作流
 
@@ -399,7 +403,9 @@ class WorkflowManager:
 
                 return executions
             else:
-                logger.error(f"獲取執行列表失敗: {response.status_code} {response.text}")
+                logger.error(
+                    f"獲取執行列表失敗: {response.status_code} {response.text}"
+                )
                 return []
         except Exception as e:
             logger.error(f"獲取執行列表時發生錯誤: {e}")
@@ -420,7 +426,9 @@ class WorkflowManager:
             return False
 
         self.running = True
-        self.monitoring_thread = threading.Thread(target=self._monitoring_loop, args=(interval,))
+        self.monitoring_thread = threading.Thread(
+            target=self._monitoring_loop, args=(interval,)
+        )
         self.monitoring_thread.daemon = True
         self.monitoring_thread.start()
 
@@ -463,7 +471,9 @@ class WorkflowManager:
                 # 檢查執行狀態
                 for execution in executions:
                     if execution["status"] == "failed":
-                        logger.error(f"工作流執行失敗: {execution['id']}, 工作流: {execution['workflowId']}")
+                        logger.error(
+                            f"工作流執行失敗: {execution['id']}, 工作流: {execution['workflowId']}"
+                        )
 
                 # 等待下一個監控間隔
                 time.sleep(interval)
@@ -471,8 +481,9 @@ class WorkflowManager:
                 logger.error(f"工作流監控循環發生錯誤: {e}")
                 time.sleep(10)  # 發生錯誤時等待較長時間
 
-
-    def create_workflow_from_template(self, template_name: str, workflow_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def create_workflow_from_template(
+        self, template_name: str, workflow_name: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         從模板創建工作流
 
@@ -521,7 +532,9 @@ class WorkflowManager:
             logger.info(f"已創建數據獲取工作流: {data_ingestion_workflow['id']}")
 
         # 創建交易訊號生成工作流
-        signal_generation_workflow = self.create_workflow_from_template("signal_generation")
+        signal_generation_workflow = self.create_workflow_from_template(
+            "signal_generation"
+        )
         if signal_generation_workflow:
             workflow_ids["signal_generation"] = signal_generation_workflow["id"]
             logger.info(f"已創建交易訊號生成工作流: {signal_generation_workflow['id']}")

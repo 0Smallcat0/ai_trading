@@ -218,7 +218,10 @@ class OrderManager:
         # 獲取券商 API 中的訂單
         broker_orders = self.broker.get_orders(status)
         for order in broker_orders:
-            if order.order_id not in self.pending_orders and order.order_id not in self.completed_orders:
+            if (
+                order.order_id not in self.pending_orders
+                and order.order_id not in self.completed_orders
+            ):
                 orders.append(order)
 
         return orders
@@ -332,10 +335,14 @@ class OrderManager:
                         original_order.filled_price = updated_order.filled_price
                         original_order.updated_at = datetime.now()
                         original_order.error_message = updated_order.error_message
-                        original_order.exchange_order_id = updated_order.exchange_order_id
+                        original_order.exchange_order_id = (
+                            updated_order.exchange_order_id
+                        )
 
                         # 記錄訂單狀態變更
-                        logger.info(f"訂單狀態變更: {order_id} -> {original_order.status.value}")
+                        logger.info(
+                            f"訂單狀態變更: {order_id} -> {original_order.status.value}"
+                        )
                         self._log_order(original_order)
 
                         # 調用回調函數
@@ -343,16 +350,27 @@ class OrderManager:
                             self.on_order_status_change(original_order)
 
                         # 處理已完成的訂單
-                        if original_order.status in [OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED, OrderStatus.EXPIRED]:
+                        if original_order.status in [
+                            OrderStatus.FILLED,
+                            OrderStatus.CANCELLED,
+                            OrderStatus.REJECTED,
+                            OrderStatus.EXPIRED,
+                        ]:
                             # 從等待中的訂單移除
                             self.pending_orders.pop(order_id)
                             # 加入已完成的訂單
                             self.completed_orders[order_id] = original_order
 
                             # 調用特定回調函數
-                            if original_order.status == OrderStatus.FILLED and self.on_order_filled:
+                            if (
+                                original_order.status == OrderStatus.FILLED
+                                and self.on_order_filled
+                            ):
                                 self.on_order_filled(original_order)
-                            elif original_order.status == OrderStatus.REJECTED and self.on_order_rejected:
+                            elif (
+                                original_order.status == OrderStatus.REJECTED
+                                and self.on_order_rejected
+                            ):
                                 self.on_order_rejected(original_order)
 
                 # 等待一段時間再更新
@@ -370,7 +388,9 @@ class OrderManager:
         """
         try:
             # 創建日誌檔案路徑
-            log_file = Path(self.order_log_dir) / f"{datetime.now().strftime('%Y%m%d')}.json"
+            log_file = (
+                Path(self.order_log_dir) / f"{datetime.now().strftime('%Y%m%d')}.json"
+            )
 
             # 將訂單轉換為字典
             order_dict = order.to_dict()

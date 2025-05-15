@@ -28,38 +28,20 @@ NODE_TEMPLATES = {
     # 觸發器節點
     "schedule_trigger": {
         "parameters": {
-            "rule": {
-                "interval": [
-                    {
-                        "field": "minute",
-                        "minuteInterval": 5
-                    }
-                ]
-            }
+            "rule": {"interval": [{"field": "minute", "minuteInterval": 5}]}
         },
         "name": "Schedule Trigger",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ]
+        "position": [0, 0],
     },
     "webhook_trigger": {
-        "parameters": {
-            "path": "",
-            "responseMode": "lastNode",
-            "options": {}
-        },
+        "parameters": {"path": "", "responseMode": "lastNode", "options": {}},
         "name": "Webhook Trigger",
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ]
+        "position": [0, 0],
     },
-    
     # HTTP請求節點
     "http_request": {
         "parameters": {
@@ -67,37 +49,22 @@ NODE_TEMPLATES = {
             "method": "GET",
             "authentication": "genericCredentialType",
             "genericAuthType": "httpHeaderAuth",
-            "options": {}
+            "options": {},
         },
         "name": "HTTP Request",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 3,
-        "position": [
-            0,
-            0
-        ],
-        "credentials": {
-            "httpHeaderAuth": {
-                "name": "Trading API Auth",
-                "id": "1"
-            }
-        }
+        "position": [0, 0],
+        "credentials": {"httpHeaderAuth": {"name": "Trading API Auth", "id": "1"}},
     },
-    
     # 函數節點
     "function": {
-        "parameters": {
-            "functionCode": ""
-        },
+        "parameters": {"functionCode": ""},
         "name": "Function",
         "type": "n8n-nodes-base.function",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ]
+        "position": [0, 0],
     },
-    
     # IF節點
     "if": {
         "parameters": {
@@ -106,7 +73,7 @@ NODE_TEMPLATES = {
                     {
                         "value1": "={{ $json.success }}",
                         "operation": "equal",
-                        "value2": "true"
+                        "value2": "true",
                     }
                 ]
             }
@@ -114,47 +81,30 @@ NODE_TEMPLATES = {
         "name": "IF",
         "type": "n8n-nodes-base.if",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ]
+        "position": [0, 0],
     },
-    
     # 錯誤處理節點
     "error_trigger": {
         "parameters": {},
         "name": "Error Trigger",
         "type": "n8n-nodes-base.errorTrigger",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ]
+        "position": [0, 0],
     },
-    
     # 通知節點
     "slack": {
         "parameters": {
             "text": "",
             "channel": "",
             "attachments": [],
-            "otherOptions": {}
+            "otherOptions": {},
         },
         "name": "Slack",
         "type": "n8n-nodes-base.slack",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ],
-        "credentials": {
-            "slackApi": {
-                "id": "1",
-                "name": "Slack Account"
-            }
-        }
+        "position": [0, 0],
+        "credentials": {"slackApi": {"id": "1", "name": "Slack Account"}},
     },
-    
     # 電子郵件節點
     "email": {
         "parameters": {
@@ -162,22 +112,14 @@ NODE_TEMPLATES = {
             "toEmail": "",
             "subject": "",
             "text": "",
-            "options": {}
+            "options": {},
         },
         "name": "Email",
         "type": "n8n-nodes-base.emailSend",
         "typeVersion": 1,
-        "position": [
-            0,
-            0
-        ],
-        "credentials": {
-            "smtp": {
-                "id": "1",
-                "name": "SMTP Account"
-            }
-        }
-    }
+        "position": [0, 0],
+        "credentials": {"smtp": {"id": "1", "name": "SMTP Account"}},
+    },
 }
 
 # 工作流模板
@@ -189,17 +131,10 @@ WORKFLOW_TEMPLATES = {
             {
                 **NODE_TEMPLATES["schedule_trigger"],
                 "parameters": {
-                    "rule": {
-                        "interval": [
-                            {
-                                "field": "minute",
-                                "minuteInterval": 15
-                            }
-                        ]
-                    }
+                    "rule": {"interval": [{"field": "minute", "minuteInterval": 15}]}
                 },
                 "name": "每15分鐘觸發",
-                "position": [0, 0]
+                "position": [0, 0],
             },
             {
                 **NODE_TEMPLATES["http_request"],
@@ -207,10 +142,10 @@ WORKFLOW_TEMPLATES = {
                     "url": "http://localhost:8000/api/market-data/fetch",
                     "method": "POST",
                     "jsonParameters": True,
-                    "options": {}
+                    "options": {},
                 },
                 "name": "獲取市場數據",
-                "position": [220, 0]
+                "position": [220, 0],
             },
             {
                 **NODE_TEMPLATES["if"],
@@ -220,13 +155,13 @@ WORKFLOW_TEMPLATES = {
                             {
                                 "value1": "={{ $json.success }}",
                                 "operation": "equal",
-                                "value2": "true"
+                                "value2": "true",
                             }
                         ]
                     }
                 },
                 "name": "檢查結果",
-                "position": [440, 0]
+                "position": [440, 0],
             },
             {
                 **NODE_TEMPLATES["http_request"],
@@ -234,10 +169,10 @@ WORKFLOW_TEMPLATES = {
                     "url": "http://localhost:8000/api/market-data/process",
                     "method": "POST",
                     "jsonParameters": True,
-                    "options": {}
+                    "options": {},
                 },
                 "name": "處理市場數據",
-                "position": [660, -100]
+                "position": [660, -100],
             },
             {
                 **NODE_TEMPLATES["slack"],
@@ -245,53 +180,25 @@ WORKFLOW_TEMPLATES = {
                     "text": "=數據獲取失敗: {{ $json.error }}",
                     "channel": "trading-alerts",
                     "attachments": [],
-                    "otherOptions": {}
+                    "otherOptions": {},
                 },
                 "name": "發送錯誤通知",
-                "position": [660, 100]
-            }
+                "position": [660, 100],
+            },
         ],
         "connections": {
             "每15分鐘觸發": {
-                "main": [
-                    [
-                        {
-                            "node": "獲取市場數據",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
-                ]
+                "main": [[{"node": "獲取市場數據", "type": "main", "index": 0}]]
             },
             "獲取市場數據": {
-                "main": [
-                    [
-                        {
-                            "node": "檢查結果",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
-                ]
+                "main": [[{"node": "檢查結果", "type": "main", "index": 0}]]
             },
             "檢查結果": {
                 "main": [
-                    [
-                        {
-                            "node": "處理市場數據",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ],
-                    [
-                        {
-                            "node": "發送錯誤通知",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
+                    [{"node": "處理市場數據", "type": "main", "index": 0}],
+                    [{"node": "發送錯誤通知", "type": "main", "index": 0}],
                 ]
-            }
+            },
         },
         "active": False,
         "settings": {
@@ -301,7 +208,6 @@ WORKFLOW_TEMPLATES = {
         },
         "tags": ["數據", "自動化"],
     },
-    
     # 交易訊號生成工作流
     "signal_generation": {
         "name": "交易訊號生成工作流",
@@ -309,17 +215,10 @@ WORKFLOW_TEMPLATES = {
             {
                 **NODE_TEMPLATES["schedule_trigger"],
                 "parameters": {
-                    "rule": {
-                        "interval": [
-                            {
-                                "field": "minute",
-                                "minuteInterval": 30
-                            }
-                        ]
-                    }
+                    "rule": {"interval": [{"field": "minute", "minuteInterval": 30}]}
                 },
                 "name": "每30分鐘觸發",
-                "position": [0, 0]
+                "position": [0, 0],
             },
             {
                 **NODE_TEMPLATES["http_request"],
@@ -327,10 +226,10 @@ WORKFLOW_TEMPLATES = {
                     "url": "http://localhost:8000/api/strategy/generate-signals",
                     "method": "POST",
                     "jsonParameters": True,
-                    "options": {}
+                    "options": {},
                 },
                 "name": "生成交易訊號",
-                "position": [220, 0]
+                "position": [220, 0],
             },
             {
                 **NODE_TEMPLATES["if"],
@@ -340,13 +239,13 @@ WORKFLOW_TEMPLATES = {
                             {
                                 "value1": "={{ $json.success }}",
                                 "operation": "equal",
-                                "value2": "true"
+                                "value2": "true",
                             }
                         ]
                     }
                 },
                 "name": "檢查結果",
-                "position": [440, 0]
+                "position": [440, 0],
             },
             {
                 **NODE_TEMPLATES["http_request"],
@@ -354,10 +253,10 @@ WORKFLOW_TEMPLATES = {
                     "url": "http://localhost:8000/api/trade/execute",
                     "method": "POST",
                     "jsonParameters": True,
-                    "options": {}
+                    "options": {},
                 },
                 "name": "執行交易",
-                "position": [660, -100]
+                "position": [660, -100],
             },
             {
                 **NODE_TEMPLATES["slack"],
@@ -365,53 +264,25 @@ WORKFLOW_TEMPLATES = {
                     "text": "=交易訊號生成失敗: {{ $json.error }}",
                     "channel": "trading-alerts",
                     "attachments": [],
-                    "otherOptions": {}
+                    "otherOptions": {},
                 },
                 "name": "發送錯誤通知",
-                "position": [660, 100]
-            }
+                "position": [660, 100],
+            },
         ],
         "connections": {
             "每30分鐘觸發": {
-                "main": [
-                    [
-                        {
-                            "node": "生成交易訊號",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
-                ]
+                "main": [[{"node": "生成交易訊號", "type": "main", "index": 0}]]
             },
             "生成交易訊號": {
-                "main": [
-                    [
-                        {
-                            "node": "檢查結果",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
-                ]
+                "main": [[{"node": "檢查結果", "type": "main", "index": 0}]]
             },
             "檢查結果": {
                 "main": [
-                    [
-                        {
-                            "node": "執行交易",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ],
-                    [
-                        {
-                            "node": "發送錯誤通知",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
+                    [{"node": "執行交易", "type": "main", "index": 0}],
+                    [{"node": "發送錯誤通知", "type": "main", "index": 0}],
                 ]
-            }
+            },
         },
         "active": False,
         "settings": {

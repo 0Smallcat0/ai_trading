@@ -29,6 +29,7 @@ try:
         RET_OK,
         RET_ERROR,
     )
+
     FUTU_AVAILABLE = True
 except ImportError:
     FUTU_AVAILABLE = False
@@ -54,7 +55,7 @@ class FutuAdapter(BrokerBase):
         trade_env: str = "SIMULATE",
         unlock_password: Optional[str] = None,
         log_path: str = "logs/futu.log",
-        **kwargs
+        **kwargs,
     ):
         """
         初始化富途證券 API 適配器
@@ -78,7 +79,9 @@ class FutuAdapter(BrokerBase):
         self.host = host
         self.port = port
         self.market = market
-        self.trade_env = TrdEnv.SIMULATE if trade_env.upper() == "SIMULATE" else TrdEnv.REAL
+        self.trade_env = (
+            TrdEnv.SIMULATE if trade_env.upper() == "SIMULATE" else TrdEnv.REAL
+        )
         self.unlock_password = unlock_password
         self.log_path = log_path
 
@@ -292,7 +295,12 @@ class FutuAdapter(BrokerBase):
         order = self.orders[order_id]
 
         # 如果訂單已經完成，直接返回
-        if order.status in [OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED, OrderStatus.EXPIRED]:
+        if order.status in [
+            OrderStatus.FILLED,
+            OrderStatus.CANCELLED,
+            OrderStatus.REJECTED,
+            OrderStatus.EXPIRED,
+        ]:
             return order
 
         # 如果訂單在 Futu 中，更新狀態
@@ -414,7 +422,9 @@ class FutuAdapter(BrokerBase):
         try:
             # 訂閱股票
             if stock_id not in self.subscribed_symbols:
-                ret, data = self.quote_ctx.subscribe(stock_id, ["QUOTE", "TICKER", "ORDER_BOOK"])
+                ret, data = self.quote_ctx.subscribe(
+                    stock_id, ["QUOTE", "TICKER", "ORDER_BOOK"]
+                )
                 if ret != RET_OK:
                     logger.error(f"訂閱股票失敗: {data}")
                 else:
@@ -522,7 +532,11 @@ class FutuAdapter(BrokerBase):
                     # 更新訂單狀態
                     order.status = self._convert_order_status(order_info["status"])
                     order.filled_quantity = int(order_info["dealt_qty"])
-                    order.filled_price = float(order_info["dealt_avg_price"]) if order_info["dealt_avg_price"] > 0 else 0
+                    order.filled_price = (
+                        float(order_info["dealt_avg_price"])
+                        if order_info["dealt_avg_price"] > 0
+                        else 0
+                    )
                     order.updated_at = datetime.now()
                     order.exchange_order_id = futu_order_id
 
@@ -555,7 +569,11 @@ class FutuAdapter(BrokerBase):
                         # 更新訂單狀態
                         order.status = self._convert_order_status(row["status"])
                         order.filled_quantity = int(row["dealt_qty"])
-                        order.filled_price = float(row["dealt_avg_price"]) if row["dealt_avg_price"] > 0 else 0
+                        order.filled_price = (
+                            float(row["dealt_avg_price"])
+                            if row["dealt_avg_price"] > 0
+                            else 0
+                        )
                         order.updated_at = datetime.now()
                         order.exchange_order_id = futu_order_id
 

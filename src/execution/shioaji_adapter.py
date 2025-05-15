@@ -23,6 +23,7 @@ try:
         OrderState,
         TFTOrderType,
     )
+
     SHIOAJI_AVAILABLE = True
 except ImportError:
     SHIOAJI_AVAILABLE = False
@@ -46,7 +47,7 @@ class ShioajiAdapter(BrokerBase):
         ca_path: Optional[str] = None,
         cache_dir: str = "cache/shioaji",
         log_path: str = "logs/shioaji.log",
-        **kwargs
+        **kwargs,
     ):
         """
         初始化永豐證券 API 適配器
@@ -121,7 +122,10 @@ class ShioajiAdapter(BrokerBase):
             # 等待合約載入完成
             timeout = 30  # 30 秒超時
             start_time = time.time()
-            while not hasattr(self.api, "Contracts") and time.time() - start_time < timeout:
+            while (
+                not hasattr(self.api, "Contracts")
+                and time.time() - start_time < timeout
+            ):
                 time.sleep(0.5)
 
             if not hasattr(self.api, "Contracts"):
@@ -220,7 +224,9 @@ class ShioajiAdapter(BrokerBase):
                 return None
 
             # 轉換訂單類型
-            price_type, order_type, time_in_force = self._convert_order_type(order.order_type)
+            price_type, order_type, time_in_force = self._convert_order_type(
+                order.order_type
+            )
 
             # 轉換買賣別
             action = Action.Buy if order.action.lower() == "buy" else Action.Sell
@@ -251,7 +257,9 @@ class ShioajiAdapter(BrokerBase):
             self.order_map[order.order_id] = sj_order
             self.exchange_order_map[sj_order.order.id] = order.order_id
 
-            logger.info(f"訂單已提交: {order.order_id}, 券商訂單 ID: {sj_order.order.id}")
+            logger.info(
+                f"訂單已提交: {order.order_id}, 券商訂單 ID: {sj_order.order.id}"
+            )
             return order.order_id
         except Exception as e:
             logger.exception(f"下單失敗: {e}")
@@ -307,7 +315,12 @@ class ShioajiAdapter(BrokerBase):
         order = self.orders[order_id]
 
         # 如果訂單已經完成，直接返回
-        if order.status in [OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED, OrderStatus.EXPIRED]:
+        if order.status in [
+            OrderStatus.FILLED,
+            OrderStatus.CANCELLED,
+            OrderStatus.REJECTED,
+            OrderStatus.EXPIRED,
+        ]:
             return order
 
         # 如果訂單在 Shioaji 中，更新狀態
@@ -364,9 +377,17 @@ class ShioajiAdapter(BrokerBase):
                     "avg_price": avg_price,
                     "cost": avg_price * quantity,
                     "current_price": last_price,
-                    "value": last_price * quantity if last_price else avg_price * quantity,
-                    "profit_loss": (last_price - avg_price) * quantity if last_price else 0,
-                    "profit_loss_pct": (last_price / avg_price - 1) * 100 if last_price and avg_price else 0,
+                    "value": (
+                        last_price * quantity if last_price else avg_price * quantity
+                    ),
+                    "profit_loss": (
+                        (last_price - avg_price) * quantity if last_price else 0
+                    ),
+                    "profit_loss_pct": (
+                        (last_price / avg_price - 1) * 100
+                        if last_price and avg_price
+                        else 0
+                    ),
                 }
 
             return positions
@@ -391,7 +412,9 @@ class ShioajiAdapter(BrokerBase):
 
             # 獲取持倉
             positions = self.get_positions()
-            positions_value = sum(position.get("value", 0) for position in positions.values())
+            positions_value = sum(
+                position.get("value", 0) for position in positions.values()
+            )
 
             return {
                 "account_id": self.account_id,
@@ -453,7 +476,9 @@ class ShioajiAdapter(BrokerBase):
                     "stock_id": stock_id,
                     "price": float(latest_tick.close),
                     "change": float(latest_tick.close - latest_tick.open),
-                    "change_pct": float((latest_tick.close / latest_tick.open - 1) * 100),
+                    "change_pct": float(
+                        (latest_tick.close / latest_tick.open - 1) * 100
+                    ),
                     "volume": int(latest_tick.volume),
                     "total_volume": int(latest_tick.total_volume),
                     "tick_type": latest_tick.tick_type,
@@ -575,7 +600,9 @@ class ShioajiAdapter(BrokerBase):
         # 更新狀態
         order.status = self._convert_order_status(sj_order.status.status)
         order.filled_quantity = int(sj_order.status.deal_quantity)
-        order.filled_price = float(sj_order.status.avg_price) if sj_order.status.avg_price else 0
+        order.filled_price = (
+            float(sj_order.status.avg_price) if sj_order.status.avg_price else 0
+        )
         order.updated_at = datetime.now()
         order.exchange_order_id = sj_order.order.id
 
@@ -657,7 +684,9 @@ class ShioajiAdapter(BrokerBase):
                     self._update_order_status(order, order_status)
 
                     # 記錄狀態變更
-                    logger.info(f"訂單狀態變更: {order_id} {old_status.value} -> {order.status.value}")
+                    logger.info(
+                        f"訂單狀態變更: {order_id} {old_status.value} -> {order.status.value}"
+                    )
 
                     # 調用回調函數
                     if self.on_order_status:

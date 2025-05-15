@@ -24,13 +24,15 @@ logger = logging.getLogger("execution.config")
 
 class TradingEnvironment(Enum):
     """交易環境列舉"""
+
     PAPER = "paper"  # 模擬交易
-    LIVE = "live"    # 實盤交易
+    LIVE = "live"  # 實盤交易
 
 
 @dataclass
 class BrokerConfig:
     """券商配置類別"""
+
     name: str  # 券商名稱
     type: str  # 券商類型 (simulator, shioaji, futu)
     environment: TradingEnvironment = TradingEnvironment.PAPER  # 交易環境
@@ -53,7 +55,7 @@ class BrokerConfig:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'BrokerConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "BrokerConfig":
         """從字典創建配置"""
         # 處理環境列舉
         if "environment" in data and isinstance(data["environment"], str):
@@ -138,7 +140,10 @@ def load_broker_config(
     try:
         # 讀取配置文件
         with open(config_path, "r", encoding="utf-8") as f:
-            if config_path.suffix.lower() == ".yaml" or config_path.suffix.lower() == ".yml":
+            if (
+                config_path.suffix.lower() == ".yaml"
+                or config_path.suffix.lower() == ".yml"
+            ):
                 config_data = yaml.safe_load(f)
             else:
                 config_data = json.load(f)
@@ -192,7 +197,10 @@ def load_all_broker_configs(
     try:
         # 讀取配置文件
         with open(config_path, "r", encoding="utf-8") as f:
-            if config_path.suffix.lower() == ".yaml" or config_path.suffix.lower() == ".yml":
+            if (
+                config_path.suffix.lower() == ".yaml"
+                or config_path.suffix.lower() == ".yml"
+            ):
                 config_data = yaml.safe_load(f)
             else:
                 config_data = json.load(f)

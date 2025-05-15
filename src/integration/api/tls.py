@@ -93,7 +93,9 @@ class TLSConfig:
             context.minimum_version = ssl.TLSVersion.TLSv1_2
 
             # 設置加密套件
-            context.set_ciphers("ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384")
+            context.set_ciphers(
+                "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+            )
 
             return context
         except Exception as e:

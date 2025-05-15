@@ -19,6 +19,7 @@ try:
     from cryptography.fernet import Fernet
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
@@ -44,6 +45,7 @@ def generate_key(password: str, salt: Optional[bytes] = None) -> Tuple[bytes, by
     # 如果沒有提供鹽值，則隨機生成
     if salt is None:
         import os
+
         salt = os.urandom(16)
 
     # 使用 PBKDF2 生成金鑰
@@ -81,7 +83,11 @@ def encrypt_api_key(api_key: str, password: str) -> str:
         encrypted_data = f.encrypt(api_key.encode())
 
         # 將鹽值和加密數據組合
-        result = base64.urlsafe_b64encode(salt).decode() + ":" + base64.urlsafe_b64encode(encrypted_data).decode()
+        result = (
+            base64.urlsafe_b64encode(salt).decode()
+            + ":"
+            + base64.urlsafe_b64encode(encrypted_data).decode()
+        )
         return result
     except Exception as e:
         logger.error(f"加密 API 金鑰時發生錯誤: {e}")

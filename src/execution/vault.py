@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 try:
     import hvac
     from hvac.exceptions import InvalidPath, VaultError
+
     VAULT_AVAILABLE = True
 except ImportError:
     VAULT_AVAILABLE = False
@@ -96,7 +97,11 @@ class VaultClient:
         Returns:
             bool: Vault 是否可用
         """
-        return VAULT_AVAILABLE and self.client is not None and self.client.is_authenticated()
+        return (
+            VAULT_AVAILABLE
+            and self.client is not None
+            and self.client.is_authenticated()
+        )
 
     def _get_full_path(self, path: str) -> str:
         """

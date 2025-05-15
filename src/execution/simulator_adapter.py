@@ -42,7 +42,7 @@ class SimulatorAdapter(BrokerBase):
         market_data_dir: str = "data/market",
         state_file: str = "data/simulator_state.json",
         realistic_simulation: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化模擬交易適配器
@@ -209,7 +209,11 @@ class SimulatorAdapter(BrokerBase):
         order = self.orders[order_id]
 
         # 檢查訂單狀態
-        if order.status not in [OrderStatus.PENDING, OrderStatus.SUBMITTED, OrderStatus.PARTIALLY_FILLED]:
+        if order.status not in [
+            OrderStatus.PENDING,
+            OrderStatus.SUBMITTED,
+            OrderStatus.PARTIALLY_FILLED,
+        ]:
             logger.error(f"訂單狀態不允許取消: {order.status.value}")
             return False
 
@@ -261,7 +265,11 @@ class SimulatorAdapter(BrokerBase):
                 position["current_price"] = latest_price
                 position["value"] = position["shares"] * latest_price
                 position["profit_loss"] = position["value"] - position["cost"]
-                position["profit_loss_pct"] = (position["profit_loss"] / position["cost"]) if position["cost"] > 0 else 0
+                position["profit_loss_pct"] = (
+                    (position["profit_loss"] / position["cost"])
+                    if position["cost"] > 0
+                    else 0
+                )
 
         return self.positions
 
@@ -273,7 +281,9 @@ class SimulatorAdapter(BrokerBase):
             Dict[str, Any]: 帳戶資訊
         """
         # 計算總資產價值
-        positions_value = sum(position.get("value", 0) for position in self.positions.values())
+        positions_value = sum(
+            position.get("value", 0) for position in self.positions.values()
+        )
         total_value = self.cash + positions_value
 
         return {
@@ -282,7 +292,11 @@ class SimulatorAdapter(BrokerBase):
             "total_value": total_value,
             "initial_cash": self.initial_cash,
             "profit_loss": total_value - self.initial_cash,
-            "profit_loss_pct": (total_value - self.initial_cash) / self.initial_cash if self.initial_cash > 0 else 0,
+            "profit_loss_pct": (
+                (total_value - self.initial_cash) / self.initial_cash
+                if self.initial_cash > 0
+                else 0
+            ),
             "positions_count": len(self.positions),
             "orders_count": len(self.orders),
         }
@@ -330,7 +344,10 @@ class SimulatorAdapter(BrokerBase):
                 logger.info(f"訂單已提交: {order}")
 
                 # 模擬訂單拒絕
-                if self.realistic_simulation and random.random() < self.rejection_probability:
+                if (
+                    self.realistic_simulation
+                    and random.random() < self.rejection_probability
+                ):
                     order.status = OrderStatus.REJECTED
                     order.error_message = "訂單被拒絕 (模擬)"
                     order.updated_at = datetime.now()
@@ -410,7 +427,10 @@ class SimulatorAdapter(BrokerBase):
 
         # 模擬部分成交
         fill_quantity = order.quantity
-        if self.realistic_simulation and random.random() < self.partial_fill_probability:
+        if (
+            self.realistic_simulation
+            and random.random() < self.partial_fill_probability
+        ):
             # 隨機部分成交 (50%-99%)
             fill_ratio = random.uniform(0.5, 0.99)
             fill_quantity = int(order.quantity * fill_ratio)
@@ -459,7 +479,10 @@ class SimulatorAdapter(BrokerBase):
                 position["value"] = total_shares * latest_price
         elif order.action == "sell":
             # 檢查持倉是否足夠
-            if order.stock_id not in self.positions or self.positions[order.stock_id]["shares"] < fill_quantity:
+            if (
+                order.stock_id not in self.positions
+                or self.positions[order.stock_id]["shares"] < fill_quantity
+            ):
                 order.status = OrderStatus.REJECTED
                 order.error_message = "持倉不足"
                 order.updated_at = datetime.now()
@@ -477,7 +500,9 @@ class SimulatorAdapter(BrokerBase):
                 del self.positions[order.stock_id]
             else:
                 # 更新持倉成本和價值
-                position["cost"] = position["cost"] * (1 - fill_quantity / (position["shares"] + fill_quantity))
+                position["cost"] = position["cost"] * (
+                    1 - fill_quantity / (position["shares"] + fill_quantity)
+                )
                 position["current_price"] = latest_price
                 position["value"] = position["shares"] * latest_price
 
@@ -504,7 +529,9 @@ class SimulatorAdapter(BrokerBase):
         }
         self.transaction_history.append(transaction)
 
-        logger.info(f"訂單執行: {order}, 成交價格: {execution_price}, 成交數量: {fill_quantity}")
+        logger.info(
+            f"訂單執行: {order}, 成交價格: {execution_price}, 成交數量: {fill_quantity}"
+        )
 
     def _get_latest_price(self, stock_id: str) -> Optional[float]:
         """
@@ -576,7 +603,9 @@ class SimulatorAdapter(BrokerBase):
             state = {
                 "cash": self.cash,
                 "positions": self.positions,
-                "orders": {order_id: order.to_dict() for order_id, order in self.orders.items()},
+                "orders": {
+                    order_id: order.to_dict() for order_id, order in self.orders.items()
+                },
                 "transaction_history": self.transaction_history,
                 "latest_prices": self.latest_prices,
                 "timestamp": datetime.now().isoformat(),

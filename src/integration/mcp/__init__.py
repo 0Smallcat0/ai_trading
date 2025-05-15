@@ -10,4 +10,4 @@ from .client import MCPClient
 # 創建全局MCP客戶端實例
 mcp_client = MCPClient()
 
-__all__ = ['mcp_client', 'MCPClient']
+__all__ = ["mcp_client", "MCPClient"]

@@ -24,14 +24,14 @@ from .futu_adapter import FutuAdapter
 from .config import BrokerConfig
 
 __all__ = [
-    'BrokerBase',
-    'OrderStatus',
-    'OrderType',
-    'OrderManager',
-    'encrypt_api_key',
-    'decrypt_api_key',
-    'SimulatorAdapter',
-    'ShioajiAdapter',
-    'FutuAdapter',
-    'BrokerConfig',
+    "BrokerBase",
+    "OrderStatus",
+    "OrderType",
+    "OrderManager",
+    "encrypt_api_key",
+    "decrypt_api_key",
+    "SimulatorAdapter",
+    "ShioajiAdapter",
+    "FutuAdapter",
+    "BrokerConfig",
 ]

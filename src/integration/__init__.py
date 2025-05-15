@@ -12,8 +12,8 @@ from .workflows import workflow_manager
 from .mcp import mcp_client
 
 __all__ = [
-    'api_router',
-    'create_app',
-    'workflow_manager',
-    'mcp_client',
+    "api_router",
+    "create_app",
+    "workflow_manager",
+    "mcp_client",
 ]

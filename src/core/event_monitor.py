@@ -39,8 +39,16 @@ from .events.event_processor import EventProcessor, processor_registry
 from .events.event_store import event_store
 from .events.event_filter import EventFilter, TypeFilter, SeverityFilter
 from .events.event_aggregator import EventAggregator, CountAggregator, SubjectAggregator
-from .events.event_correlation import EventCorrelator, SequenceCorrelator, SubjectCorrelator
-from .events.anomaly_detector import AnomalyDetector, FrequencyAnomalyDetector, ValueAnomalyDetector
+from .events.event_correlation import (
+    EventCorrelator,
+    SequenceCorrelator,
+    SubjectCorrelator,
+)
+from .events.anomaly_detector import (
+    AnomalyDetector,
+    FrequencyAnomalyDetector,
+    ValueAnomalyDetector,
+)
 
 # 載入環境變數
 load_dotenv()
@@ -219,7 +227,7 @@ class EventMonitor:
                 name="price_anomaly_detector",
                 event_types=[EventType.MARKET_DATA],
                 data_field="price",
-                threshold=3.0
+                threshold=3.0,
             )
             processor_registry.register(price_detector)
 
@@ -228,7 +236,7 @@ class EventMonitor:
                 name="volume_anomaly_detector",
                 event_types=[EventType.MARKET_DATA],
                 data_field="volume",
-                threshold=3.0
+                threshold=3.0,
             )
             processor_registry.register(volume_detector)
 
@@ -262,18 +270,16 @@ class EventMonitor:
                             message=f"負面新聞: {event.message} (情緒分數: {sentiment_score:.2f})",
                             data={
                                 "sentiment_score": sentiment_score,
-                                "original_event_id": event.id
+                                "original_event_id": event.id,
                             },
                             tags=["sentiment", "negative", "news"],
-                            related_events=[event.id]
+                            related_events=[event.id],
                         )
 
                     return None
 
             sentiment_processor = SentimentProcessor(
-                name="sentiment_processor",
-                event_types=[EventType.NEWS],
-                monitor=self
+                name="sentiment_processor", event_types=[EventType.NEWS], monitor=self
             )
             processor_registry.register(sentiment_processor)
 
@@ -282,16 +288,20 @@ class EventMonitor:
                 name="news_aggregator",
                 event_types=[EventType.NEWS],
                 window_size=300,
-                threshold=3
+                threshold=3,
             )
             processor_registry.register(news_aggregator)
 
             # 創建事件關聯分析器
             correlator = SubjectCorrelator(
                 name="subject_correlator",
-                event_types=[EventType.PRICE_ANOMALY, EventType.VOLUME_ANOMALY, EventType.NEWS],
+                event_types=[
+                    EventType.PRICE_ANOMALY,
+                    EventType.VOLUME_ANOMALY,
+                    EventType.NEWS,
+                ],
                 window_size=600,
-                threshold=2
+                threshold=2,
             )
             processor_registry.register(correlator)
 
@@ -403,16 +413,20 @@ class EventMonitor:
                         event_type=EventType.PRICE_ANOMALY,
                         source=EventSource.MARKET_DATA,
                         subject=stock_id,
-                        severity=EventSeverity.ERROR if abs(change) > self.price_threshold * 2 else EventSeverity.WARNING,
+                        severity=(
+                            EventSeverity.ERROR
+                            if abs(change) > self.price_threshold * 2
+                            else EventSeverity.WARNING
+                        ),
                         message=f"價格異常變化: {change:.2%}",
                         data={
                             "stock_id": stock_id,
                             "price": float(latest_prices[stock_id]),
                             "previous_price": float(previous_prices[stock_id]),
                             "change": float(change),
-                            "threshold": self.price_threshold
+                            "threshold": self.price_threshold,
                         },
-                        tags=["price", "anomaly", "market"]
+                        tags=["price", "anomaly", "market"],
                     )
 
                     # 發布事件
@@ -424,7 +438,9 @@ class EventMonitor:
                         stock_id=stock_id,
                         content=f"價格異常變化: {change:.2%}",
                         severity=(
-                            "high" if abs(change) > self.price_threshold * 2 else "medium"
+                            "high"
+                            if abs(change) > self.price_threshold * 2
+                            else "medium"
                         ),
                     )
 
@@ -462,16 +478,20 @@ class EventMonitor:
                         event_type=EventType.VOLUME_ANOMALY,
                         source=EventSource.MARKET_DATA,
                         subject=stock_id,
-                        severity=EventSeverity.ERROR if change > self.volume_threshold * 2 else EventSeverity.WARNING,
+                        severity=(
+                            EventSeverity.ERROR
+                            if change > self.volume_threshold * 2
+                            else EventSeverity.WARNING
+                        ),
                         message=f"成交量異常變化: {change:.2f}倍",
                         data={
                             "stock_id": stock_id,
                             "volume": float(latest_volumes[stock_id]),
                             "avg_volume": float(avg_volumes[stock_id]),
                             "change": float(change),
-                            "threshold": self.volume_threshold
+                            "threshold": self.volume_threshold,
                         },
-                        tags=["volume", "anomaly", "market"]
+                        tags=["volume", "anomaly", "market"],
                     )
 
                     # 發布事件
@@ -482,7 +502,9 @@ class EventMonitor:
                         event_type=EventType.VOLUME_ANOMALY,
                         stock_id=stock_id,
                         content=f"成交量異常變化: {change:.2f}倍",
-                        severity="high" if change > self.volume_threshold * 2 else "medium",
+                        severity=(
+                            "high" if change > self.volume_threshold * 2 else "medium"
+                        ),
                     )
 
                     # 添加事件
@@ -508,7 +530,11 @@ class EventMonitor:
                                 event_type=EventType.NEWS,
                                 source=EventSource.NEWS_FEED,
                                 subject=news.get("stock_id", "market"),
-                                severity=EventSeverity.ERROR if news.get("severity") == "high" else EventSeverity.WARNING,
+                                severity=(
+                                    EventSeverity.ERROR
+                                    if news.get("severity") == "high"
+                                    else EventSeverity.WARNING
+                                ),
                                 message=news.get("title", ""),
                                 data={
                                     "stock_id": news.get("stock_id"),
@@ -516,9 +542,21 @@ class EventMonitor:
                                     "content": news.get("content", ""),
                                     "url": news.get("url", ""),
                                     "source": source,
-                                    "timestamp": news.get("timestamp", datetime.now()).isoformat() if isinstance(news.get("timestamp"), datetime) else news.get("timestamp", datetime.now().isoformat())
+                                    "timestamp": (
+                                        news.get(
+                                            "timestamp", datetime.now()
+                                        ).isoformat()
+                                        if isinstance(news.get("timestamp"), datetime)
+                                        else news.get(
+                                            "timestamp", datetime.now().isoformat()
+                                        )
+                                    ),
                                 },
-                                tags=["news", "important", news.get("severity", "medium")]
+                                tags=[
+                                    "news",
+                                    "important",
+                                    news.get("severity", "medium"),
+                                ],
                             )
 
                             # 發布事件
