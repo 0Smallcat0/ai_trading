@@ -5,22 +5,23 @@
 模擬真實市場環境，包括訂單執行、滑價、部分成交等。
 """
 
-import logging
-import time
-import random
-import uuid
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-import threading
-import queue
 import json
+import logging
 import os
+import queue
+import random
+import threading
+import time
+import uuid
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+
+from src.utils.utils import retry
 
 from .broker_base import BrokerBase, Order, OrderStatus, OrderType
-from src.utils.utils import retry
 
 # 設定日誌
 logger = logging.getLogger("execution.simulator")

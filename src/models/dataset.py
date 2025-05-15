@@ -10,17 +10,17 @@
 """
 
 import logging
+from datetime import datetime
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from datetime import datetime, timedelta
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from src.config import LOG_LEVEL
 from src.core.features import (
-    calculate_technical_indicators,
     calculate_fundamental_indicators,
+    calculate_technical_indicators,
 )
 
 # 設定日誌

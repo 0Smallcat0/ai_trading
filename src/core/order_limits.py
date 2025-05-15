@@ -5,15 +5,11 @@
 以符合風險管理和監管要求。
 """
 
-import os
 import json
-import time
-import logging
+import os
 import threading
 from enum import Enum
-from typing import Dict, List, Set, Optional, Any, Union, Tuple
-from datetime import datetime, timedelta
-from collections import deque
+from typing import Any, List, Tuple
 
 from src.core.logger import logger
 

@@ -14,41 +14,33 @@
 - 異常檢測
 """
 
-import time
-import os
-import pandas as pd
-import logging
-import threading
-import requests
-import feedparser
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Optional, Any, Union
-from dotenv import load_dotenv
-from bs4 import BeautifulSoup
-from snownlp import SnowNLP
-from FinMind.data import DataLoader
-import psutil
 import gc
+import logging
+import os
+import threading
+import time
+from datetime import datetime, timedelta
+from typing import Callable
+
+import feedparser
+import pandas as pd
+import psutil
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from FinMind.data import DataLoader
+from snownlp import SnowNLP
+
+from .events.anomaly_detector import ValueAnomalyDetector
 
 # 導入事件處理引擎
-from .events.event import Event, EventType, EventSeverity, EventSource
-from .events.event_bus import event_bus, SubscriptionType
+from .events.event import Event, EventSeverity, EventSource, EventType
+from .events.event_aggregator import SubjectAggregator
+from .events.event_bus import event_bus
+from .events.event_correlation import SubjectCorrelator
 from .events.event_processor import EventProcessor, processor_registry
 from .events.event_store import event_store
-from .events.event_filter import EventFilter, TypeFilter, SeverityFilter
-from .events.event_aggregator import EventAggregator, CountAggregator, SubjectAggregator
-from .events.event_correlation import (
-    EventCorrelator,
-    SequenceCorrelator,
-    SubjectCorrelator,
-)
-from .events.anomaly_detector import (
-    AnomalyDetector,
-    FrequencyAnomalyDetector,
-    ValueAnomalyDetector,
-)
 
 # 載入環境變數
 load_dotenv()
@@ -242,11 +234,29 @@ class EventMonitor:
 
             # 創建新聞情緒分析器
             class SentimentProcessor(EventProcessor):
+            """
+            SentimentProcessor
+            
+            """
                 def __init__(self, name, event_types, monitor):
+                """
+                __init__
+                
+                Args:
+                    name: 
+                    event_types: 
+                    monitor: 
+                """
                     super().__init__(name, event_types)
                     self.monitor = monitor
 
                 def process_event(self, event):
+                """
+                process_event
+                
+                Args:
+                    event: 
+                """
                     if event.event_type != EventType.NEWS:
                         return None
 
@@ -1409,6 +1419,10 @@ def start(callback=None):
 
     # 定義監控循環
     def monitor_loop():
+    """
+    monitor_loop
+    
+    """
         while monitor.running:
             try:
                 # 拉取最新新聞

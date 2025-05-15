@@ -9,18 +9,19 @@
 - 訂單重試機制
 """
 
-import logging
-import time
-import threading
-import queue
-from typing import Dict, List, Optional, Callable, Any, Union
-from datetime import datetime, timedelta
 import json
+import logging
 import os
+import queue
+import threading
+import time
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from src.utils.utils import retry
 
 from .broker_base import BrokerBase, Order, OrderStatus, OrderType
-from src.utils.utils import retry
 
 # 設定日誌
 logger = logging.getLogger("execution.order_manager")

@@ -7,12 +7,11 @@
 import logging
 import threading
 import time
-from typing import Dict, List, Callable, Any, Optional, Set, Tuple, Union
 from abc import ABC, abstractmethod
-import queue
+from typing import List, Optional, Union
 
-from .event import Event, EventType, EventSeverity, EventSource
-from .event_bus import event_bus, SubscriptionType
+from .event import Event, EventType
+from .event_bus import SubscriptionType, event_bus
 
 # 設定日誌
 logger = logging.getLogger("events.event_processor")
@@ -125,7 +124,6 @@ class EventProcessor(ABC):
         Returns:
             Optional[Union[Event, List[Event]]]: 處理結果，可以是一個新事件、事件列表或None
         """
-        pass
 
     def get_stats(self):
         """

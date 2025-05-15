@@ -6,12 +6,10 @@
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Set, Tuple, Callable
-from datetime import datetime, timedelta
-from collections import defaultdict, Counter, deque
-import re
+from collections import Counter, defaultdict, deque
+from typing import Callable, List, Optional
 
-from .event import Event, EventType, EventSeverity, EventSource, create_system_event
+from .event import Event, EventSeverity, EventSource, EventType
 from .event_processor import EventProcessor
 
 # 設定日誌

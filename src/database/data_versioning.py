@@ -11,25 +11,38 @@
 - 變更歷史記錄
 """
 
-import logging
-import json
 import hashlib
-from datetime import datetime, date
-from typing import Dict, List, Any, Optional, Union, Tuple, Set
-from sqlalchemy import inspect, text, func
+import json
+import logging
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import func, inspect, text
 from sqlalchemy.orm import Session
+
 
 # 自定義 JSON 編碼器，處理日期、時間和 DataFrame 類型
 class CustomJSONEncoder(json.JSONEncoder):
+"""
+CustomJSONEncoder
+
+"""
     def default(self, obj):
+    """
+    default
+    
+    Args:
+        obj: 
+    """
         if isinstance(obj, (date, datetime)):
             return obj.isoformat()
-        elif hasattr(obj, 'to_dict'):
+        elif hasattr(obj, "to_dict"):
             return obj.to_dict()
         return super().default(obj)
 
-from src.database.schema import Base, DatabaseVersion, SystemLog
+
 from src.config import LOG_LEVEL
+from src.database.schema import Base, DatabaseVersion, SystemLog
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -75,7 +88,7 @@ class DataVersionManager:
         version: str,
         description: str,
         changes: Dict[str, Any],
-        applied_by: str = "system"
+        applied_by: str = "system",
     ) -> DatabaseVersion:
         """
         更新資料庫版本
@@ -118,21 +131,23 @@ class DataVersionManager:
             List[Dict[str, Any]]: 版本歷史記錄列表
         """
         version_records = (
-            self.session.query(DatabaseVersion)
-            .order_by(DatabaseVersion.id)
-            .all()
+            self.session.query(DatabaseVersion).order_by(DatabaseVersion.id).all()
         )
 
         history = []
         for record in version_records:
-            history.append({
-                "id": record.id,
-                "version": record.version,
-                "description": record.description,
-                "changes": record.changes,
-                "applied_by": record.applied_by,
-                "applied_at": record.applied_at.isoformat() if record.applied_at else None,
-            })
+            history.append(
+                {
+                    "id": record.id,
+                    "version": record.version,
+                    "description": record.description,
+                    "changes": record.changes,
+                    "applied_by": record.applied_by,
+                    "applied_at": (
+                        record.applied_at.isoformat() if record.applied_at else None
+                    ),
+                }
+            )
 
         return history
 
@@ -228,9 +243,9 @@ class DataVersionManager:
         # 添加缺失的表
         for table_name in comparison_result.get("missing_tables", []):
             table = Base.metadata.tables[table_name]
-            create_table_stmt = str(
-                table.create(bind=self.session.bind).compile()
-            ).strip() + ";"
+            create_table_stmt = (
+                str(table.create(bind=self.session.bind).compile()).strip() + ";"
+            )
             migration_script.append(create_table_stmt)
 
         # 添加缺失的列
@@ -251,7 +266,7 @@ class DataVersionManager:
         table_name: str,
         record_id: int,
         changes: Dict[str, Any],
-        user: str = "system"
+        user: str = "system",
     ) -> None:
         """
         追蹤資料變更
@@ -265,12 +280,15 @@ class DataVersionManager:
             user: 變更者
         """
         # 將變更內容轉換為 JSON 字串，使用自定義編碼器處理日期和時間
-        details_json = json.dumps({
-            "table": table_name,
-            "record_id": record_id,
-            "changes": changes,
-            "user": user,
-        }, cls=CustomJSONEncoder)
+        details_json = json.dumps(
+            {
+                "table": table_name,
+                "record_id": record_id,
+                "changes": changes,
+                "user": user,
+            },
+            cls=CustomJSONEncoder,
+        )
         details_dict = json.loads(details_json)
 
         # 創建日誌記錄
@@ -308,33 +326,24 @@ class DataVersionManager:
             List[Dict[str, Any]]: 變更歷史記錄列表
         """
         # 構建查詢
-        query = (
-            self.session.query(SystemLog)
-            .filter(SystemLog.module == "data_versioning")
+        query = self.session.query(SystemLog).filter(
+            SystemLog.module == "data_versioning"
         )
 
         # 添加過濾條件
         if table_name:
             # 對於 SQLite，我們需要使用 JSON 字串匹配
             # 這裡使用簡單的 LIKE 查詢來模擬 JSON 查詢
-            query = query.filter(
-                SystemLog.message.like(f"資料變更: {table_name} ID=%")
-            )
+            query = query.filter(SystemLog.message.like(f"資料變更: {table_name} ID=%"))
 
         if record_id:
-            query = query.filter(
-                SystemLog.message.like(f"資料變更: % ID={record_id}")
-            )
+            query = query.filter(SystemLog.message.like(f"資料變更: % ID={record_id}"))
 
         if start_date:
-            query = query.filter(
-                func.date(SystemLog.timestamp) >= start_date
-            )
+            query = query.filter(func.date(SystemLog.timestamp) >= start_date)
 
         if end_date:
-            query = query.filter(
-                func.date(SystemLog.timestamp) <= end_date
-            )
+            query = query.filter(func.date(SystemLog.timestamp) <= end_date)
 
         # 執行查詢
         logs = query.order_by(SystemLog.timestamp).all()
@@ -342,14 +351,16 @@ class DataVersionManager:
         # 格式化結果
         history = []
         for log in logs:
-            history.append({
-                "id": log.id,
-                "timestamp": log.timestamp.isoformat(),
-                "table": log.details.get("table"),
-                "record_id": log.details.get("record_id"),
-                "changes": log.details.get("changes"),
-                "user": log.details.get("user"),
-            })
+            history.append(
+                {
+                    "id": log.id,
+                    "timestamp": log.timestamp.isoformat(),
+                    "table": log.details.get("table"),
+                    "record_id": log.details.get("record_id"),
+                    "changes": log.details.get("changes"),
+                    "user": log.details.get("user"),
+                }
+            )
 
         return history
 

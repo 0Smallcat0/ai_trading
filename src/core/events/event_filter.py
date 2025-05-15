@@ -6,10 +6,10 @@
 
 import logging
 import re
-from typing import Dict, List, Callable, Any, Optional, Set, Union, Pattern
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import Any, Dict, List, Optional, Pattern, Union
 
-from .event import Event, EventType, EventSeverity, EventSource
+from .event import Event, EventSeverity, EventSource, EventType
 from .event_processor import EventProcessor
 
 # 設定日誌
@@ -47,7 +47,6 @@ class EventFilter(EventProcessor):
         Returns:
             bool: 是否通過過濾
         """
-        pass
 
     def process_event(self, event: Event) -> Optional[Event]:
         """

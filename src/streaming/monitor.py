@@ -4,16 +4,17 @@
 此模組實現了數據流監控器，用於監控數據流的狀態和性能。
 """
 
+import json
 import logging
+import os
 import threading
 import time
-import json
-import os
-from typing import Dict, List, Any, Optional, Union, Callable
 from datetime import datetime
+from typing import Any, Callable, Dict, List
+
 import psutil
 
-from .message import Message, MessageType, MessagePriority
+from .message import Message, MessagePriority, MessageType
 
 # 設定日誌
 logger = logging.getLogger("streaming.monitor")

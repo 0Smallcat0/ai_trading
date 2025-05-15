@@ -5,17 +5,16 @@
 """
 
 import logging
+import queue
 import threading
 import time
-import queue
-import json
-import numpy as np
-import pandas as pd
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Union, Callable, Set
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from .message import Message, MessageType, MessagePriority
+import numpy as np
+
+from .message import Message, MessageType
 
 # 設定日誌
 logger = logging.getLogger("streaming.processor")
@@ -178,7 +177,6 @@ class Processor(ABC):
         Returns:
             Optional[Union[Message, List[Message]]]: 處理結果，可以是一個新消息、消息列表或None
         """
-        pass
 
     def get_stats(self) -> Dict[str, Any]:
         """

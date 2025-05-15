@@ -4,10 +4,11 @@
 此模組包含整個交易系統中共用的工具函數，如數值處理、日期轉換等。
 """
 
-import numpy as np
-import pandas as pd
 import functools
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
 
 
@@ -57,8 +58,8 @@ def generate_random_header():
     Returns:
         dict: 包含隨機 User-Agent 的請求頭
     """
-    import random
     import copy
+    import random
 
     random_headers = [
         {
@@ -253,8 +254,18 @@ def retry(max_retries=3):
     """
 
     def decorator(func):
+    """
+    decorator
+    
+    Args:
+        func: 
+    """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+        """
+        wrapper
+        
+        """
             retries = 0
             while retries < max_retries:
                 try:
@@ -307,6 +318,10 @@ def cache_dataframe(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         # 創建快取目錄
+    """
+    wrapper
+    
+    """
         cache_dir = Path("cache")
         cache_dir.mkdir(exist_ok=True)
         # 生成快取檔案名稱（用 hash 處理參數）

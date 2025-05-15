@@ -7,13 +7,14 @@
 - 交易參數設定
 """
 
-import os
 import json
 import logging
-from typing import Dict, Any, Optional, List
-from pathlib import Path
-from dataclasses import dataclass, field, asdict
+import os
+from dataclasses import asdict, dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 import yaml
 
 from .security import load_api_keys

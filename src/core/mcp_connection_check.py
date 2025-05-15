@@ -10,13 +10,14 @@ MCP服務器連接測試腳本
 並且可以正確調用MCP工具。
 """
 
-import os
-import sys
-import time
-import requests
 import argparse
 import logging
+import os
 import subprocess
+import sys
+import time
+
+import requests
 
 # 設定日誌
 logging.basicConfig(

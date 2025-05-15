@@ -4,20 +4,19 @@
 此模組實現了流管理器，用於管理數據流的生產者、消費者和處理器。
 """
 
+import json
 import logging
+import os
+import queue
 import threading
 import time
-from typing import Dict, List, Any, Optional, Union, Set, Callable
-import queue
-import json
-import os
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from .message import Message, MessageType, MessagePriority
-from .producer import Producer
 from .consumer import Consumer
-from .processor import Processor
+from .message import Message, MessageType
 from .pipeline import Pipeline
+from .processor import Processor
+from .producer import Producer
 
 # 設定日誌
 logger = logging.getLogger("streaming.manager")

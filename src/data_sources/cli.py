@@ -4,17 +4,17 @@
 此模組提供資料收集系統的命令列介面，方便使用者透過命令列操作資料收集系統。
 """
 
+import argparse
+import json
+import logging
 import os
 import sys
-import argparse
-import logging
-import json
 import time
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from src.data_sources.data_collection_system import DataCollectionSystem
 from src.config import CONFIG_DIR
+from src.data_sources.data_collection_system import DataCollectionSystem
 
 # 設定日誌
 logging.basicConfig(

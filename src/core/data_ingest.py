@@ -17,43 +17,28 @@ import logging
 import os
 import queue
 import sqlite3
-import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
 from tqdm import tqdm
 
+# 配置模組
+from src.config import CACHE_DIR, DATA_DIR, LOGS_DIR
+
+# 工具模組
+from src.core.rate_limiter import AdaptiveRateLimiter
+from src.core.websocket_client import WebSocketClient
+from src.data_sources.broker_adapter import SimulatedBrokerAdapter
+
 # 資料來源適配器
 from src.data_sources.twse_crawler import twse_crawler
 from src.data_sources.yahoo_adapter import YahooFinanceAdapter
-from src.data_sources.broker_adapter import SimulatedBrokerAdapter
-from src.data_sources.market_data_adapter import MarketDataAdapter
-
-# 工具模組
-from src.core.rate_limiter import RateLimiter, AdaptiveRateLimiter
-from src.core.websocket_client import WebSocketClient
 
 # 資料庫模組
-from src.database.schema import (
-    MarketDaily,
-    MarketMinute,
-    MarketTick,
-    MarketType,
-    TimeGranularity,
-    init_db,
-)
-from src.database.parquet_utils import (
-    query_to_dataframe,
-    save_to_parquet,
-    read_from_parquet,
-    create_market_data_shard,
-)
 
-# 配置模組
-from src.config import DATA_DIR, CACHE_DIR, LOGS_DIR
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -1138,6 +1123,10 @@ def schedule_fetch(
 
     # 定義更新函數
     def update_job():
+    """
+    update_job
+    
+    """
         try:
             # 更新日期
             today = datetime.datetime.now().date()

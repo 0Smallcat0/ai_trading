@@ -12,6 +12,13 @@ class MeanReversionStrategy:
     """
 
     def __init__(self, window: int = 20, threshold: float = 0.02):
+    """
+    __init__
+    
+    Args:
+        window: 
+        threshold: 
+    """
         self.window = window
         self.threshold = threshold
 

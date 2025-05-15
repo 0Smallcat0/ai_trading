@@ -4,11 +4,11 @@
 此模組定義了券商 API 的基礎介面，所有具體的券商 API 適配器都應該繼承此類別。
 """
 
+import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Optional, Union, Any
-import logging
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # 設定日誌
 logger = logging.getLogger("execution.broker")
@@ -170,7 +170,6 @@ class BrokerBase(ABC):
         Returns:
             bool: 是否連接成功
         """
-        pass
 
     @abstractmethod
     def disconnect(self) -> bool:
@@ -180,7 +179,6 @@ class BrokerBase(ABC):
         Returns:
             bool: 是否斷開成功
         """
-        pass
 
     @abstractmethod
     def place_order(self, order: Order) -> Optional[str]:
@@ -193,7 +191,6 @@ class BrokerBase(ABC):
         Returns:
             str: 訂單 ID 或 None (如果下單失敗)
         """
-        pass
 
     @abstractmethod
     def cancel_order(self, order_id: str) -> bool:
@@ -206,7 +203,6 @@ class BrokerBase(ABC):
         Returns:
             bool: 是否取消成功
         """
-        pass
 
     @abstractmethod
     def get_order(self, order_id: str) -> Optional[Order]:
@@ -219,7 +215,6 @@ class BrokerBase(ABC):
         Returns:
             Order: 訂單物件或 None (如果訂單不存在)
         """
-        pass
 
     @abstractmethod
     def get_orders(self, status: Optional[OrderStatus] = None) -> List[Order]:
@@ -232,7 +227,6 @@ class BrokerBase(ABC):
         Returns:
             List[Order]: 訂單列表
         """
-        pass
 
     @abstractmethod
     def get_positions(self) -> Dict[str, Dict[str, Any]]:
@@ -242,7 +236,6 @@ class BrokerBase(ABC):
         Returns:
             Dict[str, Dict[str, Any]]: 持倉資訊，key 為股票代號
         """
-        pass
 
     @abstractmethod
     def get_account_info(self) -> Dict[str, Any]:
@@ -252,7 +245,6 @@ class BrokerBase(ABC):
         Returns:
             Dict[str, Any]: 帳戶資訊
         """
-        pass
 
     @abstractmethod
     def get_market_data(self, stock_id: str) -> Dict[str, Any]:
@@ -265,7 +257,6 @@ class BrokerBase(ABC):
         Returns:
             Dict[str, Any]: 市場資料
         """
-        pass
 
     def place_orders(self, orders: List[Dict[str, Any]]) -> List[str]:
         """

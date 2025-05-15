@@ -4,17 +4,14 @@ Kafka 流處理示例
 此示例展示了如何使用 Kafka 進行流處理。
 """
 
+import logging
 import os
 import sys
 import time
-import logging
-import json
+from datetime import datetime
+from typing import Any, Dict, Optional
+
 import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-import threading
-import queue
-from typing import Dict, List, Any, Optional, Union
 
 # 添加項目根目錄到 Python 路徑
 sys.path.append(
@@ -23,19 +20,13 @@ sys.path.append(
 
 # 導入流處理模組
 from src.streaming import (
-    StreamManager,
-    Message,
-    MessageType,
-    MessagePriority,
-    Producer,
-    KafkaProducer,
-    Consumer,
     KafkaConsumer,
+    KafkaProducer,
+    Message,
+    MessagePriority,
+    MessageType,
     Processor,
-    FeatureProcessor,
-    ModelProcessor,
-    Pipeline,
-    StreamingPipeline,
+    StreamManager,
     StreamMonitor,
 )
 
@@ -183,7 +174,7 @@ def main():
     """主函數"""
     # 檢查 Kafka 是否可用
     try:
-        from kafka import KafkaProducer as KafkaClient
+        pass
     except ImportError:
         logger.error("Kafka 套件未安裝，請先安裝: pip install kafka-python")
         return

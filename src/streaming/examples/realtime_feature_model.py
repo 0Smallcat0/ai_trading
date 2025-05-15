@@ -4,57 +4,46 @@
 此示例展示了如何使用流處理框架進行實時特徵更新和模型推理。
 """
 
+import logging
 import os
 import sys
 import time
-import logging
-import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-import threading
-import queue
-from typing import Dict, List, Any, Optional, Union
 
 # 添加項目根目錄到 Python 路徑
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 )
 
-# 導入流處理模組
-from src.streaming import (
-    StreamManager,
-    Message,
-    MessageType,
-    MessagePriority,
-    Producer,
-    WebSocketProducer,
-    KafkaProducer,
-    Consumer,
-    WebSocketConsumer,
-    KafkaConsumer,
-    Processor,
-    FeatureProcessor,
-    ModelProcessor,
-    Pipeline,
-    StreamingPipeline,
-    FeaturePipeline,
-    ModelPipeline,
-    StreamMonitor,
-)
-
 # 導入特徵計算函數
 from src.core.features import (
-    calculate_rsi,
-    calculate_macd,
-    calculate_bollinger_bands,
     calculate_atr,
+    calculate_bollinger_bands,
+    calculate_macd,
     calculate_obv,
+    calculate_rsi,
     calculate_vwap,
 )
 
 # 導入模型
 from src.models.model_loader import load_model
+
+# 導入流處理模組
+from src.streaming import (
+    FeatureProcessor,
+    Message,
+    MessagePriority,
+    MessageType,
+    ModelProcessor,
+    Processor,
+    Producer,
+    StreamManager,
+    StreamMonitor,
+)
 
 # 設定日誌
 logging.basicConfig(

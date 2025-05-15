@@ -5,62 +5,32 @@ API應用程序
 """
 
 import os
-import logging
-import time
 import threading
-import uvicorn
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 
-from fastapi import (
-    FastAPI,
-    APIRouter,
-    Depends,
-    HTTPException,
-    status,
-    Security,
-    BackgroundTasks,
-    Request,
-)
-from fastapi.security import (
-    OAuth2PasswordBearer,
-    OAuth2PasswordRequestForm,
-    SecurityScopes,
-)
+import uvicorn
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import BaseModel
 
+from src.core.audit_trail import AuditEventType, audit_trail
 from src.core.logger import logger
-from src.core.audit_trail import audit_trail, AuditEventType
-from src.core.order_limits import order_limits
-from src.risk_management.compliance import compliance_monitor
-from .tls import tls_config
-from .rbac import rbac_manager, Role, Permission
-from .auth import authenticate, create_access_token, get_current_user
-from .models import (
-    UserModel,
-    TokenModel,
-    TradeRequestModel,
-    TradeResponseModel,
-    PortfolioModel,
-    StrategyModel,
-    BacktestRequestModel,
-    BacktestResponseModel,
-)
+
 from .routes import (
     auth_router,
-    trade_router,
-    portfolio_router,
-    strategy_router,
     backtest_router,
     market_data_router,
-    system_router,
-    workflow_router,
+    portfolio_router,
     signal_router,
+    strategy_router,
+    system_router,
+    trade_router,
+    workflow_router,
 )
+from .tls import tls_config
 
 # 創建API路由器
 api_router = APIRouter()

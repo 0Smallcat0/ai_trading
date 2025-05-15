@@ -5,22 +5,19 @@
 """
 
 import logging
+import os
 import time
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-import threading
-import queue
-import os
-from pathlib import Path
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     import shioaji as sj
     from shioaji.constant import (
         Action,
+        OrderState,
         StockOrderType,
         StockPriceType,
-        OrderState,
         TFTOrderType,
     )
 
@@ -28,8 +25,9 @@ try:
 except ImportError:
     SHIOAJI_AVAILABLE = False
 
-from .broker_base import BrokerBase, Order, OrderStatus, OrderType
 from src.utils.utils import retry
+
+from .broker_base import BrokerBase, Order, OrderStatus, OrderType
 
 # 設定日誌
 logger = logging.getLogger("execution.shioaji")

@@ -12,14 +12,15 @@ WebSocket 客戶端模組
 """
 
 import json
-import time
 import logging
-import threading
 import queue
 import random
-from typing import Dict, List, Any, Optional, Union, Callable, Tuple
+import threading
+import time
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import websocket
-from datetime import datetime, timedelta
 
 # 設定日誌
 logger = logging.getLogger(__name__)

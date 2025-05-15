@@ -4,16 +4,16 @@
 此模組實現了事件總線，用於事件的發布和訂閱。
 """
 
-import logging
-import threading
-import queue
-import time
-from typing import Dict, List, Callable, Any, Optional, Set, Tuple
-from enum import Enum
 import asyncio
+import logging
+import queue
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from .event import Event, EventType, EventSeverity, EventSource
+from .event import Event, EventType
 
 # 設定日誌
 logger = logging.getLogger("events.event_bus")

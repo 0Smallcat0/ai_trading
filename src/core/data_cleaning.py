@@ -15,20 +15,14 @@
 """
 
 import logging
+from datetime import date
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, date, timedelta
-from scipy import stats, interpolate
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.impute import KNNImputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 
 # 導入現有的資料清理功能
-from src.core.features import DataCleaner
-from src.database.data_validation import DataValidator
-from src.utils.utils import clean_data as utils_clean_data
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -77,7 +71,9 @@ class MissingValueHandler:
         if self.method == "knn" and self.imputer is not None:
             self.imputer.fit(df[columns])
 
-    def transform(self, df: pd.DataFrame, columns: Optional[List[str]] = None) -> pd.DataFrame:
+    def transform(
+        self, df: pd.DataFrame, columns: Optional[List[str]] = None
+    ) -> pd.DataFrame:
         """
         填補缺失值
 
@@ -126,11 +122,15 @@ class MissingValueHandler:
             # 填補缺失值
             imputed_values = self.imputer.transform(result[columns])
             # 將填補後的值放回原始資料框
-            result[columns] = pd.DataFrame(imputed_values, index=original_index, columns=columns)
+            result[columns] = pd.DataFrame(
+                imputed_values, index=original_index, columns=columns
+            )
 
         return result
 
-    def fit_transform(self, df: pd.DataFrame, columns: Optional[List[str]] = None) -> pd.DataFrame:
+    def fit_transform(
+        self, df: pd.DataFrame, columns: Optional[List[str]] = None
+    ) -> pd.DataFrame:
         """
         擬合並填補缺失值
 
@@ -170,7 +170,9 @@ class OutlierHandler:
         self.iqr_multiplier = kwargs.get("iqr_multiplier", 1.5)
         self.winsorize_limits = kwargs.get("winsorize_limits", (0.05, 0.05))
 
-    def detect_outliers(self, df: pd.DataFrame, columns: Optional[List[str]] = None) -> pd.DataFrame:
+    def detect_outliers(
+        self, df: pd.DataFrame, columns: Optional[List[str]] = None
+    ) -> pd.DataFrame:
         """
         檢測異常值
 
@@ -209,7 +211,10 @@ class OutlierHandler:
                 # 如果需要使用 Isolation Forest，需要額外安裝 scikit-learn
                 try:
                     from sklearn.ensemble import IsolationForest
-                    model = IsolationForest(contamination=self.params.get("contamination", 0.05))
+
+                    model = IsolationForest(
+                        contamination=self.params.get("contamination", 0.05)
+                    )
                     outliers[col] = model.fit_predict(df[[col]]) == -1
                 except ImportError:
                     logger.warning("無法使用 Isolation Forest，請安裝 scikit-learn")
@@ -219,8 +224,12 @@ class OutlierHandler:
 
         return outliers
 
-    def treat_outliers(self, df: pd.DataFrame, outliers: Optional[pd.DataFrame] = None,
-                      columns: Optional[List[str]] = None) -> pd.DataFrame:
+    def treat_outliers(
+        self,
+        df: pd.DataFrame,
+        outliers: Optional[pd.DataFrame] = None,
+        columns: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
         """
         處理異常值
 
@@ -268,7 +277,9 @@ class OutlierHandler:
                     lower_bound = mean - self.z_threshold * std
                     upper_bound = mean + self.z_threshold * std
 
-                result.loc[outliers[col], col] = result.loc[outliers[col], col].clip(lower_bound, upper_bound)
+                result.loc[outliers[col], col] = result.loc[outliers[col], col].clip(
+                    lower_bound, upper_bound
+                )
             elif self.treatment_method == "remove":
                 # 移除法（設為 NaN）
                 result.loc[outliers[col], col] = np.nan
@@ -282,7 +293,10 @@ class OutlierHandler:
                 # Winsorize 法
                 try:
                     from scipy.stats import mstats
-                    result[col] = mstats.winsorize(result[col], limits=self.winsorize_limits)
+
+                    result[col] = mstats.winsorize(
+                        result[col], limits=self.winsorize_limits
+                    )
                 except ImportError:
                     logger.warning("無法使用 winsorize，請安裝 scipy")
                     # 回退到截斷法
@@ -290,7 +304,9 @@ class OutlierHandler:
                     std = result[col].std()
                     lower_bound = mean - self.z_threshold * std
                     upper_bound = mean + self.z_threshold * std
-                    result.loc[outliers[col], col] = result.loc[outliers[col], col].clip(lower_bound, upper_bound)
+                    result.loc[outliers[col], col] = result.loc[
+                        outliers[col], col
+                    ].clip(lower_bound, upper_bound)
 
         return result
 
@@ -311,7 +327,9 @@ class PriceStandardizer:
         """
         self.adjust_method = adjust_method
 
-    def standardize_prices(self, df: pd.DataFrame, symbol: Optional[str] = None) -> pd.DataFrame:
+    def standardize_prices(
+        self, df: pd.DataFrame, symbol: Optional[str] = None
+    ) -> pd.DataFrame:
         """
         標準化價格
 
@@ -351,9 +369,13 @@ class PriceStandardizer:
                 # 移除 adj_close 欄位，因為現在 close 已經是調整後的價格
                 result = result.drop(columns=["adj_close"])
 
-                logger.info(f"使用調整後收盤價邏輯標準化價格 {symbol if symbol else ''}")
+                logger.info(
+                    f"使用調整後收盤價邏輯標準化價格 {symbol if symbol else ''}"
+                )
             else:
-                logger.warning(f"缺少 adj_close 欄位，無法使用調整後收盤價邏輯 {symbol if symbol else ''}")
+                logger.warning(
+                    f"缺少 adj_close 欄位，無法使用調整後收盤價邏輯 {symbol if symbol else ''}"
+                )
 
         elif self.adjust_method == "adj_factor":
             # 使用調整因子邏輯
@@ -366,11 +388,15 @@ class PriceStandardizer:
 
                 logger.info(f"使用調整因子邏輯標準化價格 {symbol if symbol else ''}")
             else:
-                logger.warning(f"缺少 adj_factor 欄位，無法使用調整因子邏輯 {symbol if symbol else ''}")
+                logger.warning(
+                    f"缺少 adj_factor 欄位，無法使用調整因子邏輯 {symbol if symbol else ''}"
+                )
 
         return result
 
-    def handle_stock_splits(self, df: pd.DataFrame, split_events: Dict[date, float]) -> pd.DataFrame:
+    def handle_stock_splits(
+        self, df: pd.DataFrame, split_events: Dict[date, float]
+    ) -> pd.DataFrame:
         """
         處理股票分割
 
@@ -416,11 +442,13 @@ class DataCleaningPipeline:
     提供完整的資料清理流程，包括缺失值處理、異常值處理和價格標準化。
     """
 
-    def __init__(self,
-                 missing_value_handler: Optional[MissingValueHandler] = None,
-                 outlier_handler: Optional[OutlierHandler] = None,
-                 price_standardizer: Optional[PriceStandardizer] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        missing_value_handler: Optional[MissingValueHandler] = None,
+        outlier_handler: Optional[OutlierHandler] = None,
+        price_standardizer: Optional[PriceStandardizer] = None,
+        **kwargs,
+    ):
         """
         初始化資料清理管道
 
@@ -436,11 +464,15 @@ class DataCleaningPipeline:
         self.price_standardizer = price_standardizer or PriceStandardizer()
 
         # 設定處理順序和其他參數
-        self.process_order = kwargs.get("process_order", ["missing", "outlier", "price"])
+        self.process_order = kwargs.get(
+            "process_order", ["missing", "outlier", "price"]
+        )
         self.report = kwargs.get("report", True)
         self.visualize = kwargs.get("visualize", False)
 
-    def clean(self, df: pd.DataFrame, symbol: Optional[str] = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def clean(
+        self, df: pd.DataFrame, symbol: Optional[str] = None
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """
         清理資料
 
@@ -462,7 +494,7 @@ class DataCleaningPipeline:
             "original_shape": result.shape,
             "missing_values_before": result.isna().sum().to_dict(),
             "outliers_detected": {},
-            "processing_steps": []
+            "processing_steps": [],
         }
 
         # 根據處理順序執行清理步驟
@@ -486,7 +518,9 @@ class DataCleaningPipeline:
 
             elif step == "price":
                 # 標準化價格
-                if any(col in result.columns for col in ["open", "high", "low", "close"]):
+                if any(
+                    col in result.columns for col in ["open", "high", "low", "close"]
+                ):
                     result = self.price_standardizer.standardize_prices(result, symbol)
                     report["processing_steps"].append("price_standardization")
 
@@ -500,7 +534,12 @@ class DataCleaningPipeline:
 
         return result, report
 
-    def _generate_visualization(self, original_df: pd.DataFrame, cleaned_df: pd.DataFrame, report: Dict[str, Any]):
+    def _generate_visualization(
+        self,
+        original_df: pd.DataFrame,
+        cleaned_df: pd.DataFrame,
+        report: Dict[str, Any],
+    ):
         """
         生成視覺化報告
 
@@ -511,16 +550,18 @@ class DataCleaningPipeline:
         """
         # 這裡可以實現視覺化報告的生成邏輯
         # 例如，繪製清理前後的分佈圖、箱線圖等
-        pass
 
 
 # 實用函數
 
-def clean_stock_data(df: pd.DataFrame,
-                    handle_missing: bool = True,
-                    handle_outliers: bool = True,
-                    standardize_prices: bool = True,
-                    symbol: Optional[str] = None) -> pd.DataFrame:
+
+def clean_stock_data(
+    df: pd.DataFrame,
+    handle_missing: bool = True,
+    handle_outliers: bool = True,
+    standardize_prices: bool = True,
+    symbol: Optional[str] = None,
+) -> pd.DataFrame:
     """
     清理股票資料的便捷函數
 
@@ -546,9 +587,11 @@ def clean_stock_data(df: pd.DataFrame,
     # 創建清理管道
     pipeline = DataCleaningPipeline(
         missing_value_handler=MissingValueHandler(method="interpolate"),
-        outlier_handler=OutlierHandler(detection_method="z-score", treatment_method="clip"),
+        outlier_handler=OutlierHandler(
+            detection_method="z-score", treatment_method="clip"
+        ),
         price_standardizer=PriceStandardizer(),
-        process_order=process_order
+        process_order=process_order,
     )
 
     # 執行清理

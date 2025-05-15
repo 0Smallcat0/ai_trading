@@ -4,10 +4,11 @@ API模型
 此模組定義了API使用的數據模型。
 """
 
-from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel
 
 
 class UserModel(BaseModel):

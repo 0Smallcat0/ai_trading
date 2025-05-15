@@ -31,10 +31,10 @@ except ImportError:
     print("請先安裝 requests 套件：pip install requests")
     raise
 import datetime
-import time
 import os
-from io import StringIO
+import time
 import warnings
+from io import StringIO
 
 # 忽略警告
 warnings.filterwarnings("ignore")

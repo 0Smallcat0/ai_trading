@@ -9,27 +9,20 @@
 - 模型效能優化
 """
 
-import os
 import logging
+import threading
 import time
-import json
-import pickle
+import warnings
+from datetime import datetime
+from functools import lru_cache
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
-import threading
-import queue
-import warnings
-from functools import lru_cache
 
 # 嘗試導入 MLflow
 try:
-    import mlflow
-    import mlflow.sklearn
-    import mlflow.tensorflow
-    import mlflow.xgboost
-    import mlflow.lightgbm
+    pass
 
     MLFLOW_AVAILABLE = True
 except ImportError:
@@ -38,16 +31,16 @@ except ImportError:
 
 # 嘗試導入 ONNX
 try:
-    import onnxruntime as ort
+    pass
 
     ONNX_AVAILABLE = True
 except ImportError:
     warnings.warn("無法匯入 ONNX Runtime，部分優化功能將無法使用")
     ONNX_AVAILABLE = False
 
-from src.config import LOG_LEVEL, MODELS_DIR
-from src.models.model_governance import ModelRegistry
+from src.config import LOG_LEVEL
 from src.models.inference_pipeline import InferencePipeline
+from src.models.model_governance import ModelRegistry
 
 # 設定日誌
 logger = logging.getLogger(__name__)

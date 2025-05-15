@@ -6,12 +6,10 @@
 """
 
 import os
-import json
-import requests
-import logging
 import threading
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import requests
 
 from src.core.logger import logger
 

@@ -11,10 +11,10 @@
 - 盈虧比 (Profit/Loss Ratio)
 """
 
+from typing import Dict, Optional, Union
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # 風險調整收益指標
 

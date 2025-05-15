@@ -4,10 +4,9 @@
 此模組實現了各種倉位大小計算策略，用於控制交易風險。
 """
 
-import numpy as np
-import pandas as pd
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Union, Tuple
+
+import pandas as pd
 
 from src.core.logger import logger
 
@@ -41,7 +40,6 @@ class PositionSizingStrategy(ABC):
         Returns:
             float: 倉位大小（金額）
         """
-        pass
 
     def calculate_shares(self, portfolio_value: float, price: float, **kwargs) -> int:
         """

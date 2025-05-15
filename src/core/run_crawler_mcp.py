@@ -1,5 +1,6 @@
 import argparse
-from mcp_data_ingest import fetch_market_news, analyze_market_sentiment
+
+from mcp_data_ingest import analyze_market_sentiment, fetch_market_news
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

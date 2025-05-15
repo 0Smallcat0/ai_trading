@@ -14,16 +14,22 @@
 - 股本資料
 """
 
-from logging.handlers import RotatingFileHandler
+import argparse
+import logging
 import os
 import sys
-import warnings
 import traceback
-import logging
-import argparse
+import warnings
+from logging.handlers import RotatingFileHandler
 
 
 def progress_bar_dummy(x):
+"""
+progress_bar_dummy
+
+Args:
+    x: 
+"""
     return x
 
 

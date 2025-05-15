@@ -9,22 +9,24 @@
 支援從 Yahoo Finance、券商 API 等多個來源收集資料。
 """
 
+import logging
 import os
 import time
-import logging
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from src.config import DATA_DIR, CACHE_DIR, DB_PATH
-from src.database.schema import MarketType, TimeGranularity, MarketDaily, MarketMinute
-from src.data_sources.data_collector import DataCollector, RetryStrategy
-from src.data_sources.yahoo_adapter import YahooFinanceAdapter
-from src.data_sources.twse_crawler import TwseCrawler
+import numpy as np
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from src.config import CACHE_DIR, DATA_DIR, DB_PATH
+from src.data_sources.data_collector import DataCollector, RetryStrategy
+from src.data_sources.twse_crawler import TwseCrawler
+from src.data_sources.yahoo_adapter import YahooFinanceAdapter
+from src.database.schema import (MarketDaily, MarketMinute, MarketType,
+                                 TimeGranularity)
 
 # 設定日誌
 logger = logging.getLogger(__name__)

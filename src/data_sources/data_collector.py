@@ -10,22 +10,23 @@
 所有特定類型的資料收集器都應該繼承自基礎類別。
 """
 
-import os
-import time
 import logging
-import traceback
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from abc import ABC, abstractmethod
-import schedule
-import threading
+import os
 import queue
+import threading
+import time
+import traceback
+from abc import ABC, abstractmethod
+from datetime import date, datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from src.config import DATA_DIR, CACHE_DIR
-from src.database.schema import MarketType, TimeGranularity
+import numpy as np
+import pandas as pd
+import schedule
+
+from src.config import CACHE_DIR, DATA_DIR
 from src.core.rate_limiter import RateLimiter
+from src.database.schema import MarketType, TimeGranularity
 
 # 設定日誌
 logger = logging.getLogger(__name__)

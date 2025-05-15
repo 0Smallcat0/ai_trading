@@ -6,10 +6,10 @@
 
 import json
 import uuid
-from enum import Enum, auto
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Union
+from enum import Enum, auto
+from typing import Any, Dict, Optional
 
 
 # 設定消息類型

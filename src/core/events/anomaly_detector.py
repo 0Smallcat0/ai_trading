@@ -5,14 +5,12 @@
 """
 
 import logging
-import time
-import numpy as np
-from typing import Dict, List, Optional, Any, Set, Tuple, Union
-from datetime import datetime, timedelta
-from collections import defaultdict, deque
 import statistics
+import time
+from collections import defaultdict, deque
+from typing import List, Optional, Tuple
 
-from .event import Event, EventType, EventSeverity, EventSource
+from .event import Event, EventSeverity, EventSource, EventType
 from .event_processor import EventProcessor
 
 # 設定日誌

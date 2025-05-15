@@ -4,11 +4,9 @@
 此模組實現了各種停利策略，用於獲利了結。
 """
 
-import numpy as np
-import pandas as pd
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
+from datetime import datetime
+from typing import List
 
 from src.core.logger import logger
 
@@ -42,7 +40,6 @@ class TakeProfitStrategy(ABC):
         Returns:
             float: 停利價格
         """
-        pass
 
     @abstractmethod
     def should_take_profit(
@@ -59,7 +56,6 @@ class TakeProfitStrategy(ABC):
         Returns:
             bool: 是否應該停利
         """
-        pass
 
     def update(self, current_price: float, **kwargs) -> None:
         """
@@ -69,7 +65,6 @@ class TakeProfitStrategy(ABC):
             current_price: 當前價格
             **kwargs: 其他參數
         """
-        pass
 
 
 class PercentTakeProfit(TakeProfitStrategy):

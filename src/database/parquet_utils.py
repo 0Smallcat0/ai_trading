@@ -12,23 +12,17 @@ Parquet/Arrow 格式工具模組
 """
 
 import os
+from datetime import date
+from typing import List, Optional, Tuple
+
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from datetime import datetime, date, timedelta
-from typing import Dict, Any, Optional, List, Union, Tuple
-from sqlalchemy import select, and_, func
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from src.config import DATA_DIR
-from src.database.schema import (
-    Base,
-    MarketDaily,
-    MarketMinute,
-    MarketTick,
-    DataShard,
-    create_data_shard,
-)
+from src.database.schema import Base, DataShard, MarketDaily, create_data_shard
 
 
 def query_to_dataframe(session: Session, query) -> pd.DataFrame:

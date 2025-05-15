@@ -8,35 +8,24 @@
 - 貝葉斯優化
 """
 
-import os
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime
+from typing import Any, Callable, Dict, Optional, Union
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.metrics import make_scorer
 import mlflow
+import mlflow.lightgbm
 import mlflow.sklearn
 import mlflow.tensorflow
 import mlflow.xgboost
-import mlflow.lightgbm
+import numpy as np
 import optuna
+import pandas as pd
+import seaborn as sns
 from optuna.integration.mlflow import MLflowCallback
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
-from src.config import LOG_LEVEL, MODELS_DIR
-from src.models.model_base import ModelBase
+from src.config import LOG_LEVEL
 from src.models.model_factory import create_model
-from src.models.performance_metrics import (
-    calculate_sharpe_ratio,
-    calculate_sortino_ratio,
-    calculate_calmar_ratio,
-    calculate_max_drawdown,
-    calculate_win_rate,
-    calculate_pnl_ratio,
-)
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -304,6 +293,12 @@ class HyperparameterTuner:
         # 定義目標函數
         def objective(trial):
             # 從參數網格中採樣
+        """
+        objective
+        
+        Args:
+            trial: 
+        """
             params = {}
             for param, values in self.param_grid.items():
                 if isinstance(values, list):
@@ -443,7 +438,7 @@ class HyperparameterTuner:
 
         for param in param_names:
             # 計算參數與分數的相關性
-            param_values = self.results[param].astype(str)
+            self.results[param].astype(str)
             mean_scores = self.results.groupby(param)["mean_test_score"].mean()
 
             # 計算參數的重要性（最大分數 - 最小分數）

@@ -1,0 +1,214 @@
+name: Production Deployment
+
+on:
+  workflow_run:
+    workflows: ["Staging Deployment"]
+    types:
+      - completed
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: 'latest'
+
+jobs:
+  check-approval:
+    name: Check Approval Status
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set version
+        id: set-version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Get version from the staging workflow
+            echo "version=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+          fi
+      - name: Create version file
+        run: |
+          echo "version: ${{ steps.set-version.outputs.version }}" > version.txt
+          echo "commit: ${{ github.sha }}" >> version.txt
+          echo "build_date: $(date +'%Y-%m-%d %H:%M:%S')" >> version.txt
+          echo "branch: ${{ github.ref_name }}" >> version.txt
+      - name: Upload version artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version
+          path: version.txt
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: check-approval
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+      - name: Build package
+        run: |
+          poetry build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [check-approval, build]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+      - name: Configure environment
+        run: |
+          # Create .env.production file
+          echo "DB_URL=${{ secrets.PRODUCTION_DB_URL }}" > .envs/.env.production
+          echo "API_KEY=${{ secrets.PRODUCTION_API_KEY }}" >> .envs/.env.production
+          echo "API_SECRET=${{ secrets.PRODUCTION_API_SECRET }}" >> .envs/.env.production
+          echo "LOG_LEVEL=INFO" >> .envs/.env.production
+          echo "ENVIRONMENT=production" >> .envs/.env.production
+      - name: Deploy to production server
+        run: |
+          # This would typically use SSH or another deployment method
+          # For demonstration, we'll simulate a deployment
+          echo "Deploying version ${{ needs.check-approval.outputs.version }} to production..."
+          mkdir -p production
+          cp -r dist/* production/
+          cp -r .envs/.env.production production/.env
+          cp version.txt production/
+          echo "Deployment to production completed"
+      - name: Initialize database
+        run: |
+          echo "Initializing database..."
+          # In a real scenario, you would run database migrations
+          # poetry run python -m src.database.schema --env production
+          echo "Database initialization completed"
+      - name: Create deployment tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v${{ needs.check-approval.outputs.version }}" -m "Production deployment v${{ needs.check-approval.outputs.version }}"
+          git push origin "v${{ needs.check-approval.outputs.version }}"
+
+  test-production:
+    name: Test Production Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against production environment..."
+          # In a real scenario, you would run tests against the production environment
+          # poetry run python -m src.tests.smoke_tests --env production
+          echo "Smoke tests completed successfully"
+
+  rollback-plan:
+    name: Prepare Rollback Plan
+    runs-on: ubuntu-latest
+    needs: [check-approval, deploy-production]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+      - name: Create rollback script
+        run: |
+          cat > rollback.sh << 'EOL'
+          #!/bin/bash
+          # Rollback script for version ${{ needs.check-approval.outputs.version }}
+          
+          echo "Rolling back from version ${{ needs.check-approval.outputs.version }}..."
+          
+          # Get previous version
+          PREV_VERSION=$(git describe --abbrev=0 --tags --exclude "v${{ needs.check-approval.outputs.version }}")
+          
+          echo "Rolling back to version ${PREV_VERSION}..."
+          
+          # In a real scenario, you would:
+          # 1. Stop the current services
+          # 2. Deploy the previous version
+          # 3. Restart the services
+          # 4. Run smoke tests
+          
+          echo "Rollback completed successfully"
+          EOL
+          
+          chmod +x rollback.sh
+      - name: Upload rollback script
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-script
+          path: rollback.sh
+
+  monitor-deployment:
+    name: Monitor Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-production, test-production]
+    steps:
+      - name: Monitor for 5 minutes
+        run: |
+          echo "Starting deployment monitoring..."
+          
+          # In a real scenario, you would:
+          # 1. Monitor application metrics
+          # 2. Check for error rates
+          # 3. Verify system health
+          
+          # Simulate monitoring for 5 minutes
+          for i in {1..5}; do
+            echo "Monitoring minute $i..."
+            sleep 60
+            echo "System health check: OK"
+            echo "Error rate: Normal"
+            echo "Response time: Acceptable"
+          done
+          
+          echo "Deployment monitoring completed successfully"

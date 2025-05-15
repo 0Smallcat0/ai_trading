@@ -1,12 +1,23 @@
-import time
 import random
+import time
 from typing import Any, Dict, Optional
+
 import numpy as np
 
 
 # ========== 1. Freqtrade 訂單執行適配器 ==========
 class FreqtradeAdapter:
+"""
+FreqtradeAdapter
+
+"""
     def __init__(self, api_client):
+    """
+    __init__
+    
+    Args:
+        api_client: 
+    """
         self.api = api_client  # 假設已封裝好 Freqtrade REST API client
 
     def execute(
@@ -50,13 +61,39 @@ class FreqtradeAdapter:
 
 # ========== 2. TensorTrade RL 環境封裝器 ==========
 class TensorTradeEnvWrapper:
+"""
+TensorTradeEnvWrapper
+
+"""
     def __init__(self, env):
+    """
+    __init__
+    
+    Args:
+        env: 
+    """
         self.env = env  # TensorTrade gym 環境
 
     def step(self, action: Any) -> Any:
+    """
+    step
+    
+    Args:
+        action: 
+    
+    Returns:
+        Any: 
+    """
         return self.env.step(action)
 
     def reset(self) -> Any:
+    """
+    reset
+    
+    
+    Returns:
+        Any: 
+    """
         return self.env.reset()
 
     def execute_order(
@@ -136,6 +173,12 @@ class UnifiedExecutor:
     """
 
     def __init__(self, adapters: dict):
+    """
+    __init__
+    
+    Args:
+        adapters: 
+    """
         self.adapters = adapters  # {'freqtrade':..., 'tensortrade':..., ...}
         # 可擴充更多引擎
         self.engines = list(adapters.keys())
@@ -186,10 +229,30 @@ class UnifiedExecutor:
 if __name__ == "__main__":
     # 假設已初始化好 Freqtrade API client 與 TensorTrade 環境
     class DummyFreqtradeAPI:
+    """
+    DummyFreqtradeAPI
+    
+    """
         def get_market_price(self, symbol):
+        """
+        get_market_price
+        
+        Args:
+            symbol: 
+        """
             return 100.0
 
         def place_order(self, symbol, side, amount, price=None, order_type="market"):
+        """
+        place_order
+        
+        Args:
+            symbol: 
+            side: 
+            amount: 
+            price: 
+            order_type: 
+        """
             return {
                 "status": "success",
                 "symbol": symbol,
@@ -200,10 +263,24 @@ if __name__ == "__main__":
             }
 
     class DummyTensorTradeEnv:
+    """
+    DummyTensorTradeEnv
+    
+    """
         def step(self, action):
+        """
+        step
+        
+        Args:
+            action: 
+        """
             return (None, 1.0, False, {"msg": "step"})
 
         def reset(self):
+        """
+        reset
+        
+        """
             return None
 
     freqtrade_adapter = FreqtradeAdapter(DummyFreqtradeAPI())

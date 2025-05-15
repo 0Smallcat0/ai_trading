@@ -4,12 +4,12 @@
 此模組定義了系統中使用的各種事件類型和事件類。
 """
 
-from enum import Enum, auto
+import json
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
-import uuid
-import json
+from enum import Enum, auto
+from typing import Any, Dict, List, Optional
 
 
 class EventType(Enum):

@@ -20,14 +20,16 @@ from src.utils.config_manager import (
     EnvConfigProvider,
     FileConfigProvider,
     MemoryConfigProvider,
-    create_default_config_manager
+    create_default_config_manager,
 )
+
 
 def print_separator(title):
     """打印分隔線"""
     print("\n" + "=" * 50)
     print(f" {title} ".center(50, "="))
     print("=" * 50)
+
 
 def test_env_provider():
     """測試環境變數提供者"""
@@ -64,6 +66,7 @@ def test_env_provider():
         del os.environ["TEST_ENV_VAR2"]
     if "TEST_ENV_VAR3" in os.environ:
         del os.environ["TEST_ENV_VAR3"]
+
 
 def test_file_provider():
     """測試文件提供者"""
@@ -107,6 +110,7 @@ def test_file_provider():
         if os.path.exists(temp_path):
             os.unlink(temp_path)
 
+
 def test_memory_provider():
     """測試內存提供者"""
     print_separator("內存提供者測試")
@@ -135,6 +139,7 @@ def test_memory_provider():
     print("\n列出所有配置項:")
     for key, value in provider.list().items():
         print(f"- {key}: {value}")
+
 
 def test_config_manager():
     """測試配置管理器"""
@@ -189,6 +194,7 @@ def test_config_manager():
     del os.environ["TEST_BOOL"]
     del os.environ["TEST_LIST"]
 
+
 def test_default_config_manager():
     """測試默認配置管理器"""
     print_separator("默認配置管理器測試")
@@ -198,11 +204,14 @@ def test_default_config_manager():
 
     # 重新創建默認配置管理器以載入新的環境變數
     from src.utils.config_manager import create_default_config_manager
+
     test_config_manager = create_default_config_manager()
 
     # 測試獲取配置項
     print(f"TEST_DEFAULT_VAR: {test_config_manager.get('TEST_DEFAULT_VAR')}")
-    print(f"TEST_DEFAULT_VAR2 (不存在): {test_config_manager.get('TEST_DEFAULT_VAR2', '默認值')}")
+    print(
+        f"TEST_DEFAULT_VAR2 (不存在): {test_config_manager.get('TEST_DEFAULT_VAR2', '默認值')}"
+    )
 
     # 測試設置內存配置項
     test_config_manager.set("TEST_DEFAULT_VAR2", "memory-value", provider_name="memory")
@@ -210,6 +219,7 @@ def test_default_config_manager():
 
     # 清理測試環境變數
     del os.environ["TEST_DEFAULT_VAR"]
+
 
 def main():
     """主函數"""
@@ -222,6 +232,7 @@ def main():
     test_default_config_manager()
 
     print_separator("配置管理器測試完成")
+
 
 if __name__ == "__main__":
     main()

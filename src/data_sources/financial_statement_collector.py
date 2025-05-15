@@ -9,23 +9,24 @@
 支援從 Yahoo Finance、公開資訊觀測站等多個來源收集資料。
 """
 
+import logging
 import os
 import time
-import logging
-import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
-from src.config import DATA_DIR, CACHE_DIR, DB_PATH
-from src.database.schema import Fundamental
-from src.data_sources.data_collector import DataCollector, RetryStrategy
-from src.data_sources.yahoo_adapter import YahooFinanceAdapter
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from src.config import CACHE_DIR, DATA_DIR, DB_PATH
+from src.data_sources.data_collector import DataCollector, RetryStrategy
+from src.data_sources.yahoo_adapter import YahooFinanceAdapter
+from src.database.schema import Fundamental
 
 # 設定日誌
 logger = logging.getLogger(__name__)

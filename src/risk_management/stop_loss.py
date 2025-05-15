@@ -4,11 +4,12 @@
 此模組實現了各種停損策略，用於控制交易風險。
 """
 
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import List
+
 import numpy as np
 import pandas as pd
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
 
 from src.core.logger import logger
 
@@ -42,7 +43,6 @@ class StopLossStrategy(ABC):
         Returns:
             float: 停損價格
         """
-        pass
 
     @abstractmethod
     def should_stop_out(
@@ -59,7 +59,6 @@ class StopLossStrategy(ABC):
         Returns:
             bool: 是否應該停損
         """
-        pass
 
     def update(self, current_price: float, **kwargs) -> None:
         """
@@ -69,7 +68,6 @@ class StopLossStrategy(ABC):
             current_price: 當前價格
             **kwargs: 其他參數
         """
-        pass
 
 
 class PercentStopLoss(StopLossStrategy):

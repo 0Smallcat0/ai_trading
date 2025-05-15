@@ -16,11 +16,10 @@
 """
 
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 from sklearn.model_selection import ParameterGrid
 
@@ -28,9 +27,9 @@ from src.config import LOG_LEVEL, RESULTS_DIR
 from src.core.backtest import Backtest
 from src.models.model_factory import create_model
 from src.models.rule_based_models import (
+    bollinger_bands_strategy,
     moving_average_crossover,
     rsi_strategy,
-    bollinger_bands_strategy,
 )
 
 # 設定日誌

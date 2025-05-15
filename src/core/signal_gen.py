@@ -15,23 +15,19 @@
 - 技術指標整合
 """
 
-import pandas as pd
-import numpy as np
 import logging
 import warnings
-from typing import Dict, List, Union, Optional, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # 嘗試導入 indicators 模組
 try:
     from src.core.indicators import (
-        TechnicalIndicators,
         FundamentalIndicators,
         SentimentIndicators,
-    )
-    from src.core.indicators import (
-        evaluate_indicator_efficacy,
-        generate_trading_signals,
+        TechnicalIndicators,
     )
 
     INDICATORS_AVAILABLE = True

@@ -5,15 +5,15 @@
 """
 
 import os
-import json
-import requests
 import threading
 import time
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import requests
 
 from src.core.logger import logger
-from .config import WORKFLOW_TEMPLATES, BASE_WORKFLOW_TEMPLATE, NODE_TEMPLATES
+
+from .config import WORKFLOW_TEMPLATES
 
 
 class WorkflowManager:
@@ -463,7 +463,7 @@ class WorkflowManager:
         while self.running:
             try:
                 # 獲取所有工作流
-                workflows = self.get_workflows()
+                self.get_workflows()
 
                 # 獲取所有執行
                 executions = self.get_executions()
@@ -538,6 +538,35 @@ class WorkflowManager:
         if signal_generation_workflow:
             workflow_ids["signal_generation"] = signal_generation_workflow["id"]
             logger.info(f"已創建交易訊號生成工作流: {signal_generation_workflow['id']}")
+
+        # 創建投資組合再平衡工作流
+        from .templates import portfolio_rebalance_workflow
+
+        portfolio_workflow = portfolio_rebalance_workflow()
+        portfolio_workflow_created = self.create_workflow(portfolio_workflow)
+        if portfolio_workflow_created:
+            workflow_ids["portfolio_rebalance"] = portfolio_workflow_created["id"]
+            logger.info(
+                f"已創建投資組合再平衡工作流: {portfolio_workflow_created['id']}"
+            )
+
+        # 創建風險監控工作流
+        from .templates import risk_monitoring_workflow
+
+        risk_workflow = risk_monitoring_workflow()
+        risk_workflow_created = self.create_workflow(risk_workflow)
+        if risk_workflow_created:
+            workflow_ids["risk_monitoring"] = risk_workflow_created["id"]
+            logger.info(f"已創建風險監控工作流: {risk_workflow_created['id']}")
+
+        # 創建報告生成工作流
+        from .templates import reporting_workflow
+
+        report_workflow = reporting_workflow()
+        report_workflow_created = self.create_workflow(report_workflow)
+        if report_workflow_created:
+            workflow_ids["reporting"] = report_workflow_created["id"]
+            logger.info(f"已創建報告生成工作流: {report_workflow_created['id']}")
 
         return workflow_ids
 

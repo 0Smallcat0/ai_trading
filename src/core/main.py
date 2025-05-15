@@ -10,21 +10,23 @@
 - 主流程控制
 """
 
-from . import logger as trade_logger
-from .executor import place_orders
-from .risk_control import filter_signals
-from .event_monitor import start as start_event_monitor
-from .logger import record
-from .backtest import run_backtest
-from .portfolio import optimize
-from .strategy import generate_signals
-from .features import compute_features
-from .data_ingest import load_data, update_data
-import time
-import logging
 import argparse
+import logging
+import time
 from datetime import datetime
+
 from dotenv import load_dotenv
+
+from . import logger as trade_logger
+from .backtest import run_backtest
+from .data_ingest import load_data, update_data
+from .event_monitor import start as start_event_monitor
+from .executor import place_orders
+from .features import compute_features
+from .logger import record
+from .portfolio import optimize
+from .risk_control import filter_signals
+from .strategy import generate_signals
 
 # 載入環境變數
 load_dotenv()

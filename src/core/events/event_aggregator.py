@@ -6,11 +6,10 @@
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Set, Tuple
-from datetime import datetime, timedelta
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
+from typing import List, Optional
 
-from .event import Event, EventType, EventSeverity, EventSource, create_system_event
+from .event import Event, EventSeverity, EventType
 from .event_processor import EventProcessor
 
 # 設定日誌
@@ -296,7 +295,7 @@ class SeverityAggregator(EventAggregator):
         if len(severe_events) >= self.threshold:
             # 統計事件類型
             type_counter = Counter(event.event_type for event in severe_events)
-            most_common_type = type_counter.most_common(1)[0][0]
+            type_counter.most_common(1)[0][0]
 
             # 統計事件來源
             source_counter = Counter(event.source for event in severe_events)

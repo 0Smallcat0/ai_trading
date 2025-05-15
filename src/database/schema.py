@@ -18,34 +18,25 @@
 import enum
 import hashlib
 import json
-from datetime import datetime, date, timezone
-from typing import Dict, Any, Optional, List, Union
+from datetime import datetime, timezone
 
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
-    String,
-    Float,
-    Integer,
     Date,
     DateTime,
-    Boolean,
-    Text,
-    ForeignKey,
-    Index,
-    UniqueConstraint,
-    CheckConstraint,
     Enum,
-    Table,
-    MetaData,
-    JSON,
-    LargeBinary,
-    func,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
     event,
-    DDL,
 )
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy.schema import CreateTable
+from sqlalchemy.orm import declarative_base
 
 # type: ignore[misc, valid-type]
 Base = declarative_base()
@@ -85,6 +76,12 @@ class MarketDataMixin:
 
     @declared_attr
     def __tablename__(cls):
+    """
+    __tablename__
+    
+    Args:
+        cls: 
+    """
         return cls.__name__.lower()
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -130,6 +127,10 @@ class MarketDataMixin:
         return hashlib.sha256(data_str.encode()).hexdigest()
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<{self.__class__.__name__}(symbol={self.symbol}, timestamp={getattr(self, 'timestamp', None) or getattr(self, 'date', None)})>"
 
 
@@ -268,6 +269,10 @@ class Fundamental(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<Fundamental(symbol={self.symbol}, date={self.date})>"
 
 
@@ -322,6 +327,10 @@ class TechnicalIndicator(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<TechnicalIndicator(symbol={self.symbol}, date={self.date})>"
 
 
@@ -367,6 +376,10 @@ class NewsSentiment(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<NewsSentiment(symbol={self.symbol}, date={self.date}, score={self.sentiment_score})>"
 
 
@@ -416,6 +429,10 @@ class TradeRecord(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<TradeRecord(symbol={self.symbol}, action={self.action}, timestamp={self.timestamp})>"
 
 
@@ -450,6 +467,10 @@ class SystemLog(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<SystemLog(level={self.level}, timestamp={self.timestamp})>"
 
 
@@ -500,6 +521,10 @@ class DataShard(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<DataShard(table={self.table_name}, shard_id={self.shard_id})>"
 
 
@@ -535,6 +560,10 @@ class DataChecksum(Base):
     )
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return f"<DataChecksum(table={self.table_name}, record_id={self.record_id})>"
 
 
@@ -562,6 +591,10 @@ class DatabaseVersion(Base):
     applied_by = Column(String(50), comment="應用者")
 
     def __repr__(self):
+    """
+    __repr__
+    
+    """
         return (
             f"<DatabaseVersion(version={self.version}, applied_at={self.applied_at})>"
         )

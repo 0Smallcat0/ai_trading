@@ -5,28 +5,25 @@
 並確保記錄的不可變性和完整性。
 """
 
-import os
 import json
-import hashlib
-import logging
+import os
 import threading
 import time
+from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Set, Optional, Any, Union, Tuple
-from datetime import datetime, timedelta
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # 嘗試導入加密庫
 try:
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.asymmetric import padding, rsa
     from cryptography.hazmat.primitives.serialization import (
-        load_pem_private_key,
-        load_pem_public_key,
         Encoding,
+        NoEncryption,
         PrivateFormat,
         PublicFormat,
-        NoEncryption,
+        load_pem_private_key,
+        load_pem_public_key,
     )
 
     CRYPTOGRAPHY_AVAILABLE = True

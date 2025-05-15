@@ -6,20 +6,22 @@
 """
 
 import logging
+from typing import Any, Callable, Dict, Optional
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
 from sklearn.metrics import (
     accuracy_score,
-    precision_score,
-    recall_score,
     f1_score,
-    mean_squared_error,
     mean_absolute_error,
+    mean_squared_error,
+    precision_score,
     r2_score,
+    recall_score,
 )
 
 from src.config import LOG_LEVEL
+
 from .model_base import ModelBase
 
 # 設定日誌

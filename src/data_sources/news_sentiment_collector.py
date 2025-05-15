@@ -9,24 +9,25 @@
 支援從多個新聞來源收集資料，並使用 NLP 模型進行情緒分析。
 """
 
+import json
+import logging
 import os
 import time
-import logging
-import pandas as pd
-import numpy as np
-import requests
-import json
-from bs4 import BeautifulSoup
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from src.config import DATA_DIR, CACHE_DIR, DB_PATH
-from src.database.schema import NewsSentiment
-from src.data_sources.data_collector import DataCollector, RetryStrategy
-from src.data_sources.mcp_crawler import McpCrawler
+import numpy as np
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from src.config import CACHE_DIR, DATA_DIR, DB_PATH
+from src.data_sources.data_collector import DataCollector, RetryStrategy
+from src.data_sources.mcp_crawler import McpCrawler
+from src.database.schema import NewsSentiment
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ class NewsSentimentCollector(DataCollector):
             try:
                 import nltk
                 from nltk.sentiment import SentimentIntensityAnalyzer
-                
+
                 # 下載必要的資源
                 nltk.download("vader_lexicon", quiet=True)
                 
@@ -111,7 +112,7 @@ class NewsSentimentCollector(DataCollector):
             # 使用 Transformers 進行情緒分析
             try:
                 from transformers import pipeline
-                
+
                 # 初始化情緒分析管道
                 self.sentiment_analyzer = pipeline("sentiment-analysis")
             except ImportError:

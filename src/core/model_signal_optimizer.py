@@ -10,14 +10,11 @@
 - 訊號組合優化
 """
 
-import os
 import logging
+from typing import Dict, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
-import warnings
-from scipy import stats
 from scipy.signal import savgol_filter
 
 from src.config import LOG_LEVEL

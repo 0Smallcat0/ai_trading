@@ -9,22 +9,19 @@ Backtrader 整合模組
 - 結果分析
 """
 
-import os
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
+import os
+from datetime import datetime
+from typing import Any, Dict, Optional, Union
+
 import backtrader as bt
 import backtrader.analyzers as btanalyzers
 import backtrader.feeds as btfeeds
-import backtrader.indicators as btind
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 from src.config import LOG_LEVEL, RESULTS_DIR
-from src.models.model_base import ModelBase
-from src.models.model_governance import ModelRegistry
-from src.models.inference_pipeline import InferencePipeline
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -519,7 +516,7 @@ class BacktestEngine:
         # 獲取分析結果
         sharpe_ratio = self.strats.analyzers.sharpe.get_analysis()
         drawdown = self.strats.analyzers.drawdown.get_analysis()
-        returns = self.strats.analyzers.returns.get_analysis()
+        self.strats.analyzers.returns.get_analysis()
         trades = self.strats.analyzers.trades.get_analysis()
         sqn = self.strats.analyzers.sqn.get_analysis()
         time_return = self.strats.analyzers.time_return.get_analysis()

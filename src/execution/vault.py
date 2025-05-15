@@ -6,17 +6,13 @@ Vault 整合模組
 """
 
 import os
-import logging
-import json
-import base64
 import threading
-from typing import Dict, Optional, Any, List, Tuple
-from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 # 嘗試導入 hvac (HashiCorp Vault 客戶端)
 try:
     import hvac
-    from hvac.exceptions import InvalidPath, VaultError
+    from hvac.exceptions import InvalidPath
 
     VAULT_AVAILABLE = True
 except ImportError:

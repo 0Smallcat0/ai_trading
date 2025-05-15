@@ -11,14 +11,16 @@
 - 策略評估和比較
 """
 
-from numba import njit
+import logging
+import math
+
 import numpy as np
 import pandas as pd
-import math
-import logging
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import SVC
+from numba import njit
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC
+
 from src.core.data_ingest import load_data
 
 # 集中管理 log 訊息，方便多語系擴充
@@ -599,6 +601,12 @@ def continuous_trading_signal(price_series, window):
     """
 
     def generate_signal(s):
+    """
+    generate_signal
+    
+    Args:
+        s: 
+    """
         if s[0] < s[-1]:
             smin = s.min()
             smax = s.max()
@@ -628,6 +636,12 @@ def triple_barrier(price_series, upper_barrier, lower_barrier, max_period):
     """
 
     def end_price(s):
+    """
+    end_price
+    
+    Args:
+        s: 
+    """
         return (
             np.append(
                 s[(s / s[0] > upper_barrier) | (s / s[0] < lower_barrier)], s[-1]
@@ -638,6 +652,12 @@ def triple_barrier(price_series, upper_barrier, lower_barrier, max_period):
     r = np.array(range(max_period))
 
     def end_time(s):
+    """
+    end_time
+    
+    Args:
+        s: 
+    """
         return np.append(
             r[(s / s[0] > upper_barrier) | (s / s[0] < lower_barrier)], max_period - 1
         )[0]
@@ -831,9 +851,13 @@ class HybridStrategy:
 
     def __init__(self):
         # 假設已經有對應的engine/adapters初始化
+    """
+    __init__
+    
+    """
         try:
-            from open_source_libs.vectorbt import VectorBTEngine
             from open_source_libs.qlib import QlibAnalyzer
+            from open_source_libs.vectorbt import VectorBTEngine
         except ImportError:
             VectorBTEngine = None
             QlibAnalyzer = None
@@ -885,6 +909,13 @@ class HybridStrategy:
 
 @njit(fastmath=True, cache=True)
 def numba_moving_average(arr, window):
+"""
+numba_moving_average
+
+Args:
+    arr: 
+    window: 
+"""
     n = arr.shape[0]
     result = np.zeros(n, dtype=np.float64)
     s = 0.0

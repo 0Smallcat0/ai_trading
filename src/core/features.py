@@ -11,33 +11,25 @@
 - 分散式處理支援
 """
 
-import pandas as pd
-import numpy as np
 import copy
 import logging
 import warnings
-from typing import Dict, List, Union, Optional, Callable, Tuple
-from functools import partial
-import datetime
-from scipy import stats
-from sklearn.impute import KNNImputer, SimpleImputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from sklearn.decomposition import PCA
-from sklearn.feature_selection import SelectKBest, f_regression, RFE
-from sklearn.linear_model import LinearRegression, Lasso
-from sklearn.ensemble import RandomForestRegressor
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-import joblib
-import os
-import json
-from datetime import datetime
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.feature_selection import RFE, SelectKBest, f_regression
+from sklearn.impute import KNNImputer
+from sklearn.linear_model import Lasso, LinearRegression
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 # 導入相關模組
 try:
-    from src.core.data_ingest import load_data
-    import talib
     from talib import abstract
+
+    from src.core.data_ingest import load_data
 except ImportError as e:
     # 只在非測試環境中顯示警告
     import sys
@@ -47,7 +39,17 @@ except ImportError as e:
 
     # 創建空的 abstract 模組以避免錯誤
     class DummyAbstract:
+    """
+    DummyAbstract
+    
+    """
         def __getattr__(self, name):
+        """
+        __getattr__
+        
+        Args:
+            name: 
+        """
             return None
 
     abstract = DummyAbstract()
@@ -56,7 +58,6 @@ except ImportError as e:
 try:
     import dask
     import dask.dataframe as dd
-    import dask.array as da
 
     DASK_AVAILABLE = True
 except ImportError:
@@ -681,6 +682,15 @@ class FeatureCalculator:
         # 定義計算單一指標的函數
         def calculate_indicator(name, ohlcv_dict, multipliers, custom_params):
             # 將 Dask DataFrame 轉換為 pandas DataFrame
+        """
+        calculate_indicator
+        
+        Args:
+            name: 
+            ohlcv_dict: 
+            multipliers: 
+            custom_params: 
+        """
             pandas_dict = {}
             for k, v in ohlcv_dict.items():
                 pandas_dict[k] = v.compute()
@@ -1024,11 +1034,15 @@ class FeatureCalculator:
             return features_df, None
 
         # 創建包含選擇特徵的資料框架
-        selected_df = pd.DataFrame(X_new, index=features_df.index, columns=selected_features)
+        selected_df = pd.DataFrame(
+            X_new, index=features_df.index, columns=selected_features
+        )
 
         return selected_df, selector
 
-    def reduce_dimensions(self, features_df, n_components=None, method="pca", variance_ratio=0.95):
+    def reduce_dimensions(
+        self, features_df, n_components=None, method="pca", variance_ratio=0.95
+    ):
         """
         降維
 
@@ -1074,7 +1088,9 @@ class FeatureCalculator:
 
             # 創建降維後的資料框架
             columns = [f"PC{i+1}" for i in range(X_reduced.shape[1])]
-            reduced_df = pd.DataFrame(X_reduced, index=features_df.index, columns=columns)
+            reduced_df = pd.DataFrame(
+                X_reduced, index=features_df.index, columns=columns
+            )
 
         else:
             logging.warning(f"不支援的降維方法: {method}")
@@ -1082,7 +1098,9 @@ class FeatureCalculator:
 
         return reduced_df, reducer
 
-    def calculate_feature_importance(self, features_df, target_df=None, method="random_forest"):
+    def calculate_feature_importance(
+        self, features_df, target_df=None, method="random_forest"
+    ):
         """
         計算特徵重要性
 
@@ -1136,7 +1154,9 @@ class FeatureCalculator:
             # 使用隨機森林計算特徵重要性
             model = RandomForestRegressor(n_estimators=100, random_state=42)
             model.fit(features_df, target_df)
-            importance = pd.Series(model.feature_importances_, index=features_df.columns)
+            importance = pd.Series(
+                model.feature_importances_, index=features_df.columns
+            )
 
         elif method == "linear":
             # 使用線性回歸係數的絕對值作為特徵重要性
@@ -1157,7 +1177,9 @@ class FeatureCalculator:
 
         return importance.sort_values(ascending=False)
 
-    def plot_feature_importance(self, importance, top_n=20, figsize=(12, 8), save_path=None):
+    def plot_feature_importance(
+        self, importance, top_n=20, figsize=(12, 8), save_path=None
+    ):
         """
         繪製特徵重要性圖
 
@@ -1182,19 +1204,19 @@ class FeatureCalculator:
         fig, ax = plt.subplots(figsize=figsize)
 
         # 繪製水平條形圖
-        importance.sort_values().plot(kind='barh', ax=ax)
+        importance.sort_values().plot(kind="barh", ax=ax)
 
         # 設置標題和標籤
-        ax.set_title(f'Top {top_n} Feature Importance', fontsize=16)
-        ax.set_xlabel('Importance', fontsize=14)
-        ax.set_ylabel('Feature', fontsize=14)
+        ax.set_title(f"Top {top_n} Feature Importance", fontsize=16)
+        ax.set_xlabel("Importance", fontsize=14)
+        ax.set_ylabel("Feature", fontsize=14)
 
         # 調整佈局
         plt.tight_layout()
 
         # 保存圖形
         if save_path is not None:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
 
         return fig
 
@@ -1341,12 +1363,14 @@ def compute_features(
     # 降維
     if dimensionality_reduction and not features.empty:
         reduced_features, reducer = calculator.reduce_dimensions(
-            features, n_components=n_components, method=dimensionality_reduction_method,
-            variance_ratio=variance_ratio
+            features,
+            n_components=n_components,
+            method=dimensionality_reduction_method,
+            variance_ratio=variance_ratio,
         )
         if not reduced_features.empty:
             features = reduced_features
-            if hasattr(reducer, 'explained_variance_ratio_'):
+            if hasattr(reducer, "explained_variance_ratio_"):
                 explained_variance = sum(reducer.explained_variance_ratio_)
                 logging.info(f"降維後保留了 {explained_variance:.2%} 的方差")
             logging.info(f"降維後特徵維度: {features.shape}")
@@ -1357,6 +1381,7 @@ def compute_features(
     if save_to_feature_store and not features.empty:
         try:
             from src.core.feature_store import FeatureStore
+
             feature_store = FeatureStore()
             metadata = {
                 "start_date": start_date.isoformat() if start_date else None,
@@ -1365,9 +1390,15 @@ def compute_features(
                 "remove_extremes": remove_extremes,
                 "clean_data": clean_data,
                 "feature_selection": feature_selection,
-                "feature_selection_method": feature_selection_method if feature_selection else None,
+                "feature_selection_method": (
+                    feature_selection_method if feature_selection else None
+                ),
                 "dimensionality_reduction": dimensionality_reduction,
-                "dimensionality_reduction_method": dimensionality_reduction_method if dimensionality_reduction else None,
+                "dimensionality_reduction_method": (
+                    dimensionality_reduction_method
+                    if dimensionality_reduction
+                    else None
+                ),
                 "n_components": n_components,
                 "variance_ratio": variance_ratio,
             }
@@ -1407,6 +1438,12 @@ def _compute_features_with_dask(
         # 定義 map_partitions 函數
         def process_partition(partition):
             # 創建臨時資料字典
+        """
+        process_partition
+        
+        Args:
+            partition: 
+        """
             temp_dict = calculator.data_dict.copy()
             temp_dict["price"] = partition
 
@@ -1478,6 +1515,16 @@ def _compute_features_with_ray(
         # 定義 Ray 任務
         @ray.remote
         def process_chunk_ray(
+        """
+        process_chunk_ray
+        
+        Args:
+            chunk: 
+            data_dict_copy: 
+            normalize: 
+            remove_extremes: 
+            clean_data: 
+        """
             chunk, data_dict_copy, normalize, remove_extremes, clean_data
         ):
             # 創建臨時資料字典

@@ -9,24 +9,21 @@
 - 部分依賴圖
 """
 
-import os
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
-import matplotlib.pyplot as plt
-import seaborn as sns
-import shap
+import os
+from typing import Any, Dict, List, Optional
+
 import lime
 import lime.lime_tabular
-from sklearn.inspection import (
-    permutation_importance,
-    partial_dependence,
-    plot_partial_dependence,
-)
+import matplotlib.pyplot as plt
 import mlflow
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import shap
+from sklearn.inspection import permutation_importance
 
-from src.config import LOG_LEVEL, MODELS_DIR, RESULTS_DIR
+from src.config import LOG_LEVEL, RESULTS_DIR
 from src.models.model_base import ModelBase
 
 # 設定日誌

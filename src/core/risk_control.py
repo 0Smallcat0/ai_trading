@@ -12,9 +12,9 @@
 - 風險指標計算
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
@@ -356,8 +356,14 @@ class PositionSizer:
         self.risk_per_trade = risk_per_trade
         self.position_sizing_method = position_sizing_method
 
-    def calculate_position_size(self, portfolio_value, entry_price, stop_loss_price,
-                               win_rate=None, reward_risk_ratio=None):
+    def calculate_position_size(
+        self,
+        portfolio_value,
+        entry_price,
+        stop_loss_price,
+        win_rate=None,
+        reward_risk_ratio=None,
+    ):
         """
         計算部位大小
 
@@ -372,13 +378,17 @@ class PositionSizer:
             float: 部位大小（股數）
         """
         if self.position_sizing_method == "risk_based":
-            return self._risk_based_position_size(portfolio_value, entry_price, stop_loss_price)
+            return self._risk_based_position_size(
+                portfolio_value, entry_price, stop_loss_price
+            )
         elif self.position_sizing_method == "equal_weight":
             return self._equal_weight_position_size(portfolio_value, entry_price)
         elif self.position_sizing_method == "kelly":
             if win_rate is None or reward_risk_ratio is None:
                 raise ValueError("使用凱利公式計算部位大小需要提供勝率和獎風險比")
-            return self._kelly_position_size(portfolio_value, win_rate, reward_risk_ratio)
+            return self._kelly_position_size(
+                portfolio_value, win_rate, reward_risk_ratio
+            )
         else:
             raise ValueError(f"不支援的部位大小計算方法: {self.position_sizing_method}")
 
@@ -405,7 +415,9 @@ class PositionSizer:
 
         return position_size
 
-    def _equal_weight_position_size(self, portfolio_value, entry_price, num_positions=10):
+    def _equal_weight_position_size(
+        self, portfolio_value, entry_price, num_positions=10
+    ):
         """
         等權重部位大小計算
 
@@ -482,7 +494,15 @@ class StopLossStrategy:
         elif strategy_type == "time_based" and "max_days" not in params:
             self.params["max_days"] = 20
 
-    def calculate_stop_loss(self, entry_price, current_price=None, high_price=None, atr=None, entry_date=None, current_date=None):
+    def calculate_stop_loss(
+        self,
+        entry_price,
+        current_price=None,
+        high_price=None,
+        atr=None,
+        entry_date=None,
+        current_date=None,
+    ):
         """
         計算停損價格
 
@@ -504,7 +524,9 @@ class StopLossStrategy:
         elif self.strategy_type == "atr":
             return self._atr_stop_loss(entry_price, atr)
         elif self.strategy_type == "time_based":
-            return self._time_based_stop_loss(entry_price, current_price, entry_date, current_date)
+            return self._time_based_stop_loss(
+                entry_price, current_price, entry_date, current_date
+            )
         else:
             raise ValueError(f"不支援的停損策略類型: {self.strategy_type}")
 
@@ -561,7 +583,9 @@ class StopLossStrategy:
 
         return entry_price - (atr * atr_multiple)
 
-    def _time_based_stop_loss(self, entry_price, current_price, entry_date, current_date):
+    def _time_based_stop_loss(
+        self, entry_price, current_price, entry_date, current_date
+    ):
         """
         時間停損
 
@@ -617,7 +641,9 @@ class StopProfitStrategy:
         elif strategy_type == "risk_reward" and "risk_reward_ratio" not in params:
             self.params["risk_reward_ratio"] = 2.0
 
-    def calculate_stop_profit(self, entry_price, current_price=None, high_price=None, stop_loss_price=None):
+    def calculate_stop_profit(
+        self, entry_price, current_price=None, high_price=None, stop_loss_price=None
+    ):
         """
         計算停利價格
 
@@ -725,7 +751,6 @@ class RiskMetricsCalculator:
 
     def __init__(self):
         """初始化風險指標計算器"""
-        pass
 
     def calculate_var(self, returns, confidence_level=0.95, method="historical"):
         """
@@ -853,7 +878,9 @@ class RiskMetricsCalculator:
 
         return cvar
 
-    def calculate_volatility(self, returns, window=None, annualize=True, trading_days=252):
+    def calculate_volatility(
+        self, returns, window=None, annualize=True, trading_days=252
+    ):
         """
         計算波動率
 
@@ -923,7 +950,11 @@ class RiskMetricsCalculator:
         annual_volatility = returns.std() * np.sqrt(trading_days)
 
         # 計算夏普比率
-        sharpe_ratio = (annual_return - risk_free_rate) / annual_volatility if annual_volatility > 0 else 0
+        sharpe_ratio = (
+            (annual_return - risk_free_rate) / annual_volatility
+            if annual_volatility > 0
+            else 0
+        )
 
         return sharpe_ratio
 
@@ -944,10 +975,18 @@ class RiskMetricsCalculator:
 
         # 計算下行波動率
         downside_returns = returns[returns < 0]
-        downside_volatility = downside_returns.std() * np.sqrt(trading_days) if len(downside_returns) > 0 else 0
+        downside_volatility = (
+            downside_returns.std() * np.sqrt(trading_days)
+            if len(downside_returns) > 0
+            else 0
+        )
 
         # 計算索提諾比率
-        sortino_ratio = (annual_return - risk_free_rate) / downside_volatility if downside_volatility > 0 else 0
+        sortino_ratio = (
+            (annual_return - risk_free_rate) / downside_volatility
+            if downside_volatility > 0
+            else 0
+        )
 
         return sortino_ratio
 

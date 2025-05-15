@@ -10,17 +10,16 @@ MCP 爬蟲模組
 - 處理爬蟲結果
 """
 
-import os
-import json
-import time
 import logging
+import os
 import subprocess
-import requests
-from typing import Dict, List, Any, Optional
+import time
 from datetime import datetime, timedelta
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from src.config import ROOT_DIR, LOGS_DIR, REQUEST_TIMEOUT, RETRY_COUNT
+import requests
+
+from src.config import REQUEST_TIMEOUT, RETRY_COUNT, ROOT_DIR
 
 # 設定日誌
 logger = logging.getLogger("mcp_crawler")

@@ -1,0 +1,98 @@
+groups:
+  - name: system_alerts
+    rules:
+      - alert: HighCpuUsage
+        expr: system_cpu_usage > 80
+        for: 5m
+        labels:
+          severity: warning
+          type: system
+        annotations:
+          summary: "高 CPU 使用率"
+          description: "CPU 使用率超過 80% 已持續 5 分鐘"
+
+      - alert: HighMemoryUsage
+        expr: system_memory_usage > 80
+        for: 5m
+        labels:
+          severity: warning
+          type: system
+        annotations:
+          summary: "高內存使用率"
+          description: "內存使用率超過 80% 已持續 5 分鐘"
+
+      - alert: HighDiskUsage
+        expr: system_disk_usage > 80
+        for: 5m
+        labels:
+          severity: warning
+          type: system
+        annotations:
+          summary: "高磁盤使用率"
+          description: "磁盤使用率超過 80% 已持續 5 分鐘"
+
+  - name: api_alerts
+    rules:
+      - alert: HighApiLatency
+        expr: histogram_quantile(0.95, sum(rate(api_latency_seconds_bucket[5m])) by (le, endpoint)) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          type: api
+        annotations:
+          summary: "高 API 延遲"
+          description: "API 延遲 (p95) 超過 200ms 已持續 5 分鐘: {{ $labels.endpoint }}"
+
+      - alert: HighApiErrorRate
+        expr: sum(rate(api_errors_total[5m])) by (endpoint) / sum(rate(api_requests_total[5m])) by (endpoint) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          type: api
+        annotations:
+          summary: "高 API 錯誤率"
+          description: "API 錯誤率超過 5% 已持續 5 分鐘: {{ $labels.endpoint }}"
+
+  - name: model_alerts
+    rules:
+      - alert: LowModelAccuracy
+        expr: model_prediction_accuracy < 0.6
+        for: 30m
+        labels:
+          severity: warning
+          type: model
+        annotations:
+          summary: "低模型準確率"
+          description: "模型準確率低於 60% 已持續 30 分鐘: {{ $labels.model_name }}"
+
+      - alert: HighModelLatency
+        expr: histogram_quantile(0.95, sum(rate(model_prediction_latency_seconds_bucket[5m])) by (le, model_name)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          type: model
+        annotations:
+          summary: "高模型延遲"
+          description: "模型延遲 (p95) 超過 500ms 已持續 5 分鐘: {{ $labels.model_name }}"
+
+  - name: trade_alerts
+    rules:
+      - alert: LowTradeSuccessRate
+        expr: trade_success_rate < 0.7
+        for: 1h
+        labels:
+          severity: warning
+          type: trade
+        annotations:
+          summary: "低交易成功率"
+          description: "交易成功率低於 70% 已持續 1 小時"
+
+      - alert: NegativeCapitalChange
+        expr: capital_change_percent < -5
+        for: 5m
+        labels:
+          severity: critical
+          type: trade
+        annotations:
+          summary: "資本大幅下降"
+          description: "資本下降超過 5% 已持續 5 分鐘"

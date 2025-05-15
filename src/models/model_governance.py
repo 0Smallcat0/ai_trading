@@ -9,18 +9,18 @@
 - 模型文檔
 """
 
-import os
+import datetime
 import json
 import logging
-import shutil
-import datetime
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
+import os
+from typing import Any, Dict, List, Optional, Union
+
 import mlflow
+import mlflow.lightgbm
 import mlflow.sklearn
 import mlflow.tensorflow
 import mlflow.xgboost
-import mlflow.lightgbm
+import pandas as pd
 
 from src.config import LOG_LEVEL, MODELS_DIR
 from src.models.model_base import ModelBase

@@ -11,15 +11,16 @@
 - 投資組合再平衡
 """
 
+from typing import Dict
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.optimize as sco
-from typing import Dict
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 try:
-    from pypfopt import EfficientFrontier, risk_models, expected_returns
+    from pypfopt import EfficientFrontier, expected_returns, risk_models
 except ImportError as e:
     raise ImportError("請先安裝 pypfopt 套件：pip install pypfopt") from e
 from .data_ingest import load_data
@@ -28,7 +29,14 @@ from .data_ingest import load_data
 class Portfolio:
     """投資組合基類，所有具體投資組合策略都應該繼承此類"""
 
-    def __init__(self, name="BasePortfolio", initial_capital=1000000, transaction_cost=0.001425, tax=0.003, slippage=0.001):
+    def __init__(
+        self,
+        name="BasePortfolio",
+        initial_capital=1000000,
+        transaction_cost=0.001425,
+        tax=0.003,
+        slippage=0.001,
+    ):
         """
         初始化投資組合
 
@@ -47,7 +55,9 @@ class Portfolio:
 
         # 投資組合狀態
         self.cash = initial_capital
-        self.positions = {}  # {stock_id: {'shares': 100, 'cost': 50.0, 'value': 5000.0}}
+        self.positions = (
+            {}
+        )  # {stock_id: {'shares': 100, 'cost': 50.0, 'value': 5000.0}}
         self.history = []  # 歷史狀態記錄
         self.transactions = []  # 交易記錄
 
@@ -97,7 +107,9 @@ class Portfolio:
         # 子類應該覆寫此方法
         raise NotImplementedError("子類必須實現 rebalance 方法")
 
-    def simulate(self, signals, price_df, start_date=None, end_date=None, rebalance_freq="M"):
+    def simulate(
+        self, signals, price_df, start_date=None, end_date=None, rebalance_freq="M"
+    ):
         """
         模擬投資組合表現
 
@@ -136,7 +148,9 @@ class Portfolio:
         self.transactions = []
 
         # 計算再平衡日期
-        rebalance_dates = pd.date_range(start=trading_days[0], end=trading_days[-1], freq=rebalance_freq)
+        rebalance_dates = pd.date_range(
+            start=trading_days[0], end=trading_days[-1], freq=rebalance_freq
+        )
 
         # 模擬每個交易日
         for day in trading_days:
@@ -152,7 +166,11 @@ class Portfolio:
             # 檢查是否為再平衡日
             if day in rebalance_dates:
                 # 獲取當日訊號
-                day_signals = signals.xs(day, level="date", drop_level=False) if day in signals.index.get_level_values("date") else pd.DataFrame()
+                day_signals = (
+                    signals.xs(day, level="date", drop_level=False)
+                    if day in signals.index.get_level_values("date")
+                    else pd.DataFrame()
+                )
 
                 if not day_signals.empty:
                     # 最佳化投資組合權重
@@ -167,7 +185,7 @@ class Portfolio:
         return {
             "history": self.history,
             "transactions": self.transactions,
-            "performance": performance
+            "performance": performance,
         }
 
     def _update_positions_value(self, day_prices, close_col):
@@ -179,8 +197,13 @@ class Portfolio:
             close_col (str): 收盤價欄位名稱
         """
         for stock_id, position in list(self.positions.items()):
-            if (stock_id, day_prices.index.get_level_values("date")[0]) in day_prices.index:
-                price = day_prices.loc[(stock_id, day_prices.index.get_level_values("date")[0]), close_col]
+            if (
+                stock_id,
+                day_prices.index.get_level_values("date")[0],
+            ) in day_prices.index:
+                price = day_prices.loc[
+                    (stock_id, day_prices.index.get_level_values("date")[0]), close_col
+                ]
                 self.positions[stock_id]["value"] = position["shares"] * price
 
     def _record_state(self, date):
@@ -191,15 +214,22 @@ class Portfolio:
             date (datetime.date): 日期
         """
         # 計算總價值
-        total_value = self.cash + sum(position["value"] for position in self.positions.values())
+        total_value = self.cash + sum(
+            position["value"] for position in self.positions.values()
+        )
 
         # 記錄狀態
-        self.history.append({
-            "date": date,
-            "cash": self.cash,
-            "positions": {stock_id: position.copy() for stock_id, position in self.positions.items()},
-            "total_value": total_value
-        })
+        self.history.append(
+            {
+                "date": date,
+                "cash": self.cash,
+                "positions": {
+                    stock_id: position.copy()
+                    for stock_id, position in self.positions.items()
+                },
+                "total_value": total_value,
+            }
+        )
 
     def _execute_rebalance(self, weights, day_prices, close_col):
         """
@@ -211,16 +241,26 @@ class Portfolio:
             close_col (str): 收盤價欄位名稱
         """
         # 計算總價值
-        total_value = self.cash + sum(position["value"] for position in self.positions.values())
+        total_value = self.cash + sum(
+            position["value"] for position in self.positions.values()
+        )
 
         # 計算目標持倉
         target_positions = {}
         for (stock_id, _), row in weights.iterrows():
-            if (stock_id, day_prices.index.get_level_values("date")[0]) in day_prices.index:
-                price = day_prices.loc[(stock_id, day_prices.index.get_level_values("date")[0]), close_col]
+            if (
+                stock_id,
+                day_prices.index.get_level_values("date")[0],
+            ) in day_prices.index:
+                price = day_prices.loc[
+                    (stock_id, day_prices.index.get_level_values("date")[0]), close_col
+                ]
                 target_value = total_value * row["weight"]
                 target_shares = target_value / price
-                target_positions[stock_id] = {"shares": target_shares, "value": target_value}
+                target_positions[stock_id] = {
+                    "shares": target_shares,
+                    "value": target_value,
+                }
 
         # 賣出不在目標持倉中的股票
         for stock_id in list(self.positions.keys()):
@@ -236,10 +276,14 @@ class Portfolio:
 
                 if target_shares > current_shares:
                     # 買入股票
-                    self._buy_stock(stock_id, target_shares - current_shares, day_prices, close_col)
+                    self._buy_stock(
+                        stock_id, target_shares - current_shares, day_prices, close_col
+                    )
                 elif target_shares < current_shares:
                     # 賣出股票
-                    self._sell_stock(stock_id, current_shares - target_shares, day_prices, close_col)
+                    self._sell_stock(
+                        stock_id, current_shares - target_shares, day_prices, close_col
+                    )
             else:
                 # 買入新股票
                 self._buy_stock(stock_id, target["shares"], day_prices, close_col)
@@ -283,23 +327,25 @@ class Portfolio:
                     self.positions[stock_id] = {
                         "shares": shares,
                         "cost": buy_price,
-                        "value": shares * price
+                        "value": shares * price,
                     }
 
                 # 更新現金
-                self.cash -= (amount + transaction_cost)
+                self.cash -= amount + transaction_cost
 
                 # 記錄交易
-                self.transactions.append({
-                    "date": date,
-                    "stock_id": stock_id,
-                    "action": "buy",
-                    "shares": shares,
-                    "price": buy_price,
-                    "amount": amount,
-                    "transaction_cost": transaction_cost,
-                    "tax": 0.0  # 買入不課稅
-                })
+                self.transactions.append(
+                    {
+                        "date": date,
+                        "stock_id": stock_id,
+                        "action": "buy",
+                        "shares": shares,
+                        "price": buy_price,
+                        "amount": amount,
+                        "transaction_cost": transaction_cost,
+                        "tax": 0.0,  # 買入不課稅
+                    }
+                )
 
     def _sell_stock(self, stock_id, shares=None, day_prices=None, close_col=None):
         """
@@ -338,22 +384,26 @@ class Portfolio:
                 else:
                     # 更新持倉
                     self.positions[stock_id]["shares"] -= shares
-                    self.positions[stock_id]["value"] = self.positions[stock_id]["shares"] * price
+                    self.positions[stock_id]["value"] = (
+                        self.positions[stock_id]["shares"] * price
+                    )
 
                 # 更新現金
-                self.cash += (amount - transaction_cost - tax)
+                self.cash += amount - transaction_cost - tax
 
                 # 記錄交易
-                self.transactions.append({
-                    "date": date,
-                    "stock_id": stock_id,
-                    "action": "sell",
-                    "shares": shares,
-                    "price": sell_price,
-                    "amount": amount,
-                    "transaction_cost": transaction_cost,
-                    "tax": tax
-                })
+                self.transactions.append(
+                    {
+                        "date": date,
+                        "stock_id": stock_id,
+                        "action": "sell",
+                        "shares": shares,
+                        "price": sell_price,
+                        "amount": amount,
+                        "transaction_cost": transaction_cost,
+                        "tax": tax,
+                    }
+                )
 
     def _calculate_performance(self):
         """
@@ -368,14 +418,14 @@ class Portfolio:
         # 提取權益曲線
         equity_curve = pd.Series(
             [state["total_value"] for state in self.history],
-            index=[state["date"] for state in self.history]
+            index=[state["date"] for state in self.history],
         )
 
         # 計算每日收益率
         daily_returns = equity_curve.pct_change().dropna()
 
         # 計算累積收益率
-        cumulative_returns = (1 + daily_returns).cumprod()
+        (1 + daily_returns).cumprod()
 
         # 計算年化收益率
         annual_return = daily_returns.mean() * 252
@@ -384,7 +434,9 @@ class Portfolio:
         annual_volatility = daily_returns.std() * np.sqrt(252)
 
         # 計算夏普比率
-        sharpe_ratio = annual_return / annual_volatility if annual_volatility != 0 else 0
+        sharpe_ratio = (
+            annual_return / annual_volatility if annual_volatility != 0 else 0
+        )
 
         # 計算最大回撤
         max_drawdown = (equity_curve / equity_curve.cummax() - 1).min()
@@ -399,8 +451,16 @@ class Portfolio:
             profits = []
             for stock_id in sell_trades.index.unique():
                 if stock_id in buy_trades.index:
-                    buy_price = buy_trades.loc[stock_id, "price"].mean() if isinstance(buy_trades.loc[stock_id, "price"], pd.Series) else buy_trades.loc[stock_id, "price"]
-                    sell_price = sell_trades.loc[stock_id, "price"].mean() if isinstance(sell_trades.loc[stock_id, "price"], pd.Series) else sell_trades.loc[stock_id, "price"]
+                    buy_price = (
+                        buy_trades.loc[stock_id, "price"].mean()
+                        if isinstance(buy_trades.loc[stock_id, "price"], pd.Series)
+                        else buy_trades.loc[stock_id, "price"]
+                    )
+                    sell_price = (
+                        sell_trades.loc[stock_id, "price"].mean()
+                        if isinstance(sell_trades.loc[stock_id, "price"], pd.Series)
+                        else sell_trades.loc[stock_id, "price"]
+                    )
                     profit = (sell_price - buy_price) / buy_price
                     profits.append(profit)
 
@@ -419,7 +479,7 @@ class Portfolio:
             "annual_volatility": annual_volatility * 100,
             "sharpe_ratio": sharpe_ratio,
             "max_drawdown": max_drawdown * 100,
-            "win_rate": win_rate * 100
+            "win_rate": win_rate * 100,
         }
 
 
@@ -725,6 +785,12 @@ class MeanVariancePortfolio(Portfolio):
 
         # 定義目標函數
         def objective(weights):
+        """
+        objective
+        
+        Args:
+            weights: 
+        """
             portfolio_return = np.sum(expected_returns * weights)
             portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
             return -portfolio_return + self.risk_aversion * portfolio_variance
@@ -935,6 +1001,12 @@ class RiskParityPortfolio(Portfolio):
         # 定義目標函數
         def objective(weights):
             # 計算每個資產的風險貢獻
+        """
+        objective
+        
+        Args:
+            weights: 
+        """
             portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
             risk_contribution = (
                 weights * np.dot(cov_matrix, weights) / portfolio_variance
@@ -1043,7 +1115,9 @@ class MaxSharpePortfolio(Portfolio):
                 date_weights = pd.DataFrame(weight, index=stocks, columns=["weight"])
             else:
                 # 計算預期收益率和協方差矩陣
-                expected_returns = historical_returns.groupby(level="stock_id").mean() * 252  # 年化
+                expected_returns = (
+                    historical_returns.groupby(level="stock_id").mean() * 252
+                )  # 年化
                 cov_matrix = (
                     historical_returns.groupby(level="stock_id").cov() * 252  # 年化
                 ).unstack()
@@ -1087,14 +1161,24 @@ class MaxSharpePortfolio(Portfolio):
 
         # 定義目標函數 (負的夏普比率，因為我們要最大化)
         def objective(weights):
+        """
+        objective
+        
+        Args:
+            weights: 
+        """
             portfolio_return = np.sum(expected_returns * weights)
-            portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+            portfolio_volatility = np.sqrt(
+                np.dot(weights.T, np.dot(cov_matrix, weights))
+            )
 
             # 避免除以零
             if portfolio_volatility == 0:
                 return -999999  # 一個非常小的數，表示這不是一個好的解
 
-            sharpe_ratio = (portfolio_return - self.risk_free_rate) / portfolio_volatility
+            sharpe_ratio = (
+                portfolio_return - self.risk_free_rate
+            ) / portfolio_volatility
             return -sharpe_ratio  # 負號是因為我們要最大化夏普比率
 
         # 定義約束條件
@@ -1172,7 +1256,9 @@ class MaxSharpePortfolio(Portfolio):
 
         # 計算夏普比率
         sharpe_ratio = (
-            (annual_return - self.risk_free_rate) / annual_volatility if annual_volatility != 0 else 0
+            (annual_return - self.risk_free_rate) / annual_volatility
+            if annual_volatility != 0
+            else 0
         )
 
         # 計算最大回撤
@@ -1303,6 +1389,12 @@ class MinVariancePortfolio(Portfolio):
 
         # 定義目標函數 (投資組合方差)
         def objective(weights):
+        """
+        objective
+        
+        Args:
+            weights: 
+        """
             return np.dot(weights.T, np.dot(cov_matrix, weights))
 
         # 定義約束條件
@@ -1713,7 +1805,13 @@ def backtest_portfolio(
 def simulate_portfolios(
     signals: pd.DataFrame,
     prices: pd.DataFrame,
-    portfolio_types: list = ["equal_weight", "mean_variance", "risk_parity", "max_sharpe", "min_variance"],
+    portfolio_types: list = [
+        "equal_weight",
+        "mean_variance",
+        "risk_parity",
+        "max_sharpe",
+        "min_variance",
+    ],
     initial_capital: float = 1000000,
     start_date=None,
     end_date=None,
@@ -1762,7 +1860,9 @@ def simulate_portfolios(
             raise ValueError(f"不支援的投資組合類型: {portfolio_type}")
 
         # 模擬投資組合
-        result = portfolio.simulate(signals, prices, start_date, end_date, rebalance_freq)
+        result = portfolio.simulate(
+            signals, prices, start_date, end_date, rebalance_freq
+        )
         results[portfolio_type] = result
 
     # 比較各投資組合的表現
@@ -1784,7 +1884,7 @@ def compare_portfolio_performance(results: dict):
     for portfolio_type, result in results.items():
         equity_curve = pd.Series(
             [state["total_value"] for state in result["history"]],
-            index=[state["date"] for state in result["history"]]
+            index=[state["date"] for state in result["history"]],
         )
         equity_curves[portfolio_type] = equity_curve
 
@@ -1808,11 +1908,19 @@ def compare_portfolio_performance(results: dict):
 
     # 提取各投資組合的績效指標
     performance_data = {
-        "年化收益率 (%)": [result["performance"]["annual_return"] for result in results.values()],
-        "年化波動率 (%)": [result["performance"]["annual_volatility"] for result in results.values()],
-        "夏普比率": [result["performance"]["sharpe_ratio"] for result in results.values()],
-        "最大回撤 (%)": [result["performance"]["max_drawdown"] for result in results.values()],
-        "勝率 (%)": [result["performance"]["win_rate"] for result in results.values()]
+        "年化收益率 (%)": [
+            result["performance"]["annual_return"] for result in results.values()
+        ],
+        "年化波動率 (%)": [
+            result["performance"]["annual_volatility"] for result in results.values()
+        ],
+        "夏普比率": [
+            result["performance"]["sharpe_ratio"] for result in results.values()
+        ],
+        "最大回撤 (%)": [
+            result["performance"]["max_drawdown"] for result in results.values()
+        ],
+        "勝率 (%)": [result["performance"]["win_rate"] for result in results.values()],
     }
 
     # 創建績效指標比較表

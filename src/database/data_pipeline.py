@@ -11,50 +11,44 @@
 - 資料版本控制
 """
 
-import os
-import logging
 import json
+import logging
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional, Tuple
+
 import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple, Set
-from sqlalchemy import create_engine, select, and_, func, Integer, Float, String, Date, DateTime, Boolean
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 # 自定義 JSON 編碼器，處理日期、時間和 DataFrame 類型
 class CustomJSONEncoder(json.JSONEncoder):
+"""
+CustomJSONEncoder
+
+"""
     def default(self, obj):
+    """
+    default
+    
+    Args:
+        obj: 
+    """
         if isinstance(obj, (date, datetime)):
             return obj.isoformat()
         elif isinstance(obj, pd.DataFrame):
-            return obj.to_dict(orient='records')
-        elif hasattr(obj, 'to_dict'):
+            return obj.to_dict(orient="records")
+        elif hasattr(obj, "to_dict"):
             return obj.to_dict()
         return super().default(obj)
 
+
 from src.config import DB_URL, LOG_LEVEL
-from src.database.schema import (
-    Base,
-    MarketDaily,
-    MarketMinute,
-    MarketTick,
-    Fundamental,
-    TechnicalIndicator,
-    NewsSentiment,
-    DataShard,
-    DataChecksum,
-    init_db,
-)
-from src.database.data_validation import DataValidator
 from src.database.data_backup import DatabaseBackup
+from src.database.data_validation import DataValidator
 from src.database.data_versioning import DataVersionManager
-from src.database.parquet_utils import (
-    query_to_dataframe,
-    save_to_parquet,
-    read_from_parquet,
-    create_market_data_shard,
-    load_from_shard,
-)
+from src.database.parquet_utils import create_market_data_shard, load_from_shard
+from src.database.schema import DataChecksum, DataShard, init_db
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -133,7 +127,9 @@ class DataPipeline:
             if validate:
                 # 檢查必要欄位
                 required_fields = self._get_required_fields(table_class)
-                missing_fields = [field for field in required_fields if field not in data.columns]
+                missing_fields = [
+                    field for field in required_fields if field not in data.columns
+                ]
                 if missing_fields:
                     logger.error(f"資料缺少必要欄位: {missing_fields}")
                     return False, []
@@ -155,16 +151,19 @@ class DataPipeline:
                 # 設置校驗碼
                 if create_checksum and hasattr(record, "checksum"):
                     checksum_fields = [
-                        col.name for col in table_class.__table__.columns
-                        if col.name not in ["id", "created_at", "updated_at", "checksum"]
+                        col.name
+                        for col in table_class.__table__.columns
+                        if col.name
+                        not in ["id", "created_at", "updated_at", "checksum"]
                     ]
                     record_data = {
                         field: getattr(record, field)
                         for field in checksum_fields
                         if hasattr(record, field)
                     }
-                    import json
                     import hashlib
+                    import json
+
                     json_str = json.dumps(record_data, sort_keys=True, default=str)
                     record.checksum = hashlib.sha256(json_str.encode()).hexdigest()
 
@@ -193,11 +192,7 @@ class DataPipeline:
             return False, []
 
     def validate_data_quality(
-        self,
-        table_class,
-        symbol: str,
-        start_date: date,
-        end_date: date
+        self, table_class, symbol: str, start_date: date, end_date: date
     ) -> Dict[str, Any]:
         """
         驗證資料品質
@@ -277,10 +272,7 @@ class DataPipeline:
         self.backup.schedule_backup(interval)
 
     def update_schema_version(
-        self,
-        version: str,
-        description: str,
-        changes: Dict[str, Any]
+        self, version: str, description: str, changes: Dict[str, Any]
     ) -> None:
         """
         更新資料庫結構版本
@@ -315,7 +307,7 @@ class DataPipeline:
         table_name: str,
         record_id: int,
         changes: Dict[str, Any],
-        user: str = "system"
+        user: str = "system",
     ) -> None:
         """
         追蹤資料變更
@@ -407,7 +399,11 @@ class DataPipeline:
         """
         required_fields = []
         for column in table_class.__table__.columns:
-            if not column.nullable and not column.primary_key and column.default is None:
+            if (
+                not column.nullable
+                and not column.primary_key
+                and column.default is None
+            ):
                 required_fields.append(column.name)
         return required_fields
 
@@ -430,13 +426,26 @@ class DataPipeline:
                 actual_type = data[column.name].dtype
 
                 # 簡單類型檢查
-                if type_name in ["Integer", "Float", "Numeric"] and not pd.api.types.is_numeric_dtype(actual_type):
+                if type_name in [
+                    "Integer",
+                    "Float",
+                    "Numeric",
+                ] and not pd.api.types.is_numeric_dtype(actual_type):
                     invalid_types[column.name] = type_name
-                elif type_name in ["String", "Text", "Unicode"] and not pd.api.types.is_string_dtype(actual_type):
+                elif type_name in [
+                    "String",
+                    "Text",
+                    "Unicode",
+                ] and not pd.api.types.is_string_dtype(actual_type):
                     invalid_types[column.name] = type_name
-                elif type_name in ["Date", "DateTime"] and not pd.api.types.is_datetime64_dtype(actual_type):
+                elif type_name in [
+                    "Date",
+                    "DateTime",
+                ] and not pd.api.types.is_datetime64_dtype(actual_type):
                     invalid_types[column.name] = type_name
-                elif type_name == "Boolean" and not pd.api.types.is_bool_dtype(actual_type):
+                elif type_name == "Boolean" and not pd.api.types.is_bool_dtype(
+                    actual_type
+                ):
                     invalid_types[column.name] = type_name
 
         return invalid_types
@@ -453,7 +462,8 @@ class DataPipeline:
         for record in records:
             # 獲取參與校驗的欄位
             checksum_fields = [
-                col.name for col in record.__table__.columns
+                col.name
+                for col in record.__table__.columns
                 if col.name not in ["id", "created_at", "updated_at", "checksum"]
             ]
 
@@ -493,11 +503,21 @@ class DataPipeline:
         continuity_score = continuity_result.get("continuity_score", 0.0)
 
         # 缺失值分數
-        missing_percentage = sum(missing_result.get("missing_percentages", {}).values()) / len(missing_result.get("missing_percentages", {})) if missing_result.get("missing_percentages") else 0.0
+        missing_percentage = (
+            sum(missing_result.get("missing_percentages", {}).values())
+            / len(missing_result.get("missing_percentages", {}))
+            if missing_result.get("missing_percentages")
+            else 0.0
+        )
         missing_score = 1.0 - (missing_percentage / 100.0)
 
         # 異常值分數
-        outlier_percentage = sum(outlier_result.get("outlier_percentages", {}).values()) / len(outlier_result.get("outlier_percentages", {})) if outlier_result.get("outlier_percentages") else 0.0
+        outlier_percentage = (
+            sum(outlier_result.get("outlier_percentages", {}).values())
+            / len(outlier_result.get("outlier_percentages", {}))
+            if outlier_result.get("outlier_percentages")
+            else 0.0
+        )
         outlier_score = 1.0 - (outlier_percentage / 100.0)
 
         # 計算加權平均分數
@@ -508,9 +528,9 @@ class DataPipeline:
         }
 
         overall_score = (
-            weights["continuity"] * continuity_score +
-            weights["missing"] * missing_score +
-            weights["outlier"] * outlier_score
+            weights["continuity"] * continuity_score
+            + weights["missing"] * missing_score
+            + weights["outlier"] * outlier_score
         )
 
         # 品質等級

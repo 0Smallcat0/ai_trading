@@ -3,17 +3,19 @@
 #
 # 本筆記本用於研究交易策略和測試因子效力。
 
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 # %%
 # 導入必要的庫
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
-from statsmodels.tsa.stattools import adfuller
-from sklearn.model_selection import TimeSeriesSplit
 from sklearn.linear_model import LinearRegression
-import sys
+from sklearn.model_selection import TimeSeriesSplit
+from statsmodels.tsa.stattools import adfuller
 
 # 添加專案根目錄到路徑
 sys.path.append("..")

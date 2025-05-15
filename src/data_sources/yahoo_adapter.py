@@ -11,19 +11,18 @@ Yahoo Finance 資料適配器
 - 獲取即時報價
 """
 
-import os
-import time
 import logging
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
-import yfinance as yf
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from src.config import DATA_DIR, CACHE_DIR
-from src.database.schema import MarketType, TimeGranularity
+import pandas as pd
+import yfinance as yf
+
+from src.config import CACHE_DIR
 from src.core.rate_limiter import RateLimiter
+from src.database.schema import MarketType, TimeGranularity
 
 # 設定日誌
 logger = logging.getLogger(__name__)

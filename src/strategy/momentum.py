@@ -12,6 +12,12 @@ class MomentumStrategy:
     """
 
     def __init__(self, window: int = 20):
+    """
+    __init__
+    
+    Args:
+        window: 
+    """
         self.window = window
 
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:

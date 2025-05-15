@@ -12,23 +12,21 @@
 - 自動標記和處理異常值
 """
 
-import os
-import logging
 import datetime
-import pandas as pd
-import numpy as np
-from typing import List, Dict, Union, Optional, Tuple
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
 import time
-from functools import partial
-import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
 from scipy import stats
 
 # 導入相關模組
 try:
     from src.core.data_ingest import DataIngestionManager, load_data
-    from src.database.parquet_utils import save_to_parquet, read_from_parquet
-    from src.utils.utils import get_trading_dates, is_trading_day
+    from src.database.parquet_utils import save_to_parquet
+    from src.utils.utils import get_trading_dates
 except ImportError as e:
     raise ImportError(
         "無法匯入必要模組，請確認你在 package 結構下執行，或設置 PYTHONPATH。錯誤："

@@ -1,10 +1,11 @@
 [project]
 name = "ai-trading"
 version = "0.1.0"
-description = ""
+description = "AI Stock Automated Trading System"
 authors = [
     {name = "Cookie",email = "noiroao@gmail.com"}
 ]
+package-mode = false
 readme = "README.md"
 requires-python = ">=3.10,<4.0.0"
 dependencies = [
@@ -40,15 +41,26 @@ dependencies = [
     "alpha-vantage (>=3.0.0,<4.0.0)",
     "snownlp (>=0.12.3,<0.13.0)",
     "psutil (>=7.0.0,<8.0.0)",
-    "pyarrow (>=20.0.0,<21.0.0)",
+    "pyarrow (>=4.0.0,<20.0.0)",
     "backtrader (>=1.9.76,<2.0.0)",
     "tensorflow (>=2.15.0,<3.0.0)",
+    "tensorflow-io-gcs-filesystem (==0.31.0) ; python_version >= '3.10' and python_version < '3.12'",
     "torch (>=2.0.0,<3.0.0)",
     "mlflow (>=2.10.0,<3.0.0)",
     "shap (>=0.44.0,<0.45.0)",
     "lime (>=0.2.0,<0.3.0)",
     "xgboost (>=2.0.0,<3.0.0)",
-    "lightgbm (>=4.1.0,<5.0.0)"
+    "lightgbm (>=4.1.0,<5.0.0)",
+    "uvicorn (>=0.34.2,<0.35.0)",
+    "fastapi (>=0.115.12,<0.116.0)",
+    "onnx (>=1.15.0,<2.0.0)",
+    "onnxruntime (>=1.17.0,<2.0.0)",
+    "tf2onnx (>=1.16.0,<2.0.0)",
+    "prometheus-client (>=0.19.0,<0.20.0)",
+    "memory-profiler (>=0.61.0,<0.62.0)",
+    "line-profiler (>=4.1.0,<5.0.0)",
+    "dask (>=2024.4.1,<2025.0.0)",
+    "ray (>=2.9.3,<3.0.0)"
 ]
 
 

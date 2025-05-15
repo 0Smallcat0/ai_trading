@@ -1,3 +1,9 @@
+"""
+配置模組
+
+此模組提供系統配置的載入和訪問功能。
+"""
+
 import os
 import sys
 from pathlib import Path
@@ -58,7 +64,9 @@ API_SECRET = os.getenv("API_SECRET", "")
 
 # 日誌設定
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-LOG_FORMAT = os.getenv("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+LOG_FORMAT = os.getenv(
+    "LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 # 交易設定
 TRADING_HOURS_START = os.getenv("TRADING_HOURS_START", "09:00:00")
@@ -111,11 +119,11 @@ def load_config_file(file_path, default=None):
         with open(file_path, "r", encoding="utf-8") as f:
             if file_path.suffix.lower() in [".yaml", ".yml"]:
                 return yaml.safe_load(f)
-            elif file_path.suffix.lower() == ".json":
+            if file_path.suffix.lower() == ".json":
                 return json.load(f)
-            else:
-                print(f"不支援的配置文件格式: {file_path.suffix}")
-                return default
+
+            print(f"不支援的配置文件格式: {file_path.suffix}")
+            return default
     except Exception as e:
         print(f"載入配置文件時發生錯誤: {e}")
         return default

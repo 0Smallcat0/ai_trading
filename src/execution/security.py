@@ -5,14 +5,13 @@ API 金鑰安全管理模組
 使用環境變數和加密技術來保護敏感資訊。
 """
 
-import os
 import base64
-import logging
 import json
-from typing import Dict, Optional, Any, Tuple
+import logging
+import os
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
-import hashlib
+from typing import Dict, Optional, Tuple
 
 # 嘗試導入加密庫
 try:

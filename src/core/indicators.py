@@ -12,18 +12,16 @@
 - 提供指標評估工具
 """
 
-import pandas as pd
-import numpy as np
 import logging
 import warnings
-from typing import Dict, List, Union, Optional, Tuple, Callable
-import matplotlib.pyplot as plt
-from scipy import stats
+from typing import Dict, List, Tuple, Union
+
+import pandas as pd
 
 # 嘗試導入 TA-Lib
 try:
-    import talib
     from talib import abstract
+
     TALIB_AVAILABLE = True
 except ImportError as e:
     warnings.warn(f"無法匯入 TA-Lib，部分技術指標功能將無法使用: {e}")
@@ -31,13 +29,24 @@ except ImportError as e:
 
     # 創建空的 abstract 模組以避免錯誤
     class DummyAbstract:
+    """
+    DummyAbstract
+    
+    """
         def __getattr__(self, name):
+        """
+        __getattr__
+        
+        Args:
+            name: 
+        """
             return None
 
     abstract = DummyAbstract()
 
 # 設置日誌
 logger = logging.getLogger(__name__)
+
 
 class TechnicalIndicators:
     """
@@ -66,7 +75,9 @@ class TechnicalIndicators:
         """
         self.price_data = price_data
 
-    def _prepare_ohlcv_data(self, price_data: pd.DataFrame = None) -> Dict[str, pd.Series]:
+    def _prepare_ohlcv_data(
+        self, price_data: pd.DataFrame = None
+    ) -> Dict[str, pd.Series]:
         """
         準備 OHLCV 資料
 
@@ -84,11 +95,11 @@ class TechnicalIndicators:
 
         # 標準化欄位名稱
         column_mapping = {
-            'open': ['open', 'Open', '開盤價', '開盤'],
-            'high': ['high', 'High', '最高價', '最高'],
-            'low': ['low', 'Low', '最低價', '最低'],
-            'close': ['close', 'Close', '收盤價', '收盤'],
-            'volume': ['volume', 'Volume', '成交量', '成交股數']
+            "open": ["open", "Open", "開盤價", "開盤"],
+            "high": ["high", "High", "最高價", "最高"],
+            "low": ["low", "Low", "最低價", "最低"],
+            "close": ["close", "Close", "收盤價", "收盤"],
+            "volume": ["volume", "Volume", "成交量", "成交股數"],
         }
 
         ohlcv_dict = {}
@@ -101,7 +112,9 @@ class TechnicalIndicators:
 
         return ohlcv_dict
 
-    def calculate_sma(self, period: int = 20, column: str = 'close', price_data: pd.DataFrame = None) -> pd.Series:
+    def calculate_sma(
+        self, period: int = 20, column: str = "close", price_data: pd.DataFrame = None
+    ) -> pd.Series:
         """
         計算簡單移動平均線 (Simple Moving Average, SMA)
 
@@ -135,7 +148,9 @@ class TechnicalIndicators:
 
         return sma
 
-    def calculate_ema(self, period: int = 20, column: str = 'close', price_data: pd.DataFrame = None) -> pd.Series:
+    def calculate_ema(
+        self, period: int = 20, column: str = "close", price_data: pd.DataFrame = None
+    ) -> pd.Series:
         """
         計算指數移動平均線 (Exponential Moving Average, EMA)
 
@@ -170,8 +185,14 @@ class TechnicalIndicators:
 
         return ema
 
-    def calculate_macd(self, fast_period: int = 12, slow_period: int = 26, signal_period: int = 9,
-                      column: str = 'close', price_data: pd.DataFrame = None) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    def calculate_macd(
+        self,
+        fast_period: int = 12,
+        slow_period: int = 26,
+        signal_period: int = 9,
+        column: str = "close",
+        price_data: pd.DataFrame = None,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
         """
         計算移動平均收斂散度 (Moving Average Convergence Divergence, MACD)
 
@@ -205,7 +226,7 @@ class TechnicalIndicators:
                 ohlcv_dict,
                 fastperiod=fast_period,
                 slowperiod=slow_period,
-                signalperiod=signal_period
+                signalperiod=signal_period,
             )
         else:
             # 手動計算MACD
@@ -222,7 +243,9 @@ class TechnicalIndicators:
 
         return macd, signal, hist
 
-    def calculate_rsi(self, period: int = 14, column: str = 'close', price_data: pd.DataFrame = None) -> pd.Series:
+    def calculate_rsi(
+        self, period: int = 14, column: str = "close", price_data: pd.DataFrame = None
+    ) -> pd.Series:
         """
         計算相對強弱指標 (Relative Strength Index, RSI)
 
@@ -266,8 +289,13 @@ class TechnicalIndicators:
 
         return rsi
 
-    def calculate_bollinger_bands(self, period: int = 20, std_dev: float = 2.0,
-                                column: str = 'close', price_data: pd.DataFrame = None) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    def calculate_bollinger_bands(
+        self,
+        period: int = 20,
+        std_dev: float = 2.0,
+        column: str = "close",
+        price_data: pd.DataFrame = None,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
         """
         計算布林帶 (Bollinger Bands)
 
@@ -297,10 +325,7 @@ class TechnicalIndicators:
 
         if TALIB_AVAILABLE:
             upper, middle, lower = abstract.BBANDS(
-                ohlcv_dict,
-                timeperiod=period,
-                nbdevup=std_dev,
-                nbdevdn=std_dev
+                ohlcv_dict, timeperiod=period, nbdevup=std_dev, nbdevdn=std_dev
             )
         else:
             # 手動計算布林帶
@@ -338,32 +363,34 @@ class TechnicalIndicators:
 
         ohlcv_dict = self._prepare_ohlcv_data(price_data)
 
-        if 'close' not in ohlcv_dict or 'volume' not in ohlcv_dict:
+        if "close" not in ohlcv_dict or "volume" not in ohlcv_dict:
             raise ValueError("找不到必要的欄位: close, volume")
 
         if TALIB_AVAILABLE:
             obv = abstract.OBV(ohlcv_dict)
         else:
             # 手動計算OBV
-            close = ohlcv_dict['close']
-            volume = ohlcv_dict['volume']
+            close = ohlcv_dict["close"]
+            volume = ohlcv_dict["volume"]
 
             obv = pd.Series(index=close.index)
             obv.iloc[0] = volume.iloc[0]
 
             for i in range(1, len(close)):
-                if close.iloc[i] > close.iloc[i-1]:
-                    obv.iloc[i] = obv.iloc[i-1] + volume.iloc[i]
-                elif close.iloc[i] < close.iloc[i-1]:
-                    obv.iloc[i] = obv.iloc[i-1] - volume.iloc[i]
+                if close.iloc[i] > close.iloc[i - 1]:
+                    obv.iloc[i] = obv.iloc[i - 1] + volume.iloc[i]
+                elif close.iloc[i] < close.iloc[i - 1]:
+                    obv.iloc[i] = obv.iloc[i - 1] - volume.iloc[i]
                 else:
-                    obv.iloc[i] = obv.iloc[i-1]
+                    obv.iloc[i] = obv.iloc[i - 1]
 
         self.indicators_data["OBV"] = obv
 
         return obv
 
-    def calculate_atr(self, period: int = 14, price_data: pd.DataFrame = None) -> pd.Series:
+    def calculate_atr(
+        self, period: int = 14, price_data: pd.DataFrame = None
+    ) -> pd.Series:
         """
         計算平均真實範圍 (Average True Range, ATR)
 
@@ -385,16 +412,20 @@ class TechnicalIndicators:
 
         ohlcv_dict = self._prepare_ohlcv_data(price_data)
 
-        if 'high' not in ohlcv_dict or 'low' not in ohlcv_dict or 'close' not in ohlcv_dict:
+        if (
+            "high" not in ohlcv_dict
+            or "low" not in ohlcv_dict
+            or "close" not in ohlcv_dict
+        ):
             raise ValueError("找不到必要的欄位: high, low, close")
 
         if TALIB_AVAILABLE:
             atr = abstract.ATR(ohlcv_dict, timeperiod=period)
         else:
             # 手動計算ATR
-            high = ohlcv_dict['high']
-            low = ohlcv_dict['low']
-            close = ohlcv_dict['close']
+            high = ohlcv_dict["high"]
+            low = ohlcv_dict["low"]
+            close = ohlcv_dict["close"]
 
             prev_close = close.shift(1)
             tr1 = high - low
@@ -409,7 +440,7 @@ class TechnicalIndicators:
 
         return atr
 
-    def standardize_indicators(self, method: str = 'zscore') -> pd.DataFrame:
+    def standardize_indicators(self, method: str = "zscore") -> pd.DataFrame:
         """
         標準化所有指標
 
@@ -426,13 +457,15 @@ class TechnicalIndicators:
         indicators_df = pd.DataFrame(self.indicators_data)
 
         # 標準化
-        if method == 'zscore':
+        if method == "zscore":
             # Z-score標準化: (x - mean) / std
             standardized = (indicators_df - indicators_df.mean()) / indicators_df.std()
-        elif method == 'minmax':
+        elif method == "minmax":
             # Min-Max標準化: (x - min) / (max - min)
-            standardized = (indicators_df - indicators_df.min()) / (indicators_df.max() - indicators_df.min())
-        elif method == 'robust':
+            standardized = (indicators_df - indicators_df.min()) / (
+                indicators_df.max() - indicators_df.min()
+            )
+        elif method == "robust":
             # 穩健標準化: (x - median) / IQR
             median = indicators_df.median()
             q1 = indicators_df.quantile(0.25)
@@ -444,8 +477,12 @@ class TechnicalIndicators:
 
         return standardized
 
-    def compare_indicators(self, price_series: pd.Series, periods: List[int] = None,
-                          indicators: List[str] = None) -> pd.DataFrame:
+    def compare_indicators(
+        self,
+        price_series: pd.Series,
+        periods: List[int] = None,
+        indicators: List[str] = None,
+    ) -> pd.DataFrame:
         """
         比較不同指標的表現
 
@@ -461,7 +498,7 @@ class TechnicalIndicators:
             periods = [5, 10, 20, 50, 100]
 
         if indicators is None:
-            indicators = ['SMA', 'EMA', 'RSI', 'BBANDS', 'ATR']
+            indicators = ["SMA", "EMA", "RSI", "BBANDS", "ATR"]
 
         results = {}
 
@@ -472,16 +509,16 @@ class TechnicalIndicators:
         for indicator in indicators:
             for period in periods:
                 # 計算指標
-                if indicator == 'SMA':
+                if indicator == "SMA":
                     ind_values = self.calculate_sma(period=period)
-                elif indicator == 'EMA':
+                elif indicator == "EMA":
                     ind_values = self.calculate_ema(period=period)
-                elif indicator == 'RSI':
+                elif indicator == "RSI":
                     ind_values = self.calculate_rsi(period=period)
-                elif indicator == 'BBANDS':
+                elif indicator == "BBANDS":
                     upper, middle, lower = self.calculate_bollinger_bands(period=period)
                     ind_values = (price_series - middle) / (upper - lower)
-                elif indicator == 'ATR':
+                elif indicator == "ATR":
                     ind_values = self.calculate_atr(period=period)
                 else:
                     continue
@@ -490,12 +527,12 @@ class TechnicalIndicators:
                 correlation = ind_values.shift(1).corr(price_change)
 
                 # 計算預測準確率
-                if indicator in ['SMA', 'EMA']:
+                if indicator in ["SMA", "EMA"]:
                     # 價格高於均線買入，低於均線賣出
                     signals = (price_series > ind_values).astype(int)
                     next_change = price_change.shift(-1)
                     accuracy = (signals * next_change > 0).mean()
-                elif indicator == 'RSI':
+                elif indicator == "RSI":
                     # RSI低於30買入，高於70賣出
                     buy_signals = (ind_values < 30).astype(int)
                     sell_signals = (ind_values > 70).astype(int)
@@ -507,8 +544,8 @@ class TechnicalIndicators:
                     accuracy = None
 
                 results[f"{indicator}_{period}"] = {
-                    'correlation': correlation,
-                    'accuracy': accuracy
+                    "correlation": correlation,
+                    "accuracy": accuracy,
                 }
 
         return pd.DataFrame(results).T
@@ -555,17 +592,17 @@ class FundamentalIndicators:
         Returns:
             pd.DataFrame: EPS成長率
         """
-        if 'income_statement' not in self.financial_data:
+        if "income_statement" not in self.financial_data:
             raise ValueError("找不到損益表資料")
 
         if periods is None:
             periods = [1, 4, 12]  # 1季、1年、3年
 
-        income_df = self.financial_data['income_statement']
+        income_df = self.financial_data["income_statement"]
 
         # 檢查是否有EPS欄位
         eps_col = None
-        for col in ['EPS', 'eps', '每股盈餘']:
+        for col in ["EPS", "eps", "每股盈餘"]:
             if col in income_df.columns:
                 eps_col = col
                 break
@@ -599,20 +636,20 @@ class FundamentalIndicators:
         Returns:
             pd.Series: P/E值
         """
-        if 'income_statement' not in self.financial_data:
+        if "income_statement" not in self.financial_data:
             raise ValueError("找不到損益表資料")
 
-        if price_data is None and 'price' in self.financial_data:
-            price_data = self.financial_data['price']
+        if price_data is None and "price" in self.financial_data:
+            price_data = self.financial_data["price"]
 
         if price_data is None:
             raise ValueError("找不到價格資料")
 
-        income_df = self.financial_data['income_statement']
+        income_df = self.financial_data["income_statement"]
 
         # 檢查是否有EPS欄位
         eps_col = None
-        for col in ['EPS', 'eps', '每股盈餘']:
+        for col in ["EPS", "eps", "每股盈餘"]:
             if col in income_df.columns:
                 eps_col = col
                 break
@@ -622,7 +659,7 @@ class FundamentalIndicators:
 
         # 檢查價格資料
         price_col = None
-        for col in ['close', 'Close', '收盤價', '收盤']:
+        for col in ["close", "Close", "收盤價", "收盤"]:
             if col in price_data.columns:
                 price_col = col
                 break
@@ -631,12 +668,12 @@ class FundamentalIndicators:
             raise ValueError("找不到價格欄位")
 
         # 將EPS資料對齊到價格資料的日期
-        eps = income_df[eps_col].reindex(price_data.index, method='ffill')
+        eps = income_df[eps_col].reindex(price_data.index, method="ffill")
 
         # 計算P/E
         pe_ratio = price_data[price_col] / eps
 
-        self.indicators_data['PE_ratio'] = pe_ratio
+        self.indicators_data["PE_ratio"] = pe_ratio
 
         return pe_ratio
 
@@ -654,20 +691,20 @@ class FundamentalIndicators:
         Returns:
             pd.Series: P/B值
         """
-        if 'balance_sheet' not in self.financial_data:
+        if "balance_sheet" not in self.financial_data:
             raise ValueError("找不到資產負債表資料")
 
-        if price_data is None and 'price' in self.financial_data:
-            price_data = self.financial_data['price']
+        if price_data is None and "price" in self.financial_data:
+            price_data = self.financial_data["price"]
 
         if price_data is None:
             raise ValueError("找不到價格資料")
 
-        balance_df = self.financial_data['balance_sheet']
+        balance_df = self.financial_data["balance_sheet"]
 
         # 檢查是否有每股淨值欄位
         bps_col = None
-        for col in ['BPS', 'bps', '每股淨值', '每股權益']:
+        for col in ["BPS", "bps", "每股淨值", "每股權益"]:
             if col in balance_df.columns:
                 bps_col = col
                 break
@@ -677,12 +714,12 @@ class FundamentalIndicators:
             equity_col = None
             shares_col = None
 
-            for col in ['股東權益', '權益總計', 'Total Equity', 'equity']:
+            for col in ["股東權益", "權益總計", "Total Equity", "equity"]:
                 if col in balance_df.columns:
                     equity_col = col
                     break
 
-            for col in ['股本', '普通股股本', 'Common Stock', 'shares']:
+            for col in ["股本", "普通股股本", "Common Stock", "shares"]:
                 if col in balance_df.columns:
                     shares_col = col
                     break
@@ -697,7 +734,7 @@ class FundamentalIndicators:
 
         # 檢查價格資料
         price_col = None
-        for col in ['close', 'Close', '收盤價', '收盤']:
+        for col in ["close", "Close", "收盤價", "收盤"]:
             if col in price_data.columns:
                 price_col = col
                 break
@@ -706,12 +743,12 @@ class FundamentalIndicators:
             raise ValueError("找不到價格欄位")
 
         # 將BPS資料對齊到價格資料的日期
-        bps = bps.reindex(price_data.index, method='ffill')
+        bps = bps.reindex(price_data.index, method="ffill")
 
         # 計算P/B
         pb_ratio = price_data[price_col] / bps
 
-        self.indicators_data['PB_ratio'] = pb_ratio
+        self.indicators_data["PB_ratio"] = pb_ratio
 
         return pb_ratio
 
@@ -755,14 +792,14 @@ class SentimentIndicators:
         Returns:
             pd.Series: 新聞情緒指標
         """
-        if 'news' not in self.sentiment_data:
+        if "news" not in self.sentiment_data:
             raise ValueError("找不到新聞情緒資料")
 
-        news_df = self.sentiment_data['news']
+        news_df = self.sentiment_data["news"]
 
         # 檢查是否有情緒分數欄位
         sentiment_col = None
-        for col in ['sentiment', 'sentiment_score', '情緒分數']:
+        for col in ["sentiment", "sentiment_score", "情緒分數"]:
             if col in news_df.columns:
                 sentiment_col = col
                 break
@@ -773,7 +810,7 @@ class SentimentIndicators:
         # 計算移動平均情緒指標
         sentiment_ma = news_df[sentiment_col].rolling(window=window).mean()
 
-        self.indicators_data['news_sentiment'] = sentiment_ma
+        self.indicators_data["news_sentiment"] = sentiment_ma
 
         return sentiment_ma
 
@@ -789,14 +826,14 @@ class SentimentIndicators:
         Returns:
             pd.Series: 社交媒體情緒指標
         """
-        if 'social' not in self.sentiment_data:
+        if "social" not in self.sentiment_data:
             raise ValueError("找不到社交媒體情緒資料")
 
-        social_df = self.sentiment_data['social']
+        social_df = self.sentiment_data["social"]
 
         # 檢查是否有情緒分數欄位
         sentiment_col = None
-        for col in ['sentiment', 'sentiment_score', '情緒分數']:
+        for col in ["sentiment", "sentiment_score", "情緒分數"]:
             if col in social_df.columns:
                 sentiment_col = col
                 break
@@ -807,11 +844,13 @@ class SentimentIndicators:
         # 計算移動平均情緒指標
         sentiment_ma = social_df[sentiment_col].rolling(window=window).mean()
 
-        self.indicators_data['social_sentiment'] = sentiment_ma
+        self.indicators_data["social_sentiment"] = sentiment_ma
 
         return sentiment_ma
 
-    def calculate_topic_sentiment(self, topics: List[str] = None, window: int = 7) -> pd.DataFrame:
+    def calculate_topic_sentiment(
+        self, topics: List[str] = None, window: int = 7
+    ) -> pd.DataFrame:
         """
         計算主題情緒指標
 
@@ -824,21 +863,21 @@ class SentimentIndicators:
         Returns:
             pd.DataFrame: 主題情緒指標
         """
-        if 'news' not in self.sentiment_data:
+        if "news" not in self.sentiment_data:
             raise ValueError("找不到新聞情緒資料")
 
-        news_df = self.sentiment_data['news']
+        news_df = self.sentiment_data["news"]
 
         # 檢查是否有主題欄位和情緒分數欄位
         topic_col = None
         sentiment_col = None
 
-        for col in ['topic', 'category', '主題', '類別']:
+        for col in ["topic", "category", "主題", "類別"]:
             if col in news_df.columns:
                 topic_col = col
                 break
 
-        for col in ['sentiment', 'sentiment_score', '情緒分數']:
+        for col in ["sentiment", "sentiment_score", "情緒分數"]:
             if col in news_df.columns:
                 sentiment_col = col
                 break
@@ -868,8 +907,11 @@ class SentimentIndicators:
         return topic_sentiment_df
 
 
-def evaluate_indicator_efficacy(price_data: pd.DataFrame, indicator_data: pd.DataFrame,
-                               forward_periods: List[int] = None) -> pd.DataFrame:
+def evaluate_indicator_efficacy(
+    price_data: pd.DataFrame,
+    indicator_data: pd.DataFrame,
+    forward_periods: List[int] = None,
+) -> pd.DataFrame:
     """
     評估指標有效性
 
@@ -888,7 +930,7 @@ def evaluate_indicator_efficacy(price_data: pd.DataFrame, indicator_data: pd.Dat
 
     # 確保價格資料有 'close' 列
     price_col = None
-    for col in ['close', 'Close', '收盤價', '收盤']:
+    for col in ["close", "Close", "收盤價", "收盤"]:
         if col in price_data.columns:
             price_col = col
             break
@@ -899,22 +941,31 @@ def evaluate_indicator_efficacy(price_data: pd.DataFrame, indicator_data: pd.Dat
     # 計算未來價格變化
     future_returns = {}
     for period in forward_periods:
-        future_returns[f"future_return_{period}"] = price_data[price_col].pct_change(periods=period).shift(-period)
+        future_returns[f"future_return_{period}"] = (
+            price_data[price_col].pct_change(periods=period).shift(-period)
+        )
 
     future_returns_df = pd.DataFrame(future_returns)
 
     # 計算指標與未來價格變化的相關性
-    correlation_matrix = pd.DataFrame(index=indicator_data.columns, columns=future_returns_df.columns)
+    correlation_matrix = pd.DataFrame(
+        index=indicator_data.columns, columns=future_returns_df.columns
+    )
 
     for ind_col in indicator_data.columns:
         for ret_col in future_returns_df.columns:
-            correlation_matrix.loc[ind_col, ret_col] = indicator_data[ind_col].corr(future_returns_df[ret_col])
+            correlation_matrix.loc[ind_col, ret_col] = indicator_data[ind_col].corr(
+                future_returns_df[ret_col]
+            )
 
     return correlation_matrix
 
 
-def generate_trading_signals(price_data: pd.DataFrame, indicator_data: pd.DataFrame,
-                            signal_rules: Dict[str, Dict[str, Union[str, float]]]) -> pd.DataFrame:
+def generate_trading_signals(
+    price_data: pd.DataFrame,
+    indicator_data: pd.DataFrame,
+    signal_rules: Dict[str, Dict[str, Union[str, float]]],
+) -> pd.DataFrame:
     """
     生成交易訊號
 
@@ -929,7 +980,7 @@ def generate_trading_signals(price_data: pd.DataFrame, indicator_data: pd.DataFr
         pd.DataFrame: 交易訊號
     """
     signals = pd.DataFrame(index=price_data.index)
-    signals['signal'] = 0
+    signals["signal"] = 0
 
     for indicator, rule in signal_rules.items():
         if indicator not in indicator_data.columns:
@@ -937,31 +988,43 @@ def generate_trading_signals(price_data: pd.DataFrame, indicator_data: pd.DataFr
 
         indicator_values = indicator_data[indicator]
 
-        if rule['type'] == 'threshold':
+        if rule["type"] == "threshold":
             # 閾值規則
-            if 'buy_threshold' in rule:
-                signals.loc[indicator_values < rule['buy_threshold'], 'signal'] = 1
-            if 'sell_threshold' in rule:
-                signals.loc[indicator_values > rule['sell_threshold'], 'signal'] = -1
+            if "buy_threshold" in rule:
+                signals.loc[indicator_values < rule["buy_threshold"], "signal"] = 1
+            if "sell_threshold" in rule:
+                signals.loc[indicator_values > rule["sell_threshold"], "signal"] = -1
 
-        elif rule['type'] == 'crossover':
+        elif rule["type"] == "crossover":
             # 交叉規則
-            if 'reference' in rule:
-                if rule['reference'] == 'SMA':
-                    reference_values = indicator_values.rolling(window=rule['period']).mean()
-                elif rule['reference'] == 'EMA':
-                    reference_values = indicator_values.ewm(span=rule['period'], adjust=False).mean()
+            if "reference" in rule:
+                if rule["reference"] == "SMA":
+                    reference_values = indicator_values.rolling(
+                        window=rule["period"]
+                    ).mean()
+                elif rule["reference"] == "EMA":
+                    reference_values = indicator_values.ewm(
+                        span=rule["period"], adjust=False
+                    ).mean()
                 else:
                     continue
 
                 # 上穿買入，下穿賣出
-                signals.loc[(indicator_values > reference_values) & (indicator_values.shift(1) <= reference_values.shift(1)), 'signal'] = 1
-                signals.loc[(indicator_values < reference_values) & (indicator_values.shift(1) >= reference_values.shift(1)), 'signal'] = -1
+                signals.loc[
+                    (indicator_values > reference_values)
+                    & (indicator_values.shift(1) <= reference_values.shift(1)),
+                    "signal",
+                ] = 1
+                signals.loc[
+                    (indicator_values < reference_values)
+                    & (indicator_values.shift(1) >= reference_values.shift(1)),
+                    "signal",
+                ] = -1
 
-        elif rule['type'] == 'momentum':
+        elif rule["type"] == "momentum":
             # 動量規則
-            momentum = indicator_values.diff(periods=rule['period'])
-            signals.loc[momentum > 0, 'signal'] = 1
-            signals.loc[momentum < 0, 'signal'] = -1
+            momentum = indicator_values.diff(periods=rule["period"])
+            signals.loc[momentum > 0, "signal"] = 1
+            signals.loc[momentum < 0, "signal"] = -1
 
     return signals

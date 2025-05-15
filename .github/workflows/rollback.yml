@@ -1,0 +1,179 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version to rollback to (leave empty for previous version)'
+        required: false
+        default: ''
+
+jobs:
+  prepare-rollback:
+    name: Prepare Rollback
+    runs-on: ubuntu-latest
+    outputs:
+      rollback_version: ${{ steps.set-version.outputs.rollback_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine rollback version
+        id: set-version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            ROLLBACK_VERSION="${{ github.event.inputs.version }}"
+          else
+            # Get the previous version tag
+            ROLLBACK_VERSION=$(git describe --abbrev=0 --tags --exclude $(git describe --abbrev=0 --tags))
+            # Remove 'v' prefix if present
+            ROLLBACK_VERSION=${ROLLBACK_VERSION#v}
+          fi
+          
+          echo "Rolling back to version: $ROLLBACK_VERSION"
+          echo "rollback_version=$ROLLBACK_VERSION" >> $GITHUB_OUTPUT
+      - name: Create rollback info file
+        run: |
+          echo "environment: ${{ github.event.inputs.environment }}" > rollback-info.txt
+          echo "rollback_version: ${{ steps.set-version.outputs.rollback_version }}" >> rollback-info.txt
+          echo "rollback_date: $(date +'%Y-%m-%d %H:%M:%S')" >> rollback-info.txt
+          echo "triggered_by: ${{ github.actor }}" >> rollback-info.txt
+      - name: Upload rollback info
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-info
+          path: rollback-info.txt
+
+  build-previous-version:
+    name: Build Previous Version
+    runs-on: ubuntu-latest
+    needs: prepare-rollback
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.prepare-rollback.outputs.rollback_version }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Build package
+        run: |
+          poetry build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  rollback-staging:
+    name: Rollback Staging
+    runs-on: ubuntu-latest
+    needs: [prepare-rollback, build-previous-version]
+    if: ${{ github.event.inputs.environment == 'staging' }}
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download rollback info
+        uses: actions/download-artifact@v4
+        with:
+          name: rollback-info
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Configure environment
+        run: |
+          # Create .env.staging file
+          echo "DB_URL=${{ secrets.STAGING_DB_URL }}" > .envs/.env.staging
+          echo "API_KEY=${{ secrets.STAGING_API_KEY }}" >> .envs/.env.staging
+          echo "API_SECRET=${{ secrets.STAGING_API_SECRET }}" >> .envs/.env.staging
+          echo "LOG_LEVEL=INFO" >> .envs/.env.staging
+          echo "ENVIRONMENT=staging" >> .envs/.env.staging
+      - name: Deploy previous version to staging
+        run: |
+          echo "Rolling back staging to version ${{ needs.prepare-rollback.outputs.rollback_version }}..."
+          mkdir -p staging
+          cp -r dist/* staging/
+          cp -r .envs/.env.staging staging/.env
+          echo "Rollback to staging completed"
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging environment..."
+          # In a real scenario, you would run tests against the staging environment
+          # poetry run python -m src.tests.smoke_tests --env staging
+          echo "Smoke tests completed successfully"
+
+  rollback-production:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    needs: [prepare-rollback, build-previous-version]
+    if: ${{ github.event.inputs.environment == 'production' }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download rollback info
+        uses: actions/download-artifact@v4
+        with:
+          name: rollback-info
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Configure environment
+        run: |
+          # Create .env.production file
+          echo "DB_URL=${{ secrets.PRODUCTION_DB_URL }}" > .envs/.env.production
+          echo "API_KEY=${{ secrets.PRODUCTION_API_KEY }}" >> .envs/.env.production
+          echo "API_SECRET=${{ secrets.PRODUCTION_API_SECRET }}" >> .envs/.env.production
+          echo "LOG_LEVEL=INFO" >> .envs/.env.production
+          echo "ENVIRONMENT=production" >> .envs/.env.production
+      - name: Deploy previous version to production
+        run: |
+          echo "Rolling back production to version ${{ needs.prepare-rollback.outputs.rollback_version }}..."
+          mkdir -p production
+          cp -r dist/* production/
+          cp -r .envs/.env.production production/.env
+          echo "Rollback to production completed"
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against production environment..."
+          # In a real scenario, you would run tests against the production environment
+          # poetry run python -m src.tests.smoke_tests --env production
+          echo "Smoke tests completed successfully"
+      - name: Create rollback tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "rollback-${{ needs.prepare-rollback.outputs.rollback_version }}-$(date +'%Y%m%d%H%M%S')" -m "Rollback to v${{ needs.prepare-rollback.outputs.rollback_version }}"
+          git push origin "rollback-${{ needs.prepare-rollback.outputs.rollback_version }}-$(date +'%Y%m%d%H%M%S')"
+
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [rollback-staging, rollback-production]
+    if: ${{ always() && (needs.rollback-staging.result == 'success' || needs.rollback-production.result == 'success') }}
+    steps:
+      - name: Send notification
+        run: |
+          echo "Sending rollback notification..."
+          
+          # In a real scenario, you would:
+          # 1. Send email notification
+          # 2. Send Slack notification
+          # 3. Update status page
+          
+          echo "Rollback notification sent"

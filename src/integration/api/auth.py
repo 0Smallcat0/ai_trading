@@ -5,16 +5,15 @@ API認證模組
 """
 
 import os
-import jwt
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, Optional
 
-from fastapi import Depends, HTTPException, status, Security
+import jwt
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
-from src.core.logger import logger
-from .models import UserModel, TokenModel
+from .models import UserModel
 
 # 獲取密鑰
 SECRET_KEY = os.environ.get(

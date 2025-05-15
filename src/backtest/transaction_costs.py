@@ -10,8 +10,8 @@
 """
 
 import logging
-import numpy as np
-from typing import Dict, Any, Optional, Union
+from typing import Optional
+
 import backtrader as bt
 
 from src.config import LOG_LEVEL

@@ -10,34 +10,24 @@
 - 交叉驗證
 """
 
-import os
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime
+import os
+from typing import Any, Dict, Optional
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import cross_val_score, KFold, TimeSeriesSplit
 import mlflow
+import mlflow.lightgbm
 import mlflow.sklearn
 import mlflow.tensorflow
 import mlflow.xgboost
-import mlflow.lightgbm
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.model_selection import KFold, TimeSeriesSplit
 
 from src.config import LOG_LEVEL, MODELS_DIR
 from src.models.model_base import ModelBase
 from src.models.model_factory import create_model
-from src.models.dataset import TimeSeriesSplit as TSS, FeatureProcessor
-from src.models.performance_metrics import (
-    calculate_sharpe_ratio,
-    calculate_sortino_ratio,
-    calculate_calmar_ratio,
-    calculate_max_drawdown,
-    calculate_win_rate,
-    calculate_pnl_ratio,
-    calculate_all_metrics,
-)
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -126,7 +116,7 @@ class ModelTrainer:
         try:
             # 訓練模型
             logger.info(f"開始訓練模型: {self.model.name}")
-            train_result = self.model.train(X_train, y_train, **train_params)
+            self.model.train(X_train, y_train, **train_params)
 
             # 評估訓練集表現
             self.train_metrics = self.model.evaluate(X_train, y_train)

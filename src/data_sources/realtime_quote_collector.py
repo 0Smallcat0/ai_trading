@@ -10,23 +10,24 @@
 支援從 Yahoo Finance、券商 API 等多個來源收集即時報價資料。
 """
 
-import os
-import time
-import logging
 import json
-import threading
+import logging
+import os
 import queue
-import websocket
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
+import threading
+import time
+from datetime import date, datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from src.config import DATA_DIR, CACHE_DIR, DB_PATH
-from src.database.schema import MarketType, TimeGranularity, MarketTick
-from src.data_sources.data_collector import DataCollector, RetryStrategy
+import numpy as np
+import pandas as pd
+import websocket
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from src.config import CACHE_DIR, DATA_DIR, DB_PATH
+from src.data_sources.data_collector import DataCollector, RetryStrategy
+from src.database.schema import MarketTick, MarketType, TimeGranularity
 
 # 設定日誌
 logger = logging.getLogger(__name__)

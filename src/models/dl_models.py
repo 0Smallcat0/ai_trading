@@ -9,36 +9,27 @@
 """
 
 import logging
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
-import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import (
-    Dense,
-    LSTM,
-    GRU,
-    Dropout,
-    BatchNormalization,
-    Input,
-    MultiHeadAttention,
-    LayerNormalization,
-    GlobalAveragePooling1D,
-)
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import (
     accuracy_score,
-    precision_score,
-    recall_score,
     f1_score,
-    mean_squared_error,
     mean_absolute_error,
+    mean_squared_error,
+    precision_score,
     r2_score,
+    recall_score,
 )
 from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.layers import GRU, LSTM, Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
 
 from src.config import LOG_LEVEL, MODELS_DIR
+
 from .model_base import ModelBase
 
 # 設定日誌

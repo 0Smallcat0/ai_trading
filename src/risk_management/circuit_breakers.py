@@ -4,11 +4,11 @@
 此模組實現了各種熔斷機制，用於在風險超過閾值時自動停止交易。
 """
 
-import numpy as np
-import pandas as pd
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Union, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 from src.core.logger import logger
 
@@ -45,7 +45,6 @@ class CircuitBreaker(ABC):
         Returns:
             bool: 是否應該觸發熔斷
         """
-        pass
 
     def trigger(self, reason: str) -> None:
         """

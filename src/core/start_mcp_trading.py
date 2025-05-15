@@ -10,9 +10,9 @@ MCP自動交易系統啟動腳本
 """
 
 import os
+import subprocess
 import sys
 import time
-import subprocess
 
 try:
     import requests
@@ -20,9 +20,8 @@ except ImportError:
     print("請先安裝 requests 套件：pip install requests")
     raise
 import argparse
-import signal
 import logging
-
+import signal
 from logging.handlers import RotatingFileHandler
 
 # 設定日誌

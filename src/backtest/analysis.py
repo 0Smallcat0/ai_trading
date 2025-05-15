@@ -9,26 +9,18 @@
 - 穩健性分析
 """
 
-import os
 import logging
+import os
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy import stats
 
 from src.config import LOG_LEVEL, RESULTS_DIR
-from src.models.performance_metrics import (
-    calculate_sharpe_ratio,
-    calculate_sortino_ratio,
-    calculate_calmar_ratio,
-    calculate_max_drawdown,
-    calculate_win_rate,
-    calculate_pnl_ratio,
-    calculate_all_metrics,
-)
+from src.models.performance_metrics import calculate_all_metrics
 
 # 設定日誌
 logger = logging.getLogger(__name__)

@@ -6,12 +6,13 @@
 """
 
 import logging
-from typing import Dict, Any, Optional, Union, Type
+from typing import Dict, Optional, Type
 
 from src.config import LOG_LEVEL
+
+from .dl_models import GRUModel, LSTMModel, TransformerModel
+from .ml_models import LightGBMModel, RandomForestModel, SVMModel, XGBoostModel
 from .model_base import ModelBase
-from .ml_models import RandomForestModel, XGBoostModel, LightGBMModel, SVMModel
-from .dl_models import LSTMModel, GRUModel, TransformerModel
 from .rule_based_models import RuleBasedModel
 
 # 設定日誌

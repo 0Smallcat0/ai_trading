@@ -12,17 +12,15 @@
 - 下單和撤單
 """
 
-import os
-import time
 import logging
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
+import os
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Dict, Optional
 
-from src.config import DATA_DIR, CACHE_DIR
-from src.database.schema import MarketType, TimeGranularity
+import pandas as pd
+
+from src.config import CACHE_DIR
 from src.core.rate_limiter import RateLimiter
 
 # 設定日誌
@@ -72,7 +70,6 @@ class BrokerAdapter(ABC):
         Returns:
             bool: 是否連接成功
         """
-        pass
 
     @abstractmethod
     def disconnect(self) -> bool:
@@ -82,7 +79,6 @@ class BrokerAdapter(ABC):
         Returns:
             bool: 是否斷開成功
         """
-        pass
 
     @abstractmethod
     def get_account_info(self) -> Dict[str, Any]:
@@ -92,7 +88,6 @@ class BrokerAdapter(ABC):
         Returns:
             Dict[str, Any]: 帳戶資訊
         """
-        pass
 
     @abstractmethod
     def get_positions(self) -> pd.DataFrame:
@@ -102,7 +97,6 @@ class BrokerAdapter(ABC):
         Returns:
             pd.DataFrame: 持倉資訊
         """
-        pass
 
     @abstractmethod
     def get_historical_trades(
@@ -118,7 +112,6 @@ class BrokerAdapter(ABC):
         Returns:
             pd.DataFrame: 歷史交易記錄
         """
-        pass
 
     @abstractmethod
     def get_quote(self, symbol: str) -> Dict[str, Any]:
@@ -131,7 +124,6 @@ class BrokerAdapter(ABC):
         Returns:
             Dict[str, Any]: 即時報價
         """
-        pass
 
     def _get_cache_path(self, data_type: str, params: Dict[str, Any] = None) -> str:
         """

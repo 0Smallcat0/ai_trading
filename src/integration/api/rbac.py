@@ -4,17 +4,15 @@
 此模組實現了角色基於訪問控制 (RBAC) 功能，用於管理用戶權限。
 """
 
-import os
-import logging
 import json
+import os
 from enum import Enum
-from typing import Dict, List, Set, Optional, Any, Union
-from datetime import datetime, timedelta
+from typing import Dict, List, Set
 
-from fastapi import Depends, HTTPException, status, Security, Request
-from fastapi.security import SecurityScopes
+from fastapi import Depends, HTTPException, Request, Security, status
 
 from src.core.logger import logger
+
 from .models import UserModel
 
 

@@ -4,10 +4,6 @@
 此模組提供n8n工作流的配置模板和工具函數。
 """
 
-import os
-import json
-from typing import Dict, List, Any, Optional, Union
-
 # 基本工作流模板
 BASE_WORKFLOW_TEMPLATE = {
     "name": "",

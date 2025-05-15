@@ -4,10 +4,10 @@
 此模組實現了投資組合級別的風險管理策略，包括分散化、相關性分析和風險平價等。
 """
 
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Union, Tuple
 
 from src.core.logger import logger
 

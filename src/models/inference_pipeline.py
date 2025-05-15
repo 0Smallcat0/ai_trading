@@ -9,18 +9,18 @@
 - 推論結果記錄
 """
 
-import os
 import logging
+import os
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime
-import mlflow
 
-from src.config import LOG_LEVEL, MODELS_DIR, RESULTS_DIR
-from src.models.model_base import ModelBase
-from src.models.model_governance import ModelRegistry, ModelMonitor
+from src.config import LOG_LEVEL, RESULTS_DIR
 from src.models.dataset import FeatureProcessor
+from src.models.model_base import ModelBase
+from src.models.model_governance import ModelMonitor, ModelRegistry
 
 # 設定日誌
 logger = logging.getLogger(__name__)

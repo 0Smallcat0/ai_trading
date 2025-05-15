@@ -4,17 +4,16 @@
 此模組實現了事件存儲，用於持久化和查詢事件。
 """
 
-import logging
-import threading
 import json
+import logging
 import os
 import sqlite3
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
-import time
+import threading
+from datetime import datetime
+from typing import List, Optional
 
-from .event import Event, EventType, EventSeverity, EventSource
-from .event_bus import event_bus, SubscriptionType
+from .event import Event, EventSeverity, EventSource, EventType
+from .event_bus import SubscriptionType, event_bus
 
 # 設定日誌
 logger = logging.getLogger("events.event_store")

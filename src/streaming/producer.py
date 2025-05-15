@@ -4,17 +4,17 @@
 此模組實現了各種數據生產者，用於從不同來源獲取數據並發布到數據流中。
 """
 
+import json
 import logging
+import queue
 import threading
 import time
-import json
-import websocket
-import queue
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Union, Callable
-from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from .message import Message, MessageType, MessagePriority
+import websocket
+
+from .message import Message, MessageType
 
 # 設定日誌
 logger = logging.getLogger("streaming.producer")
@@ -123,7 +123,6 @@ class Producer(ABC):
     @abstractmethod
     def _run(self):
         """運行生產者的抽象方法，子類必須實現"""
-        pass
 
     def get_stats(self) -> Dict[str, Any]:
         """

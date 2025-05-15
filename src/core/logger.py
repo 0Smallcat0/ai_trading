@@ -14,26 +14,24 @@
 - 日誌分析
 """
 
-import os
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import logging
 import json
-import time
-import traceback
+import logging
+import os
+import re
 import socket
 import sys
+import time
+import traceback
 import uuid
-import re
-from datetime import datetime, timedelta
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from dotenv import load_dotenv
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-import threading
-import queue
-from typing import Dict, List, Any, Optional, Union, Callable
+from plotly.subplots import make_subplots
 
 # 載入環境變數
 load_dotenv()
@@ -74,11 +72,23 @@ class JsonFormatter(logging.Formatter):
     """JSON格式化器，將日誌格式化為JSON格式"""
 
     def __init__(self, fmt_dict=None):
+    """
+    __init__
+    
+    Args:
+        fmt_dict: 
+    """
         super(JsonFormatter, self).__init__()
         self.fmt_dict = fmt_dict if fmt_dict else JSON_LOG_FORMAT
         self.hostname = socket.gethostname()
 
     def format(self, record):
+    """
+    format
+    
+    Args:
+        record: 
+    """
         record_dict = self.fmt_dict.copy()
 
         # 填充記錄字典

@@ -9,17 +9,14 @@
 - 訊號時機優化
 """
 
-import os
 import logging
+from typing import Dict, List, Optional
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
-import warnings
 
 from src.config import LOG_LEVEL
 from src.core.signal_gen import SignalGenerator
-from src.core.model_integration import ModelManager
 
 # 設定日誌
 logger = logging.getLogger(__name__)

@@ -4,35 +4,36 @@ API路由
 此模組定義了API路由。
 """
 
-from typing import Dict, List, Any, Optional, Union
 from datetime import datetime, timedelta
-import pandas as pd
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Security, BackgroundTasks
-from fastapi.security import OAuth2PasswordRequestForm, SecurityScopes
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from src.core.logger import logger
-from src.core.executor import Executor
 from src.core.signal_gen import generate_signals
+from src.execution.broker_base import OrderStatus
+from src.execution.order_manager import OrderManager
+from src.execution.signal_executor import SignalExecutor
 from src.integration.workflows import workflow_manager
-from src.integration.mcp import mcp_client
+
 from .auth import authenticate, create_access_token, get_current_user
 from .models import (
-    UserModel,
-    TokenModel,
-    TradeRequestModel,
-    TradeResponseModel,
-    PortfolioModel,
-    StrategyModel,
     BacktestRequestModel,
     BacktestResponseModel,
     MarketDataRequestModel,
     MarketDataResponseModel,
-    SystemStatusModel,
-    WorkflowRequestModel,
-    WorkflowResponseModel,
+    PortfolioModel,
     SignalGenerationRequestModel,
     SignalGenerationResponseModel,
+    StrategyModel,
+    SystemStatusModel,
+    TokenModel,
+    TradeRequestModel,
+    TradeResponseModel,
+    UserModel,
+    WorkflowRequestModel,
+    WorkflowResponseModel,
 )
 
 # 創建認證路由
@@ -912,6 +913,28 @@ async def execute_workflow(
 # 創建訊號生成路由
 signal_router = APIRouter()
 
+# 創建全局的 SignalExecutor 實例
+_signal_executor = None
+
+
+def get_signal_executor():
+    """獲取 SignalExecutor 實例"""
+    global _signal_executor
+    if _signal_executor is None:
+        # 創建 OrderManager
+        from src.core.executor import SimulatedBrokerAPI
+
+        broker = SimulatedBrokerAPI()
+        order_manager = OrderManager(broker)
+
+        # 創建 SignalExecutor
+        _signal_executor = SignalExecutor(order_manager)
+
+        # 啟動 SignalExecutor
+        _signal_executor.start()
+
+    return _signal_executor
+
 
 @signal_router.post("/generate", response_model=SignalGenerationResponseModel)
 async def generate_trading_signals(
@@ -1011,34 +1034,136 @@ async def execute_trading_signals(
             end_date=signal_request.end_date,
         )
 
-        # 創建執行器
-        executor = Executor()
+        # 使用 SignalExecutor 執行訊號
+        signal_executor = get_signal_executor()
+        order_ids = signal_executor.execute_signals(signals, strategy_id)
 
-        # 連接券商API
-        if not executor.connect():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="連接券商API失敗",
-            )
-
-        try:
-            # 執行訊號
-            order_ids = executor.adjust_orders(signals)
-
-            return {
-                "strategy_id": strategy_id,
-                "success": True,
-                "order_ids": order_ids,
-                "message": f"已執行 {len(order_ids)} 個訂單",
-            }
-        finally:
-            # 斷開連接
-            executor.disconnect()
+        return {
+            "strategy_id": strategy_id,
+            "success": True,
+            "order_ids": order_ids,
+            "message": f"已執行 {len(order_ids)} 個訂單",
+        }
     except Exception as e:
         logger.error(f"執行交易訊號時發生錯誤: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"執行交易訊號失敗: {str(e)}",
+        )
+
+
+@signal_router.get("/orders", response_model=List[Dict[str, Any]])
+async def get_signal_orders(
+    status: Optional[str] = None,
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
+):
+    """
+    獲取訊號執行產生的訂單
+
+    Args:
+        status: 訂單狀態
+        current_user: 當前用戶
+
+    Returns:
+        List[Dict[str, Any]]: 訂單列表
+    """
+    try:
+        # 獲取 SignalExecutor
+        signal_executor = get_signal_executor()
+
+        # 獲取訂單
+        order_status = OrderStatus(status) if status else None
+        orders = signal_executor.order_manager.get_orders(order_status)
+
+        # 轉換為字典列表
+        order_dicts = [order.to_dict() for order in orders]
+
+        return order_dicts
+    except Exception as e:
+        logger.error(f"獲取訊號訂單時發生錯誤: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"獲取訊號訂單失敗: {str(e)}",
+        )
+
+
+@signal_router.delete("/orders/{order_id}", response_model=Dict[str, Any])
+async def cancel_signal_order(
+    order_id: str,
+    current_user: UserModel = Security(get_current_user, scopes=["write"]),
+):
+    """
+    取消訊號執行產生的訂單
+
+    Args:
+        order_id: 訂單ID
+        current_user: 當前用戶
+
+    Returns:
+        Dict[str, Any]: 取消結果
+    """
+    try:
+        # 獲取 SignalExecutor
+        signal_executor = get_signal_executor()
+
+        # 取消訂單
+        success = signal_executor.order_manager.cancel_order(order_id)
+
+        if success:
+            return {
+                "order_id": order_id,
+                "success": True,
+                "message": f"訂單 {order_id} 已取消",
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"取消訂單 {order_id} 失敗",
+            )
+    except Exception as e:
+        logger.error(f"取消訊號訂單時發生錯誤: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"取消訊號訂單失敗: {str(e)}",
+        )
+
+
+@signal_router.get("/account", response_model=Dict[str, Any])
+async def get_signal_account_info(
+    current_user: UserModel = Security(get_current_user, scopes=["read"]),
+):
+    """
+    獲取訊號執行器的帳戶資訊
+
+    Args:
+        current_user: 當前用戶
+
+    Returns:
+        Dict[str, Any]: 帳戶資訊
+    """
+    try:
+        # 獲取 SignalExecutor
+        signal_executor = get_signal_executor()
+
+        # 獲取帳戶資訊
+        account_info = signal_executor._get_account_info()
+
+        # 獲取持倉資訊
+        positions = signal_executor._get_positions()
+
+        # 組合返回資訊
+        result = {
+            "account": account_info,
+            "positions": positions,
+            "pending_orders": len(signal_executor.pending_orders),
+        }
+
+        return result
+    except Exception as e:
+        logger.error(f"獲取帳戶資訊時發生錯誤: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"獲取帳戶資訊失敗: {str(e)}",
         )
 
 

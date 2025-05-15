@@ -9,13 +9,12 @@
 - 支援自動重試和退避策略
 """
 
-import time
 import logging
-import threading
 import random
+import threading
+import time
 from collections import deque
-from datetime import datetime, timedelta
-from typing import Optional, Callable, List, Dict, Any, Union
+from typing import Optional
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -66,7 +65,6 @@ class RateLimiter:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """退出上下文管理器時調用"""
-        pass
 
     def acquire(self):
         """

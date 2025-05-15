@@ -12,36 +12,42 @@
 - 資料完整性驗證（使用校驗碼）
 """
 
-import logging
 import hashlib
 import json
-import pandas as pd
+import logging
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List
+
 import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple, Set
-from sqlalchemy import select, and_, func, text
+import pandas as pd
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
+
 
 # 自定義 JSON 編碼器，處理日期、時間和 DataFrame 類型
 class CustomJSONEncoder(json.JSONEncoder):
+"""
+CustomJSONEncoder
+
+"""
     def default(self, obj):
+    """
+    default
+    
+    Args:
+        obj: 
+    """
         if isinstance(obj, (date, datetime)):
             return obj.isoformat()
         elif isinstance(obj, pd.DataFrame):
-            return obj.to_dict(orient='records')
-        elif hasattr(obj, 'to_dict'):
+            return obj.to_dict(orient="records")
+        elif hasattr(obj, "to_dict"):
             return obj.to_dict()
         return super().default(obj)
 
-from src.database.schema import (
-    Base,
-    MarketDaily,
-    MarketMinute,
-    MarketTick,
-    DataChecksum,
-    SystemLog,
-)
+
 from src.config import LOG_LEVEL
+from src.database.schema import DataChecksum, MarketDaily, MarketMinute, SystemLog
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -84,7 +90,7 @@ class DataValidator:
         """
         # 根據資料表類別選擇日期欄位
         if table_class == MarketDaily:
-            date_column = table_class.date
+            table_class.date
             # 生成預期的日期範圍（僅工作日）
             expected_dates = self._generate_trading_dates(start_date, end_date)
 
@@ -106,7 +112,11 @@ class DataValidator:
             missing_dates = sorted(set(expected_dates) - set(actual_dates))
 
             # 計算連續性指標
-            continuity = 1.0 - (len(missing_dates) / len(expected_dates)) if expected_dates else 1.0
+            continuity = (
+                1.0 - (len(missing_dates) / len(expected_dates))
+                if expected_dates
+                else 1.0
+            )
 
             result = {
                 "is_continuous": len(missing_dates) == 0,
@@ -117,7 +127,7 @@ class DataValidator:
             }
         else:
             # 對於分鐘和 Tick 資料，檢查時間間隔
-            date_column = table_class.timestamp
+            table_class.timestamp
 
             # 查詢實際的時間戳
             query = (
@@ -149,8 +159,10 @@ class DataValidator:
             else:
                 # 對於 Tick 資料，我們不能假設固定的時間間隔
                 # 只檢查是否有異常大的間隔
-                intervals = [(timestamps[i+1] - timestamps[i]).total_seconds()
-                            for i in range(len(timestamps)-1)]
+                intervals = [
+                    (timestamps[i + 1] - timestamps[i]).total_seconds()
+                    for i in range(len(timestamps) - 1)
+                ]
                 if not intervals:
                     return {
                         "is_continuous": True,
@@ -165,12 +177,14 @@ class DataValidator:
                 threshold = avg_interval + 3 * std_interval
 
                 large_intervals = [
-                    (timestamps[i], timestamps[i+1], intervals[i])
+                    (timestamps[i], timestamps[i + 1], intervals[i])
                     for i in range(len(intervals))
                     if intervals[i] > threshold
                 ]
 
-                continuity = 1.0 - (len(large_intervals) / len(intervals)) if intervals else 1.0
+                continuity = (
+                    1.0 - (len(large_intervals) / len(intervals)) if intervals else 1.0
+                )
 
                 return {
                     "is_continuous": len(large_intervals) == 0,
@@ -185,13 +199,19 @@ class DataValidator:
             # 對於分鐘資料，檢查是否有缺失的分鐘
             missing_intervals = []
             for i in range(len(timestamps) - 1):
-                interval = timestamps[i+1] - timestamps[i]
+                interval = timestamps[i + 1] - timestamps[i]
                 if interval > expected_interval:
-                    missing_intervals.append((timestamps[i], timestamps[i+1], interval.total_seconds()))
+                    missing_intervals.append(
+                        (timestamps[i], timestamps[i + 1], interval.total_seconds())
+                    )
 
             # 計算連續性指標
             total_intervals = len(timestamps) - 1
-            continuity = 1.0 - (len(missing_intervals) / total_intervals) if total_intervals > 0 else 1.0
+            continuity = (
+                1.0 - (len(missing_intervals) / total_intervals)
+                if total_intervals > 0
+                else 1.0
+            )
 
             result = {
                 "is_continuous": len(missing_intervals) == 0,
@@ -226,32 +246,27 @@ class DataValidator:
         """
         # 根據資料表類別選擇日期欄位和查詢條件
         if table_class == MarketDaily:
-            date_column = table_class.date
-            query = (
-                select(table_class)
-                .where(
-                    and_(
-                        table_class.symbol == symbol,
-                        table_class.date >= start_date,
-                        table_class.date <= end_date,
-                    )
+            table_class.date
+            query = select(table_class).where(
+                and_(
+                    table_class.symbol == symbol,
+                    table_class.date >= start_date,
+                    table_class.date <= end_date,
                 )
             )
         else:
-            date_column = table_class.timestamp
-            query = (
-                select(table_class)
-                .where(
-                    and_(
-                        table_class.symbol == symbol,
-                        func.date(table_class.timestamp) >= start_date,
-                        func.date(table_class.timestamp) <= end_date,
-                    )
+            table_class.timestamp
+            query = select(table_class).where(
+                and_(
+                    table_class.symbol == symbol,
+                    func.date(table_class.timestamp) >= start_date,
+                    func.date(table_class.timestamp) <= end_date,
                 )
             )
 
         # 執行查詢並轉換為 DataFrame
         from src.database.parquet_utils import query_to_dataframe
+
         df = query_to_dataframe(self.session, query)
 
         if df.empty:
@@ -290,7 +305,7 @@ class DataValidator:
         start_date: date,
         end_date: date,
         method: str = "zscore",
-        threshold: float = 3.0
+        threshold: float = 3.0,
     ) -> Dict[str, Any]:
         """
         檢測異常值
@@ -310,32 +325,27 @@ class DataValidator:
         """
         # 根據資料表類別選擇日期欄位和查詢條件
         if table_class == MarketDaily:
-            date_column = table_class.date
-            query = (
-                select(table_class)
-                .where(
-                    and_(
-                        table_class.symbol == symbol,
-                        table_class.date >= start_date,
-                        table_class.date <= end_date,
-                    )
+            table_class.date
+            query = select(table_class).where(
+                and_(
+                    table_class.symbol == symbol,
+                    table_class.date >= start_date,
+                    table_class.date <= end_date,
                 )
             )
         else:
-            date_column = table_class.timestamp
-            query = (
-                select(table_class)
-                .where(
-                    and_(
-                        table_class.symbol == symbol,
-                        func.date(table_class.timestamp) >= start_date,
-                        func.date(table_class.timestamp) <= end_date,
-                    )
+            table_class.timestamp
+            query = select(table_class).where(
+                and_(
+                    table_class.symbol == symbol,
+                    func.date(table_class.timestamp) >= start_date,
+                    func.date(table_class.timestamp) <= end_date,
                 )
             )
 
         # 執行查詢並轉換為 DataFrame
         from src.database.parquet_utils import query_to_dataframe
+
         df = query_to_dataframe(self.session, query)
 
         if df.empty:
@@ -377,23 +387,26 @@ class DataValidator:
                 upper_bound = q3 + threshold * iqr
 
                 col_outliers = set(
-                    df.index[
-                        (df[col] < lower_bound) | (df[col] > upper_bound)
-                    ].tolist()
+                    df.index[(df[col] < lower_bound) | (df[col] > upper_bound)].tolist()
                 )
 
             outliers[col] = col_outliers
             outlier_indices.update(col_outliers)
 
         # 計算每個欄位的異常值數量和比例
-        outlier_counts = {col: len(indices) for col, indices in outliers.items() if indices}
+        outlier_counts = {
+            col: len(indices) for col, indices in outliers.items() if indices
+        }
         outlier_percentages = {
             col: len(indices) / len(df) * 100
-            for col, indices in outliers.items() if indices
+            for col, indices in outliers.items()
+            if indices
         }
 
         # 獲取異常值的資料
-        outlier_data = df.loc[list(outlier_indices)] if outlier_indices else pd.DataFrame()
+        outlier_data = (
+            df.loc[list(outlier_indices)] if outlier_indices else pd.DataFrame()
+        )
 
         result = {
             "has_outliers": bool(outlier_indices),
@@ -410,9 +423,7 @@ class DataValidator:
 
         return result
 
-    def verify_data_integrity(
-        self, table_class, record_id: int
-    ) -> Dict[str, Any]:
+    def verify_data_integrity(self, table_class, record_id: int) -> Dict[str, Any]:
         """
         驗證資料完整性
 
@@ -447,7 +458,9 @@ class DataValidator:
             }
 
         # 計算當前校驗碼
-        current_checksum = self._calculate_checksum(record, checksum_record.checksum_fields)
+        current_checksum = self._calculate_checksum(
+            record, checksum_record.checksum_fields
+        )
 
         # 比較校驗碼
         is_valid = current_checksum == checksum_record.checksum
@@ -517,7 +530,9 @@ class DataValidator:
 
         return trading_dates
 
-    def log_validation_result(self, validation_type: str, result: Dict[str, Any]) -> None:
+    def log_validation_result(
+        self, validation_type: str, result: Dict[str, Any]
+    ) -> None:
         """
         記錄驗證結果
 

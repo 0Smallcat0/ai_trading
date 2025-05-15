@@ -11,22 +11,20 @@ MCP 資料擷取模組
 - 獲取產業報告
 """
 
-import os
-import time
 import logging
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-import threading
+import os
 import queue
-import json
-import re
+import threading
+import time
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
-from src.data_sources.mcp_crawler import crawl_stock_news
+import pandas as pd
+
+from src.config import CACHE_DIR, LOGS_DIR
 from src.core.rate_limiter import RateLimiter
 from src.core.websocket_client import WebSocketClient
-from src.config import DATA_DIR, CACHE_DIR, LOGS_DIR
+from src.data_sources.mcp_crawler import crawl_stock_news
 
 # 設定日誌
 logger = logging.getLogger(__name__)

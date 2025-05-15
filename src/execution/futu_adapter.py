@@ -5,37 +5,31 @@
 """
 
 import logging
-import time
-import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-import threading
-import queue
 import os
-from pathlib import Path
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     from futu import (
-        OpenQuoteContext,
-        OpenHKTradeContext,
-        OpenUSTradeContext,
-        OpenCNTradeContext,
-        TrdEnv,
-        TrdSide,
-        OrderType as FutuOrderType,
-        OrderStatus as FutuOrderStatus,
-        ModifyOrderOp,
-        Market,
         RET_OK,
-        RET_ERROR,
+        ModifyOrderOp,
+        OpenCNTradeContext,
+        OpenHKTradeContext,
+        OpenQuoteContext,
+        OpenUSTradeContext,
     )
+    from futu import OrderStatus as FutuOrderStatus
+    from futu import OrderType as FutuOrderType
+    from futu import TrdEnv, TrdSide
 
     FUTU_AVAILABLE = True
 except ImportError:
     FUTU_AVAILABLE = False
 
-from .broker_base import BrokerBase, Order, OrderStatus, OrderType
 from src.utils.utils import retry
+
+from .broker_base import BrokerBase, Order, OrderStatus, OrderType
 
 # 設定日誌
 logger = logging.getLogger("execution.futu")

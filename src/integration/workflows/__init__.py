@@ -7,10 +7,10 @@
 from .manager import WorkflowManager, workflow_manager
 from .templates import (
     get_market_data_workflow,
-    strategy_execution_workflow,
     portfolio_rebalance_workflow,
-    risk_monitoring_workflow,
     reporting_workflow,
+    risk_monitoring_workflow,
+    strategy_execution_workflow,
 )
 
 __all__ = [

@@ -9,17 +9,17 @@
 - 相關性變化模擬
 """
 
-import os
 import logging
+import os
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 from src.config import LOG_LEVEL, RESULTS_DIR
-from src.backtest.backtrader_integration import BacktestEngine
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -424,7 +424,7 @@ class StressTester:
 
         # 計算原始相關係數
         returns_df = pd.DataFrame(change_returns)
-        original_corr = returns_df.corr()
+        returns_df.corr()
 
         # 生成新的收益率（保持邊際分佈不變，改變相關性）
         # 使用 Cholesky 分解

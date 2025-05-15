@@ -6,11 +6,10 @@
 
 import json
 import os
-import sys
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import yaml
 from dotenv import dotenv_values
@@ -18,6 +17,7 @@ from dotenv import dotenv_values
 
 class ConfigSource(Enum):
     """配置源類型"""
+
     ENV = "env"  # 環境變數
     FILE = "file"  # 文件
     CONSUL = "consul"  # Consul
@@ -31,22 +31,18 @@ class ConfigProvider(ABC):
     @abstractmethod
     def get(self, key: str, default: Any = None) -> Any:
         """獲取配置項"""
-        pass
 
     @abstractmethod
     def set(self, key: str, value: Any) -> None:
         """設置配置項"""
-        pass
 
     @abstractmethod
     def delete(self, key: str) -> None:
         """刪除配置項"""
-        pass
 
     @abstractmethod
     def list(self, prefix: str = "") -> Dict[str, Any]:
         """列出配置項"""
-        pass
 
 
 class EnvConfigProvider(ConfigProvider):
@@ -66,7 +62,7 @@ class EnvConfigProvider(ConfigProvider):
             self.env_vars.update(dotenv_values(env_file))
 
         # 載入系統環境變數
-        self.env_vars.update({k: v for k, v in os.environ.items()})
+        self.env_vars.update(dict(os.environ.items()))
 
     def get(self, key: str, default: Any = None) -> Any:
         """獲取配置項"""
@@ -112,11 +108,11 @@ class FileConfigProvider(ConfigProvider):
             with open(self.file_path, "r", encoding="utf-8") as f:
                 if self.file_path.suffix.lower() in [".yaml", ".yml"]:
                     return yaml.safe_load(f) or {}
-                elif self.file_path.suffix.lower() == ".json":
+                if self.file_path.suffix.lower() == ".json":
                     return json.load(f)
-                else:
-                    print(f"不支援的配置文件格式: {self.file_path.suffix}")
-                    return {}
+
+                print(f"不支援的配置文件格式: {self.file_path.suffix}")
+                return {}
         except Exception as e:
             print(f"載入配置文件時發生錯誤: {e}")
             return {}
@@ -129,11 +125,15 @@ class FileConfigProvider(ConfigProvider):
 
             with open(self.file_path, "w", encoding="utf-8") as f:
                 if self.file_path.suffix.lower() in [".yaml", ".yml"]:
-                    yaml.dump(self.config, f, default_flow_style=False, allow_unicode=True)
-                elif self.file_path.suffix.lower() == ".json":
+                    yaml.dump(
+                        self.config, f, default_flow_style=False, allow_unicode=True
+                    )
+                    return
+                if self.file_path.suffix.lower() == ".json":
                     json.dump(self.config, f, ensure_ascii=False, indent=2)
-                else:
-                    print(f"不支援的配置文件格式: {self.file_path.suffix}")
+                    return
+
+                print(f"不支援的配置文件格式: {self.file_path.suffix}")
         except Exception as e:
             print(f"保存配置文件時發生錯誤: {e}")
 
@@ -157,7 +157,7 @@ class FileConfigProvider(ConfigProvider):
         keys = key.split(".")
         config = self.config
 
-        for i, k in enumerate(keys[:-1]):
+        for k in keys[:-1]:
             if k not in config:
                 config[k] = {}
             elif not isinstance(config[k], dict):
@@ -174,7 +174,7 @@ class FileConfigProvider(ConfigProvider):
         keys = key.split(".")
         config = self.config
 
-        for i, k in enumerate(keys[:-1]):
+        for k in keys[:-1]:
             if k not in config or not isinstance(config[k], dict):
                 return
 
@@ -236,7 +236,9 @@ class ConfigManager:
         self.providers = {}
         self.provider_order = []
 
-    def add_provider(self, name: str, provider: ConfigProvider, priority: int = 0) -> None:
+    def add_provider(
+        self, name: str, provider: ConfigProvider, priority: int = 0
+    ) -> None:
         """
         添加配置提供者
 
@@ -251,7 +253,7 @@ class ConfigManager:
         self.provider_order = sorted(
             self.providers.keys(),
             key=lambda x: self.providers[x]["priority"],
-            reverse=True
+            reverse=True,
         )
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -304,7 +306,7 @@ class ConfigManager:
 
         return bool(value)
 
-    def get_list(self, key: str, default: List[Any] = None) -> List[Any]:
+    def get_list(self, key: str, default: Optional[List[Any]] = None) -> List[Any]:
         """獲取列表配置項"""
         if default is None:
             default = []
@@ -362,7 +364,9 @@ class ConfigManager:
             provider = self.providers[provider_name]["provider"]
             provider.delete(key)
 
-    def list(self, prefix: str = "", provider_name: Optional[str] = None) -> Dict[str, Any]:
+    def list(
+        self, prefix: str = "", provider_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         列出配置項
 

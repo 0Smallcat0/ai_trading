@@ -13,18 +13,17 @@
 - 獲取技術指標
 """
 
-import os
-import time
 import logging
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
+import os
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Dict, Optional
 
-from src.config import DATA_DIR, CACHE_DIR
-from src.database.schema import MarketType, TimeGranularity
+import pandas as pd
+
+from src.config import CACHE_DIR
 from src.core.rate_limiter import RateLimiter
+from src.database.schema import MarketType, TimeGranularity
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -78,7 +77,6 @@ class MarketDataAdapter(ABC):
         Returns:
             bool: 是否連接成功
         """
-        pass
 
     @abstractmethod
     def disconnect(self) -> bool:
@@ -88,7 +86,6 @@ class MarketDataAdapter(ABC):
         Returns:
             bool: 是否斷開成功
         """
-        pass
 
     @abstractmethod
     def get_historical_data(
@@ -112,7 +109,6 @@ class MarketDataAdapter(ABC):
         Returns:
             pd.DataFrame: 歷史價格數據
         """
-        pass
 
     @abstractmethod
     def get_quote(self, symbol: str) -> Dict[str, Any]:
@@ -125,7 +121,6 @@ class MarketDataAdapter(ABC):
         Returns:
             Dict[str, Any]: 即時報價
         """
-        pass
 
     def _get_cache_path(
         self, symbol: str, data_type: str, start_date: str, end_date: str

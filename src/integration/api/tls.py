@@ -5,10 +5,8 @@ TLS 配置模組
 """
 
 import os
-import logging
 import ssl
-from typing import Dict, Optional, Any, Tuple
-from pathlib import Path
+from typing import Optional, Tuple
 
 from src.core.logger import logger
 
@@ -121,14 +119,14 @@ class TLSConfig:
         """
         try:
             from cryptography import x509
-            from cryptography.x509.oid import NameOID
             from cryptography.hazmat.primitives import hashes
             from cryptography.hazmat.primitives.asymmetric import rsa
             from cryptography.hazmat.primitives.serialization import (
                 Encoding,
-                PrivateFormat,
                 NoEncryption,
+                PrivateFormat,
             )
+            from cryptography.x509.oid import NameOID
         except ImportError:
             logger.error("未安裝 cryptography 套件，無法生成自簽名證書")
             return False, "", ""

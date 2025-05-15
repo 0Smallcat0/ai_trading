@@ -8,8 +8,8 @@
 """
 
 from .api import api_router, create_app
-from .workflows import workflow_manager
 from .mcp import mcp_client
+from .workflows import workflow_manager
 
 __all__ = [
     "api_router",

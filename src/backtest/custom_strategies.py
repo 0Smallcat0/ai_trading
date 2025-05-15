@@ -9,19 +9,15 @@
 - 多資產策略
 """
 
-import os
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable
-from datetime import datetime, timedelta
+
 import backtrader as bt
 import backtrader.indicators as btind
+import numpy as np
+import pandas as pd
 
-from src.config import LOG_LEVEL
-from src.models.model_base import ModelBase
-from src.models.inference_pipeline import InferencePipeline
 from src.backtest.backtrader_integration import ModelSignalStrategy
+from src.config import LOG_LEVEL
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -521,9 +517,9 @@ class TechnicalStrategy(bt.Strategy):
         rsi = self.rsi[data._name][0]
         macd = self.macd[data._name][0]
         macd_signal = self.macd_signal[data._name][0]
-        macd_hist = self.macd_hist[data._name][0]
+        self.macd_hist[data._name][0]
         bb_top = self.bb_top[data._name][0]
-        bb_mid = self.bb_mid[data._name][0]
+        self.bb_mid[data._name][0]
         bb_bot = self.bb_bot[data._name][0]
 
         # 生成訊號

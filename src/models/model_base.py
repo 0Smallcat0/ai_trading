@@ -6,17 +6,18 @@
 所有具體的模型實現都應該繼承此基類。
 """
 
-import os
+import json
 import logging
+import os
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+import joblib
 import numpy as np
 import pandas as pd
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
-from datetime import datetime
-import joblib
-import json
 
-from src.config import MODELS_DIR, LOG_LEVEL
+from src.config import LOG_LEVEL, MODELS_DIR
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -63,7 +64,6 @@ class ModelBase(ABC):
         Returns:
             Dict[str, Any]: 訓練結果，包含各種指標
         """
-        pass
 
     @abstractmethod
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -76,7 +76,6 @@ class ModelBase(ABC):
         Returns:
             np.ndarray: 預測結果
         """
-        pass
 
     @abstractmethod
     def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
@@ -90,7 +89,6 @@ class ModelBase(ABC):
         Returns:
             Dict[str, float]: 評估結果，包含各種指標
         """
-        pass
 
     def save(self, path: Optional[str] = None) -> str:
         """

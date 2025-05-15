@@ -11,13 +11,15 @@
 - 交易狀態監控
 """
 
-import os
-import numpy as np
-import logging
-import shioaji
 import asyncio
+import logging
+import os
 from datetime import datetime
+
+import numpy as np
+import shioaji
 from dotenv import load_dotenv
+
 from src.utils.utils import retry
 
 # 載入環境變數

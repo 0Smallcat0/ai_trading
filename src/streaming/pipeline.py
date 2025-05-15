@@ -5,10 +5,9 @@
 """
 
 import logging
-import threading
 import time
-from typing import Dict, List, Any, Optional, Union, Callable
-from abc import ABC, abstractmethod
+from abc import ABC
+from typing import Any, Dict, List, Optional
 
 from .message import Message, MessageType
 from .processor import Processor
