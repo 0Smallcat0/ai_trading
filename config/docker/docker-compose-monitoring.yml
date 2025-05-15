@@ -7,8 +7,8 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./src/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./src/monitoring/prometheus/rules:/etc/prometheus/rules
+      - ../../src/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../../src/monitoring/prometheus/rules:/etc/prometheus/rules
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -26,7 +26,7 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./src/monitoring/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ../../src/monitoring/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager_data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
@@ -41,8 +41,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./src/monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./src/monitoring/grafana_dashboards:/var/lib/grafana/dashboards
+      - ../../src/monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ../../src/monitoring/grafana_dashboards:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin

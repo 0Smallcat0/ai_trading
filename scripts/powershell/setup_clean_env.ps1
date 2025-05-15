@@ -6,7 +6,11 @@
 if (-not (Test-Path .env)) {
     Write-Host "創建 .env 文件..."
     Write-Host "Creating .env file..."
-    Copy-Item .env.example .env
+    if (Test-Path .env.example) {
+        Copy-Item .env.example .env
+    } else {
+        Copy-Item .envs/.env.template .env
+    }
     Write-Host ".env 文件已創建，請編輯此文件並填入您的實際設定值"
     Write-Host ".env file created, please edit this file and fill in your actual settings"
 }

@@ -52,8 +52,8 @@ This project contains sensitive information such as API keys, passwords, etc. Pl
 2. 複製 `.envs/.env.template` 文件為 `.envs/.env.{環境}`，並填入您的實際設定值
    Copy `.envs/.env.template` file to `.envs/.env.{environment}` and fill in your actual settings
 
-3. 運行 `setup_clean_env.ps1` 腳本以設置乾淨的環境
-   Run `setup_clean_env.ps1` script to set up a clean environment
+3. 運行 `scripts/powershell/setup_clean_env.ps1` 腳本以設置乾淨的環境
+   Run `scripts/powershell/setup_clean_env.ps1` script to set up a clean environment
 
 ## 清理 Git 歷史
 ## Cleaning Git History
@@ -61,8 +61,8 @@ This project contains sensitive information such as API keys, passwords, etc. Pl
 如果您不小心將敏感資訊提交到版本控制系統，請按照以下步驟清理 Git 歷史：
 If you accidentally commit sensitive information to version control, follow these steps to clean Git history:
 
-1. 運行 `clean_git_history.ps1` 腳本以清理 Git 歷史
-   Run `clean_git_history.ps1` script to clean Git history
+1. 運行 `scripts/powershell/clean_git_history.ps1` 腳本以清理 Git 歷史
+   Run `scripts/powershell/clean_git_history.ps1` script to clean Git history
 
 2. 使用 `--force` 推送到遠端
    Use `--force` to push to remote
