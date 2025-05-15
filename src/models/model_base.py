@@ -11,7 +11,7 @@ import logging
 import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Dict, Any, Optional
 from datetime import datetime
 import joblib
 import json
@@ -45,9 +45,9 @@ class ModelBase(ABC):
         self.target_name = None
         self.trained = False
         self.version = datetime.now().strftime("%Y%m%d%H%M%S")
-        self.metrics = {}
+        self.metrics: Dict[str, Any] = {}
         self.model_dir = os.path.join(MODELS_DIR, self.name, self.version)
-        
+
         # 創建模型目錄
         os.makedirs(self.model_dir, exist_ok=True)
 
@@ -104,10 +104,10 @@ class ModelBase(ABC):
         """
         if path is None:
             path = os.path.join(self.model_dir, f"{self.name}.joblib")
-        
+
         # 保存模型
         joblib.dump(self.model, path)
-        
+
         # 保存模型元數據
         metadata = {
             "name": self.name,
@@ -119,11 +119,11 @@ class ModelBase(ABC):
             "trained": self.trained,
             "created_at": datetime.now().isoformat(),
         }
-        
+
         metadata_path = os.path.join(self.model_dir, "metadata.json")
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
-        
+
         logger.info(f"模型已保存至 {path}")
         return path
 
@@ -137,22 +137,22 @@ class ModelBase(ABC):
         # 載入模型
         self.model = joblib.load(path)
         self.trained = True
-        
+
         # 載入模型元數據
         model_dir = os.path.dirname(path)
         metadata_path = os.path.join(model_dir, "metadata.json")
-        
+
         if os.path.exists(metadata_path):
             with open(metadata_path, "r") as f:
                 metadata = json.load(f)
-            
+
             self.name = metadata.get("name", self.name)
             self.version = metadata.get("version", self.version)
             self.feature_names = metadata.get("feature_names", self.feature_names)
             self.target_name = metadata.get("target_name", self.target_name)
             self.model_params = metadata.get("model_params", self.model_params)
             self.metrics = metadata.get("metrics", self.metrics)
-        
+
         logger.info(f"模型已從 {path} 載入")
 
     def feature_importance(self) -> pd.DataFrame:
@@ -165,7 +165,7 @@ class ModelBase(ABC):
         if not self.trained or self.model is None:
             logger.warning("模型尚未訓練，無法獲取特徵重要性")
             return pd.DataFrame()
-        
+
         try:
             # 嘗試獲取特徵重要性
             if hasattr(self.model, "feature_importances_"):
@@ -175,17 +175,21 @@ class ModelBase(ABC):
             else:
                 logger.warning("模型不支援特徵重要性")
                 return pd.DataFrame()
-            
+
             # 創建特徵重要性資料框
-            feature_names = self.feature_names or [f"feature_{i}" for i in range(len(importances))]
-            importance_df = pd.DataFrame({
-                "feature": feature_names[:len(importances)],
-                "importance": importances
-            })
-            
+            feature_names = self.feature_names or [
+                f"feature_{i}" for i in range(len(importances))
+            ]
+            importance_df = pd.DataFrame(
+                {
+                    "feature": feature_names[: len(importances)],
+                    "importance": importances,
+                }
+            )
+
             # 按重要性排序
             importance_df = importance_df.sort_values("importance", ascending=False)
-            
+
             return importance_df
         except Exception as e:
             logger.error(f"獲取特徵重要性時發生錯誤: {e}")
@@ -208,7 +212,7 @@ class ModelBase(ABC):
             **params: 模型參數
         """
         self.model_params.update(params)
-        
+
         # 如果模型已經初始化，則更新模型參數
         if self.model is not None and hasattr(self.model, "set_params"):
             self.model.set_params(**params)

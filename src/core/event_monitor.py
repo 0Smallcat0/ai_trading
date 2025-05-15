@@ -9,6 +9,9 @@
 - 異常價格監控
 - 異常交易量監控
 - 事件通知
+- 複雜事件處理
+- 事件關聯分析
+- 異常檢測
 """
 
 import time
@@ -19,14 +22,25 @@ import threading
 import requests
 import feedparser
 import asyncio
+import json
 from datetime import datetime, timedelta
-from typing import Callable
+from typing import Callable, Dict, List, Optional, Any, Union
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from snownlp import SnowNLP
 from FinMind.data import DataLoader
 import psutil
 import gc
+
+# 導入事件處理引擎
+from .events.event import Event, EventType, EventSeverity, EventSource
+from .events.event_bus import event_bus, SubscriptionType
+from .events.event_processor import EventProcessor, processor_registry
+from .events.event_store import event_store
+from .events.event_filter import EventFilter, TypeFilter, SeverityFilter
+from .events.event_aggregator import EventAggregator, CountAggregator, SubjectAggregator
+from .events.event_correlation import EventCorrelator, SequenceCorrelator, SubjectCorrelator
+from .events.anomaly_detector import AnomalyDetector, FrequencyAnomalyDetector, ValueAnomalyDetector
 
 # 載入環境變數
 load_dotenv()
@@ -142,6 +156,7 @@ class EventMonitor:
         volume_threshold=3.0,
         check_interval=60,
         notification_channels=None,
+        use_event_engine=True,
     ):
         """
         初始化事件監控器
@@ -154,6 +169,7 @@ class EventMonitor:
             volume_threshold (float): 成交量異常閾值
             check_interval (int): 檢查間隔（秒）
             notification_channels (list, optional): 通知渠道列表
+            use_event_engine (bool): 是否使用事件處理引擎
         """
         self.price_df = price_df
         self.volume_df = volume_df
@@ -166,12 +182,125 @@ class EventMonitor:
         self.volume_threshold = volume_threshold
         self.check_interval = check_interval
         self.notification_channels = notification_channels or ["log"]
+        self.use_event_engine = use_event_engine
 
         self.running = False
         self.monitor_thread = None
         self.events = []
         self.last_check_time = datetime.now()
         self.async_task = None
+
+        # 初始化事件處理引擎
+        if self.use_event_engine:
+            self._init_event_engine()
+
+    def _init_event_engine(self):
+        """初始化事件處理引擎"""
+        try:
+            # 啟動事件總線
+            event_bus.start()
+
+            # 啟動事件存儲
+            event_store.start()
+
+            # 創建事件處理器
+            self._create_event_processors()
+
+            logger.info("事件處理引擎已初始化")
+        except Exception as e:
+            logger.error(f"初始化事件處理引擎時發生錯誤: {e}")
+            self.use_event_engine = False
+
+    def _create_event_processors(self):
+        """創建事件處理器"""
+        try:
+            # 創建價格異常檢測器
+            price_detector = ValueAnomalyDetector(
+                name="price_anomaly_detector",
+                event_types=[EventType.MARKET_DATA],
+                data_field="price",
+                threshold=3.0
+            )
+            processor_registry.register(price_detector)
+
+            # 創建成交量異常檢測器
+            volume_detector = ValueAnomalyDetector(
+                name="volume_anomaly_detector",
+                event_types=[EventType.MARKET_DATA],
+                data_field="volume",
+                threshold=3.0
+            )
+            processor_registry.register(volume_detector)
+
+            # 創建新聞情緒分析器
+            class SentimentProcessor(EventProcessor):
+                def __init__(self, name, event_types, monitor):
+                    super().__init__(name, event_types)
+                    self.monitor = monitor
+
+                def process_event(self, event):
+                    if event.event_type != EventType.NEWS:
+                        return None
+
+                    # 分析情緒
+                    text = event.message or ""
+                    if "content" in event.data:
+                        text += " " + event.data["content"]
+
+                    sentiment_score = self.monitor.analyze_sentiment(text)
+
+                    # 更新事件數據
+                    event.data["sentiment_score"] = sentiment_score
+
+                    # 如果情緒分數低於 -0.7，生成警報事件
+                    if sentiment_score < -0.7:
+                        return Event(
+                            event_type=EventType.COMPOSITE_EVENT,
+                            source=EventSource.MONITORING,
+                            severity=EventSeverity.WARNING,
+                            subject=event.subject,
+                            message=f"負面新聞: {event.message} (情緒分數: {sentiment_score:.2f})",
+                            data={
+                                "sentiment_score": sentiment_score,
+                                "original_event_id": event.id
+                            },
+                            tags=["sentiment", "negative", "news"],
+                            related_events=[event.id]
+                        )
+
+                    return None
+
+            sentiment_processor = SentimentProcessor(
+                name="sentiment_processor",
+                event_types=[EventType.NEWS],
+                monitor=self
+            )
+            processor_registry.register(sentiment_processor)
+
+            # 創建事件聚合器
+            news_aggregator = SubjectAggregator(
+                name="news_aggregator",
+                event_types=[EventType.NEWS],
+                window_size=300,
+                threshold=3
+            )
+            processor_registry.register(news_aggregator)
+
+            # 創建事件關聯分析器
+            correlator = SubjectCorrelator(
+                name="subject_correlator",
+                event_types=[EventType.PRICE_ANOMALY, EventType.VOLUME_ANOMALY, EventType.NEWS],
+                window_size=600,
+                threshold=2
+            )
+            processor_registry.register(correlator)
+
+            # 啟動所有處理器
+            processor_registry.start_all()
+
+            logger.info("事件處理器已創建並啟動")
+        except Exception as e:
+            logger.error(f"創建事件處理器時發生錯誤: {e}")
 
     def start(self):
         """
@@ -183,6 +312,12 @@ class EventMonitor:
         if self.running:
             logger.warning("監控已經在運行中")
             return False
+
+        # 啟動事件處理引擎
+        if self.use_event_engine and not event_bus.get_stats()["running"]:
+            event_bus.start()
+            event_store.start()
+            processor_registry.start_all()
 
         self.running = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop)
@@ -206,6 +341,16 @@ class EventMonitor:
         self.running = False
         if self.monitor_thread:
             self.monitor_thread.join(timeout=10)
+
+        # 停止事件處理引擎
+        if self.use_event_engine:
+            try:
+                processor_registry.stop_all()
+                event_store.stop()
+                event_bus.stop()
+                logger.info("事件處理引擎已停止")
+            except Exception as e:
+                logger.error(f"停止事件處理引擎時發生錯誤: {e}")
 
         logger.info("事件監控已停止")
         return True
@@ -252,21 +397,42 @@ class EventMonitor:
         # 檢查異常
         for stock_id, change in price_changes.items():
             if abs(change) > self.price_threshold:
-                # 創建事件
-                event = Event(
-                    event_type=EventType.PRICE_ANOMALY,
-                    stock_id=stock_id,
-                    content=f"價格異常變化: {change:.2%}",
-                    severity=(
-                        "high" if abs(change) > self.price_threshold * 2 else "medium"
-                    ),
-                )
+                if self.use_event_engine:
+                    # 使用新的事件處理引擎
+                    event = Event(
+                        event_type=EventType.PRICE_ANOMALY,
+                        source=EventSource.MARKET_DATA,
+                        subject=stock_id,
+                        severity=EventSeverity.ERROR if abs(change) > self.price_threshold * 2 else EventSeverity.WARNING,
+                        message=f"價格異常變化: {change:.2%}",
+                        data={
+                            "stock_id": stock_id,
+                            "price": float(latest_prices[stock_id]),
+                            "previous_price": float(previous_prices[stock_id]),
+                            "change": float(change),
+                            "threshold": self.price_threshold
+                        },
+                        tags=["price", "anomaly", "market"]
+                    )
 
-                # 添加事件
-                self.events.append(event)
+                    # 發布事件
+                    event_bus.publish(event)
+                else:
+                    # 使用舊的事件處理方式
+                    event = Event(
+                        event_type=EventType.PRICE_ANOMALY,
+                        stock_id=stock_id,
+                        content=f"價格異常變化: {change:.2%}",
+                        severity=(
+                            "high" if abs(change) > self.price_threshold * 2 else "medium"
+                        ),
+                    )
 
-                # 發送通知
-                self._send_notification(event)
+                    # 添加事件
+                    self.events.append(event)
+
+                    # 發送通知
+                    self._send_notification(event)
 
     def _check_volume_anomaly(self):
         """檢查成交量異常"""
@@ -290,19 +456,40 @@ class EventMonitor:
         # 檢查異常
         for stock_id, change in volume_changes.items():
             if change > self.volume_threshold:
-                # 創建事件
-                event = Event(
-                    event_type=EventType.VOLUME_ANOMALY,
-                    stock_id=stock_id,
-                    content=f"成交量異常變化: {change:.2f}倍",
-                    severity="high" if change > self.volume_threshold * 2 else "medium",
-                )
+                if self.use_event_engine:
+                    # 使用新的事件處理引擎
+                    event = Event(
+                        event_type=EventType.VOLUME_ANOMALY,
+                        source=EventSource.MARKET_DATA,
+                        subject=stock_id,
+                        severity=EventSeverity.ERROR if change > self.volume_threshold * 2 else EventSeverity.WARNING,
+                        message=f"成交量異常變化: {change:.2f}倍",
+                        data={
+                            "stock_id": stock_id,
+                            "volume": float(latest_volumes[stock_id]),
+                            "avg_volume": float(avg_volumes[stock_id]),
+                            "change": float(change),
+                            "threshold": self.volume_threshold
+                        },
+                        tags=["volume", "anomaly", "market"]
+                    )
 
-                # 添加事件
-                self.events.append(event)
+                    # 發布事件
+                    event_bus.publish(event)
+                else:
+                    # 使用舊的事件處理方式
+                    event = Event(
+                        event_type=EventType.VOLUME_ANOMALY,
+                        stock_id=stock_id,
+                        content=f"成交量異常變化: {change:.2f}倍",
+                        severity="high" if change > self.volume_threshold * 2 else "medium",
+                    )
 
-                # 發送通知
-                self._send_notification(event)
+                    # 添加事件
+                    self.events.append(event)
+
+                    # 發送通知
+                    self._send_notification(event)
 
     def _check_news(self):
         """檢查新聞"""
@@ -315,20 +502,42 @@ class EventMonitor:
                 for news in news_list:
                     # 檢查是否為重要新聞
                     if self._is_important_news(news):
-                        # 創建事件
-                        event = Event(
-                            event_type=EventType.NEWS,
-                            stock_id=news.get("stock_id"),
-                            content=news.get("title"),
-                            source=source,
-                            severity=news.get("severity", "medium"),
-                        )
+                        if self.use_event_engine:
+                            # 使用新的事件處理引擎
+                            event = Event(
+                                event_type=EventType.NEWS,
+                                source=EventSource.NEWS_FEED,
+                                subject=news.get("stock_id", "market"),
+                                severity=EventSeverity.ERROR if news.get("severity") == "high" else EventSeverity.WARNING,
+                                message=news.get("title", ""),
+                                data={
+                                    "stock_id": news.get("stock_id"),
+                                    "title": news.get("title"),
+                                    "content": news.get("content", ""),
+                                    "url": news.get("url", ""),
+                                    "source": source,
+                                    "timestamp": news.get("timestamp", datetime.now()).isoformat() if isinstance(news.get("timestamp"), datetime) else news.get("timestamp", datetime.now().isoformat())
+                                },
+                                tags=["news", "important", news.get("severity", "medium")]
+                            )
 
-                        # 添加事件
-                        self.events.append(event)
+                            # 發布事件
+                            event_bus.publish(event)
+                        else:
+                            # 使用舊的事件處理方式
+                            event = Event(
+                                event_type=EventType.NEWS,
+                                stock_id=news.get("stock_id"),
+                                content=news.get("title"),
+                                source=source,
+                                severity=news.get("severity", "medium"),
+                            )
 
-                        # 發送通知
-                        self._send_notification(event)
+                            # 添加事件
+                            self.events.append(event)
+
+                            # 發送通知
+                            self._send_notification(event)
             except Exception as e:
                 logger.error(f"獲取新聞時發生錯誤: {e}")
 

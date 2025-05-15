@@ -9,6 +9,9 @@
 - 績效分析
 - 報表生成
 - 資料視覺化
+- 結構化日誌
+- 異常檢測
+- 日誌分析
 """
 
 import os
@@ -16,10 +19,21 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
-from datetime import datetime
+import json
+import time
+import traceback
+import socket
+import sys
+import uuid
+import re
+from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from dotenv import load_dotenv
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+import threading
+import queue
+from typing import Dict, List, Any, Optional, Union, Callable
 
 # 載入環境變數
 load_dotenv()
@@ -30,16 +44,490 @@ log_dir = os.path.join(
 )
 os.makedirs(log_dir, exist_ok=True)
 
-# 設定日誌
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(os.path.join(log_dir, "trading.log")),
-        logging.StreamHandler(),
-    ],
+# 創建子目錄
+trade_log_dir = os.path.join(log_dir, "trades")
+os.makedirs(trade_log_dir, exist_ok=True)
+
+system_log_dir = os.path.join(log_dir, "system")
+os.makedirs(system_log_dir, exist_ok=True)
+
+error_log_dir = os.path.join(log_dir, "errors")
+os.makedirs(error_log_dir, exist_ok=True)
+
+# 定義日誌格式
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+JSON_LOG_FORMAT = {
+    "timestamp": "%(asctime)s",
+    "level": "%(levelname)s",
+    "logger": "%(name)s",
+    "message": "%(message)s",
+    "module": "%(module)s",
+    "function": "%(funcName)s",
+    "line": "%(lineno)d",
+    "thread": "%(threadName)s",
+    "process": "%(process)d"
+}
+
+# 自定義JSON格式化器
+class JsonFormatter(logging.Formatter):
+    """JSON格式化器，將日誌格式化為JSON格式"""
+
+    def __init__(self, fmt_dict=None):
+        super(JsonFormatter, self).__init__()
+        self.fmt_dict = fmt_dict if fmt_dict else JSON_LOG_FORMAT
+        self.hostname = socket.gethostname()
+
+    def format(self, record):
+        record_dict = self.fmt_dict.copy()
+
+        # 填充記錄字典
+        for key, value in record_dict.items():
+            if isinstance(value, str) and value.startswith("%(") and value.endswith(")s"):
+                attr_name = value[2:-2]
+                if hasattr(record, attr_name):
+                    record_dict[key] = getattr(record, attr_name)
+
+        # 添加異常信息
+        if record.exc_info:
+            record_dict["exception"] = {
+                "type": str(record.exc_info[0].__name__),
+                "message": str(record.exc_info[1]),
+                "traceback": traceback.format_exception(*record.exc_info)
+            }
+
+        # 添加額外數據
+        if hasattr(record, "data") and record.data:
+            record_dict["data"] = record.data
+
+        # 添加主機名
+        record_dict["hostname"] = self.hostname
+
+        # 添加唯一ID
+        record_dict["id"] = str(uuid.uuid4())
+
+        return json.dumps(record_dict, ensure_ascii=False)
+
+# 創建日誌處理器
+def create_logger(name, log_file=None, level=logging.INFO, use_json=False, max_bytes=10*1024*1024, backup_count=5):
+    """
+    創建日誌記錄器
+
+    Args:
+        name (str): 日誌記錄器名稱
+        log_file (str, optional): 日誌文件路徑
+        level (int): 日誌級別
+        use_json (bool): 是否使用JSON格式
+        max_bytes (int): 日誌文件最大大小
+        backup_count (int): 備份文件數量
+
+    Returns:
+        logging.Logger: 日誌記錄器
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    # 清除現有處理器
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+
+    # 創建控制台處理器
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+
+    # 創建文件處理器
+    if log_file:
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        file_handler.setLevel(level)
+
+    # 設置格式化器
+    if use_json:
+        formatter = JsonFormatter()
+    else:
+        formatter = logging.Formatter(LOG_FORMAT)
+
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    if log_file:
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    return logger
+
+# 創建主日誌記錄器
+logger = create_logger(
+    "trading_logger",
+    os.path.join(log_dir, "trading.log"),
+    level=logging.INFO
 )
-logger = logging.getLogger("trading_logger")
+
+# 創建交易日誌記錄器
+trade_logger = create_logger(
+    "trade_logger",
+    os.path.join(trade_log_dir, "trades.log"),
+    level=logging.INFO,
+    use_json=True
+)
+
+# 創建系統日誌記錄器
+system_logger = create_logger(
+    "system_logger",
+    os.path.join(system_log_dir, "system.log"),
+    level=logging.INFO,
+    use_json=True
+)
+
+# 創建錯誤日誌記錄器
+error_logger = create_logger(
+    "error_logger",
+    os.path.join(error_log_dir, "errors.log"),
+    level=logging.ERROR,
+    use_json=True
+)
+
+# 添加額外數據的日誌函數
+def log_with_data(logger, level, msg, data=None, exc_info=None):
+    """
+    記錄帶有額外數據的日誌
+
+    Args:
+        logger (logging.Logger): 日誌記錄器
+        level (int): 日誌級別
+        msg (str): 日誌消息
+        data (dict, optional): 額外數據
+        exc_info (tuple, optional): 異常信息
+    """
+    if data is None:
+        data = {}
+
+    # 創建自定義記錄
+    record = logging.LogRecord(
+        name=logger.name,
+        level=level,
+        pathname=sys._getframe(1).f_code.co_filename,
+        lineno=sys._getframe(1).f_lineno,
+        msg=msg,
+        args=(),
+        exc_info=exc_info
+    )
+
+    # 添加額外數據
+    record.data = data
+
+    # 處理記錄
+    for handler in logger.handlers:
+        if record.levelno >= handler.level:
+            handler.handle(record)
+
+# 異常檢測類
+class LogAnomalyDetector:
+    """日誌異常檢測類，用於檢測日誌中的異常模式"""
+
+    def __init__(self, log_file, patterns=None, threshold=5, window_size=3600):
+        """
+        初始化日誌異常檢測器
+
+        Args:
+            log_file (str): 日誌文件路徑
+            patterns (list, optional): 異常模式列表
+            threshold (int): 異常閾值
+            window_size (int): 時間窗口大小（秒）
+        """
+        self.log_file = log_file
+        self.patterns = patterns or [
+            r"error",
+            r"exception",
+            r"fail",
+            r"timeout",
+            r"refused",
+            r"denied",
+            r"rejected"
+        ]
+        self.threshold = threshold
+        self.window_size = window_size
+        self.error_counts = {}
+        self.last_check_time = time.time()
+
+    def check_anomalies(self):
+        """
+        檢查日誌異常
+
+        Returns:
+            list: 異常列表
+        """
+        anomalies = []
+        current_time = time.time()
+
+        # 讀取日誌文件
+        try:
+            with open(self.log_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception as e:
+            system_logger.error(f"讀取日誌文件時發生錯誤: {e}")
+            return anomalies
+
+        # 過濾時間窗口內的日誌
+        window_start_time = current_time - self.window_size
+        window_logs = []
+
+        for line in lines:
+            try:
+                # 嘗試解析JSON格式
+                log_data = json.loads(line)
+                log_time = datetime.strptime(log_data["timestamp"], "%Y-%m-%d %H:%M:%S,%f")
+                log_timestamp = log_time.timestamp()
+
+                if log_timestamp >= window_start_time:
+                    window_logs.append(log_data)
+            except:
+                # 如果不是JSON格式，嘗試解析標準格式
+                try:
+                    log_time_str = line.split(" - ")[0]
+                    log_time = datetime.strptime(log_time_str, "%Y-%m-%d %H:%M:%S,%f")
+                    log_timestamp = log_time.timestamp()
+
+                    if log_timestamp >= window_start_time:
+                        window_logs.append({"message": line, "timestamp": log_time_str})
+                except:
+                    # 如果無法解析時間，則跳過
+                    continue
+
+        # 檢查異常模式
+        pattern_counts = {}
+
+        for log in window_logs:
+            message = log.get("message", "")
+
+            for pattern in self.patterns:
+                if re.search(pattern, message, re.IGNORECASE):
+                    if pattern not in pattern_counts:
+                        pattern_counts[pattern] = 0
+                    pattern_counts[pattern] += 1
+
+        # 檢查是否超過閾值
+        for pattern, count in pattern_counts.items():
+            if count >= self.threshold:
+                anomaly = {
+                    "pattern": pattern,
+                    "count": count,
+                    "window_size": self.window_size,
+                    "threshold": self.threshold,
+                    "timestamp": datetime.now().isoformat()
+                }
+                anomalies.append(anomaly)
+
+                # 記錄異常
+                system_logger.warning(
+                    f"檢測到日誌異常: 模式 '{pattern}' 在 {self.window_size} 秒內出現 {count} 次",
+                    extra={"data": anomaly}
+                )
+
+        self.last_check_time = current_time
+        return anomalies
+
+# 創建日誌異常檢測器
+error_anomaly_detector = LogAnomalyDetector(
+    os.path.join(error_log_dir, "errors.log"),
+    threshold=3,
+    window_size=1800
+)
+
+# 日誌分析類
+class LogAnalyzer:
+    """日誌分析類，用於分析日誌數據"""
+
+    def __init__(self, log_files=None):
+        """
+        初始化日誌分析器
+
+        Args:
+            log_files (list, optional): 日誌文件路徑列表
+        """
+        self.log_files = log_files or []
+
+    def add_log_file(self, log_file):
+        """
+        添加日誌文件
+
+        Args:
+            log_file (str): 日誌文件路徑
+        """
+        if log_file not in self.log_files:
+            self.log_files.append(log_file)
+
+    def parse_logs(self, start_time=None, end_time=None):
+        """
+        解析日誌
+
+        Args:
+            start_time (datetime, optional): 開始時間
+            end_time (datetime, optional): 結束時間
+
+        Returns:
+            list: 日誌列表
+        """
+        logs = []
+
+        for log_file in self.log_files:
+            try:
+                with open(log_file, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+
+                for line in lines:
+                    try:
+                        # 嘗試解析JSON格式
+                        log_data = json.loads(line)
+                        log_time = datetime.strptime(log_data["timestamp"], "%Y-%m-%d %H:%M:%S,%f")
+
+                        # 過濾時間範圍
+                        if start_time and log_time < start_time:
+                            continue
+                        if end_time and log_time > end_time:
+                            continue
+
+                        logs.append(log_data)
+                    except:
+                        # 如果不是JSON格式，嘗試解析標準格式
+                        try:
+                            parts = line.split(" - ")
+                            log_time_str = parts[0]
+                            log_time = datetime.strptime(log_time_str, "%Y-%m-%d %H:%M:%S,%f")
+
+                            # 過濾時間範圍
+                            if start_time and log_time < start_time:
+                                continue
+                            if end_time and log_time > end_time:
+                                continue
+
+                            log_data = {
+                                "timestamp": log_time_str,
+                                "level": parts[1] if len(parts) > 1 else "",
+                                "logger": parts[2] if len(parts) > 2 else "",
+                                "message": parts[3] if len(parts) > 3 else line
+                            }
+                            logs.append(log_data)
+                        except:
+                            # 如果無法解析，則跳過
+                            continue
+            except Exception as e:
+                system_logger.error(f"解析日誌文件 {log_file} 時發生錯誤: {e}")
+
+        return logs
+
+    def analyze_error_frequency(self, start_time=None, end_time=None):
+        """
+        分析錯誤頻率
+
+        Args:
+            start_time (datetime, optional): 開始時間
+            end_time (datetime, optional): 結束時間
+
+        Returns:
+            dict: 錯誤頻率統計
+        """
+        logs = self.parse_logs(start_time, end_time)
+
+        # 過濾錯誤日誌
+        error_logs = [log for log in logs if log.get("level") in ["ERROR", "CRITICAL"]]
+
+        # 按小時統計錯誤數量
+        error_counts = {}
+
+        for log in error_logs:
+            try:
+                log_time = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S,%f")
+                hour_key = log_time.strftime("%Y-%m-%d %H:00:00")
+
+                if hour_key not in error_counts:
+                    error_counts[hour_key] = 0
+
+                error_counts[hour_key] += 1
+            except:
+                continue
+
+        return error_counts
+
+    def analyze_error_types(self, start_time=None, end_time=None):
+        """
+        分析錯誤類型
+
+        Args:
+            start_time (datetime, optional): 開始時間
+            end_time (datetime, optional): 結束時間
+
+        Returns:
+            dict: 錯誤類型統計
+        """
+        logs = self.parse_logs(start_time, end_time)
+
+        # 過濾錯誤日誌
+        error_logs = [log for log in logs if log.get("level") in ["ERROR", "CRITICAL"]]
+
+        # 統計錯誤類型
+        error_types = {}
+
+        for log in error_logs:
+            # 嘗試從異常信息中獲取錯誤類型
+            exception = log.get("exception", {})
+            error_type = exception.get("type", "Unknown")
+
+            if error_type not in error_types:
+                error_types[error_type] = 0
+
+            error_types[error_type] += 1
+
+        return error_types
+
+    def generate_report(self, start_time=None, end_time=None):
+        """
+        生成日誌分析報告
+
+        Args:
+            start_time (datetime, optional): 開始時間
+            end_time (datetime, optional): 結束時間
+
+        Returns:
+            dict: 分析報告
+        """
+        logs = self.parse_logs(start_time, end_time)
+
+        # 統計日誌級別
+        level_counts = {}
+        for log in logs:
+            level = log.get("level", "UNKNOWN")
+            if level not in level_counts:
+                level_counts[level] = 0
+            level_counts[level] += 1
+
+        # 分析錯誤頻率
+        error_frequency = self.analyze_error_frequency(start_time, end_time)
+
+        # 分析錯誤類型
+        error_types = self.analyze_error_types(start_time, end_time)
+
+        # 生成報告
+        report = {
+            "start_time": start_time.isoformat() if start_time else None,
+            "end_time": end_time.isoformat() if end_time else None,
+            "total_logs": len(logs),
+            "level_counts": level_counts,
+            "error_frequency": error_frequency,
+            "error_types": error_types
+        }
+
+        return report
+
+# 創建日誌分析器
+log_analyzer = LogAnalyzer([
+    os.path.join(log_dir, "trading.log"),
+    os.path.join(error_log_dir, "errors.log"),
+    os.path.join(system_log_dir, "system.log")
+])
 
 
 class TradeLogger:

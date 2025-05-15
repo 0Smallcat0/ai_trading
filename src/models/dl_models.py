@@ -15,14 +15,26 @@ from typing import Dict, List, Any, Optional, Union, Tuple
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import (
-    Dense, LSTM, GRU, Dropout, BatchNormalization,
-    Input, MultiHeadAttention, LayerNormalization, GlobalAveragePooling1D
+    Dense,
+    LSTM,
+    GRU,
+    Dropout,
+    BatchNormalization,
+    Input,
+    MultiHeadAttention,
+    LayerNormalization,
+    GlobalAveragePooling1D,
 )
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    mean_squared_error, mean_absolute_error, r2_score
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
 )
 from sklearn.preprocessing import StandardScaler
 
@@ -40,14 +52,14 @@ class LSTMModel(ModelBase):
     """
 
     def __init__(
-        self, 
-        name: str = "lstm", 
-        is_classifier: bool = False, 
+        self,
+        name: str = "lstm",
+        is_classifier: bool = False,
         input_shape: Tuple[int, int] = None,
         units: List[int] = [64, 32],
         dropout: float = 0.2,
         learning_rate: float = 0.001,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化 LSTM 模型
@@ -62,13 +74,13 @@ class LSTMModel(ModelBase):
             **kwargs: 其他參數
         """
         super().__init__(
-            name=name, 
-            is_classifier=is_classifier, 
+            name=name,
+            is_classifier=is_classifier,
             input_shape=input_shape,
             units=units,
             dropout=dropout,
             learning_rate=learning_rate,
-            **kwargs
+            **kwargs,
         )
         self.is_classifier = is_classifier
         self.input_shape = input_shape
@@ -76,7 +88,7 @@ class LSTMModel(ModelBase):
         self.dropout = dropout
         self.learning_rate = learning_rate
         self.scaler = StandardScaler()
-        
+
         # 如果提供了輸入形狀，則創建模型
         if input_shape is not None:
             self._build_model()
@@ -86,35 +98,39 @@ class LSTMModel(ModelBase):
         構建 LSTM 模型
         """
         model = Sequential()
-        
+
         # 添加 LSTM 層
         for i, unit in enumerate(self.units):
             return_sequences = i < len(self.units) - 1
             if i == 0:
-                model.add(LSTM(unit, return_sequences=return_sequences, input_shape=self.input_shape))
+                model.add(
+                    LSTM(
+                        unit,
+                        return_sequences=return_sequences,
+                        input_shape=self.input_shape,
+                    )
+                )
             else:
                 model.add(LSTM(unit, return_sequences=return_sequences))
-            
+
             # 添加 Dropout 層
             model.add(Dropout(self.dropout))
-        
+
         # 添加輸出層
         if self.is_classifier:
-            model.add(Dense(1, activation='sigmoid'))
-            loss = 'binary_crossentropy'
-            metrics = ['accuracy']
+            model.add(Dense(1, activation="sigmoid"))
+            loss = "binary_crossentropy"
+            metrics = ["accuracy"]
         else:
             model.add(Dense(1))
-            loss = 'mse'
-            metrics = ['mae']
-        
+            loss = "mse"
+            metrics = ["mae"]
+
         # 編譯模型
         model.compile(
-            optimizer=Adam(learning_rate=self.learning_rate),
-            loss=loss,
-            metrics=metrics
+            optimizer=Adam(learning_rate=self.learning_rate), loss=loss, metrics=metrics
         )
-        
+
         self.model = model
 
     def _prepare_data(self, X: pd.DataFrame, y: Optional[pd.Series] = None) -> Tuple:
@@ -129,17 +145,19 @@ class LSTMModel(ModelBase):
             Tuple: 準備好的資料
         """
         # 標準化特徵
-        X_scaled = self.scaler.fit_transform(X) if y is not None else self.scaler.transform(X)
-        
+        X_scaled = (
+            self.scaler.fit_transform(X) if y is not None else self.scaler.transform(X)
+        )
+
         # 如果沒有設定輸入形狀，則根據資料設定
         if self.input_shape is None:
             # 假設每個樣本是一個時間步長
             self.input_shape = (1, X.shape[1])
             self._build_model()
-        
+
         # 重塑資料以符合 LSTM 輸入要求
         X_reshaped = X_scaled.reshape(-1, self.input_shape[0], self.input_shape[1])
-        
+
         if y is not None:
             return X_reshaped, y.values
         else:
@@ -159,41 +177,41 @@ class LSTMModel(ModelBase):
         # 保存特徵名稱和目標名稱
         self.feature_names = X.columns.tolist()
         self.target_name = y.name
-        
+
         # 準備資料
         X_train, y_train = self._prepare_data(X, y)
-        
+
         # 設定回調函數
         callbacks = [
             EarlyStopping(patience=10, restore_best_weights=True),
             ModelCheckpoint(
-                filepath=f"{MODELS_DIR}/{self.name}/best_model.h5",
-                save_best_only=True
-            )
+                filepath=f"{MODELS_DIR}/{self.name}/best_model.h5", save_best_only=True
+            ),
         ]
-        
+
         # 訓練模型
         history = self.model.fit(
-            X_train, y_train,
+            X_train,
+            y_train,
             epochs=100,
             batch_size=32,
             validation_split=0.2,
             callbacks=callbacks,
-            verbose=1
+            verbose=1,
         )
-        
+
         self.trained = True
-        
+
         # 評估模型
         metrics = self.evaluate(X, y)
         self.metrics = metrics
-        
+
         # 添加訓練歷史
         metrics["history"] = {
             "loss": history.history["loss"],
-            "val_loss": history.history["val_loss"]
+            "val_loss": history.history["val_loss"],
         }
-        
+
         return metrics
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -209,17 +227,17 @@ class LSTMModel(ModelBase):
         if not self.trained:
             logger.warning("模型尚未訓練，無法進行預測")
             return np.array([])
-        
+
         # 準備資料
         X_test = self._prepare_data(X)
-        
+
         # 進行預測
         predictions = self.model.predict(X_test)
-        
+
         # 如果是分類問題，則將概率轉換為類別
         if self.is_classifier:
             predictions = (predictions > 0.5).astype(int)
-        
+
         return predictions.flatten()
 
     def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
@@ -236,13 +254,13 @@ class LSTMModel(ModelBase):
         if not self.trained:
             logger.warning("模型尚未訓練，無法進行評估")
             return {}
-        
+
         # 進行預測
         y_pred = self.predict(X)
-        
+
         # 計算指標
         metrics = {}
-        
+
         if self.is_classifier:
             # 分類指標
             metrics["accuracy"] = accuracy_score(y, y_pred)
@@ -255,7 +273,7 @@ class LSTMModel(ModelBase):
             metrics["rmse"] = np.sqrt(metrics["mse"])
             metrics["mae"] = mean_absolute_error(y, y_pred)
             metrics["r2"] = r2_score(y, y_pred)
-        
+
         return metrics
 
 
@@ -265,14 +283,14 @@ class GRUModel(ModelBase):
     """
 
     def __init__(
-        self, 
-        name: str = "gru", 
-        is_classifier: bool = False, 
+        self,
+        name: str = "gru",
+        is_classifier: bool = False,
         input_shape: Tuple[int, int] = None,
         units: List[int] = [64, 32],
         dropout: float = 0.2,
         learning_rate: float = 0.001,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化 GRU 模型
@@ -287,13 +305,13 @@ class GRUModel(ModelBase):
             **kwargs: 其他參數
         """
         super().__init__(
-            name=name, 
-            is_classifier=is_classifier, 
+            name=name,
+            is_classifier=is_classifier,
             input_shape=input_shape,
             units=units,
             dropout=dropout,
             learning_rate=learning_rate,
-            **kwargs
+            **kwargs,
         )
         self.is_classifier = is_classifier
         self.input_shape = input_shape
@@ -301,7 +319,7 @@ class GRUModel(ModelBase):
         self.dropout = dropout
         self.learning_rate = learning_rate
         self.scaler = StandardScaler()
-        
+
         # 如果提供了輸入形狀，則創建模型
         if input_shape is not None:
             self._build_model()
@@ -311,33 +329,37 @@ class GRUModel(ModelBase):
         構建 GRU 模型
         """
         model = Sequential()
-        
+
         # 添加 GRU 層
         for i, unit in enumerate(self.units):
             return_sequences = i < len(self.units) - 1
             if i == 0:
-                model.add(GRU(unit, return_sequences=return_sequences, input_shape=self.input_shape))
+                model.add(
+                    GRU(
+                        unit,
+                        return_sequences=return_sequences,
+                        input_shape=self.input_shape,
+                    )
+                )
             else:
                 model.add(GRU(unit, return_sequences=return_sequences))
-            
+
             # 添加 Dropout 層
             model.add(Dropout(self.dropout))
-        
+
         # 添加輸出層
         if self.is_classifier:
-            model.add(Dense(1, activation='sigmoid'))
-            loss = 'binary_crossentropy'
-            metrics = ['accuracy']
+            model.add(Dense(1, activation="sigmoid"))
+            loss = "binary_crossentropy"
+            metrics = ["accuracy"]
         else:
             model.add(Dense(1))
-            loss = 'mse'
-            metrics = ['mae']
-        
+            loss = "mse"
+            metrics = ["mae"]
+
         # 編譯模型
         model.compile(
-            optimizer=Adam(learning_rate=self.learning_rate),
-            loss=loss,
-            metrics=metrics
+            optimizer=Adam(learning_rate=self.learning_rate), loss=loss, metrics=metrics
         )
-        
+
         self.model = model

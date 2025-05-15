@@ -1,0 +1,52 @@
+# 券商配置文件
+# 此文件包含各個券商的連接配置
+
+# 模擬交易
+simulator:
+  name: "simulator"
+  type: "simulator"
+  environment: "paper"
+  market: "TWN"
+  order_timeout: 60
+  max_retry: 3
+  connection_timeout: 30
+  enable_async: true
+  log_level: "INFO"
+  extra_params:
+    initial_cash: 1000000.0
+    slippage: 0.001
+    commission_rate: 0.001425
+    tax_rate: 0.003
+    delay_ms: 500
+    realistic_simulation: true
+
+# 永豐證券
+shioaji:
+  name: "shioaji"
+  type: "shioaji"
+  environment: "paper"  # paper 或 live
+  market: "TWN"
+  order_timeout: 60
+  max_retry: 3
+  connection_timeout: 30
+  enable_async: true
+  log_level: "INFO"
+  extra_params:
+    simulation: true  # 是否使用模擬環境
+    ca_path: ""  # 憑證路徑
+
+# 富途證券
+futu:
+  name: "futu"
+  type: "futu"
+  environment: "paper"  # paper 或 live
+  market: "HK"  # HK, US, CN
+  order_timeout: 60
+  max_retry: 3
+  connection_timeout: 30
+  enable_async: true
+  log_level: "INFO"
+  extra_params:
+    host: "127.0.0.1"
+    port: 11111
+    trade_env: "SIMULATE"  # SIMULATE 或 REAL

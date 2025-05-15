@@ -24,8 +24,16 @@ import matplotlib.pyplot as plt
 
 # 嘗試導入 indicators 模組
 try:
-    from src.core.indicators import TechnicalIndicators, FundamentalIndicators, SentimentIndicators
-    from src.core.indicators import evaluate_indicator_efficacy, generate_trading_signals
+    from src.core.indicators import (
+        TechnicalIndicators,
+        FundamentalIndicators,
+        SentimentIndicators,
+    )
+    from src.core.indicators import (
+        evaluate_indicator_efficacy,
+        generate_trading_signals,
+    )
+
     INDICATORS_AVAILABLE = True
 except ImportError as e:
     warnings.warn(f"無法匯入 indicators 模組，部分功能將無法使用: {e}")
@@ -34,6 +42,7 @@ except ImportError as e:
 # 嘗試導入 model_integration 模組
 try:
     from src.core.model_integration import ModelManager
+
     MODEL_INTEGRATION_AVAILABLE = True
 except ImportError as e:
     warnings.warn(f"無法匯入 model_integration 模組，AI 模型整合功能將無法使用: {e}")
@@ -72,7 +81,12 @@ class SignalGenerator:
     """訊號產生器類別，用於生成各種交易訊號"""
 
     def __init__(
-        self, price_data=None, volume_data=None, financial_data=None, news_data=None, model_manager=None
+        self,
+        price_data=None,
+        volume_data=None,
+        financial_data=None,
+        news_data=None,
+        model_manager=None,
     ):
         """
         初始化訊號產生器
@@ -453,29 +467,59 @@ class SignalGenerator:
             if len(predictions) > 0:
                 # 對每個股票分別處理
                 for stock_id in self.price_data.index.get_level_values(0).unique():
-                    stock_indices = self.price_data.index.get_level_values(0) == stock_id
-                    stock_predictions = predictions[stock_indices] if len(predictions) == len(self.price_data) else []
+                    stock_indices = (
+                        self.price_data.index.get_level_values(0) == stock_id
+                    )
+                    stock_predictions = (
+                        predictions[stock_indices]
+                        if len(predictions) == len(self.price_data)
+                        else []
+                    )
 
                     if len(stock_predictions) > 0:
                         # 根據預測值生成訊號
                         signals.loc[stock_id, "signal"] = 0
 
                         # 檢查模型類型
-                        model_info = self.model_manager.get_model_info(model_name, version)
-                        is_classifier = model_info.get("model_type", "").lower().find("classifier") >= 0
+                        model_info = self.model_manager.get_model_info(
+                            model_name, version
+                        )
+                        is_classifier = (
+                            model_info.get("model_type", "").lower().find("classifier")
+                            >= 0
+                        )
 
                         if is_classifier:
                             # 分類模型，直接使用類別作為訊號
-                            signals.loc[(stock_id, self.price_data.loc[stock_id].index), "signal"] = stock_predictions
+                            signals.loc[
+                                (stock_id, self.price_data.loc[stock_id].index),
+                                "signal",
+                            ] = stock_predictions
                         else:
                             # 回歸模型，使用閾值
                             buy_indices = stock_predictions > signal_threshold
                             sell_indices = stock_predictions < -signal_threshold
 
                             if any(buy_indices):
-                                signals.loc[(stock_id, self.price_data.loc[stock_id].index[buy_indices]), "signal"] = 1
+                                signals.loc[
+                                    (
+                                        stock_id,
+                                        self.price_data.loc[stock_id].index[
+                                            buy_indices
+                                        ],
+                                    ),
+                                    "signal",
+                                ] = 1
                             if any(sell_indices):
-                                signals.loc[(stock_id, self.price_data.loc[stock_id].index[sell_indices]), "signal"] = -1
+                                signals.loc[
+                                    (
+                                        stock_id,
+                                        self.price_data.loc[stock_id].index[
+                                            sell_indices
+                                        ],
+                                    ),
+                                    "signal",
+                                ] = -1
 
             # 儲存訊號
             self.signals[f"ai_{model_name}"] = signals
@@ -534,7 +578,9 @@ class SignalGenerator:
 
         return features
 
-    def generate_all_signals(self, include_advanced=True, include_ai=True, ai_models=None):
+    def generate_all_signals(
+        self, include_advanced=True, include_ai=True, ai_models=None
+    ):
         """
         生成所有策略訊號
 
@@ -645,16 +691,22 @@ class SignalGenerator:
 
             # 生成突破訊號
             # 價格突破前期高點，買入
-            signals.loc[(stock_id, stock_price.index[stock_price > high_threshold]), "signal"] = 1
+            signals.loc[
+                (stock_id, stock_price.index[stock_price > high_threshold]), "signal"
+            ] = 1
             # 價格跌破前期低點，賣出
-            signals.loc[(stock_id, stock_price.index[stock_price < low_threshold]), "signal"] = -1
+            signals.loc[
+                (stock_id, stock_price.index[stock_price < low_threshold]), "signal"
+            ] = -1
 
         # 儲存訊號
         self.signals["breakout"] = signals
 
         return signals
 
-    def generate_crossover_signals(self, fast_period=5, slow_period=20, signal_type="ma"):
+    def generate_crossover_signals(
+        self, fast_period=5, slow_period=20, signal_type="ma"
+    ):
         """
         生成交叉策略訊號
 
@@ -709,12 +761,20 @@ class SignalGenerator:
                 return pd.DataFrame()
 
             # 計算交叉
-            crossover = (fast_line.shift(1) < slow_line.shift(1)) & (fast_line > slow_line)
-            crossunder = (fast_line.shift(1) > slow_line.shift(1)) & (fast_line < slow_line)
+            crossover = (fast_line.shift(1) < slow_line.shift(1)) & (
+                fast_line > slow_line
+            )
+            crossunder = (fast_line.shift(1) > slow_line.shift(1)) & (
+                fast_line < slow_line
+            )
 
             # 生成交叉訊號
-            signals.loc[(stock_id, stock_price.index[crossover]), "signal"] = 1  # 金叉，買入
-            signals.loc[(stock_id, stock_price.index[crossunder]), "signal"] = -1  # 死叉，賣出
+            signals.loc[(stock_id, stock_price.index[crossover]), "signal"] = (
+                1  # 金叉，買入
+            )
+            signals.loc[(stock_id, stock_price.index[crossunder]), "signal"] = (
+                -1
+            )  # 死叉，賣出
 
         # 儲存訊號
         self.signals["crossover"] = signals
@@ -771,8 +831,8 @@ class SignalGenerator:
 
             # 計算價格和 RSI 的高點和低點
             for i in range(divergence_window, len(stock_price)):
-                window_price = stock_price.iloc[i-divergence_window:i]
-                window_rsi = rsi.iloc[i-divergence_window:i]
+                window_price = stock_price.iloc[i - divergence_window : i]
+                window_rsi = rsi.iloc[i - divergence_window : i]
 
                 # 檢查是否為價格高點或低點
                 if np.argmax(window_price.values) == divergence_window - 1:
@@ -793,8 +853,12 @@ class SignalGenerator:
             bullish_divergence = price_lows & ~rsi_lows
 
             # 生成背離訊號
-            signals.loc[(stock_id, stock_price.index[bullish_divergence]), "signal"] = 1  # 底背離，買入
-            signals.loc[(stock_id, stock_price.index[bearish_divergence]), "signal"] = -1  # 頂背離，賣出
+            signals.loc[(stock_id, stock_price.index[bullish_divergence]), "signal"] = (
+                1  # 底背離，買入
+            )
+            signals.loc[(stock_id, stock_price.index[bearish_divergence]), "signal"] = (
+                -1
+            )  # 頂背離，賣出
 
         # 儲存訊號
         self.signals["divergence"] = signals
@@ -855,14 +919,26 @@ class SignalGenerator:
             # 生成 SMA 交叉訊號
             crossover = (sma_20.shift(1) < sma_50.shift(1)) & (sma_20 > sma_50)
             crossunder = (sma_20.shift(1) > sma_50.shift(1)) & (sma_20 < sma_50)
-            signals.loc[(stock_id, sma_20.index[crossover]), "signal"] += 1  # 金叉，買入
-            signals.loc[(stock_id, sma_20.index[crossunder]), "signal"] -= 1  # 死叉，賣出
+            signals.loc[
+                (stock_id, sma_20.index[crossover]), "signal"
+            ] += 1  # 金叉，買入
+            signals.loc[
+                (stock_id, sma_20.index[crossunder]), "signal"
+            ] -= 1  # 死叉，賣出
 
             # 生成 MACD 訊號
-            macd_crossover = (macd.shift(1) < signal_line.shift(1)) & (macd > signal_line)
-            macd_crossunder = (macd.shift(1) > signal_line.shift(1)) & (macd < signal_line)
-            signals.loc[(stock_id, macd.index[macd_crossover]), "signal"] += 1  # 金叉，買入
-            signals.loc[(stock_id, macd.index[macd_crossunder]), "signal"] -= 1  # 死叉，賣出
+            macd_crossover = (macd.shift(1) < signal_line.shift(1)) & (
+                macd > signal_line
+            )
+            macd_crossunder = (macd.shift(1) > signal_line.shift(1)) & (
+                macd < signal_line
+            )
+            signals.loc[
+                (stock_id, macd.index[macd_crossover]), "signal"
+            ] += 1  # 金叉，買入
+            signals.loc[
+                (stock_id, macd.index[macd_crossunder]), "signal"
+            ] -= 1  # 死叉，賣出
 
         # 標準化訊號
         signals["signal"] = signals["signal"].apply(
@@ -929,7 +1005,9 @@ class SignalGenerator:
             logger.error(LOG_MSGS["export_error"].format(error=str(e)))
             return pd.DataFrame()
 
-    def plot_signals(self, strategy=None, start_date=None, end_date=None, figsize=(12, 8)):
+    def plot_signals(
+        self, strategy=None, start_date=None, end_date=None, figsize=(12, 8)
+    ):
         """
         繪製訊號圖表
 
@@ -977,14 +1055,16 @@ class SignalGenerator:
             mask = pd.Series(True, index=signals.index)
             if start_date is not None:
                 start_date = pd.Timestamp(start_date)
-                mask = mask & (signals.index.get_level_values('date') >= start_date)
+                mask = mask & (signals.index.get_level_values("date") >= start_date)
             if end_date is not None:
                 end_date = pd.Timestamp(end_date)
-                mask = mask & (signals.index.get_level_values('date') <= end_date)
+                mask = mask & (signals.index.get_level_values("date") <= end_date)
             signals = signals[mask]
 
         # 創建圖表
-        fig, axes = plt.subplots(len(signals.index.get_level_values(0).unique()), 1, figsize=figsize)
+        fig, axes = plt.subplots(
+            len(signals.index.get_level_values(0).unique()), 1, figsize=figsize
+        )
 
         # 如果只有一支股票，將 axes 轉換為列表
         if len(signals.index.get_level_values(0).unique()) == 1:
@@ -1010,7 +1090,7 @@ class SignalGenerator:
                     marker="^",
                     color="green",
                     s=100,
-                    label="Buy Signal"
+                    label="Buy Signal",
                 )
 
             # 繪製賣出訊號
@@ -1022,7 +1102,7 @@ class SignalGenerator:
                     marker="v",
                     color="red",
                     s=100,
-                    label="Sell Signal"
+                    label="Sell Signal",
                 )
 
             # 設置圖表標題和標籤

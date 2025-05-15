@@ -13,6 +13,7 @@ import backtrader as bt
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+
 def create_test_data():
     """Create test data for testing"""
     # Create date range
@@ -28,15 +29,19 @@ def create_test_data():
     prices = base_price * (1 + trend)
 
     # Create price DataFrame
-    df = pd.DataFrame({
-        "open": prices * (1 + np.random.normal(0, 0.005, n)),
-        "high": prices * (1 + np.random.normal(0.005, 0.005, n)),
-        "low": prices * (1 + np.random.normal(-0.005, 0.005, n)),
-        "close": prices * (1 + np.random.normal(0, 0.005, n)),
-        "volume": np.random.randint(1000000, 10000000, n)
-    }, index=dates)
+    df = pd.DataFrame(
+        {
+            "open": prices * (1 + np.random.normal(0, 0.005, n)),
+            "high": prices * (1 + np.random.normal(0.005, 0.005, n)),
+            "low": prices * (1 + np.random.normal(-0.005, 0.005, n)),
+            "close": prices * (1 + np.random.normal(0, 0.005, n)),
+            "volume": np.random.randint(1000000, 10000000, n),
+        },
+        index=dates,
+    )
 
     return df
+
 
 class MovingAverageCrossStrategy(bt.Strategy):
     """Moving Average Crossover Strategy"""
@@ -81,6 +86,7 @@ class MovingAverageCrossStrategy(bt.Strategy):
         print(f"Ending value: {self.broker.getvalue():.2f}")
         print(f"Number of trades: {self.trades}")
 
+
 def test_moving_average_crossover():
     """Test moving average crossover strategy"""
     print("\nTesting moving average crossover strategy...")
@@ -103,7 +109,7 @@ def test_moving_average_crossover():
         low="low",
         close="close",
         volume="volume",
-        openinterest=None
+        openinterest=None,
     )
 
     # Add the data feed to cerebro
@@ -116,10 +122,10 @@ def test_moving_average_crossover():
     cerebro.broker.setcommission(commission=0.001)
 
     # Add analyzers
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-    cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
-    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+    cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
 
     # Print starting cash
     print(f"Starting value: {cerebro.broker.getvalue():.2f}")
@@ -135,11 +141,15 @@ def test_moving_average_crossover():
     trades = strat.analyzers.trades.get_analysis()
 
     # Print results
-    sharpe_ratio = sharpe.get('sharperatio', 0.0) if sharpe else 0.0
-    max_dd = drawdown.get('max', {}).get('drawdown', 0.0) if drawdown else 0.0
-    total_ret = returns.get('rtot', 0.0) if returns else 0.0
-    total_trades = trades.get('total', 0) if trades else 0
-    win_rate = trades.get('won', 0) / trades.get('total', 1) if trades and trades.get('total', 0) > 0 else 0.0
+    sharpe_ratio = sharpe.get("sharperatio", 0.0) if sharpe else 0.0
+    max_dd = drawdown.get("max", {}).get("drawdown", 0.0) if drawdown else 0.0
+    total_ret = returns.get("rtot", 0.0) if returns else 0.0
+    total_trades = trades.get("total", 0) if trades else 0
+    win_rate = (
+        trades.get("won", 0) / trades.get("total", 1)
+        if trades and trades.get("total", 0) > 0
+        else 0.0
+    )
 
     print(f"Sharpe ratio: {sharpe_ratio:.2f}")
     print(f"Max drawdown: {max_dd:.2%}")
@@ -148,6 +158,7 @@ def test_moving_average_crossover():
     print(f"Win rate: {win_rate:.2%}")
 
     return cerebro, results
+
 
 class RSIStrategy(bt.Strategy):
     """RSI Strategy"""
@@ -191,6 +202,7 @@ class RSIStrategy(bt.Strategy):
         print(f"Ending value: {self.broker.getvalue():.2f}")
         print(f"Number of trades: {self.trades}")
 
+
 def test_rsi_strategy():
     """Test RSI strategy"""
     print("\nTesting RSI strategy...")
@@ -213,7 +225,7 @@ def test_rsi_strategy():
         low="low",
         close="close",
         volume="volume",
-        openinterest=None
+        openinterest=None,
     )
 
     # Add the data feed to cerebro
@@ -226,10 +238,10 @@ def test_rsi_strategy():
     cerebro.broker.setcommission(commission=0.001)
 
     # Add analyzers
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-    cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
-    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+    cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
 
     # Print starting cash
     print(f"Starting value: {cerebro.broker.getvalue():.2f}")
@@ -245,11 +257,15 @@ def test_rsi_strategy():
     trades = strat.analyzers.trades.get_analysis()
 
     # Print results
-    sharpe_ratio = sharpe.get('sharperatio', 0.0) if sharpe else 0.0
-    max_dd = drawdown.get('max', {}).get('drawdown', 0.0) if drawdown else 0.0
-    total_ret = returns.get('rtot', 0.0) if returns else 0.0
-    total_trades = trades.get('total', 0) if trades else 0
-    win_rate = trades.get('won', 0) / trades.get('total', 1) if trades and trades.get('total', 0) > 0 else 0.0
+    sharpe_ratio = sharpe.get("sharperatio", 0.0) if sharpe else 0.0
+    max_dd = drawdown.get("max", {}).get("drawdown", 0.0) if drawdown else 0.0
+    total_ret = returns.get("rtot", 0.0) if returns else 0.0
+    total_trades = trades.get("total", 0) if trades else 0
+    win_rate = (
+        trades.get("won", 0) / trades.get("total", 1)
+        if trades and trades.get("total", 0) > 0
+        else 0.0
+    )
 
     print(f"Sharpe ratio: {sharpe_ratio:.2f}")
     print(f"Max drawdown: {max_dd:.2%}")
@@ -258,6 +274,7 @@ def test_rsi_strategy():
     print(f"Win rate: {win_rate:.2%}")
 
     return cerebro, results
+
 
 if __name__ == "__main__":
     print("Testing Rule-Based Models and Backtest Integration Without TensorFlow")

@@ -20,7 +20,7 @@ from .transaction_costs import (
     CombinedCostScheme,
     TWStockCostScheme,
     USStockCostScheme,
-    get_cost_scheme
+    get_cost_scheme,
 )
 from .analysis import BacktestAnalyzer
 from .stress_testing import StressTester

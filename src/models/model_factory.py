@@ -25,12 +25,10 @@ MODEL_TYPES = {
     "xgboost": XGBoostModel,
     "lightgbm": LightGBMModel,
     "svm": SVMModel,
-    
     # 深度學習模型
     "lstm": LSTMModel,
     "gru": GRUModel,
     "transformer": TransformerModel,
-    
     # 規則型模型
     "rule_based": RuleBasedModel,
 }
@@ -53,18 +51,20 @@ def create_model(model_type: str, name: Optional[str] = None, **kwargs) -> Model
     """
     if model_type not in MODEL_TYPES:
         logger.error(f"未知的模型類型: {model_type}")
-        raise ValueError(f"未知的模型類型: {model_type}，可用類型: {list(MODEL_TYPES.keys())}")
-    
+        raise ValueError(
+            f"未知的模型類型: {model_type}，可用類型: {list(MODEL_TYPES.keys())}"
+        )
+
     # 獲取模型類
     model_class = MODEL_TYPES[model_type]
-    
+
     # 如果沒有指定名稱，則使用模型類型作為名稱
     if name is None:
         name = model_type
-    
+
     # 創建模型實例
     model = model_class(name=name, **kwargs)
-    
+
     logger.info(f"已創建 {model_type} 模型: {name}")
     return model
 
@@ -83,7 +83,7 @@ def register_model(model_type: str, model_class: Type[ModelBase]) -> None:
     if not issubclass(model_class, ModelBase):
         logger.error(f"模型類 {model_class.__name__} 不是 ModelBase 的子類")
         raise TypeError(f"模型類必須是 ModelBase 的子類")
-    
+
     MODEL_TYPES[model_type] = model_class
     logger.info(f"已註冊模型類型: {model_type}")
 

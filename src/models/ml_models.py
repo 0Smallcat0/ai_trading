@@ -12,12 +12,17 @@
 import logging
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Dict, Any
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    mean_squared_error, mean_absolute_error, r2_score
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
 )
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 import xgboost as xgb
@@ -36,7 +41,9 @@ class RandomForestModel(ModelBase):
     隨機森林模型
     """
 
-    def __init__(self, name: str = "random_forest", is_classifier: bool = True, **kwargs):
+    def __init__(
+        self, name: str = "random_forest", is_classifier: bool = True, **kwargs
+    ):
         """
         初始化隨機森林模型
 
@@ -148,8 +155,13 @@ class RandomForestModel(ModelBase):
         return metrics
 
     def tune_hyperparameters(
-        self, X: pd.DataFrame, y: pd.Series, param_grid: Dict[str, Any],
-        cv: int = 5, method: str = "grid", n_iter: int = 10
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        param_grid: Dict[str, Any],
+        cv: int = 5,
+        method: str = "grid",
+        n_iter: int = 10,
     ) -> Dict[str, Any]:
         """
         調優超參數
@@ -187,7 +199,7 @@ class RandomForestModel(ModelBase):
         return {
             "best_params": search.best_params_,
             "best_score": search.best_score_,
-            "cv_results": search.cv_results_
+            "cv_results": search.cv_results_,
         }
 
 

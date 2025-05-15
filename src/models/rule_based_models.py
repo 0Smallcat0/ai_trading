@@ -10,8 +10,13 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional, Union, Tuple, Callable
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    mean_squared_error, mean_absolute_error, r2_score
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
 )
 
 from src.config import LOG_LEVEL
@@ -28,12 +33,12 @@ class RuleBasedModel(ModelBase):
     """
 
     def __init__(
-        self, 
-        name: str = "rule_based", 
+        self,
+        name: str = "rule_based",
         rule_func: Optional[Callable] = None,
         rule_params: Dict[str, Any] = None,
         is_classifier: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化規則型模型
@@ -46,11 +51,11 @@ class RuleBasedModel(ModelBase):
             **kwargs: 其他參數
         """
         super().__init__(
-            name=name, 
+            name=name,
             rule_func=rule_func,
             rule_params=rule_params or {},
             is_classifier=is_classifier,
-            **kwargs
+            **kwargs,
         )
         self.rule_func = rule_func
         self.rule_params = rule_params or {}
@@ -73,11 +78,11 @@ class RuleBasedModel(ModelBase):
         # 保存特徵名稱和目標名稱
         self.feature_names = X.columns.tolist()
         self.target_name = y.name
-        
+
         # 評估模型
         metrics = self.evaluate(X, y)
         self.metrics = metrics
-        
+
         return metrics
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -93,10 +98,10 @@ class RuleBasedModel(ModelBase):
         if self.rule_func is None:
             logger.error("未設定規則函數，無法進行預測")
             raise ValueError("未設定規則函數，無法進行預測")
-        
+
         # 使用規則函數進行預測
         predictions = self.rule_func(X, **self.rule_params)
-        
+
         return predictions
 
     def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
@@ -112,10 +117,10 @@ class RuleBasedModel(ModelBase):
         """
         # 進行預測
         y_pred = self.predict(X)
-        
+
         # 計算指標
         metrics = {}
-        
+
         if self.is_classifier:
             # 分類指標
             metrics["accuracy"] = accuracy_score(y, y_pred)
@@ -128,7 +133,7 @@ class RuleBasedModel(ModelBase):
             metrics["rmse"] = np.sqrt(metrics["mse"])
             metrics["mae"] = mean_absolute_error(y, y_pred)
             metrics["r2"] = r2_score(y, y_pred)
-        
+
         return metrics
 
     def set_rule(self, rule_func: Callable, rule_params: Dict[str, Any] = None) -> None:
@@ -145,11 +150,12 @@ class RuleBasedModel(ModelBase):
 
 # 預定義的規則函數
 
+
 def moving_average_crossover(
-    X: pd.DataFrame, 
-    short_window: int = 5, 
+    X: pd.DataFrame,
+    short_window: int = 5,
     long_window: int = 20,
-    price_col: str = "close"
+    price_col: str = "close",
 ) -> np.ndarray:
     """
     移動平均線交叉規則
@@ -169,24 +175,24 @@ def moving_average_crossover(
     if price_col not in X.columns:
         logger.error(f"特徵資料中缺少價格欄位: {price_col}")
         raise ValueError(f"特徵資料中缺少價格欄位: {price_col}")
-    
+
     # 計算移動平均線
     short_ma = X[price_col].rolling(window=short_window).mean()
     long_ma = X[price_col].rolling(window=long_window).mean()
-    
+
     # 生成訊號
     signals = np.zeros(len(X))
     signals[short_ma > long_ma] = 1
-    
+
     return signals
 
 
 def rsi_strategy(
-    X: pd.DataFrame, 
+    X: pd.DataFrame,
     window: int = 14,
     overbought: float = 70,
     oversold: float = 30,
-    price_col: str = "close"
+    price_col: str = "close",
 ) -> np.ndarray:
     """
     RSI 策略規則
@@ -207,40 +213,37 @@ def rsi_strategy(
     if price_col not in X.columns:
         logger.error(f"特徵資料中缺少價格欄位: {price_col}")
         raise ValueError(f"特徵資料中缺少價格欄位: {price_col}")
-    
+
     # 計算價格變化
     delta = X[price_col].diff()
-    
+
     # 分離上漲和下跌
     gain = delta.copy()
     loss = delta.copy()
     gain[gain < 0] = 0
     loss[loss > 0] = 0
     loss = -loss
-    
+
     # 計算平均上漲和下跌
     avg_gain = gain.rolling(window=window).mean()
     avg_loss = loss.rolling(window=window).mean()
-    
+
     # 計算相對強弱
     rs = avg_gain / avg_loss
-    
+
     # 計算 RSI
     rsi = 100 - (100 / (1 + rs))
-    
+
     # 生成訊號
     signals = np.zeros(len(X))
     signals[rsi < oversold] = 1  # 買入訊號
     signals[rsi > overbought] = 0  # 賣出訊號
-    
+
     return signals
 
 
 def bollinger_bands_strategy(
-    X: pd.DataFrame, 
-    window: int = 20,
-    num_std: float = 2.0,
-    price_col: str = "close"
+    X: pd.DataFrame, window: int = 20, num_std: float = 2.0, price_col: str = "close"
 ) -> np.ndarray:
     """
     布林通道策略規則
@@ -260,20 +263,20 @@ def bollinger_bands_strategy(
     if price_col not in X.columns:
         logger.error(f"特徵資料中缺少價格欄位: {price_col}")
         raise ValueError(f"特徵資料中缺少價格欄位: {price_col}")
-    
+
     # 計算移動平均線
     ma = X[price_col].rolling(window=window).mean()
-    
+
     # 計算標準差
     std = X[price_col].rolling(window=window).std()
-    
+
     # 計算上下軌
     upper_band = ma + (std * num_std)
     lower_band = ma - (std * num_std)
-    
+
     # 生成訊號
     signals = np.zeros(len(X))
     signals[X[price_col] <= lower_band] = 1  # 買入訊號
     signals[X[price_col] >= upper_band] = 0  # 賣出訊號
-    
+
     return signals
