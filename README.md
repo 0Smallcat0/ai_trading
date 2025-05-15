@@ -1,232 +1,170 @@
-# AI 股票自動交易系統開發計劃書 / AI Stock Automated Trading System Development Proposal
+# AI 股票自動交易系統
 
-[👉 前往繁體中文版本](#繁體中文版本)  
-[👉 Go to English Version](#english-version)
+![版本](https://img.shields.io/badge/版本-1.0.0-blue)
+![Python](https://img.shields.io/badge/Python-3.8+-green)
+![授權](https://img.shields.io/badge/授權-MIT-orange)
 
----
+AI 股票自動交易系統是一個整合人工智能技術的自動化交易平台，能夠分析多維度市場數據，生成智能交易決策，並執行自動化交易。系統專為台灣及全球股票市場設計，適合個人投資者和專業交易團隊使用。
 
-## <a name="繁體中文版本"></a>繁體中文版本
+## 系統特色
 
----
+- **多維數據分析**：整合基本面、技術面和新聞情緒數據，全方位分析市場
+- **AI 驅動決策**：使用機器學習和深度學習模型，自動生成交易訊號
+- **自動化交易**：支援多家券商 API，實現全自動交易執行
+- **風險智能管理**：內建風險控制機制，保護投資資金安全
+- **策略多元化**：提供多種預設策略，並支援自定義策略開發
+- **完整回測系統**：使用歷史數據評估策略表現，優化交易參數
+- **視覺化監控**：直觀的儀表板展示系統運行狀態和交易績效
 
-目前開發進度:Todo_list.md
+## 功能概覽
 
-### 一、專案背景與市場趨勢
+### 數據分析與處理
 
-當今的股票交易市場正經歷數位化轉型，交易方式已從傳統人工操作轉向技術驅動的自動化交易。根據研究數據，高頻算法交易在2017年已占NSE股權交易量的30%，並成為計算與分析創新的主要驅動力。隨著機器學習和人工智能技術的進步，市場對能夠整合多維數據、自動生成交易決策的系統需求日益增長。
+- 自動從多個來源收集市場數據
+- 處理和清理數據，確保數據質量
+- 生成技術指標和特徵
+- 分析市場情緒和新聞影響
 
----
+### 策略管理
 
-### 二、專案名稱與核心目標
+- 支援多種交易策略類型
+  - 技術分析策略
+  - 基本面策略
+  - 統計套利策略
+  - 機器學習策略
+- 策略回測與優化
+- 策略組合與資產配置
 
-#### 專案名稱
+### 交易執行
 
-AI 驅動之智慧股票交易決策代理人（AI Trading Agent）
+- 自動執行交易訂單
+- 支援多種訂單類型
+- 整合多家券商 API
+- 訂單狀態監控與管理
 
-#### 核心目標
+### 風險管理
 
-- 能主動學習與調整策略
-- 支援自動化排程與錯誤監控
-- 結合多面向數據（基本面、技術面、新聞情緒）
-- 提供可視化操作介面與回測評估
-- 最終能每日回報「買賣股票的時機、決定採用哪些策略與資金分配」
-- 實現社會責任投資(SRI)的理念，納入道德和社會責任因素
+- 即時風險監控
+- 自動止損與止盈
+- 資金管理與部位控制
+- 風險預警與通知
 
----
+### 系統監控與報告
 
-### 三、系統架構設計
+- 系統運行狀態監控
+- 交易績效報告
+- 資金變化追蹤
+- 自動化異常通知
 
-1. 市場數據適配器（Market Data Adapter）
-2. 複雜事件處理引擎（Complex Event Processing Engine）
-3. 策略引擎與AI模組
-4. 訂單路由系統（Order Routing System）
-5. 風險管理與資金分配模組
-6. 使用者介面與視覺化系統
-7. 自動化控制與排程系統（n8n）
+## 快速開始
 
----
+### 系統需求
 
-### 四、AI模型與機器學習策略
+- **操作系統**：Windows 10/11, macOS, Linux
+- **Python 版本**：Python 3.8 或更高版本
+- **記憶體**：至少 8GB RAM
+- **儲存空間**：至少 10GB 可用空間
+- **網路**：穩定的網路連接
 
-1. 深度強化學習架構
-2. 集成學習與高級預測模型
-3. 情感分析與文本挖掘
-4. 自適應學習與優化機制
+### 安裝步驟
 
----
+1. **克隆此倉庫**：
+   ```bash
+   git clone https://github.com/yourusername/ai_trading.git
+   cd ai_trading
+   ```
 
-### 五、數據處理架構
+2. **安裝依賴**：
+   ```bash
+   # 安裝 Poetry
+   pip install poetry
 
-1. 數據源與採集模塊
-2. 特徵工程與數據預處理
-3. 數據質量管理與即時處理
+   # 使用 Poetry 安裝依賴
+   poetry install
 
----
+   # 啟動虛擬環境
+   poetry shell
+   ```
 
-### 六、交易策略模組
+3. **設置環境變數**：
+   ```bash
+   # 複製環境變數範例
+   cp .env.example .env
 
-1. 核心策略庫
-2. 策略測試與評估框架
-3. 策略組合與資產配置
+   # 編輯 .env 文件，設置必要的環境變數
+   ```
 
----
+   或者使用環境特定配置：
+   ```bash
+   # 複製環境變數模板到特定環境
+   cp .envs/.env.template .envs/.env.dev
 
-### 七、風險管理與執行控制
+   # 編輯 .env.dev 文件，設置必要的環境變數
+   ```
 
-1. 風險評估與監控
-2. 執行質量管理
-3. 系統安全與穩定性
+4. **初始化系統**：
+   ```bash
+   # 初始化資料庫
+   python -m src.database.schema
 
----
+   # 下載初始數據
+   python -m src.core.data_ingest --init
+   ```
 
-### 八、系統性能優化
+### 啟動系統
 
-1. 低延遲架構設計
-2. 並行計算與分佈式處理
-3. 系統監控與維護
+```bash
+# 啟動交易系統
+python -m src.core.main
+```
 
----
+啟動後，可以通過瀏覽器訪問系統儀表板：`http://localhost:8080`
 
-### 九、未來擴充展望
+## 使用案例
 
-1. 多市場擴展
-2. 進階AI模型整合
-3. 社會責任投資功能
-4. 機構級功能擴展
+### 個人投資者
 
----
+- 自動執行交易策略，無需全天盯盤
+- 基於數據分析做出更理性的投資決策
+- 通過回測優化個人交易策略
+- 控制風險，避免情緒化交易
 
-### 十、技術棧與工具
+### 專業交易團隊
 
-- 核心語言：Python
-- 數據處理：Pandas, NumPy, Dask
-- 機器學習：TensorFlow, PyTorch, Scikit-learn
-- 金融分析：TA-Lib, Pyfolio, Zipline
-- 數據庫：SQLite, MongoDB
-- 前端界面：Jupyter, Streamlit, Dash
-- 可視化：Matplotlib, Plotly
-- 自動化排程：n8n
-- 外部整合：券商API, MCP
+- 同時管理多個交易策略和資產組合
+- 實現策略的量化和自動化
+- 提高交易效率和準確性
+- 全面的風險管理和績效分析
 
----
+## 支援的數據源
 
-### 結論
+- **Yahoo Finance**：全球股票市場數據
+- **Alpha Vantage**：基本面和技術面數據
+- **FinMind**：台灣股市專用數據
+- **券商 API**：即時交易數據和執行
+- **新聞 API**：市場新聞和情緒分析
 
-本計劃書結合了最新的算法交易研究成果與業界最佳實踐，提出了一個完整、可行的AI股票自動交易系統架構。通過整合市場數據適配器、複雜事件處理引擎、AI決策模型、訂單路由系統等核心組件，並加入低延遲設計、風險管理與多策略融合等先進特性，本系統將能夠實現高效、穩定且智能的自動化交易功能。
+## 支援的券商
 
-透過分階段實施計劃，本系統將逐步從數據基礎設施建設，到策略與AI模型實現，再到交易執行與風控系統建設，最終完成整體系統的優化與實盤驗證，為使用者提供一個先進、可靠的AI驅動股票交易決策代理人。
+- **永豐證券**
+- **富途證券**
+- **Interactive Brokers**
+- **模擬交易**（用於測試）
 
----
+## 文檔導航
 
-## <a name="english-version"></a>English Version
+- [使用者手冊](docs/使用者手冊.md) - 系統使用指南
+- [策略開發指南](docs/策略開發指南.md) - 自定義策略開發
+- [API 文檔](docs/共用工具說明/API整理.md) - API 使用說明
+- [常見問題](docs/Q&A常見問題.md) - 常見問題與解答
+- [配置說明](docs/配置說明.md) - 系統配置結構與使用方法
 
----
+## 社群與支援
 
-Current development progress: Todo_list.md
+- **GitHub Issues**：報告問題和功能請求
+- **討論區**：[討論區連結](https://github.com/yourusername/ai_trading/discussions)
+- **電子郵件**：[support@example.com](mailto:support@example.com)
 
-### I. Project Background and Market Trends
+## 授權協議
 
-Today's stock trading market is undergoing digital transformation, shifting from manual to technology-driven automated trading. According to research, high-frequency algorithmic trading accounted for 30% of NSE equity trading volume in 2017, becoming a primary driver of analytical innovation. With the rise of machine learning and AI, demand for systems capable of integrating multidimensional data and autonomously generating trade decisions continues to grow.
-
----
-
-### II. Project Name and Core Objectives
-
-#### Project Name
-
-AI-Powered Intelligent Stock Trading Decision Agent (AI Trading Agent)
-
-#### Core Objectives
-
-- Learn and adjust strategies autonomously
-- Support automated scheduling and error monitoring
-- Integrate multifaceted data (fundamental, technical, news sentiment)
-- Provide visual interfaces and backtesting evaluation
-- Deliver daily reports on stock buy/sell timing, strategy selection, and capital allocation
-- Implement SRI (Socially Responsible Investment) principles, incorporating ethical and social responsibility factors
-
----
-
-### III. System Architecture Design
-
-1. Market Data Adapter
-2. Complex Event Processing Engine
-3. Strategy Engine and AI Module
-4. Order Routing System
-5. Risk Management and Capital Allocation Module
-6. User Interface and Visualization System
-7. Automation and Scheduling System (n8n)
-
----
-
-### IV. AI Models and Machine Learning Strategies
-
-1. Deep Reinforcement Learning Framework
-2. Ensemble Learning and Advanced Prediction Models
-3. Sentiment Analysis and Text Mining
-4. Adaptive Learning and Optimization
-
----
-
-### V. Data Processing Architecture
-
-1. Data Sources and Collection Module
-2. Feature Engineering and Preprocessing
-3. Data Quality Management and Real-time Processing
-
----
-
-### VI. Trading Strategy Modules
-
-1. Core Strategy Library
-2. Strategy Testing and Evaluation Framework
-3. Strategy Portfolio and Asset Allocation
-
----
-
-### VII. Risk Management and Execution Control
-
-1. Risk Assessment and Monitoring
-2. Execution Quality Management
-3. System Security and Stability
-
----
-
-### VIII. System Performance Optimization
-
-1. Low Latency Architecture
-2. Parallel and Distributed Computing
-3. System Monitoring and Maintenance
-
----
-
-### IX. Future Expansion Outlook
-
-1. Multi-Market Expansion
-2. Advanced AI Model Integration
-3. Socially Responsible Investment Functions
-4. Institutional-Grade Feature Expansion
-
----
-
-### X. Tech Stack and Tools
-
-- Core language: Python
-- Data processing: Pandas, NumPy, Dask
-- Machine learning: TensorFlow, PyTorch, Scikit-learn
-- Financial analysis: TA-Lib, Pyfolio, Zipline
-- Database: SQLite, MongoDB
-- Frontend interface: Jupyter, Streamlit, Dash
-- Visualization: Matplotlib, Plotly
-- Automation: n8n
-- External integration: Broker API, MCP
-
----
-
-### Conclusion
-
-This proposal integrates cutting-edge research and best practices in algorithmic trading, presenting a complete and feasible AI stock trading system. By incorporating components like the market data adapter, event processing engine, AI decision models, and order routing system, along with low-latency design, risk management, and multi-strategy integration, the system aims to deliver efficient, stable, and intelligent automated trading.
-
-Through phased development, the system will evolve from foundational data infrastructure, to AI strategy and execution control, and finally to full system optimization and live validation, providing users with an advanced and reliable AI-powered stock trading agent.
-
----
+本專案採用 MIT 授權協議 - 詳見 [LICENSE](LICENSE) 文件

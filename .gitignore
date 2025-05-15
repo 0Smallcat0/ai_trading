@@ -1,50 +1,104 @@
 # Python
 __pycache__/
-*.pyc
-.venv/
-.envs/
-data/
-results/
-.ipynb_checkpoints/
-.DS_Store
-*.sqlite3
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Jupyter
 .ipynb_checkpoints/
 notebooks/.ipynb_checkpoints/
+*.ipynb_checkpoints
+jupyter_execute/
 
-# VSCode/PyCharm
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
 
 # OS
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+Icon?
 
 # Virtualenv/Poetry
 .venv/
 env/
 venv/
+ENV/
 poetry.lock
 
 # dotenv
 .env
 .env.*
+!.env.example
+!.envs/.env.template
 
 # Data/Results
+data/
 data/cache/
 data/history/
 results/
+*.sqlite3
+*.db
+*.csv
+*.parquet
+*.feather
+*.h5
+*.pkl
 
 # Logs
+logs/
 *.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # MCP/自動產生
 .mcp/
 .cursor/
 .roo/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
 
 # Custom ignored folder
 open_source_libs/
 
+# Node.js
 node_modules/
+package-lock.json
+yarn.lock
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.out
+*~
+.~lock.*
