@@ -18,12 +18,14 @@ DATA_DIR = os.path.join(ROOT_DIR, "data")
 LOGS_DIR = os.path.join(ROOT_DIR, "logs")
 RESULTS_DIR = os.path.join(ROOT_DIR, "results")
 CACHE_DIR = os.path.join(DATA_DIR, "cache")
+MODELS_DIR = os.path.join(ROOT_DIR, "models")
 
 # 確保目錄存在
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(LOGS_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 # 資料庫設定
 DB_URL = os.getenv("DB_URL", f"sqlite:///{os.path.join(DATA_DIR, 'market_data.db')}")

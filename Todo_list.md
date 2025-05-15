@@ -133,38 +133,38 @@
 
 ---
 
-[ ] 3.1 Strategy research and model selection
-- [ ] Literature review and market analysis for strategy types (trend-following, mean-reversion, arbitrage, event-driven)
-- [ ] Select model architecture (LSTM, GRU, Transformer, RandomForest, XGBoost, LightGBM, or rule-based)
-- [ ] Define model input features and outputs (signal or price prediction)
-- [ ] Split datasets into train/validation/test (ensure temporal order, avoid look-ahead bias)
-- [ ] Prepare feature dataset (src/core/features.py)
+[X] 3.1 Strategy research and model selection
+- [X] Literature review and market analysis for strategy types (trend-following, mean-reversion, arbitrage, event-driven)
+- [X] Select model architecture (LSTM, GRU, Transformer, RandomForest, XGBoost, LightGBM, or rule-based)
+- [X] Define model input features and outputs (signal or price prediction)
+- [X] Split datasets into train/validation/test (ensure temporal order, avoid look-ahead bias)
+- [X] Prepare feature dataset (src/core/features.py)
 
-[ ] 3.2 Model training and tuning (src/models/, src/strategies/)
-- [ ] Implement training and inference pipeline
-- [ ] Perform hyperparameter tuning (Grid/Random/Bayesian Optimization)
-- [ ] Define performance metrics (Sharpe, Sortino, Calmar, Max Drawdown, Win Rate, PnL Ratio)
-- [ ] Set acceptance thresholds (e.g., Sharpe > 1.2)
-- [ ] Add model interpretability (SHAP, LIME)
-- [ ] Model governance:
-  - [ ] Version tracking and management (e.g., MLflow)
-  - [ ] Design deployment and rollback mechanisms
+[X] 3.2 Model training and tuning (src/models/, src/strategies/)
+- [X] Implement training and inference pipeline
+- [X] Perform hyperparameter tuning (Grid/Random/Bayesian Optimization)
+- [X] Define performance metrics (Sharpe, Sortino, Calmar, Max Drawdown, Win Rate, PnL Ratio)
+- [X] Set acceptance thresholds (e.g., Sharpe > 1.2)
+- [X] Add model interpretability (SHAP, LIME)
+- [X] Model governance:
+  - [X] Version tracking and management (e.g., MLflow)
+  - [X] Design deployment and rollback mechanisms
 
-[ ] 3.3 Backtesting system integration (src/strategies/, open_source_libs/backtrader/)
-- [ ] Learn and integrate backtrader or alternative backtest framework
-- [ ] Implement custom Strategy class to combine model and logic
-- [ ] Simulate transaction costs (commission, slippage, tax)
-- [ ] Rigorously backtest with:
-  - [ ] Strict prevention of look-ahead bias
-  - [ ] In-sample / out-of-sample testing
-  - [ ] Stress testing and abnormal scenario simulation (crashes, illiquidity)
-- [ ] Analyze backtest reports (results/) to iterate strategies
-- [ ] Conduct sensitivity and robustness analysis
+[X] 3.3 Backtesting system integration (src/strategies/, open_source_libs/backtrader/)
+- [X] Learn and integrate backtrader or alternative backtest framework
+- [X] Implement custom Strategy class to combine model and logic
+- [X] Simulate transaction costs (commission, slippage, tax)
+- [X] Rigorously backtest with:
+  - [X] Strict prevention of look-ahead bias
+  - [X] In-sample / out-of-sample testing
+  - [X] Stress testing and abnormal scenario simulation (crashes, illiquidity)
+- [X] Analyze backtest reports (results/) to iterate strategies
+- [X] Conduct sensitivity and robustness analysis
 
-[ ] 3.4 Integrate AI models into trading flow (src/core/signal_gen.py)
-- [ ] Integrate trained models into signal generator
-- [ ] Ensure output format compatibility with rule-based logic
-- [ ] Ensure inference efficiency and stability during deployment
+[X] 3.4 Integrate AI models into trading flow (src/core/signal_gen.py)
+- [X] Integrate trained models into signal generator
+- [X] Ensure output format compatibility with rule-based logic
+- [X] Ensure inference efficiency and stability during deployment
 
 ---
 

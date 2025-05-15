@@ -9,6 +9,7 @@
 - 動量策略訊號生成
 - 均值回歸策略訊號生成
 - 新聞情緒策略訊號生成
+- AI 模型策略訊號生成
 - 多策略訊號合併
 - 訊號輸出與回測整合
 - 技術指標整合
@@ -30,6 +31,14 @@ except ImportError as e:
     warnings.warn(f"無法匯入 indicators 模組，部分功能將無法使用: {e}")
     INDICATORS_AVAILABLE = False
 
+# 嘗試導入 model_integration 模組
+try:
+    from src.core.model_integration import ModelManager
+    MODEL_INTEGRATION_AVAILABLE = True
+except ImportError as e:
+    warnings.warn(f"無法匯入 model_integration 模組，AI 模型整合功能將無法使用: {e}")
+    MODEL_INTEGRATION_AVAILABLE = False
+
 # 集中管理 log 訊息，方便多語系擴充
 LOG_MSGS = {
     "no_financial": "缺少財務資料，無法生成基本面策略訊號",
@@ -43,6 +52,9 @@ LOG_MSGS = {
     "indicators_missing": "未安裝 indicators 模組，部分功能將無法使用",
     "no_indicators": "缺少指標資料，無法生成訊號",
     "export_error": "匯出訊號時發生錯誤: {error}",
+    "model_integration_missing": "未安裝 model_integration 模組，AI 模型整合功能將無法使用",
+    "no_model": "缺少模型，無法生成 AI 模型策略訊號",
+    "model_error": "使用模型生成訊號時發生錯誤: {error}",
 }
 
 # 設定日誌
@@ -60,7 +72,7 @@ class SignalGenerator:
     """訊號產生器類別，用於生成各種交易訊號"""
 
     def __init__(
-        self, price_data=None, volume_data=None, financial_data=None, news_data=None
+        self, price_data=None, volume_data=None, financial_data=None, news_data=None, model_manager=None
     ):
         """
         初始化訊號產生器
@@ -70,11 +82,13 @@ class SignalGenerator:
             volume_data (pandas.DataFrame, optional): 成交量資料，索引為 (股票代號, 日期)
             financial_data (pandas.DataFrame, optional): 財務資料，索引為 (股票代號, 日期)
             news_data (pandas.DataFrame, optional): 新聞資料，索引為 (股票代號, 日期)
+            model_manager (ModelManager, optional): 模型管理器，用於 AI 模型整合
         """
         self.price_data = price_data
         self.volume_data = volume_data
         self.financial_data = financial_data
         self.news_data = news_data
+        self.model_manager = model_manager
 
         # 初始化訊號字典
         self.signals = {}
@@ -86,6 +100,15 @@ class SignalGenerator:
 
         # 初始化指標資料
         self.indicators_data = {}
+
+        # 如果沒有提供模型管理器且模型整合模組可用，則創建一個
+        if self.model_manager is None and MODEL_INTEGRATION_AVAILABLE:
+            try:
+                self.model_manager = ModelManager()
+                logger.info("已創建模型管理器")
+            except Exception as e:
+                logger.warning(f"創建模型管理器失敗: {e}")
+                self.model_manager = None
 
         # 如果有價格資料且 indicators 模組可用，初始化技術指標
         if INDICATORS_AVAILABLE:
@@ -386,12 +409,139 @@ class SignalGenerator:
 
         return combined_signals
 
-    def generate_all_signals(self, include_advanced=True):
+    def generate_ai_model_signals(self, model_name, version=None, signal_threshold=0.5):
+        """
+        使用 AI 模型生成訊號
+
+        Args:
+            model_name (str): 模型名稱
+            version (str, optional): 模型版本，如果為 None，則使用最新版本
+            signal_threshold (float): 訊號閾值，預測值高於此閾值視為買入訊號，低於 -此閾值 視為賣出訊號
+
+        Returns:
+            pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
+        """
+        if self.price_data is None:
+            logger.warning(LOG_MSGS["no_price"].format(strategy="AI 模型"))
+            return pd.DataFrame()
+
+        if self.model_manager is None:
+            if MODEL_INTEGRATION_AVAILABLE:
+                try:
+                    self.model_manager = ModelManager()
+                    logger.info("已創建模型管理器")
+                except Exception as e:
+                    logger.warning(f"創建模型管理器失敗: {e}")
+                    logger.warning(LOG_MSGS["no_model"])
+                    return pd.DataFrame()
+            else:
+                logger.warning(LOG_MSGS["model_integration_missing"])
+                return pd.DataFrame()
+
+        try:
+            # 準備特徵資料
+            features = self._prepare_model_features()
+
+            # 使用模型進行預測
+            predictions = self.model_manager.predict(features, model_name, version)
+
+            # 初始化訊號
+            signals = pd.DataFrame(index=self.price_data.index)
+            signals["signal"] = 0
+
+            # 根據預測結果生成訊號
+            if len(predictions) > 0:
+                # 對每個股票分別處理
+                for stock_id in self.price_data.index.get_level_values(0).unique():
+                    stock_indices = self.price_data.index.get_level_values(0) == stock_id
+                    stock_predictions = predictions[stock_indices] if len(predictions) == len(self.price_data) else []
+
+                    if len(stock_predictions) > 0:
+                        # 根據預測值生成訊號
+                        signals.loc[stock_id, "signal"] = 0
+
+                        # 檢查模型類型
+                        model_info = self.model_manager.get_model_info(model_name, version)
+                        is_classifier = model_info.get("model_type", "").lower().find("classifier") >= 0
+
+                        if is_classifier:
+                            # 分類模型，直接使用類別作為訊號
+                            signals.loc[(stock_id, self.price_data.loc[stock_id].index), "signal"] = stock_predictions
+                        else:
+                            # 回歸模型，使用閾值
+                            buy_indices = stock_predictions > signal_threshold
+                            sell_indices = stock_predictions < -signal_threshold
+
+                            if any(buy_indices):
+                                signals.loc[(stock_id, self.price_data.loc[stock_id].index[buy_indices]), "signal"] = 1
+                            if any(sell_indices):
+                                signals.loc[(stock_id, self.price_data.loc[stock_id].index[sell_indices]), "signal"] = -1
+
+            # 儲存訊號
+            self.signals[f"ai_{model_name}"] = signals
+
+            return signals
+        except Exception as e:
+            logger.error(LOG_MSGS["model_error"].format(error=str(e)))
+            return pd.DataFrame()
+
+    def _prepare_model_features(self):
+        """
+        準備模型特徵
+
+        Returns:
+            pandas.DataFrame: 特徵資料
+        """
+        # 合併所有可用資料
+        features = pd.DataFrame(index=self.price_data.index)
+
+        # 添加價格資料
+        if self.price_data is not None:
+            for col in self.price_data.columns:
+                features[f"price_{col}"] = self.price_data[col]
+
+        # 添加成交量資料
+        if self.volume_data is not None:
+            for col in self.volume_data.columns:
+                features[f"volume_{col}"] = self.volume_data[col]
+
+        # 添加財務資料
+        if self.financial_data is not None:
+            for col in self.financial_data.columns:
+                features[f"financial_{col}"] = self.financial_data[col]
+
+        # 添加新聞情緒資料
+        if self.news_data is not None and "sentiment" in self.news_data.columns:
+            features["news_sentiment"] = self.news_data["sentiment"]
+
+        # 添加技術指標
+        if self.tech_indicators is not None:
+            indicators_data = self.tech_indicators.calculate_all()
+            for col in indicators_data.columns:
+                features[f"tech_{col}"] = indicators_data[col]
+
+        # 添加基本面指標
+        if self.fund_indicators is not None:
+            indicators_data = self.fund_indicators.calculate_all()
+            for col in indicators_data.columns:
+                features[f"fund_{col}"] = indicators_data[col]
+
+        # 添加情緒指標
+        if self.sent_indicators is not None:
+            indicators_data = self.sent_indicators.calculate_all()
+            for col in indicators_data.columns:
+                features[f"sent_{col}"] = indicators_data[col]
+
+        return features
+
+    def generate_all_signals(self, include_advanced=True, include_ai=True, ai_models=None):
         """
         生成所有策略訊號
 
         Args:
             include_advanced (bool): 是否包含進階策略訊號（突破、交叉、背離）
+            include_ai (bool): 是否包含 AI 模型策略訊號
+            ai_models (list, optional): AI 模型列表，如果為 None，則使用所有可用模型
 
         Returns:
             dict: 包含所有策略訊號的字典
@@ -411,6 +561,15 @@ class SignalGenerator:
             # 如果 indicators 模組可用，使用它生成訊號
             if INDICATORS_AVAILABLE and self.tech_indicators is not None:
                 self.generate_with_indicators()
+
+        # 生成 AI 模型策略訊號
+        if include_ai and self.model_manager is not None:
+            if ai_models is None:
+                # 使用所有可用模型
+                ai_models = self.model_manager.get_all_models()
+
+            for model_name in ai_models:
+                self.generate_ai_model_signals(model_name)
 
         return self.signals
 

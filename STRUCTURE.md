@@ -37,10 +37,12 @@ auto_trading_project/
 │   ├── core/               # 核心功能模組
 │   │   ├── backtest.py     # 回測引擎
 │   │   ├── data_api.py     # 資料 API
+│   │   ├── data_cleaning.py # 資料清理
 │   │   ├── data_ingest.py  # 資料擷取
 │   │   ├── event_monitor.py # 事件監控
 │   │   ├── executor.py     # 執行器
 │   │   ├── features.py     # 特徵工程
+│   │   ├── indicators.py   # 技術指標計算
 │   │   ├── logger.py       # 日誌記錄
 │   │   ├── main.py         # 主程式
 │   │   ├── mcp_connection_check.py # MCP 連接檢查
@@ -62,6 +64,18 @@ auto_trading_project/
 │   │   └── schema.py       # 資料庫結構
 │   ├── integration/        # 整合模組
 │   │   └── brige.py        # 橋接模組
+│   ├── models/             # 模型模組
+│   │   ├── dataset.py      # 資料集處理
+│   │   ├── dl_models.py    # 深度學習模型
+│   │   ├── ml_models.py    # 機器學習模型
+│   │   ├── model_factory.py # 模型工廠
+│   │   ├── rule_based_models.py # 規則型模型
+│   │   ├── strategy_research.py # 策略研究
+│   │   └── training_pipeline.py # 訓練管道
+│   ├── backtest/           # 回測模組
+│   │   ├── backtrader_integration.py # Backtrader 整合
+│   │   ├── performance_analysis.py # 績效分析
+│   │   └── strategy_templates.py # 策略模板
 │   ├── strategy/           # 策略模組
 │   │   ├── mean_reversion.py # 均值回歸策略
 │   │   ├── momentum.py     # 動量策略
@@ -199,6 +213,60 @@ auto_trading_project/
   - 技術指標資料表
   - 新聞情緒資料表
   - 資料分片與校驗機制
+
+### 模型模組 (src/models)
+
+- **dataset.py**: 資料集處理，用於準備模型訓練和測試資料
+  - 時間序列資料分割（訓練/驗證/測試）
+  - 特徵處理和標準化
+  - 資料集載入和轉換
+  - 防止前瞻偏差的時間序列處理
+- **dl_models.py**: 深度學習模型，實現各種深度學習模型
+  - LSTM 模型實現
+  - GRU 模型實現
+  - Transformer 模型實現
+  - 模型訓練和評估功能
+- **ml_models.py**: 機器學習模型，實現各種傳統機器學習模型
+  - 隨機森林模型
+  - XGBoost 模型
+  - LightGBM 模型
+  - SVM 模型
+  - 模型訓練和評估功能
+- **model_factory.py**: 模型工廠，用於創建和管理模型
+  - 模型註冊和創建
+  - 模型配置管理
+  - 模型版本控制
+- **rule_based_models.py**: 規則型模型，實現基於規則的交易模型
+  - 移動平均線交叉策略
+  - RSI 策略
+  - 布林帶策略
+  - 規則組合和優化
+- **strategy_research.py**: 策略研究，用於研究和評估交易策略
+  - 策略回測和評估
+  - 策略參數優化
+  - 策略比較和選擇
+- **training_pipeline.py**: 訓練管道，用於模型訓練和評估
+  - 資料準備和特徵工程
+  - 模型訓練和調參
+  - 模型評估和選擇
+  - 模型部署和版本控制
+
+### 回測模組 (src/backtest)
+
+- **backtrader_integration.py**: Backtrader 整合，整合 Backtrader 框架
+  - 自定義策略類
+  - 資料饋送器
+  - 績效分析器
+  - 視覺化工具
+- **performance_analysis.py**: 績效分析，分析交易策略的績效
+  - 計算績效指標（夏普比率、索提諾比率、最大回撤等）
+  - 生成績效報告
+  - 視覺化績效結果
+- **strategy_templates.py**: 策略模板，提供各種策略模板
+  - 基本策略模板
+  - 技術指標策略模板
+  - 機器學習策略模板
+  - 多策略組合模板
 
 ### 策略模組 (src/strategy)
 
