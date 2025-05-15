@@ -55,6 +55,14 @@ poetry.lock
 !.env.example
 !.envs/.env.template
 
+# Keys and credentials
+*.pem
+*.key
+*.crt
+config/keys/
+api_keys.json
+**/api_keys.json
+
 # Data/Results
 data/
 data/cache/
