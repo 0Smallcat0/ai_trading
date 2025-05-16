@@ -10,10 +10,10 @@
 auto_trading_project/
 ├── .envs/                  # 環境變數配置目錄
 ├── .github/                # GitHub 工作流配置
+├── .pre-commit-config.yaml  # pre-commit 配置
 ├── config/                 # 配置文件目錄
 │   ├── docker/             # Docker 配置文件
 │   ├── keys/               # 密鑰和證書目錄（不提交到版本控制）
-│   ├── .pre-commit-config.yaml  # pre-commit 配置
 │   ├── brokers.yaml        # 券商配置
 │   ├── mypy.ini            # mypy 配置
 │   └── pytest.ini          # pytest 配置
