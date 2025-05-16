@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Self-healing capabilities for critical services
 - Improved logging with standardized error message formats
 
-## [0.5.0] - 2023-06-15
+## [0.5.0] - 2025-05-16
 
 ### Added
 - Integration with n8n workflow engine for automation
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed database connection pooling issues
 - Fixed memory leaks in long-running processes
 
-## [0.4.0] - 2023-05-01
+## [0.4.0] - 2025-05-13
 
 ### Added
 - Advanced risk management module
@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed strategy signal generation in edge cases
 - Fixed data synchronization issues
 
-## [0.3.0] - 2023-03-15
+## [0.3.0] - 2025-05-11
 
 ### Added
 - Machine learning model integration
@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed memory usage in data processing
 - Fixed concurrency issues in model training
 
-## [0.2.0] - 2023-02-01
+## [0.2.0] - 2025-05-07
 
 ### Added
 - Strategy backtesting engine
@@ -93,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed timezone handling in market data
 - Fixed performance bottlenecks in data processing
 
-## [0.1.0] - 2023-01-01
+## [0.1.0] - 2025-05-01
 
 ### Added
 - Initial project structure
