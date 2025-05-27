@@ -5,6 +5,9 @@
 此檔案僅作為向後兼容的橋接，請直接使用 backtest_module 中的類別和函數。
 """
 
+# 忽略 FutureWarning
+import warnings
+
 from .backtest_module import (
     Backtest,
     MarketDataSimulator,
@@ -15,8 +18,6 @@ from .backtest_module import (
     align_timeseries,
 )
 
-# 忽略 FutureWarning
-import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 __all__ = [

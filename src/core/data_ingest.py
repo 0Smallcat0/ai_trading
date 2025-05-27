@@ -1,5 +1,4 @@
-"""
-資料蒐集與預處理模組
+"""資料蒐集與預處理模組
 
 此模組負責從各種來源獲取股票資料，包括價格、成交量、財務報表等，
 並進行必要的預處理，為後續的特徵計算和策略研究提供基礎資料。
@@ -25,12 +24,40 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import pandas as pd
 from tqdm import tqdm
 
+# 第三方套件 (可選)
+try:
+    import yfinance as yf
+except ImportError:
+    yf = None
+
+try:
+    from alpha_vantage.timeseries import TimeSeries
+    from alpha_vantage.techindicators import TechIndicators
+    from alpha_vantage.fundamentaldata import FundamentalData
+except ImportError:
+    TimeSeries = None
+    TechIndicators = None
+    FundamentalData = None
+
+try:
+    from FinMind.data import DataLoader
+except ImportError:
+    DataLoader = None
+
+try:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.cron import CronTrigger
+except ImportError:
+    BackgroundScheduler = None
+    CronTrigger = None
+
 # 配置模組
 from src.config import CACHE_DIR, DATA_DIR, LOGS_DIR
 
 # 工具模組
 from src.core.rate_limiter import AdaptiveRateLimiter
 from src.core.websocket_client import WebSocketClient
+from src.core.data_source_failover import DataSourceFailoverManager
 from src.data_sources.broker_adapter import SimulatedBrokerAdapter
 
 # 資料來源適配器
@@ -75,8 +102,7 @@ date_range_record_file = os.path.join(HISTORY_DIR, "date_range.pickle")
 
 
 class DataIngestionManager:
-    """
-    資料擷取管理器
+    """資料擷取管理器
 
     負責協調不同資料來源的資料擷取，並提供統一的介面。
     支援多種資料來源、自動重連、背壓控制和故障轉移。
@@ -84,14 +110,14 @@ class DataIngestionManager:
 
     def __init__(
         self,
+        *,
         use_cache: bool = True,
         cache_expiry_days: int = 1,
         max_workers: int = 5,
         rate_limit_max_calls: int = 60,
         rate_limit_period: int = 60,
     ):
-        """
-        初始化資料擷取管理器
+        """初始化資料擷取管理器
 
         Args:
             use_cache: 是否使用快取
@@ -125,7 +151,15 @@ class DataIngestionManager:
         self.is_processing = False
         self.processing_thread = None
 
-        # 初始化故障轉移機制
+        # 初始化故障轉移管理器
+        self.failover_manager = DataSourceFailoverManager(
+            health_check_interval=30.0,
+            max_consecutive_failures=3,
+            recovery_check_interval=60.0,
+            circuit_breaker_timeout=300.0,
+        )
+
+        # 保留舊的故障轉移機制作為備用
         self.source_priorities = {
             "price": ["yahoo", "finmind", "alpha_vantage", "broker"],
             "fundamental": ["finmind", "yahoo", "alpha_vantage"],
@@ -159,32 +193,113 @@ class DataIngestionManager:
     def init_adapters(self):
         """初始化所有資料來源適配器"""
         # Yahoo Finance 適配器
-        self.adapters["yahoo"] = YahooFinanceAdapter(
+        yahoo_adapter = YahooFinanceAdapter(
             use_cache=self.use_cache,
             cache_expiry_days=self.cache_expiry_days,
         )
+        self.adapters["yahoo"] = yahoo_adapter
 
         # 模擬券商適配器
-        self.adapters["broker"] = SimulatedBrokerAdapter(
+        broker_adapter = SimulatedBrokerAdapter(
             api_key=BROKER_API_KEY,
             api_secret=BROKER_API_SECRET,
             use_cache=self.use_cache,
             cache_expiry_days=self.cache_expiry_days,
         )
+        self.adapters["broker"] = broker_adapter
+
+        # 註冊資料源到故障轉移管理器
+        self._register_data_sources()
+
+        # 設定優先級順序
+        self._setup_priority_groups()
+
+        # 啟動健康監控
+        self.failover_manager.start_health_monitoring()
 
         logger.info("資料來源適配器初始化完成")
+
+    def _register_data_sources(self):
+        """註冊資料源到故障轉移管理器"""
+        # 註冊 Yahoo Finance
+        if "yahoo" in self.adapters:
+            self.failover_manager.register_data_source(
+                source_name="yahoo",
+                adapter=self.adapters["yahoo"],
+                health_check_func=self._create_health_check_func("yahoo"),
+                priority_groups=["price", "fundamental"],
+            )
+
+        # 註冊券商適配器
+        if "broker" in self.adapters:
+            self.failover_manager.register_data_source(
+                source_name="broker",
+                adapter=self.adapters["broker"],
+                health_check_func=self._create_health_check_func("broker"),
+                priority_groups=["price"],
+            )
+
+    def _setup_priority_groups(self):
+        """設定優先級組"""
+        # 設定價格資料優先級
+        self.failover_manager.set_priority_order(
+            "price", ["yahoo", "broker"]
+        )
+
+        # 設定基本面資料優先級
+        self.failover_manager.set_priority_order(
+            "fundamental", ["yahoo"]
+        )
+
+    def _create_health_check_func(self, source_name: str):
+        """創建健康檢查函數
+
+        Args:
+            source_name: 資料源名稱
+
+        Returns:
+            Callable: 健康檢查函數
+        """
+        def health_check():
+            try:
+                adapter = self.adapters.get(source_name)
+                if not adapter:
+                    return False
+
+                # 嘗試獲取測試資料
+                if source_name == "yahoo":
+                    # 測試獲取 AAPL 的簡單資料
+                    test_data = adapter.get_historical_data(
+                        "AAPL",
+                        start_date="2024-01-01",
+                        end_date="2024-01-02",
+                        use_cache=False
+                    )
+                    return not test_data.empty
+                if source_name == "broker":
+                    # 測試券商連接
+                    if hasattr(adapter, "test_connection"):
+                        return adapter.test_connection()
+                    return True
+
+                return True
+            except Exception as e:
+                logger.debug("資料源 %s 健康檢查失敗: %s", source_name, e)
+                return False
+
+        return health_check
 
     def get_historical_data(
         self,
         symbols: Union[str, List[str]],
+        *,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         interval: str = "1d",
         source: Optional[str] = None,
         use_cache: Optional[bool] = None,
     ) -> Dict[str, pd.DataFrame]:
-        """
-        獲取歷史價格資料
+        """獲取歷史價格資料
 
         Args:
             symbols: 股票代碼或代碼列表
@@ -208,18 +323,27 @@ class DataIngestionManager:
 
             # 如果未指定資料來源，使用故障轉移機制
             if source is None:
-                source = self._get_best_source("price")
+                source = self.failover_manager.get_best_source("price")
+                if not source:
+                    # 如果故障轉移管理器沒有可用來源，使用舊機制
+                    source = self._get_best_source("price")
 
-            # 檢查資料來源是否可用
-            if not self.source_status.get(source, False):
-                logger.warning(f"資料來源 {source} 不可用，嘗試使用備用來源")
-                source = self._get_best_source("price")
+            # 檢查資料來源是否可用（使用故障轉移管理器）
+            best_source = self.failover_manager.get_best_source("price")
+            if not best_source or best_source != source:
+                logger.warning("資料來源 %s 不可用，嘗試使用備用來源", source)
+                backup_source = self.failover_manager.get_best_source("price")
+                if backup_source and backup_source != source:
+                    source = backup_source
+                else:
+                    # 如果故障轉移管理器沒有備用來源，使用舊機制
+                    source = self._get_best_source("price")
 
             try:
                 # 獲取適配器
                 adapter = self.adapters.get(source)
                 if not adapter:
-                    logger.error(f"找不到資料來源 {source} 的適配器")
+                    logger.error("找不到資料來源 %s 的適配器", source)
                     self.stats["requests_failed"] += 1
                     return {}
 
@@ -267,8 +391,15 @@ class DataIngestionManager:
                                         result[symbol] = data
                                 except Exception as e:
                                     logger.error(
-                                        f"獲取 {symbol} 的歷史資料時發生錯誤: {e}"
+                                        "獲取 %s 的歷史資料時發生錯誤: %s", symbol, e
                                     )
+
+                # 記錄成功到故障轉移管理器
+                start_time = time.time()
+                response_time = time.time() - start_time
+                self.failover_manager.record_request_result(
+                    source, True, response_time
+                )
 
                 # 更新統計信息
                 self.stats["requests_success"] += 1
@@ -283,29 +414,39 @@ class DataIngestionManager:
                 return result
 
             except Exception as e:
-                logger.error(f"獲取歷史價格資料時發生錯誤: {e}")
+                logger.error("獲取歷史價格資料時發生錯誤: %s", e)
                 self.stats["requests_failed"] += 1
+
+                # 記錄失敗到故障轉移管理器
+                self.failover_manager.record_request_result(
+                    source, False, 0.0, str(e)
+                )
 
                 # 報告失敗
                 self.rate_limiter.report_failure()
 
-                # 標記資料來源為不可用
+                # 標記資料來源為不可用（保留舊機制作為備用）
                 self.source_status[source] = False
 
                 # 嘗試使用備用來源
-                if source != self._get_best_source("price"):
-                    logger.info(f"嘗試使用備用來源獲取資料")
+                backup_source = self.failover_manager.get_best_source("price")
+                if backup_source and backup_source != source:
+                    logger.info("嘗試使用備用來源 %s 獲取資料", backup_source)
                     return self.get_historical_data(
-                        symbols, start_date, end_date, interval, None, use_cache
+                        symbols,
+                        start_date=start_date,
+                        end_date=end_date,
+                        interval=interval,
+                        source=backup_source,
+                        use_cache=use_cache
                     )
 
                 return {}
 
     def get_quote(
-        self, symbols: Union[str, List[str]], source: Optional[str] = None
+        self, symbols: Union[str, List[str]], *, source: Optional[str] = None
     ) -> Dict[str, Dict[str, Any]]:
-        """
-        獲取即時報價
+        """獲取即時報價
 
         Args:
             symbols: 股票代碼或代碼列表
@@ -329,14 +470,14 @@ class DataIngestionManager:
 
             # 檢查資料來源是否可用
             if not self.source_status.get(source, False):
-                logger.warning(f"資料來源 {source} 不可用，嘗試使用備用來源")
+                logger.warning("資料來源 %s 不可用，嘗試使用備用來源", source)
                 source = self._get_best_source("price")
 
             try:
                 # 獲取適配器
                 adapter = self.adapters.get(source)
                 if not adapter:
-                    logger.error(f"找不到資料來源 {source} 的適配器")
+                    logger.error("找不到資料來源 %s 的適配器", source)
                     self.stats["requests_failed"] += 1
                     return {}
 
@@ -348,7 +489,7 @@ class DataIngestionManager:
                         if quote:
                             result[symbol] = quote
                     except Exception as e:
-                        logger.error(f"獲取 {symbol} 的即時報價時發生錯誤: {e}")
+                        logger.error("獲取 %s 的即時報價時發生錯誤: %s", symbol, e)
 
                 # 更新統計信息
                 self.stats["requests_success"] += 1
@@ -361,7 +502,7 @@ class DataIngestionManager:
                 return result
 
             except Exception as e:
-                logger.error(f"獲取即時報價時發生錯誤: {e}")
+                logger.error("獲取即時報價時發生錯誤: %s", e)
                 self.stats["requests_failed"] += 1
 
                 # 報告失敗
@@ -372,8 +513,8 @@ class DataIngestionManager:
 
                 # 嘗試使用備用來源
                 if source != self._get_best_source("price"):
-                    logger.info(f"嘗試使用備用來源獲取資料")
-                    return self.get_quote(symbols, None)
+                    logger.info("嘗試使用備用來源獲取資料")
+                    return self.get_quote(symbols, source=None)
 
                 return {}
 
@@ -381,10 +522,10 @@ class DataIngestionManager:
         self,
         symbols: Union[str, List[str]],
         on_message: Callable[[str], None],
+        *,
         source: str = "broker",
     ) -> bool:
-        """
-        連接 WebSocket 獲取即時資料
+        """連接 WebSocket 獲取即時資料
 
         Args:
             symbols: 股票代碼或代碼列表
@@ -400,7 +541,7 @@ class DataIngestionManager:
 
         # 檢查資料來源是否可用
         if not self.source_status.get(source, False):
-            logger.warning(f"資料來源 {source} 不可用，嘗試使用備用來源")
+            logger.warning("資料來源 %s 不可用，嘗試使用備用來源", source)
             source = self._get_best_source("price")
 
         try:
@@ -408,7 +549,7 @@ class DataIngestionManager:
             if source == "broker":
                 url = "wss://api.broker.com/ws"
             else:
-                logger.error(f"資料來源 {source} 不支援 WebSocket")
+                logger.error("資料來源 %s 不支援 WebSocket", source)
                 return False
 
             # 創建 WebSocket 客戶端
@@ -416,7 +557,7 @@ class DataIngestionManager:
 
             # 檢查是否已存在相同的客戶端
             if client_id in self.websocket_clients:
-                logger.info(f"WebSocket 客戶端 {client_id} 已存在，關閉舊連接")
+                logger.info("WebSocket 客戶端 %s 已存在，關閉舊連接", client_id)
                 self.websocket_clients[client_id].close()
 
             # 定義回調函數
@@ -426,7 +567,8 @@ class DataIngestionManager:
                     # 檢查隊列大小，實現背壓控制
                     if self.data_queue.qsize() >= self.data_queue.maxsize * 0.9:
                         logger.warning(
-                            f"消息隊列接近滿載 ({self.data_queue.qsize()}/{self.data_queue.maxsize})，可能需要增加處理速度"
+                            "消息隊列接近滿載 (%d/%d)，可能需要增加處理速度",
+                            self.data_queue.qsize(), self.data_queue.maxsize
                         )
 
                     # 將消息放入隊列
@@ -437,12 +579,12 @@ class DataIngestionManager:
 
             def on_error(error):
                 """錯誤回調"""
-                logger.error(f"WebSocket 錯誤: {error}")
+                logger.error("WebSocket 錯誤: %s", error)
                 self.source_status[source] = False
 
             def on_open():
                 """連接建立回調"""
-                logger.info(f"WebSocket 連接已建立，訂閱 {symbols}")
+                logger.info("WebSocket 連接已建立，訂閱 %s", symbols)
                 # 訂閱股票
                 client = self.websocket_clients[client_id]
                 client.send({"action": "subscribe", "symbols": symbols})
@@ -477,15 +619,14 @@ class DataIngestionManager:
             return True
 
         except Exception as e:
-            logger.error(f"連接 WebSocket 時發生錯誤: {e}")
+            logger.error("連接 WebSocket 時發生錯誤: %s", e)
             self.source_status[source] = False
             return False
 
     def disconnect_websocket(
-        self, symbols: Union[str, List[str]], source: str = "broker"
+        self, symbols: Union[str, List[str]], *, source: str = "broker"
     ) -> bool:
-        """
-        斷開 WebSocket 連接
+        """斷開 WebSocket 連接
 
         Args:
             symbols: 股票代碼或代碼列表
@@ -503,7 +644,7 @@ class DataIngestionManager:
 
         # 檢查客戶端是否存在
         if client_id not in self.websocket_clients:
-            logger.warning(f"WebSocket 客戶端 {client_id} 不存在")
+            logger.warning("WebSocket 客戶端 %s 不存在", client_id)
             return False
 
         try:
@@ -517,7 +658,7 @@ class DataIngestionManager:
             return True
 
         except Exception as e:
-            logger.error(f"斷開 WebSocket 連接時發生錯誤: {e}")
+            logger.error("斷開 WebSocket 連接時發生錯誤: %s", e)
             return False
 
     def _process_messages(self):
@@ -539,12 +680,11 @@ class DataIngestionManager:
                     continue
 
             except Exception as e:
-                logger.error(f"處理消息時發生錯誤: {e}")
+                logger.error("處理消息時發生錯誤: %s", e)
                 time.sleep(0.1)  # 避免在錯誤情況下過度消耗 CPU
 
     def _get_best_source(self, data_type: str) -> str:
-        """
-        獲取最佳資料來源
+        """獲取最佳資料來源
 
         根據優先級和可用性選擇最佳資料來源。
 
@@ -564,15 +704,14 @@ class DataIngestionManager:
 
         # 如果沒有可用的資料來源，返回第一個
         if priorities:
-            logger.warning(f"沒有可用的資料來源，使用 {priorities[0]}")
+            logger.warning("沒有可用的資料來源，使用 %s", priorities[0])
             return priorities[0]
 
         # 如果沒有優先級列表，返回 'yahoo'
         return "yahoo"
 
     def get_stats(self) -> Dict[str, Any]:
-        """
-        獲取統計信息
+        """獲取統計信息
 
         Returns:
             Dict[str, Any]: 統計信息
@@ -581,11 +720,93 @@ class DataIngestionManager:
         stats["queue_size"] = self.data_queue.qsize()
         stats["websocket_clients"] = len(self.websocket_clients)
         stats["source_status"] = self.source_status.copy()
+
+        # 添加故障轉移管理器統計信息
+        if self.failover_manager:
+            stats["failover"] = self.failover_manager.get_all_stats()
+
         return stats
 
-    def reset_source_status(self, source: Optional[str] = None):
+    def get_failover_stats(self) -> Dict[str, Any]:
+        """獲取故障轉移統計信息
+
+        Returns:
+            Dict[str, Any]: 故障轉移統計信息
         """
-        重置資料來源狀態
+        if self.failover_manager:
+            return self.failover_manager.get_all_stats()
+        return {}
+
+    def get_source_health(self, source_name: str) -> Optional[Dict[str, Any]]:
+        """獲取特定資料源的健康狀態
+
+        Args:
+            source_name: 資料源名稱
+
+        Returns:
+            Optional[Dict[str, Any]]: 健康狀態信息
+        """
+        if self.failover_manager:
+            return self.failover_manager.get_source_stats(source_name)
+        return None
+
+    def force_failover(self, source_name: str, reason: str = "手動故障轉移"):
+        """強制故障轉移指定資料源
+
+        Args:
+            source_name: 資料源名稱
+            reason: 故障轉移原因
+        """
+        if self.failover_manager:
+            self.failover_manager.force_failover(source_name, reason)
+
+        # 同時更新舊機制的狀態
+        self.source_status[source_name] = False
+        logger.info("已強制故障轉移資料源 %s: %s", source_name, reason)
+
+    def force_recovery(self, source_name: str, reason: str = "手動恢復"):
+        """強制恢復指定資料源
+
+        Args:
+            source_name: 資料源名稱
+            reason: 恢復原因
+        """
+        if self.failover_manager:
+            self.failover_manager.force_recovery(source_name, reason)
+
+        # 同時更新舊機制的狀態
+        self.source_status[source_name] = True
+        logger.info("已強制恢復資料源 %s: %s", source_name, reason)
+
+    def get_health_summary(self) -> Dict[str, Any]:
+        """獲取健康狀態摘要
+
+        Returns:
+            Dict[str, Any]: 健康狀態摘要
+        """
+        if self.failover_manager:
+            return self.failover_manager.get_health_summary()
+
+        # 使用舊機制提供基本摘要
+        healthy_sources = [
+            source for source, status in self.source_status.items() if status
+        ]
+        unhealthy_sources = [
+            source for source, status in self.source_status.items() if not status
+        ]
+
+        return {
+            "total_sources": len(self.source_status),
+            "healthy_sources": healthy_sources,
+            "unhealthy_sources": unhealthy_sources,
+            "circuit_breaker_sources": [],
+            "total_failovers": 0,
+            "total_recoveries": 0,
+            "priority_groups": list(self.source_priorities.keys()),
+        }
+
+    def reset_source_status(self, source: Optional[str] = None):
+        """重置資料來源狀態
 
         Args:
             source: 資料來源，如果為 None 則重置所有資料來源
@@ -598,18 +819,25 @@ class DataIngestionManager:
             # 重置指定資料來源
             self.source_status[source] = True
 
-        logger.info(f"已重置資料來源狀態: {self.source_status}")
+        logger.info("已重置資料來源狀態: %s", self.source_status)
 
     def close(self):
         """關閉資料擷取管理器"""
         logger.info("正在關閉資料擷取管理器")
+
+        # 停止故障轉移管理器
+        if self.failover_manager:
+            try:
+                self.failover_manager.stop_health_monitoring()
+            except Exception as e:
+                logger.error("停止故障轉移管理器時發生錯誤: %s", e)
 
         # 關閉所有 WebSocket 客戶端
         for client_id, client in list(self.websocket_clients.items()):
             try:
                 client.close()
             except Exception as e:
-                logger.error(f"關閉 WebSocket 客戶端 {client_id} 時發生錯誤: {e}")
+                logger.error("關閉 WebSocket 客戶端 %s 時發生錯誤: %s", client_id, e)
 
         # 停止處理線程
         self.is_processing = False
@@ -660,7 +888,16 @@ def load_data(start_date=None, end_date=None, data_types=None):
     if "price" in data_types:
         price_file = os.path.join(TABLES_DIR, "price.pkl")
         if os.path.exists(price_file):
-            result["price"] = pd.read_pickle(price_file)
+            # 使用 parquet 格式替代 pickle 以提高安全性
+            try:
+                parquet_file = price_file.replace('.pkl', '.parquet')
+                if os.path.exists(parquet_file):
+                    result["price"] = pd.read_parquet(parquet_file)
+                else:
+                    # 向後兼容：如果 parquet 文件不存在，嘗試讀取 pickle
+                    result["price"] = pd.read_pickle(price_file)  # nosec B301
+            except Exception:
+                result["price"] = pd.read_pickle(price_file)  # nosec B301
             df = result["price"]
             if isinstance(df.index, pd.MultiIndex) and "date" in df.index.names:
                 mask = (
@@ -867,6 +1104,11 @@ def fetch_finmind_data(data_type, stock_id=None, start_date=None, end_date=None)
         pandas.DataFrame: 獲取的資料
     """
     try:
+        # 檢查 DataLoader 是否可用
+        if DataLoader is None:
+            print("FinMind 套件未安裝，請執行: pip install FinMind")
+            return pd.DataFrame()
+
         # 初始化 FinMind API
         api = DataLoader()
 
@@ -920,6 +1162,11 @@ def fetch_yahoo_finance_data(stock_ids, start_date=None, end_date=None):
         dict: 包含各股票資料的字典
     """
     try:
+        # 檢查 yfinance 是否可用
+        if yf is None:
+            print("yfinance 套件未安裝，請執行: pip install yfinance")
+            return {}
+
         result = {}
 
         for stock_id in stock_ids:
@@ -980,6 +1227,11 @@ def fetch_alpha_vantage_data(function, symbol, **kwargs):
             print("未設定 Alpha Vantage API 金鑰")
             return pd.DataFrame()
 
+        # 檢查 Alpha Vantage 套件是否可用
+        if TimeSeries is None or TechIndicators is None or FundamentalData is None:
+            print("alpha_vantage 套件未安裝，請執行: pip install alpha_vantage")
+            return pd.DataFrame()
+
         # 根據函數類型選擇適當的 API
         if function in [
             "TIME_SERIES_DAILY",
@@ -987,27 +1239,27 @@ def fetch_alpha_vantage_data(function, symbol, **kwargs):
             "TIME_SERIES_MONTHLY",
         ]:
             ts = TimeSeries(key=ALPHA_VANTAGE_API_KEY, output_format="pandas")
-            data, meta_data = ts.get_daily(symbol=symbol, outputsize="full")
+            data, _ = ts.get_daily(symbol=symbol, outputsize="full")
         elif function in ["SMA", "EMA", "RSI", "MACD"]:
             ti = TechIndicators(key=ALPHA_VANTAGE_API_KEY, output_format="pandas")
             if function == "SMA":
-                data, meta_data = ti.get_sma(symbol=symbol, **kwargs)
+                data, _ = ti.get_sma(symbol=symbol, **kwargs)
             elif function == "EMA":
-                data, meta_data = ti.get_ema(symbol=symbol, **kwargs)
+                data, _ = ti.get_ema(symbol=symbol, **kwargs)
             elif function == "RSI":
-                data, meta_data = ti.get_rsi(symbol=symbol, **kwargs)
+                data, _ = ti.get_rsi(symbol=symbol, **kwargs)
             elif function == "MACD":
-                data, meta_data = ti.get_macd(symbol=symbol, **kwargs)
+                data, _ = ti.get_macd(symbol=symbol, **kwargs)
         elif function in ["OVERVIEW", "INCOME_STATEMENT", "BALANCE_SHEET", "CASH_FLOW"]:
             fd = FundamentalData(key=ALPHA_VANTAGE_API_KEY, output_format="pandas")
             if function == "OVERVIEW":
-                data, meta_data = fd.get_company_overview(symbol=symbol)
+                data, _ = fd.get_company_overview(symbol=symbol)
             elif function == "INCOME_STATEMENT":
-                data, meta_data = fd.get_income_statement_annual(symbol=symbol)
+                data, _ = fd.get_income_statement_annual(symbol=symbol)
             elif function == "BALANCE_SHEET":
-                data, meta_data = fd.get_balance_sheet_annual(symbol=symbol)
+                data, _ = fd.get_balance_sheet_annual(symbol=symbol)
             elif function == "CASH_FLOW":
-                data, meta_data = fd.get_cash_flow_annual(symbol=symbol)
+                data, _ = fd.get_cash_flow_annual(symbol=symbol)
         else:
             return pd.DataFrame()
 
@@ -1118,15 +1370,21 @@ def schedule_fetch(
     Returns:
         apscheduler.schedulers.background.BackgroundScheduler: 排程器
     """
+    # 檢查 APScheduler 是否可用
+    if BackgroundScheduler is None or CronTrigger is None:
+        print("apscheduler 套件未安裝，請執行: pip install apscheduler")
+        return None
+
     # 初始化排程器
     scheduler = BackgroundScheduler()
 
     # 定義更新函數
     def update_job():
-    """
-    update_job
-    
-    """
+        """
+        執行資料更新作業
+
+        自動更新各種資料源的股票資料，包括台股、FinMind、Yahoo Finance 和 Alpha Vantage
+        """
         try:
             # 更新日期
             today = datetime.datetime.now().date()
@@ -1152,7 +1410,7 @@ def schedule_fetch(
 
             # 更新 Yahoo Finance 資料
             if stock_ids:
-                print(f"更新 Yahoo Finance 資料")
+                print("更新 Yahoo Finance 資料")
                 yahoo_data = fetch_yahoo_finance_data(
                     [f"{s}.TW" for s in stock_ids],
                     yesterday.strftime("%Y-%m-%d"),

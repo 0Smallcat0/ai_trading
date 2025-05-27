@@ -26,17 +26,18 @@ from sqlalchemy.orm import Session
 
 # 自定義 JSON 編碼器，處理日期、時間和 DataFrame 類型
 class CustomJSONEncoder(json.JSONEncoder):
-"""
-CustomJSONEncoder
+    """
+    CustomJSONEncoder
 
-"""
+    """
+
     def default(self, obj):
-    """
-    default
-    
-    Args:
-        obj: 
-    """
+        """
+        default
+
+        Args:
+            obj:
+        """
         if isinstance(obj, (date, datetime)):
             return obj.isoformat()
         elif isinstance(obj, pd.DataFrame):

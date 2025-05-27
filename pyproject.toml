@@ -1,80 +1,117 @@
-[project]
+[tool.poetry]
 name = "ai-trading"
 version = "0.1.0"
 description = "AI Stock Automated Trading System"
-authors = [
-    {name = "Cookie",email = "noiroao@gmail.com"}
-]
-package-mode = false
+authors = ["Cookie <noiroao@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.10,<4.0.0"
-dependencies = [
-    "pandas (==2.2.3)",
-    "numpy (==1.26.4)",
-    "scipy (==1.15.2)",
-    "joblib (==1.5.0)",
-    "requests (==2.32.3)",
-    "beautifulsoup4 (==4.13.4)",
-    "feedparser (==6.0.11)",
-    "pandas-datareader (>=0.10.0)",
-    "matplotlib (==3.10.1)",
-    "seaborn (==0.12.2)",
-    "plotly (>=5.0.0)",
-    "ipywidgets (==8.1.7)",
-    "jupyterlab (==4.4.2)",
-    "ipykernel (>=6.0.0)",
-    "tqdm (==4.67.1)",
-    "python-json-logger (>=2.0.0)",
-    "apscheduler (==3.11.0)",
-    "python-dotenv (>=1.0.0)",
-    "pydantic (==2.7.4)",
-    "sqlalchemy (==2.0.6)",
-    "scikit-learn (==1.3.2)",
-    "statsmodels (>=0.14.0)",
-    "riskfolio-lib (==7.0.1)",
-    "cvxpy (==1.6.5)",
-    "ecos (==2.0.14)",
-    "osqp (==1.0.3)",
-    "gymnasium (==1.1.1)",
-    "finmind (>=1.8.0,<2.0.0)",
-    "yfinance (>=0.2.61,<0.3.0)",
-    "alpha-vantage (>=3.0.0,<4.0.0)",
-    "snownlp (>=0.12.3,<0.13.0)",
-    "psutil (>=7.0.0,<8.0.0)",
-    "pyarrow (>=4.0.0,<20.0.0)",
-    "backtrader (>=1.9.76,<2.0.0)",
-    "tensorflow (>=2.15.0,<3.0.0)",
-    "tensorflow-io-gcs-filesystem (==0.31.0) ; python_version >= '3.10' and python_version < '3.12'",
-    "torch (>=2.0.0,<3.0.0)",
-    "mlflow (>=2.10.0,<3.0.0)",
-    "shap (>=0.44.0,<0.45.0)",
-    "lime (>=0.2.0,<0.3.0)",
-    "xgboost (>=2.0.0,<3.0.0)",
-    "lightgbm (>=4.1.0,<5.0.0)",
-    "uvicorn (>=0.34.2,<0.35.0)",
-    "fastapi (>=0.115.12,<0.116.0)",
-    "onnx (>=1.15.0,<2.0.0)",
-    "onnxruntime (>=1.17.0,<2.0.0)",
-    "tf2onnx (>=1.16.0,<2.0.0)",
-    "prometheus-client (>=0.19.0,<0.20.0)",
-    "memory-profiler (>=0.61.0,<0.62.0)",
-    "line-profiler (>=4.1.0,<5.0.0)",
-    "dask (>=2024.4.1,<2025.0.0)",
-    "ray (>=2.9.3,<3.0.0)"
-]
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0.0"
+pandas = "2.2.3"
+numpy = "1.26.4"
+scipy = "1.15.2"
+joblib = "1.5.0"
+requests = "2.32.3"
+beautifulsoup4 = "4.13.4"
+feedparser = "6.0.11"
+pandas-datareader = "^0.10.0"
+matplotlib = "3.10.1"
+seaborn = "0.12.2"
+plotly = "^5.0.0"
+ipywidgets = "8.1.7"
+jupyterlab = "4.4.2"
+ipykernel = "^6.0.0"
+tqdm = "4.67.1"
+python-json-logger = "^2.0.0"
+apscheduler = "3.11.0"
+python-dotenv = "^1.0.0"
+pydantic = "2.7.4"
+sqlalchemy = "2.0.6"
+scikit-learn = "1.3.2"
+statsmodels = "^0.14.0"
+riskfolio-lib = "7.0.1"
+cvxpy = "1.6.5"
+ecos = "2.0.14"
+osqp = "1.0.3"
+gymnasium = "1.1.1"
+finmind = "^1.8.0"
+yfinance = "^0.2.61"
+alpha-vantage = "^3.0.0"
+# ta-lib = "^0.4.28"  # Temporarily disabled due to compilation issues on Windows
+pandas-ta = "^0.3.14b"  # Alternative technical analysis library
+# snownlp = "^0.12.3"  # Temporarily disabled due to download issues
+psutil = "^7.0.0"
+pyarrow = ">=7.0.0"
+backtrader = "^1.9.78.123"
+mlflow = "^2.10.0"
+shap = "^0.44.0"
+lime = "^0.2.0"
+xgboost = "^2.0.0"
+lightgbm = "^4.1.0"
+uvicorn = "^0.34.2"
+fastapi = "^0.115.12"
+onnx = "^1.15.0"
+onnxruntime = "^1.17.0"
+tf2onnx = "^1.16.0"
+prometheus-client = "^0.19.0"
+memory-profiler = "^0.61.0"
+line-profiler = "^4.1.0"
+dask = "^2024.4.1"
+ray = "^2.9.3"
+# 監控與告警系統依賴
+grafana-api = "^1.0.3"
+pyyaml = "^6.0"
+websockets = "^15.0.1"
+aiofiles = "^23.2.0"
+redis = "^5.0.0"
+streamlit = "^1.32.0"
+streamlit-extras = "^0.3.6"
+streamlit-option-menu = "^0.3.6"
+xlsxwriter = "^3.1.9"
+flask = "^3.0.0"
+# 回測系統增強依賴
+reportlab = "^4.0.0"
+jinja2 = "^3.1.0"
+# kaleido = "^0.2.1"  # Temporarily disabled due to compatibility issues
+openpyxl = "^3.1.0"
+# 安全相關依賴
+bcrypt = "^4.0.0"
+cryptography = "^41.0.0"
+pyjwt = "^2.8.0"
+pyotp = "^2.9.0"
+qrcode = "^7.4.0"
+pillow = "^10.0.0"
+python-multipart = "^0.0.20"
+email-validator = "^2.2.0"
+croniter = "^1.4.0"
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.2.0"
 autopep8 = "^2.3.2"
 black = "^25.1.0"
 flake8 = "^7.2.0"
 pylint = "^3.3.7"
+mypy = "^1.8.0"
 pytest = "^8.3.5"
 autoflake = "^2.3.1"
 pytest-cov = "^6.1.1"
 pyportfolioopt = "1.4.1"
+# 效能測試依賴
+pytest-benchmark = "^4.0.0"
+locust = "^2.17.0"
+pytest-asyncio = "^0.23.0"
+aiohttp = "^3.9.0"
+httpx = "^0.26.0"
+# 安全測試依賴
+bandit = "^1.7.5"
+sqlparse = "^0.4.4"
+safety = ">=2.0,<3.0"
 
+[tool.poetry.scripts]
+start = "src.ui.web_ui:main"

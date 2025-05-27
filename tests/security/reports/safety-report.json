@@ -1,0 +1,2078 @@
+{
+    "report_meta": {
+        "scan_target": "environment",
+        "scanned": [
+            "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "d:\\auto_trading_project\\.venv\\lib\\site-packages\\setuptools\\_vendor"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "api_key": false,
+        "local_database_path": null,
+        "safety_version": "2.3.4",
+        "timestamp": "2025-05-27 11:34:14",
+        "packages_found": 377,
+        "vulnerabilities_found": 18,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+        "telemetry": {
+            "os_type": "Windows",
+            "os_release": "10",
+            "os_description": "Windows-10-10.0.26100-SP0",
+            "python_version": "3.10.0",
+            "safety_command": "check",
+            "safety_options": {
+                "output": {
+                    "--output": 1
+                },
+                "save_json": {
+                    "--save-json": 1
+                }
+            },
+            "safety_version": "2.3.4",
+            "safety_source": "cli"
+        },
+        "git": {
+            "branch": "main",
+            "tag": "",
+            "commit": "19c779413da088d1a83ce284b2dcee58e521929b",
+            "dirty": true,
+            "origin": "https://github.com/Cookieeeeeeeeeeeeeee/ai_trading.git"
+        },
+        "project": null,
+        "json_version": 1
+    },
+    "scanned_packages": {
+        "apscheduler": {
+            "name": "apscheduler",
+            "version": "3.11.0"
+        },
+        "brotli": {
+            "name": "brotli",
+            "version": "1.1.0"
+        },
+        "deprecated": {
+            "name": "deprecated",
+            "version": "1.2.18"
+        },
+        "farama-notifications": {
+            "name": "farama-notifications",
+            "version": "0.0.4"
+        },
+        "flask-login": {
+            "name": "flask-login",
+            "version": "0.6.3"
+        },
+        "gitpython": {
+            "name": "gitpython",
+            "version": "3.1.44"
+        },
+        "markupsafe": {
+            "name": "markupsafe",
+            "version": "3.0.2"
+        },
+        "pyjwt": {
+            "name": "pyjwt",
+            "version": "2.10.1"
+        },
+        "pynacl": {
+            "name": "pynacl",
+            "version": "1.5.0"
+        },
+        "pyyaml": {
+            "name": "pyyaml",
+            "version": "6.0.2"
+        },
+        "sqlalchemy": {
+            "name": "sqlalchemy",
+            "version": "2.0.6"
+        },
+        "send2trash": {
+            "name": "send2trash",
+            "version": "1.8.3"
+        },
+        "xlsxwriter": {
+            "name": "xlsxwriter",
+            "version": "3.2.3"
+        },
+        "absl-py": {
+            "name": "absl-py",
+            "version": "2.2.2"
+        },
+        "ai-trading": {
+            "name": "ai-trading",
+            "version": "0.1.0"
+        },
+        "aiofiles": {
+            "name": "aiofiles",
+            "version": "23.2.1"
+        },
+        "aiohappyeyeballs": {
+            "name": "aiohappyeyeballs",
+            "version": "2.6.1"
+        },
+        "aiohttp": {
+            "name": "aiohttp",
+            "version": "3.11.18"
+        },
+        "aiosignal": {
+            "name": "aiosignal",
+            "version": "1.3.2"
+        },
+        "alembic": {
+            "name": "alembic",
+            "version": "1.15.2"
+        },
+        "alpha-vantage": {
+            "name": "alpha-vantage",
+            "version": "3.0.0"
+        },
+        "altair": {
+            "name": "altair",
+            "version": "5.5.0"
+        },
+        "annotated-types": {
+            "name": "annotated-types",
+            "version": "0.7.0"
+        },
+        "anyio": {
+            "name": "anyio",
+            "version": "4.9.0"
+        },
+        "arch": {
+            "name": "arch",
+            "version": "7.2.0"
+        },
+        "argon2-cffi": {
+            "name": "argon2-cffi",
+            "version": "23.1.0"
+        },
+        "argon2-cffi-bindings": {
+            "name": "argon2-cffi-bindings",
+            "version": "21.2.0"
+        },
+        "arrow": {
+            "name": "arrow",
+            "version": "1.3.0"
+        },
+        "astroid": {
+            "name": "astroid",
+            "version": "3.3.10"
+        },
+        "astropy": {
+            "name": "astropy",
+            "version": "6.1.7"
+        },
+        "astropy-iers-data": {
+            "name": "astropy-iers-data",
+            "version": "0.2025.5.12.0.38.29"
+        },
+        "asttokens": {
+            "name": "asttokens",
+            "version": "3.0.0"
+        },
+        "astunparse": {
+            "name": "astunparse",
+            "version": "1.6.3"
+        },
+        "async-lru": {
+            "name": "async-lru",
+            "version": "2.0.5"
+        },
+        "async-timeout": {
+            "name": "async-timeout",
+            "version": "5.0.1"
+        },
+        "attrs": {
+            "name": "attrs",
+            "version": "25.3.0"
+        },
+        "autoflake": {
+            "name": "autoflake",
+            "version": "2.3.1"
+        },
+        "autopep8": {
+            "name": "autopep8",
+            "version": "2.3.2"
+        },
+        "babel": {
+            "name": "babel",
+            "version": "2.17.0"
+        },
+        "backtrader": {
+            "name": "backtrader",
+            "version": "1.9.78.123"
+        },
+        "bandit": {
+            "name": "bandit",
+            "version": "1.8.3"
+        },
+        "base58": {
+            "name": "base58",
+            "version": "2.1.1"
+        },
+        "bcrypt": {
+            "name": "bcrypt",
+            "version": "4.3.0"
+        },
+        "beautifulsoup4": {
+            "name": "beautifulsoup4",
+            "version": "4.13.4"
+        },
+        "bidict": {
+            "name": "bidict",
+            "version": "0.23.1"
+        },
+        "black": {
+            "name": "black",
+            "version": "25.1.0"
+        },
+        "bleach": {
+            "name": "bleach",
+            "version": "6.2.0"
+        },
+        "blinker": {
+            "name": "blinker",
+            "version": "1.9.0"
+        },
+        "cachetools": {
+            "name": "cachetools",
+            "version": "5.5.2"
+        },
+        "certifi": {
+            "name": "certifi",
+            "version": "2025.4.26"
+        },
+        "cffi": {
+            "name": "cffi",
+            "version": "1.17.1"
+        },
+        "cfgv": {
+            "name": "cfgv",
+            "version": "3.4.0"
+        },
+        "chardet": {
+            "name": "chardet",
+            "version": "5.2.0"
+        },
+        "charset-normalizer": {
+            "name": "charset-normalizer",
+            "version": "3.4.2"
+        },
+        "clarabel": {
+            "name": "clarabel",
+            "version": "0.10.0"
+        },
+        "click": {
+            "name": "click",
+            "version": "8.2.0"
+        },
+        "cloudpickle": {
+            "name": "cloudpickle",
+            "version": "3.1.1"
+        },
+        "colorama": {
+            "name": "colorama",
+            "version": "0.4.6"
+        },
+        "coloredlogs": {
+            "name": "coloredlogs",
+            "version": "15.0.1"
+        },
+        "comm": {
+            "name": "comm",
+            "version": "0.2.2"
+        },
+        "configargparse": {
+            "name": "configargparse",
+            "version": "1.7.1"
+        },
+        "contourpy": {
+            "name": "contourpy",
+            "version": "1.3.2"
+        },
+        "coverage": {
+            "name": "coverage",
+            "version": "7.8.0"
+        },
+        "croniter": {
+            "name": "croniter",
+            "version": "1.4.1"
+        },
+        "cryptography": {
+            "name": "cryptography",
+            "version": "41.0.7"
+        },
+        "curl-cffi": {
+            "name": "curl-cffi",
+            "version": "0.10.0"
+        },
+        "cvxpy": {
+            "name": "cvxpy",
+            "version": "1.6.5"
+        },
+        "cycler": {
+            "name": "cycler",
+            "version": "0.12.1"
+        },
+        "dask": {
+            "name": "dask",
+            "version": "2024.12.1"
+        },
+        "databricks-sdk": {
+            "name": "databricks-sdk",
+            "version": "0.53.0"
+        },
+        "debugpy": {
+            "name": "debugpy",
+            "version": "1.8.14"
+        },
+        "decorator": {
+            "name": "decorator",
+            "version": "5.2.1"
+        },
+        "defusedxml": {
+            "name": "defusedxml",
+            "version": "0.7.1"
+        },
+        "dill": {
+            "name": "dill",
+            "version": "0.4.0"
+        },
+        "distlib": {
+            "name": "distlib",
+            "version": "0.3.9"
+        },
+        "dnspython": {
+            "name": "dnspython",
+            "version": "2.7.0"
+        },
+        "docker": {
+            "name": "docker",
+            "version": "7.1.0"
+        },
+        "dparse": {
+            "name": "dparse",
+            "version": "0.6.4"
+        },
+        "ecos": {
+            "name": "ecos",
+            "version": "2.0.14"
+        },
+        "email-validator": {
+            "name": "email-validator",
+            "version": "2.2.0"
+        },
+        "entrypoints": {
+            "name": "entrypoints",
+            "version": "0.4"
+        },
+        "et-xmlfile": {
+            "name": "et-xmlfile",
+            "version": "2.0.0"
+        },
+        "exceptiongroup": {
+            "name": "exceptiongroup",
+            "version": "1.3.0"
+        },
+        "executing": {
+            "name": "executing",
+            "version": "2.2.0"
+        },
+        "faker": {
+            "name": "faker",
+            "version": "37.3.0"
+        },
+        "fastapi": {
+            "name": "fastapi",
+            "version": "0.115.12"
+        },
+        "fastjsonschema": {
+            "name": "fastjsonschema",
+            "version": "2.21.1"
+        },
+        "favicon": {
+            "name": "favicon",
+            "version": "0.7.0"
+        },
+        "feedparser": {
+            "name": "feedparser",
+            "version": "6.0.11"
+        },
+        "filelock": {
+            "name": "filelock",
+            "version": "3.18.0"
+        },
+        "finmind": {
+            "name": "finmind",
+            "version": "1.8.0"
+        },
+        "flake8": {
+            "name": "flake8",
+            "version": "7.2.0"
+        },
+        "flask": {
+            "name": "flask",
+            "version": "3.1.0"
+        },
+        "flask-cors": {
+            "name": "flask-cors",
+            "version": "6.0.0"
+        },
+        "flatbuffers": {
+            "name": "flatbuffers",
+            "version": "25.2.10"
+        },
+        "fonttools": {
+            "name": "fonttools",
+            "version": "4.58.0"
+        },
+        "fqdn": {
+            "name": "fqdn",
+            "version": "1.5.1"
+        },
+        "frozendict": {
+            "name": "frozendict",
+            "version": "2.4.6"
+        },
+        "frozenlist": {
+            "name": "frozenlist",
+            "version": "1.6.0"
+        },
+        "fsspec": {
+            "name": "fsspec",
+            "version": "2025.3.2"
+        },
+        "futu-api": {
+            "name": "futu-api",
+            "version": "9.2.5208"
+        },
+        "gast": {
+            "name": "gast",
+            "version": "0.6.0"
+        },
+        "gevent": {
+            "name": "gevent",
+            "version": "24.11.1"
+        },
+        "geventhttpclient": {
+            "name": "geventhttpclient",
+            "version": "2.3.3"
+        },
+        "gitdb": {
+            "name": "gitdb",
+            "version": "4.0.12"
+        },
+        "google-auth": {
+            "name": "google-auth",
+            "version": "2.40.1"
+        },
+        "google-pasta": {
+            "name": "google-pasta",
+            "version": "0.2.0"
+        },
+        "grafana-api": {
+            "name": "grafana-api",
+            "version": "1.0.3"
+        },
+        "graphene": {
+            "name": "graphene",
+            "version": "3.4.3"
+        },
+        "graphql-core": {
+            "name": "graphql-core",
+            "version": "3.2.6"
+        },
+        "graphql-relay": {
+            "name": "graphql-relay",
+            "version": "3.2.0"
+        },
+        "greenlet": {
+            "name": "greenlet",
+            "version": "3.2.2"
+        },
+        "grpcio": {
+            "name": "grpcio",
+            "version": "1.71.0"
+        },
+        "gymnasium": {
+            "name": "gymnasium",
+            "version": "1.1.1"
+        },
+        "h11": {
+            "name": "h11",
+            "version": "0.16.0"
+        },
+        "h5py": {
+            "name": "h5py",
+            "version": "3.13.0"
+        },
+        "htbuilder": {
+            "name": "htbuilder",
+            "version": "0.9.0"
+        },
+        "httpcore": {
+            "name": "httpcore",
+            "version": "1.0.9"
+        },
+        "httpx": {
+            "name": "httpx",
+            "version": "0.26.0"
+        },
+        "humanfriendly": {
+            "name": "humanfriendly",
+            "version": "10.0"
+        },
+        "hvac": {
+            "name": "hvac",
+            "version": "2.3.0"
+        },
+        "identify": {
+            "name": "identify",
+            "version": "2.6.10"
+        },
+        "idna": {
+            "name": "idna",
+            "version": "3.10"
+        },
+        "imageio": {
+            "name": "imageio",
+            "version": "2.37.0"
+        },
+        "importlib-metadata": {
+            "name": "importlib-metadata",
+            "version": "8.7.0"
+        },
+        "iniconfig": {
+            "name": "iniconfig",
+            "version": "2.1.0"
+        },
+        "ipykernel": {
+            "name": "ipykernel",
+            "version": "6.29.5"
+        },
+        "ipython": {
+            "name": "ipython",
+            "version": "8.36.0"
+        },
+        "ipywidgets": {
+            "name": "ipywidgets",
+            "version": "8.1.7"
+        },
+        "isoduration": {
+            "name": "isoduration",
+            "version": "20.11.0"
+        },
+        "isort": {
+            "name": "isort",
+            "version": "6.0.1"
+        },
+        "itsdangerous": {
+            "name": "itsdangerous",
+            "version": "2.2.0"
+        },
+        "jedi": {
+            "name": "jedi",
+            "version": "0.19.2"
+        },
+        "jinja2": {
+            "name": "jinja2",
+            "version": "3.1.6"
+        },
+        "joblib": {
+            "name": "joblib",
+            "version": "1.5.0"
+        },
+        "json5": {
+            "name": "json5",
+            "version": "0.12.0"
+        },
+        "jsonpointer": {
+            "name": "jsonpointer",
+            "version": "3.0.0"
+        },
+        "jsonschema": {
+            "name": "jsonschema",
+            "version": "4.23.0"
+        },
+        "jsonschema-specifications": {
+            "name": "jsonschema-specifications",
+            "version": "2025.4.1"
+        },
+        "jupyter-client": {
+            "name": "jupyter-client",
+            "version": "8.6.3"
+        },
+        "jupyter-core": {
+            "name": "jupyter-core",
+            "version": "5.7.2"
+        },
+        "jupyter-events": {
+            "name": "jupyter-events",
+            "version": "0.12.0"
+        },
+        "jupyter-lsp": {
+            "name": "jupyter-lsp",
+            "version": "2.2.5"
+        },
+        "jupyter-server": {
+            "name": "jupyter-server",
+            "version": "2.15.0"
+        },
+        "jupyter-server-terminals": {
+            "name": "jupyter-server-terminals",
+            "version": "0.5.3"
+        },
+        "jupyterlab": {
+            "name": "jupyterlab",
+            "version": "4.4.2"
+        },
+        "jupyterlab-pygments": {
+            "name": "jupyterlab-pygments",
+            "version": "0.3.0"
+        },
+        "jupyterlab-server": {
+            "name": "jupyterlab-server",
+            "version": "2.27.3"
+        },
+        "jupyterlab-widgets": {
+            "name": "jupyterlab-widgets",
+            "version": "3.0.15"
+        },
+        "kafka-python": {
+            "name": "kafka-python",
+            "version": "2.2.7"
+        },
+        "keras": {
+            "name": "keras",
+            "version": "3.9.2"
+        },
+        "kiwisolver": {
+            "name": "kiwisolver",
+            "version": "1.4.8"
+        },
+        "lazy-loader": {
+            "name": "lazy-loader",
+            "version": "0.4"
+        },
+        "libclang": {
+            "name": "libclang",
+            "version": "18.1.1"
+        },
+        "lightgbm": {
+            "name": "lightgbm",
+            "version": "4.6.0"
+        },
+        "lime": {
+            "name": "lime",
+            "version": "0.2.0.1"
+        },
+        "line-profiler": {
+            "name": "line-profiler",
+            "version": "4.2.0"
+        },
+        "llvmlite": {
+            "name": "llvmlite",
+            "version": "0.44.0"
+        },
+        "locket": {
+            "name": "locket",
+            "version": "1.0.0"
+        },
+        "locust": {
+            "name": "locust",
+            "version": "2.37.5"
+        },
+        "locust-cloud": {
+            "name": "locust-cloud",
+            "version": "1.21.8"
+        },
+        "loguru": {
+            "name": "loguru",
+            "version": "0.7.3"
+        },
+        "lxml": {
+            "name": "lxml",
+            "version": "5.4.0"
+        },
+        "mako": {
+            "name": "mako",
+            "version": "1.3.10"
+        },
+        "markdown": {
+            "name": "markdown",
+            "version": "3.8"
+        },
+        "markdown-it-py": {
+            "name": "markdown-it-py",
+            "version": "3.0.0"
+        },
+        "markdownlit": {
+            "name": "markdownlit",
+            "version": "0.0.7"
+        },
+        "matplotlib": {
+            "name": "matplotlib",
+            "version": "3.10.1"
+        },
+        "matplotlib-inline": {
+            "name": "matplotlib-inline",
+            "version": "0.1.7"
+        },
+        "mccabe": {
+            "name": "mccabe",
+            "version": "0.7.0"
+        },
+        "mdurl": {
+            "name": "mdurl",
+            "version": "0.1.2"
+        },
+        "memory-profiler": {
+            "name": "memory-profiler",
+            "version": "0.61.0"
+        },
+        "mistune": {
+            "name": "mistune",
+            "version": "3.1.3"
+        },
+        "ml-dtypes": {
+            "name": "ml-dtypes",
+            "version": "0.5.1"
+        },
+        "mlflow": {
+            "name": "mlflow",
+            "version": "2.22.0"
+        },
+        "mlflow-skinny": {
+            "name": "mlflow-skinny",
+            "version": "2.22.0"
+        },
+        "mpmath": {
+            "name": "mpmath",
+            "version": "1.3.0"
+        },
+        "msgpack": {
+            "name": "msgpack",
+            "version": "1.1.0"
+        },
+        "multidict": {
+            "name": "multidict",
+            "version": "6.4.3"
+        },
+        "multitasking": {
+            "name": "multitasking",
+            "version": "0.0.11"
+        },
+        "mypy": {
+            "name": "mypy",
+            "version": "1.15.0"
+        },
+        "mypy-extensions": {
+            "name": "mypy-extensions",
+            "version": "1.1.0"
+        },
+        "namex": {
+            "name": "namex",
+            "version": "0.0.9"
+        },
+        "narwhals": {
+            "name": "narwhals",
+            "version": "1.39.0"
+        },
+        "nbclient": {
+            "name": "nbclient",
+            "version": "0.10.2"
+        },
+        "nbconvert": {
+            "name": "nbconvert",
+            "version": "7.16.6"
+        },
+        "nbformat": {
+            "name": "nbformat",
+            "version": "5.10.4"
+        },
+        "nest-asyncio": {
+            "name": "nest-asyncio",
+            "version": "1.6.0"
+        },
+        "networkx": {
+            "name": "networkx",
+            "version": "3.4.2"
+        },
+        "nodeenv": {
+            "name": "nodeenv",
+            "version": "1.9.1"
+        },
+        "notebook-shim": {
+            "name": "notebook-shim",
+            "version": "0.2.4"
+        },
+        "numba": {
+            "name": "numba",
+            "version": "0.61.2"
+        },
+        "numpy": {
+            "name": "numpy",
+            "version": "1.26.4"
+        },
+        "onnx": {
+            "name": "onnx",
+            "version": "1.17.0"
+        },
+        "onnxruntime": {
+            "name": "onnxruntime",
+            "version": "1.22.0"
+        },
+        "openpyxl": {
+            "name": "openpyxl",
+            "version": "3.1.5"
+        },
+        "opentelemetry-api": {
+            "name": "opentelemetry-api",
+            "version": "1.16.0"
+        },
+        "opentelemetry-sdk": {
+            "name": "opentelemetry-sdk",
+            "version": "1.16.0"
+        },
+        "opentelemetry-semantic-conventions": {
+            "name": "opentelemetry-semantic-conventions",
+            "version": "0.37b0"
+        },
+        "opt-einsum": {
+            "name": "opt-einsum",
+            "version": "3.4.0"
+        },
+        "optree": {
+            "name": "optree",
+            "version": "0.15.0"
+        },
+        "orjson": {
+            "name": "orjson",
+            "version": "3.10.18"
+        },
+        "osqp": {
+            "name": "osqp",
+            "version": "1.0.3"
+        },
+        "overrides": {
+            "name": "overrides",
+            "version": "7.7.0"
+        },
+        "packaging": {
+            "name": "packaging",
+            "version": "24.2"
+        },
+        "pandas": {
+            "name": "pandas",
+            "version": "2.2.3"
+        },
+        "pandas-datareader": {
+            "name": "pandas-datareader",
+            "version": "0.10.0"
+        },
+        "pandas-ta": {
+            "name": "pandas-ta",
+            "version": "0.3.14b0"
+        },
+        "pandocfilters": {
+            "name": "pandocfilters",
+            "version": "1.5.1"
+        },
+        "parso": {
+            "name": "parso",
+            "version": "0.8.4"
+        },
+        "partd": {
+            "name": "partd",
+            "version": "1.4.2"
+        },
+        "pathspec": {
+            "name": "pathspec",
+            "version": "0.12.1"
+        },
+        "patsy": {
+            "name": "patsy",
+            "version": "1.0.1"
+        },
+        "pbr": {
+            "name": "pbr",
+            "version": "6.1.1"
+        },
+        "peewee": {
+            "name": "peewee",
+            "version": "3.18.1"
+        },
+        "pika": {
+            "name": "pika",
+            "version": "1.3.2"
+        },
+        "pillow": {
+            "name": "pillow",
+            "version": "10.4.0"
+        },
+        "pip": {
+            "name": "pip",
+            "version": "25.1.1"
+        },
+        "platformdirs": {
+            "name": "platformdirs",
+            "version": "4.3.8"
+        },
+        "plotly": {
+            "name": "plotly",
+            "version": "5.24.1"
+        },
+        "pluggy": {
+            "name": "pluggy",
+            "version": "1.5.0"
+        },
+        "pre-commit": {
+            "name": "pre-commit",
+            "version": "4.2.0"
+        },
+        "prettytable": {
+            "name": "prettytable",
+            "version": "3.16.0"
+        },
+        "prometheus-client": {
+            "name": "prometheus-client",
+            "version": "0.19.0"
+        },
+        "prompt-toolkit": {
+            "name": "prompt-toolkit",
+            "version": "3.0.51"
+        },
+        "propcache": {
+            "name": "propcache",
+            "version": "0.3.1"
+        },
+        "protobuf": {
+            "name": "protobuf",
+            "version": "3.20.3"
+        },
+        "psutil": {
+            "name": "psutil",
+            "version": "7.0.0"
+        },
+        "pure-eval": {
+            "name": "pure-eval",
+            "version": "0.2.3"
+        },
+        "py-cpuinfo": {
+            "name": "py-cpuinfo",
+            "version": "9.0.0"
+        },
+        "pyarrow": {
+            "name": "pyarrow",
+            "version": "19.0.1"
+        },
+        "pyasn1": {
+            "name": "pyasn1",
+            "version": "0.6.1"
+        },
+        "pyasn1-modules": {
+            "name": "pyasn1-modules",
+            "version": "0.4.2"
+        },
+        "pybind11": {
+            "name": "pybind11",
+            "version": "2.13.6"
+        },
+        "pycodestyle": {
+            "name": "pycodestyle",
+            "version": "2.13.0"
+        },
+        "pycparser": {
+            "name": "pycparser",
+            "version": "2.22"
+        },
+        "pycryptodome": {
+            "name": "pycryptodome",
+            "version": "3.22.0"
+        },
+        "pydantic": {
+            "name": "pydantic",
+            "version": "2.7.4"
+        },
+        "pydantic-core": {
+            "name": "pydantic-core",
+            "version": "2.18.4"
+        },
+        "pydeck": {
+            "name": "pydeck",
+            "version": "0.9.1"
+        },
+        "pyecharts": {
+            "name": "pyecharts",
+            "version": "2.0.8"
+        },
+        "pyerfa": {
+            "name": "pyerfa",
+            "version": "2.0.1.5"
+        },
+        "pyflakes": {
+            "name": "pyflakes",
+            "version": "3.3.2"
+        },
+        "pygments": {
+            "name": "pygments",
+            "version": "2.19.1"
+        },
+        "pylint": {
+            "name": "pylint",
+            "version": "3.3.7"
+        },
+        "pymdown-extensions": {
+            "name": "pymdown-extensions",
+            "version": "10.15"
+        },
+        "pyotp": {
+            "name": "pyotp",
+            "version": "2.9.0"
+        },
+        "pyparsing": {
+            "name": "pyparsing",
+            "version": "3.2.3"
+        },
+        "pypng": {
+            "name": "pypng",
+            "version": "0.20220715.0"
+        },
+        "pyportfolioopt": {
+            "name": "pyportfolioopt",
+            "version": "1.4.1"
+        },
+        "pyreadline3": {
+            "name": "pyreadline3",
+            "version": "3.5.4"
+        },
+        "pyrsca": {
+            "name": "pyrsca",
+            "version": "0.1.2"
+        },
+        "pysolace": {
+            "name": "pysolace",
+            "version": "0.9.40"
+        },
+        "pytest": {
+            "name": "pytest",
+            "version": "8.3.5"
+        },
+        "pytest-asyncio": {
+            "name": "pytest-asyncio",
+            "version": "0.23.8"
+        },
+        "pytest-benchmark": {
+            "name": "pytest-benchmark",
+            "version": "4.0.0"
+        },
+        "pytest-cov": {
+            "name": "pytest-cov",
+            "version": "6.1.1"
+        },
+        "pytest-mock": {
+            "name": "pytest-mock",
+            "version": "3.14.1"
+        },
+        "python-dateutil": {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0"
+        },
+        "python-dotenv": {
+            "name": "python-dotenv",
+            "version": "1.1.0"
+        },
+        "python-engineio": {
+            "name": "python-engineio",
+            "version": "4.12.1"
+        },
+        "python-json-logger": {
+            "name": "python-json-logger",
+            "version": "2.0.7"
+        },
+        "python-multipart": {
+            "name": "python-multipart",
+            "version": "0.0.20"
+        },
+        "python-socketio": {
+            "name": "python-socketio",
+            "version": "5.13.0"
+        },
+        "pytz": {
+            "name": "pytz",
+            "version": "2025.2"
+        },
+        "pywin32": {
+            "name": "pywin32",
+            "version": "310"
+        },
+        "pywinpty": {
+            "name": "pywinpty",
+            "version": "2.0.15"
+        },
+        "pyzmq": {
+            "name": "pyzmq",
+            "version": "26.4.0"
+        },
+        "qrcode": {
+            "name": "qrcode",
+            "version": "7.4.2"
+        },
+        "ray": {
+            "name": "ray",
+            "version": "2.46.0"
+        },
+        "redis": {
+            "name": "redis",
+            "version": "5.2.1"
+        },
+        "referencing": {
+            "name": "referencing",
+            "version": "0.36.2"
+        },
+        "reportlab": {
+            "name": "reportlab",
+            "version": "4.4.1"
+        },
+        "requests": {
+            "name": "requests",
+            "version": "2.32.3"
+        },
+        "rfc3339-validator": {
+            "name": "rfc3339-validator",
+            "version": "0.1.4"
+        },
+        "rfc3986-validator": {
+            "name": "rfc3986-validator",
+            "version": "0.1.1"
+        },
+        "rich": {
+            "name": "rich",
+            "version": "14.0.0"
+        },
+        "riskfolio-lib": {
+            "name": "riskfolio-lib",
+            "version": "7.0.1"
+        },
+        "rpds-py": {
+            "name": "rpds-py",
+            "version": "0.24.0"
+        },
+        "rsa": {
+            "name": "rsa",
+            "version": "4.9.1"
+        },
+        "ruamel.yaml": {
+            "name": "ruamel.yaml",
+            "version": "0.18.11"
+        },
+        "ruamel.yaml.clib": {
+            "name": "ruamel.yaml.clib",
+            "version": "0.2.12"
+        },
+        "safety": {
+            "name": "safety",
+            "version": "2.3.4"
+        },
+        "schedule": {
+            "name": "schedule",
+            "version": "1.2.2"
+        },
+        "scikit-image": {
+            "name": "scikit-image",
+            "version": "0.25.2"
+        },
+        "scikit-learn": {
+            "name": "scikit-learn",
+            "version": "1.3.2"
+        },
+        "scipy": {
+            "name": "scipy",
+            "version": "1.15.2"
+        },
+        "scs": {
+            "name": "scs",
+            "version": "3.2.7.post2"
+        },
+        "seaborn": {
+            "name": "seaborn",
+            "version": "0.12.2"
+        },
+        "sentry-sdk": {
+            "name": "sentry-sdk",
+            "version": "1.5.12"
+        },
+        "setuptools": {
+            "name": "setuptools",
+            "version": "80.4.0"
+        },
+        "sgmllib3k": {
+            "name": "sgmllib3k",
+            "version": "1.0.0"
+        },
+        "shap": {
+            "name": "shap",
+            "version": "0.44.1"
+        },
+        "shioaji": {
+            "name": "shioaji",
+            "version": "1.2.5"
+        },
+        "simple-websocket": {
+            "name": "simple-websocket",
+            "version": "1.1.0"
+        },
+        "simplejson": {
+            "name": "simplejson",
+            "version": "3.20.1"
+        },
+        "six": {
+            "name": "six",
+            "version": "1.17.0"
+        },
+        "slicer": {
+            "name": "slicer",
+            "version": "0.0.7"
+        },
+        "smmap": {
+            "name": "smmap",
+            "version": "5.0.2"
+        },
+        "sniffio": {
+            "name": "sniffio",
+            "version": "1.3.1"
+        },
+        "soupsieve": {
+            "name": "soupsieve",
+            "version": "2.7"
+        },
+        "sqlparse": {
+            "name": "sqlparse",
+            "version": "0.4.4"
+        },
+        "st-annotated-text": {
+            "name": "st-annotated-text",
+            "version": "4.0.2"
+        },
+        "stack-data": {
+            "name": "stack-data",
+            "version": "0.6.3"
+        },
+        "starlette": {
+            "name": "starlette",
+            "version": "0.46.2"
+        },
+        "statsmodels": {
+            "name": "statsmodels",
+            "version": "0.14.4"
+        },
+        "stevedore": {
+            "name": "stevedore",
+            "version": "5.4.1"
+        },
+        "streamlit": {
+            "name": "streamlit",
+            "version": "1.45.1"
+        },
+        "streamlit-camera-input-live": {
+            "name": "streamlit-camera-input-live",
+            "version": "0.2.0"
+        },
+        "streamlit-card": {
+            "name": "streamlit-card",
+            "version": "1.0.2"
+        },
+        "streamlit-embedcode": {
+            "name": "streamlit-embedcode",
+            "version": "0.1.2"
+        },
+        "streamlit-extras": {
+            "name": "streamlit-extras",
+            "version": "0.3.6"
+        },
+        "streamlit-faker": {
+            "name": "streamlit-faker",
+            "version": "0.0.3"
+        },
+        "streamlit-image-coordinates": {
+            "name": "streamlit-image-coordinates",
+            "version": "0.1.9"
+        },
+        "streamlit-keyup": {
+            "name": "streamlit-keyup",
+            "version": "0.3.0"
+        },
+        "streamlit-option-menu": {
+            "name": "streamlit-option-menu",
+            "version": "0.3.13"
+        },
+        "streamlit-toggle-switch": {
+            "name": "streamlit-toggle-switch",
+            "version": "1.0.2"
+        },
+        "streamlit-vertical-slider": {
+            "name": "streamlit-vertical-slider",
+            "version": "2.5.5"
+        },
+        "sympy": {
+            "name": "sympy",
+            "version": "1.14.0"
+        },
+        "ta": {
+            "name": "ta",
+            "version": "0.5.25"
+        },
+        "ta-lib": {
+            "name": "ta-lib",
+            "version": "0.6.3"
+        },
+        "tenacity": {
+            "name": "tenacity",
+            "version": "9.1.2"
+        },
+        "tensorboard": {
+            "name": "tensorboard",
+            "version": "2.19.0"
+        },
+        "tensorboard-data-server": {
+            "name": "tensorboard-data-server",
+            "version": "0.7.2"
+        },
+        "tensorflow": {
+            "name": "tensorflow",
+            "version": "2.19.0"
+        },
+        "tensorflow-io-gcs-filesystem": {
+            "name": "tensorflow-io-gcs-filesystem",
+            "version": "0.31.0"
+        },
+        "termcolor": {
+            "name": "termcolor",
+            "version": "3.1.0"
+        },
+        "terminado": {
+            "name": "terminado",
+            "version": "0.18.1"
+        },
+        "tf2onnx": {
+            "name": "tf2onnx",
+            "version": "1.16.1"
+        },
+        "threadpoolctl": {
+            "name": "threadpoolctl",
+            "version": "3.6.0"
+        },
+        "tifffile": {
+            "name": "tifffile",
+            "version": "2025.5.10"
+        },
+        "tinycss2": {
+            "name": "tinycss2",
+            "version": "1.4.0"
+        },
+        "toml": {
+            "name": "toml",
+            "version": "0.10.2"
+        },
+        "tomli": {
+            "name": "tomli",
+            "version": "2.2.1"
+        },
+        "tomlkit": {
+            "name": "tomlkit",
+            "version": "0.13.2"
+        },
+        "toolz": {
+            "name": "toolz",
+            "version": "1.0.0"
+        },
+        "torch": {
+            "name": "torch",
+            "version": "2.7.0"
+        },
+        "tornado": {
+            "name": "tornado",
+            "version": "6.4.2"
+        },
+        "tqdm": {
+            "name": "tqdm",
+            "version": "4.67.1"
+        },
+        "traitlets": {
+            "name": "traitlets",
+            "version": "5.14.3"
+        },
+        "types-python-dateutil": {
+            "name": "types-python-dateutil",
+            "version": "2.9.0.20241206"
+        },
+        "typing-extensions": {
+            "name": "typing-extensions",
+            "version": "4.13.2"
+        },
+        "tzdata": {
+            "name": "tzdata",
+            "version": "2025.2"
+        },
+        "tzlocal": {
+            "name": "tzlocal",
+            "version": "5.3.1"
+        },
+        "uri-template": {
+            "name": "uri-template",
+            "version": "1.3.0"
+        },
+        "urllib3": {
+            "name": "urllib3",
+            "version": "2.4.0"
+        },
+        "uvicorn": {
+            "name": "uvicorn",
+            "version": "0.34.2"
+        },
+        "virtualenv": {
+            "name": "virtualenv",
+            "version": "20.31.2"
+        },
+        "waitress": {
+            "name": "waitress",
+            "version": "3.0.2"
+        },
+        "watchdog": {
+            "name": "watchdog",
+            "version": "6.0.0"
+        },
+        "wcwidth": {
+            "name": "wcwidth",
+            "version": "0.2.13"
+        },
+        "webcolors": {
+            "name": "webcolors",
+            "version": "24.11.1"
+        },
+        "webencodings": {
+            "name": "webencodings",
+            "version": "0.5.1"
+        },
+        "websocket-client": {
+            "name": "websocket-client",
+            "version": "1.8.0"
+        },
+        "websockets": {
+            "name": "websockets",
+            "version": "15.0.1"
+        },
+        "werkzeug": {
+            "name": "werkzeug",
+            "version": "3.1.3"
+        },
+        "wheel": {
+            "name": "wheel",
+            "version": "0.45.1"
+        },
+        "widgetsnbextension": {
+            "name": "widgetsnbextension",
+            "version": "4.0.14"
+        },
+        "win32-setctime": {
+            "name": "win32-setctime",
+            "version": "1.2.0"
+        },
+        "wrapt": {
+            "name": "wrapt",
+            "version": "1.17.2"
+        },
+        "wsproto": {
+            "name": "wsproto",
+            "version": "1.2.0"
+        },
+        "xgboost": {
+            "name": "xgboost",
+            "version": "2.1.4"
+        },
+        "xxhash": {
+            "name": "xxhash",
+            "version": "3.5.0"
+        },
+        "yarl": {
+            "name": "yarl",
+            "version": "1.20.0"
+        },
+        "yfinance": {
+            "name": "yfinance",
+            "version": "0.2.61"
+        },
+        "zipp": {
+            "name": "zipp",
+            "version": "3.21.0"
+        },
+        "zope.event": {
+            "name": "zope.event",
+            "version": "5.0"
+        },
+        "zope.interface": {
+            "name": "zope.interface",
+            "version": "7.2"
+        },
+        "autocommand": {
+            "name": "autocommand",
+            "version": "2.2.2"
+        },
+        "backports.tarfile": {
+            "name": "backports.tarfile",
+            "version": "1.2.0"
+        },
+        "inflect": {
+            "name": "inflect",
+            "version": "7.3.1"
+        },
+        "jaraco.collections": {
+            "name": "jaraco.collections",
+            "version": "5.1.0"
+        },
+        "jaraco.context": {
+            "name": "jaraco.context",
+            "version": "5.3.0"
+        },
+        "jaraco.functools": {
+            "name": "jaraco.functools",
+            "version": "4.0.1"
+        },
+        "jaraco.text": {
+            "name": "jaraco.text",
+            "version": "3.12.1"
+        },
+        "more-itertools": {
+            "name": "more-itertools",
+            "version": "10.3.0"
+        },
+        "typeguard": {
+            "name": "typeguard",
+            "version": "4.3.0"
+        }
+    },
+    "affected_packages": {
+        "cryptography": {
+            "name": "cryptography",
+            "version": "41.0.7",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        },
+        "mlflow": {
+            "name": "mlflow",
+            "version": "2.22.0",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        },
+        "onnx": {
+            "name": "onnx",
+            "version": "1.17.0",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        },
+        "ray": {
+            "name": "ray",
+            "version": "2.46.0",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        },
+        "scikit-learn": {
+            "name": "scikit-learn",
+            "version": "1.3.2",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        },
+        "sentry-sdk": {
+            "name": "sentry-sdk",
+            "version": "1.5.12",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        },
+        "sqlparse": {
+            "name": "sqlparse",
+            "version": "0.4.4",
+            "found": "d:\\auto_trading_project\\.venv\\lib\\site-packages",
+            "insecure_versions": [],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": null,
+            "latest_version": null,
+            "more_info_url": "https://data.safetycli.com"
+        }
+    },
+    "announcements": [],
+    "vulnerabilities": [
+        {
+            "vulnerability_id": "66704",
+            "package_name": "cryptography",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=38.0.0,<42.0.4",
+            "all_vulnerable_specs": [
+                ">=38.0.0,<42.0.4"
+            ],
+            "analyzed_version": "41.0.7",
+            "advisory": "cryptography is a package designed to expose cryptographic primitives and recipes to Python developers. Starting in version 38.0.0 and before version 42.0.4, if `pkcs12.serialize_key_and_certificates` is called with both a certificate whose public key did not match the provided private key and an `encryption_algorithm` with `hmac_hash` set (via `PrivateFormat.PKCS12.encryption_builder().hmac_hash(...)`, then a NULL pointer dereference would occur, crashing the Python process. This has been resolved in version 42.0.4, the first version in which a `ValueError` is properly raised.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-26130",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/66704/f17"
+        },
+        {
+            "vulnerability_id": "65647",
+            "package_name": "cryptography",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": "<42.0.5",
+            "all_vulnerable_specs": [
+                "<42.0.5"
+            ],
+            "analyzed_version": "41.0.7",
+            "advisory": "Cryptography version 42.0.5 introduces a limit on the number of name constraint checks during X.509 path validation to prevent denial of service attacks.\r\nhttps://github.com/pyca/cryptography/commit/4be53bf20cc90cbac01f5f94c5d1aecc5289ba1f",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": null,
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/65647/f17"
+        },
+        {
+            "vulnerability_id": "65212",
+            "package_name": "cryptography",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=35.0.0,<42.0.2",
+            "all_vulnerable_specs": [
+                ">=35.0.0,<42.0.2"
+            ],
+            "analyzed_version": "41.0.7",
+            "advisory": "Versions of Cryptograph starting from 35.0.0 are susceptible to a security flaw in the POLY1305 MAC algorithm on PowerPC CPUs, which allows an attacker to disrupt the application's state. This disruption might result in false calculations or cause a denial of service. The vulnerability's exploitation hinges on the attacker's ability to alter the algorithm's application and the dependency of the software on non-volatile XMM registers.\r\nhttps://github.com/pyca/cryptography/commit/89d0d56fb104ac4e0e6db63d78fc22b8c53d27e9",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2023-6129",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/65212/f17"
+        },
+        {
+            "vulnerability_id": "65278",
+            "package_name": "cryptography",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": "<42.0.0",
+            "all_vulnerable_specs": [
+                "<42.0.0"
+            ],
+            "analyzed_version": "41.0.7",
+            "advisory": "Affected versions of Cryptography may allow a remote attacker to decrypt captured messages in TLS servers that use RSA key exchanges, which may lead to exposure of confidential or sensitive data.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2023-50782",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/65278/f17"
+        },
+        {
+            "vulnerability_id": "71587",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=0.9.0",
+            "all_vulnerable_specs": [
+                ">=0.9.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in affected versions of the MLflow platform, enabling a maliciously uploaded PyFunc model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37054",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71587/f17"
+        },
+        {
+            "vulnerability_id": "71584",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=1.23.0",
+            "all_vulnerable_specs": [
+                ">=1.23.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in versions of the MLflow platform affected versions, enabling a maliciously uploaded LightGBM scikit-learn model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37056",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71584/f17"
+        },
+        {
+            "vulnerability_id": "71692",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=2.0.0rc0",
+            "all_vulnerable_specs": [
+                ">=2.0.0rc0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in affected versions of the MLflow platform, enabling a maliciously uploaded Tensorflow model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37057",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71692/f17"
+        },
+        {
+            "vulnerability_id": "71579",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=1.27.0",
+            "all_vulnerable_specs": [
+                ">=1.27.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in versions of the MLflow platform running version 1.27.0 or newer, enabling a maliciously crafted Recipe to execute arbitrary code on an end user\u2019s system when run.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37060",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71579/f17"
+        },
+        {
+            "vulnerability_id": "71577",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=1.1.0",
+            "all_vulnerable_specs": [
+                ">=1.1.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in versions of the MLflow platform running version 1.1.0 or newer, enabling a maliciously uploaded scikit-learn model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37052",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71577/f17"
+        },
+        {
+            "vulnerability_id": "71578",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=1.1.0",
+            "all_vulnerable_specs": [
+                ">=1.1.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in versions of the MLflow platform running version 1.1.0 or newer, enabling a maliciously uploaded scikit-learn model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37053",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71578/f17"
+        },
+        {
+            "vulnerability_id": "71693",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=1.24.0",
+            "all_vulnerable_specs": [
+                ">=1.24.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in affected versions of the MLflow platform, enabling a maliciously uploaded pmdarima model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37055",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71693/f17"
+        },
+        {
+            "vulnerability_id": "71691",
+            "package_name": "mlflow",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=0.5.0",
+            "all_vulnerable_specs": [
+                ">=0.5.0"
+            ],
+            "analyzed_version": "2.22.0",
+            "advisory": "Deserialization of untrusted data can occur in affected versions of the MLflow platform running, enabling a maliciously uploaded PyTorch model to run arbitrary code on an end user\u2019s system when interacted with.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-37059",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71691/f17"
+        },
+        {
+            "vulnerability_id": "71805",
+            "package_name": "onnx",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=0",
+            "all_vulnerable_specs": [
+                ">=0"
+            ],
+            "analyzed_version": "1.17.0",
+            "advisory": "A vulnerability in the `download_model_with_test_data` function of the onnx/onnx framework, affected versions, allows for arbitrary file overwrite due to inadequate prevention of path traversal attacks in malicious tar files. This vulnerability enables attackers to overwrite any file on the system, potentially leading to remote code execution, deletion of system, personal, or application files, thus impacting the integrity and availability of the system. The issue arises from the function's handling of tar file extraction without performing security checks on the paths within the tar file, as demonstrated by the ability to overwrite the `/home/kali/.ssh/authorized_keys` file by specifying an absolute path in the malicious tar file.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-5187",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71805/f17"
+        },
+        {
+            "vulnerability_id": "65189",
+            "package_name": "ray",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": ">=0",
+            "all_vulnerable_specs": [
+                ">=0"
+            ],
+            "analyzed_version": "2.46.0",
+            "advisory": "Ray allows a remote attacker to execute arbitrary code via the job submission API. In the default configuration, Ray does not enforce authentication. As a result, attackers may freely submit jobs, delete existing jobs, retrieve sensitive information, and exploit the other vulnerabilities described in this advisory. While the Ray documentation included an optional mutual TLS authentication mode, Ray does not appear to support an authorization model. In other words, even if a Ray administrator explicitly enabled TLS authentication, they would be unable to grant users different permissions, such as read-only access to the Ray Dashboard.\r\nThe most direct method of exploitation discovered is to submit arbitrary operating system commands for execution via the job submission API using a raw HTTP request or the Ray Jobs Python SDK. These do not require authentication in the default configuration, and are accessible remotely to any system with access to the Ray Dashboard (TCP port 8265 by default).\r\nNOTE: The vendor's position is that this report is irrelevant because Ray, as stated in its documentation, is not intended for use outside of a strictly controlled network environment.\r\nNOTE2: This flaw has been under active exploitation in the wild and it was baptized 'ShadowRay'.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2023-48022",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/65189/f17"
+        },
+        {
+            "vulnerability_id": "71596",
+            "package_name": "scikit-learn",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": "<1.5.0",
+            "all_vulnerable_specs": [
+                "<1.5.0"
+            ],
+            "analyzed_version": "1.3.2",
+            "advisory": "A sensitive data leakage vulnerability was identified in affected versions of scikit-learn TfidfVectorizer. The vulnerability arises from the unexpected storage of all tokens present in the training data within the `stop_words_` attribute, rather than only storing the subset of tokens required for the TF-IDF technique to function. This behavior leads to the potential leakage of sensitive information, as the `stop_words_` attribute could contain tokens that were meant to be discarded and not stored, such as passwords or keys. The impact of this vulnerability varies based on the nature of the data being processed by the vectorizer.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-5206",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/71596/f17"
+        },
+        {
+            "vulnerability_id": "53812",
+            "package_name": "sentry-sdk",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": "<1.14.0",
+            "all_vulnerable_specs": [
+                "<1.14.0"
+            ],
+            "analyzed_version": "1.5.12",
+            "advisory": "Sentry-sdk 1.14.0 includes a fix for CVE-2023-28117: When using the Django integration of versions prior to 1.14.0 of the Sentry SDK in a specific configuration it is possible to leak sensitive cookies values, including the session cookie to Sentry. These sensitive cookies could then be used by someone with access to your Sentry issues to impersonate or escalate their privileges within your application. In order for these sensitive values to be leaked, the Sentry SDK configuration must have 'sendDefaultPII' set to 'True'; one must use a custom name for either 'SESSION_COOKIE_NAME' or 'CSRF_COOKIE_NAME' in one's Django settings; and one must not be configured in one's organization or project settings to use Sentry's data scrubbing features to account for the custom cookie names. As of version 1.14.0, the Django integration of the 'sentry-sdk' will detect the custom cookie names based on one's Django settings and will remove the values from the payload before sending the data to Sentry. As a workaround, use the SDK's filtering mechanism to remove the cookies from the payload that is sent to Sentry. For error events, this can be done with the 'before_send' callback method and for performance related events (transactions) one can use the 'before_send_transaction' callback method. Those who want to handle filtering of these values on the server-side can also use Sentry's advanced data scrubbing feature to account for the custom cookie names. Look for the '$http.cookies', '$http.headers', '$request.cookies', or '$request.headers' fields to target with a scrubbing rule.\r\nhttps://github.com/getsentry/sentry-python/security/advisories/GHSA-29pr-6jr8-q5jm",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2023-28117",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/53812/f17"
+        },
+        {
+            "vulnerability_id": "72260",
+            "package_name": "sentry-sdk",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": "<2.8.0",
+            "all_vulnerable_specs": [
+                "<2.8.0"
+            ],
+            "analyzed_version": "1.5.12",
+            "advisory": "Affected versions of Sentry's Python SDK are vulnerable to unintentional exposure of environment variables to subprocesses despite the env={} setting. In Python's 'subprocess' calls, all environment variables are passed to subprocesses by default. However, if you specifically do not want them to be passed to subprocesses, you may use 'env' argument in 'subprocess' calls. Due to the bug in Sentry SDK, with the Stdlib integration enabled (which is enabled by default), this expectation is not fulfilled, and all environment variables are being passed to subprocesses instead. \r\nAs a workaround, and if passing environment variables to child processes poses a security risk for you, you can disable all default integrations.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-40647",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/72260/f17"
+        },
+        {
+            "vulnerability_id": "67887",
+            "package_name": "sqlparse",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": "<0.5.0",
+            "all_vulnerable_specs": [
+                "<0.5.0"
+            ],
+            "analyzed_version": "0.4.4",
+            "advisory": "Sqlparse 0.5.0 addresses a potential denial of service (DoS) vulnerability related to recursion errors in deeply nested SQL statements. To mitigate this issue, the update replaces recursion errors with a general SQLParseError, improving the resilience and stability of the parsing process.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-4340",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/67887/f17"
+        }
+    ],
+    "ignored_vulnerabilities": [],
+    "remediations": {
+        "cryptography": {
+            "current_version": "41.0.7",
+            "vulnerabilities_found": 4,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=41.0.7"
+        },
+        "mlflow": {
+            "current_version": "2.22.0",
+            "vulnerabilities_found": 8,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=2.22.0"
+        },
+        "onnx": {
+            "current_version": "1.17.0",
+            "vulnerabilities_found": 1,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=1.17.0"
+        },
+        "ray": {
+            "current_version": "2.46.0",
+            "vulnerabilities_found": 1,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=2.46.0"
+        },
+        "scikit-learn": {
+            "current_version": "1.3.2",
+            "vulnerabilities_found": 1,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=1.3.2"
+        },
+        "sentry-sdk": {
+            "current_version": "1.5.12",
+            "vulnerabilities_found": 2,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=1.5.12"
+        },
+        "sqlparse": {
+            "current_version": "0.4.4",
+            "vulnerabilities_found": 1,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": "https://data.safetycli.com/?from=0.4.4"
+        }
+    }
+}

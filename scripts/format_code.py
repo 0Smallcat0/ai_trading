@@ -121,9 +121,13 @@ def main():
     parser.add_argument("--black", action="store_true", help="使用 Black 格式化程式碼")
     parser.add_argument("--isort", action="store_true", help="使用 isort 排序 import")
     parser.add_argument(
-        "--autoflake", action="store_true", help="使用 autoflake 移除未使用的 import 和變數"
+        "--autoflake",
+        action="store_true",
+        help="使用 autoflake 移除未使用的 import 和變數",
     )
-    parser.add_argument("--flake8", action="store_true", help="使用 flake8 檢查程式碼品質")
+    parser.add_argument(
+        "--flake8", action="store_true", help="使用 flake8 檢查程式碼品質"
+    )
     parser.add_argument("--all", action="store_true", help="執行所有格式化工具")
 
     args = parser.parse_args()

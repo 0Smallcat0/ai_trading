@@ -211,7 +211,10 @@ class BacktestAnalyzer:
 
         # 載入模板
         template_dir = os.path.join(os.path.dirname(__file__), "templates")
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(template_dir),
+            autoescape=jinja2.select_autoescape(['html', 'xml'])
+        )
         template = env.get_template("backtest_report.html")
 
         # 準備資料

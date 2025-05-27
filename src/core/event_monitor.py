@@ -18,10 +18,12 @@ import asyncio
 import gc
 import logging
 import os
+import re
 import threading
 import time
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Callable
+from typing import Callable, Dict, List, Optional
 
 import feedparser
 import pandas as pd
@@ -45,6 +47,178 @@ from .events.event_store import event_store
 # 載入環境變數
 load_dotenv()
 
+
+# 常數定義
+class MonitorConstants:
+    """監控系統常數"""
+
+    # 預設閾值
+    DEFAULT_PRICE_THRESHOLD = 0.05  # 5% 價格變化閾值
+    DEFAULT_VOLUME_THRESHOLD = 2.0  # 2倍成交量變化閾值
+    DEFAULT_CHECK_INTERVAL = 60  # 60秒檢查間隔
+
+    # 情緒分析閾值
+    NEGATIVE_SENTIMENT_THRESHOLD = -0.7
+    POSITIVE_SENTIMENT_THRESHOLD = 0.7
+
+    # 事件嚴重程度閾值
+    HIGH_SEVERITY_MULTIPLIER = 2.0
+
+    # 新聞來源
+    DEFAULT_NEWS_SOURCES = [
+        "https://news.cnyes.com/news/cat/tw_stock",
+        "https://www.moneydj.com/kmdj/news/newsviewer.aspx",
+        "https://www.twse.com.tw/zh/news/newsListing",
+    ]
+
+    # 通知渠道
+    DEFAULT_NOTIFICATION_CHANNELS = ["log"]
+
+    # 效能相關
+    MAX_EVENTS_IN_MEMORY = 1000
+    GC_INTERVAL = 300  # 5分鐘垃圾回收間隔
+    REQUEST_TIMEOUT = 30  # 30秒請求超時
+
+    # 重要新聞關鍵字
+    IMPORTANT_KEYWORDS = [
+        "盈餘",
+        "財報",
+        "營收",
+        "獲利",
+        "虧損",
+        "配息",
+        "配股",
+        "除權",
+        "除息",
+        "合併",
+        "收購",
+        "策略聯盟",
+        "重大投資",
+        "重大交易",
+        "重大訊息",
+        "重大事件",
+        "董事會",
+        "股東會",
+        "增資",
+        "減資",
+        "私募",
+        "下市",
+        "下櫃",
+        "停牌",
+        "恢復交易",
+        "財務危機",
+        "破產",
+        "重整",
+        "接管",
+        "解散",
+        "清算",
+        "裁員",
+        "裁撤",
+        "關廠",
+        "罰款",
+        "訴訟",
+        "糾紛",
+        "違約",
+        "違法",
+        "調查",
+        "檢調",
+        "約談",
+        "搜索",
+        "疫情",
+        "天災",
+        "事故",
+        "火災",
+        "爆炸",
+        "污染",
+        "罷工",
+        "抗議",
+        "抵制",
+        "升息",
+        "降息",
+        "升評",
+        "降評",
+        "信評",
+        "評等",
+        "評級",
+        "評價",
+        "評比",
+        "漲停",
+        "跌停",
+        "暴漲",
+        "暴跌",
+        "崩盤",
+        "熔斷",
+        "恐慌",
+        "瘋狂",
+        "狂熱",
+        "創新高",
+        "創新低",
+        "突破",
+        "跌破",
+        "反彈",
+        "反轉",
+        "回檔",
+        "修正",
+        "整理",
+        "利多",
+        "利空",
+        "買進",
+        "賣出",
+        "加碼",
+        "減碼",
+        "進場",
+        "出場",
+        "建倉",
+        "出清",
+    ]
+
+    # 高嚴重程度關鍵字
+    HIGH_SEVERITY_KEYWORDS = [
+        "重大",
+        "緊急",
+        "立即",
+        "破產",
+        "接管",
+        "停牌",
+        "下市",
+        "下櫃",
+    ]
+
+
+class MonitorConfig:
+    """監控配置類"""
+
+    def __init__(
+        self,
+        price_threshold: float = MonitorConstants.DEFAULT_PRICE_THRESHOLD,
+        volume_threshold: float = MonitorConstants.DEFAULT_VOLUME_THRESHOLD,
+        check_interval: int = MonitorConstants.DEFAULT_CHECK_INTERVAL,
+        news_sources: Optional[List[str]] = None,
+        notification_channels: Optional[List[str]] = None,
+        use_event_engine: bool = True,
+    ):
+        """
+        初始化監控配置
+
+        Args:
+            price_threshold: 價格變化閾值
+            volume_threshold: 成交量變化閾值
+            check_interval: 檢查間隔（秒）
+            news_sources: 新聞來源列表
+            notification_channels: 通知渠道列表
+            use_event_engine: 是否使用事件引擎
+        """
+        self.price_threshold = price_threshold
+        self.volume_threshold = volume_threshold
+        self.check_interval = check_interval
+        self.news_sources = news_sources or MonitorConstants.DEFAULT_NEWS_SOURCES.copy()
+        self.notification_channels = (
+            notification_channels
+            or MonitorConstants.DEFAULT_NOTIFICATION_CHANNELS.copy()
+        )
+        self.use_event_engine = use_event_engine
+
+
 # 設定日誌目錄
 log_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs"
@@ -60,88 +234,215 @@ logging.basicConfig(
         logging.StreamHandler(),
     ],
 )
-logger = logging.getLogger("event_monitor")
+logger = logging.getLogger(__name__)
 
 
-class EventType:
-    """事件類型常數"""
+class NewsProcessor(ABC):
+    """新聞處理器抽象基類"""
 
-    NEWS = "news"
-    PRICE_ANOMALY = "price_anomaly"
-    VOLUME_ANOMALY = "volume_anomaly"
-    MARKET_CRASH = "market_crash"
-    MARKET_RALLY = "market_rally"
-    EARNINGS_ANNOUNCEMENT = "earnings_announcement"
-    DIVIDEND_ANNOUNCEMENT = "dividend_announcement"
-    MERGER_ACQUISITION = "merger_acquisition"
-    REGULATORY_ANNOUNCEMENT = "regulatory_announcement"
-
-
-class Event:
-    """事件類，用於表示監控到的事件"""
-
-    def __init__(
-        self,
-        event_type,
-        stock_id=None,
-        timestamp=None,
-        content=None,
-        source=None,
-        severity=None,
-    ):
+    @abstractmethod
+    def can_process(self, source: str) -> bool:
         """
-        初始化事件
+        檢查是否可以處理指定來源的新聞
 
         Args:
-            event_type (str): 事件類型
-            stock_id (str, optional): 股票代號
-            timestamp (datetime, optional): 事件時間戳
-            content (str, optional): 事件內容
-            source (str, optional): 事件來源
-            severity (str, optional): 事件嚴重程度
-        """
-        self.event_type = event_type
-        self.stock_id = stock_id
-        self.timestamp = timestamp or datetime.now()
-        self.content = content
-        self.source = source
-        self.severity = severity
-
-    def to_dict(self):
-        """
-        將事件轉換為字典
+            source: 新聞來源URL
 
         Returns:
-            dict: 事件字典
+            bool: 是否可以處理
         """
-        return {
-            "event_type": self.event_type,
-            "stock_id": self.stock_id,
-            "timestamp": self.timestamp,
-            "content": self.content,
-            "source": self.source,
-            "severity": self.severity,
-        }
+        raise NotImplementedError("子類必須實現 can_process 方法")
 
-    @classmethod
-    def from_dict(cls, event_dict):
+    @abstractmethod
+    def parse_news(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
         """
-        從字典創建事件
+        解析新聞內容
 
         Args:
-            event_dict (dict): 事件字典
+            soup: BeautifulSoup 物件
 
         Returns:
-            Event: 事件物件
+            List[Dict[str, str]]: 新聞列表
         """
-        return cls(
-            event_type=event_dict["event_type"],
-            stock_id=event_dict["stock_id"],
-            timestamp=event_dict["timestamp"],
-            content=event_dict["content"],
-            source=event_dict["source"],
-            severity=event_dict["severity"],
-        )
+        raise NotImplementedError("子類必須實現 parse_news 方法")
+
+
+class CnyesNewsProcessor(NewsProcessor):
+    """鉅亨網新聞處理器"""
+
+    def can_process(self, source: str) -> bool:
+        """檢查是否可以處理鉅亨網新聞"""
+        return "cnyes.com" in source
+
+    def parse_news(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+        """解析鉅亨網新聞"""
+        news_list = []
+        try:
+            # 查找新聞項目
+            news_items = soup.find_all("div", class_="news-item")
+
+            for item in news_items:
+                title_element = item.find("h3")
+                if title_element:
+                    title = title_element.get_text(strip=True)
+
+                    # 提取連結
+                    link_element = title_element.find("a")
+                    link = link_element.get("href") if link_element else ""
+
+                    # 提取時間
+                    time_element = item.find("time")
+                    publish_time = (
+                        time_element.get_text(strip=True) if time_element else ""
+                    )
+
+                    # 提取摘要
+                    summary_element = item.find("p", class_="summary")
+                    summary = (
+                        summary_element.get_text(strip=True) if summary_element else ""
+                    )
+
+                    # 嘗試從標題中提取股票代號
+                    stock_id_match = re.search(r"(\d{4,6})", title)
+                    stock_id = stock_id_match.group(1) if stock_id_match else ""
+
+                    news_list.append(
+                        {
+                            "title": title,
+                            "link": link,
+                            "publish_time": publish_time,
+                            "summary": summary,
+                            "stock_id": stock_id,
+                            "source": "鉅亨網",
+                        }
+                    )
+        except Exception as e:
+            logger.error("解析鉅亨網新聞時發生錯誤: %s", e)
+
+        return news_list
+
+
+class MoneyDJNewsProcessor(NewsProcessor):
+    """MoneyDJ新聞處理器"""
+
+    def can_process(self, source: str) -> bool:
+        """檢查是否可以處理MoneyDJ新聞"""
+        return "moneydj.com" in source
+
+    def parse_news(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+        """解析MoneyDJ新聞"""
+        news_list = []
+        try:
+            # 查找新聞項目
+            news_items = soup.find_all("tr", class_="news-row")
+
+            for item in news_items:
+                title_element = item.find("td", class_="title")
+                if title_element:
+                    title_link = title_element.find("a")
+                    if title_link:
+                        title = title_link.get_text(strip=True)
+                        link = title_link.get("href", "")
+
+                        # 提取時間
+                        time_element = item.find("td", class_="time")
+                        publish_time = (
+                            time_element.get_text(strip=True) if time_element else ""
+                        )
+
+                        # 嘗試從標題中提取股票代號
+                        stock_id_match = re.search(r"(\d{4,6})", title)
+                        stock_id = stock_id_match.group(1) if stock_id_match else ""
+
+                        news_list.append(
+                            {
+                                "title": title,
+                                "link": link,
+                                "publish_time": publish_time,
+                                "summary": "",
+                                "stock_id": stock_id,
+                                "source": "MoneyDJ",
+                            }
+                        )
+        except Exception as e:
+            logger.error("解析 MoneyDJ 新聞時發生錯誤: %s", e)
+
+        return news_list
+
+
+class TWSENewsProcessor(NewsProcessor):
+    """證交所新聞處理器"""
+
+    def can_process(self, source: str) -> bool:
+        """檢查是否可以處理證交所新聞"""
+        return "twse.com.tw" in source
+
+    def parse_news(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+        """解析證交所新聞"""
+        news_list = []
+        try:
+            # 查找新聞項目
+            news_items = soup.find_all("tr")
+
+            for item in news_items[1:]:  # 跳過標題行
+                cells = item.find_all("td")
+                if len(cells) >= 3:
+                    # 提取日期
+                    date_cell = cells[0]
+                    publish_time = date_cell.get_text(strip=True)
+
+                    # 提取標題和連結
+                    title_cell = cells[1]
+                    title_link = title_cell.find("a")
+                    if title_link:
+                        title = title_link.get_text(strip=True)
+                        link = title_link.get("href", "")
+
+                        # 嘗試從標題中提取股票代號
+                        stock_id_match = re.search(r"(\d{4,6})", title)
+                        stock_id = stock_id_match.group(1) if stock_id_match else ""
+
+                        news_list.append(
+                            {
+                                "title": title,
+                                "link": link,
+                                "publish_time": publish_time,
+                                "summary": "",
+                                "stock_id": stock_id,
+                                "source": "證交所",
+                            }
+                        )
+        except Exception as e:
+            logger.error("解析證交所新聞時發生錯誤: %s", e)
+
+        return news_list
+
+
+class NewsProcessorFactory:
+    """新聞處理器工廠"""
+
+    def __init__(self):
+        """初始化新聞處理器工廠"""
+        self.processors = [
+            CnyesNewsProcessor(),
+            MoneyDJNewsProcessor(),
+            TWSENewsProcessor(),
+        ]
+
+    def get_processor(self, source: str) -> Optional[NewsProcessor]:
+        """
+        根據來源獲取對應的新聞處理器
+
+        Args:
+            source: 新聞來源URL
+
+        Returns:
+            Optional[NewsProcessor]: 新聞處理器，如果沒有找到則返回None
+        """
+        for processor in self.processors:
+            if processor.can_process(source):
+                return processor
+        return None
 
 
 class EventMonitor:
@@ -149,49 +450,38 @@ class EventMonitor:
 
     def __init__(
         self,
-        price_df=None,
-        volume_df=None,
-        news_sources=None,
-        price_threshold=0.05,
-        volume_threshold=3.0,
-        check_interval=60,
-        notification_channels=None,
-        use_event_engine=True,
+        config: Optional[MonitorConfig] = None,
+        price_df: Optional[pd.DataFrame] = None,
+        volume_df: Optional[pd.DataFrame] = None,
     ):
         """
         初始化事件監控器
 
         Args:
-            price_df (pandas.DataFrame, optional): 價格資料
-            volume_df (pandas.DataFrame, optional): 成交量資料
-            news_sources (list, optional): 新聞來源列表
-            price_threshold (float): 價格異常閾值
-            volume_threshold (float): 成交量異常閾值
-            check_interval (int): 檢查間隔（秒）
-            notification_channels (list, optional): 通知渠道列表
-            use_event_engine (bool): 是否使用事件處理引擎
+            config: 監控配置物件
+            price_df: 價格資料
+            volume_df: 成交量資料
         """
+        # 使用配置物件或建立預設配置
+        self.config = config or MonitorConfig()
+
+        # 資料框
         self.price_df = price_df
         self.volume_df = volume_df
-        self.news_sources = news_sources or [
-            "https://news.cnyes.com/news/cat/tw_stock",
-            "https://www.moneydj.com/kmdj/news/newsreallist.aspx?index=1",
-            "https://www.twse.com.tw/zh/news/newsBoard",
-        ]
-        self.price_threshold = price_threshold
-        self.volume_threshold = volume_threshold
-        self.check_interval = check_interval
-        self.notification_channels = notification_channels or ["log"]
-        self.use_event_engine = use_event_engine
 
+        # 狀態管理
         self.running = False
         self.monitor_thread = None
         self.events = []
         self.last_check_time = datetime.now()
         self.async_task = None
+        self.last_gc_time = datetime.now()
+
+        # 新聞處理器工廠
+        self.news_processor_factory = NewsProcessorFactory()
 
         # 初始化事件處理引擎
-        if self.use_event_engine:
+        if self.config.use_event_engine:
             self._init_event_engine()
 
     def _init_event_engine(self):
@@ -208,7 +498,7 @@ class EventMonitor:
 
             logger.info("事件處理引擎已初始化")
         except Exception as e:
-            logger.error(f"初始化事件處理引擎時發生錯誤: {e}")
+            logger.error("初始化事件處理引擎時發生錯誤: %s", e)
             self.use_event_engine = False
 
     def _create_event_processors(self):
@@ -234,29 +524,31 @@ class EventMonitor:
 
             # 創建新聞情緒分析器
             class SentimentProcessor(EventProcessor):
-            """
-            SentimentProcessor
-            
-            """
+                """
+                新聞情緒分析處理器
+
+                分析新聞事件的情緒並生成相應的警報事件。
+                """
+
                 def __init__(self, name, event_types, monitor):
-                """
-                __init__
-                
-                Args:
-                    name: 
-                    event_types: 
-                    monitor: 
-                """
+                    """
+                    初始化情緒分析處理器
+
+                    Args:
+                        name: 處理器名稱
+                        event_types: 處理的事件類型
+                        monitor: 監控器實例
+                    """
                     super().__init__(name, event_types)
                     self.monitor = monitor
 
                 def process_event(self, event):
-                """
-                process_event
-                
-                Args:
-                    event: 
-                """
+                    """
+                    處理事件
+
+                    Args:
+                        event: 要處理的事件
+                    """
                     if event.event_type != EventType.NEWS:
                         return None
 
@@ -320,7 +612,7 @@ class EventMonitor:
 
             logger.info("事件處理器已創建並啟動")
         except Exception as e:
-            logger.error(f"創建事件處理器時發生錯誤: {e}")
+            logger.error("創建事件處理器時發生錯誤: %s", e)
 
     def start(self):
         """
@@ -370,7 +662,7 @@ class EventMonitor:
                 event_bus.stop()
                 logger.info("事件處理引擎已停止")
             except Exception as e:
-                logger.error(f"停止事件處理引擎時發生錯誤: {e}")
+                logger.error("停止事件處理引擎時發生錯誤: %s", e)
 
         logger.info("事件監控已停止")
         return True
@@ -388,144 +680,198 @@ class EventMonitor:
                 # 檢查新聞
                 self._check_news()
 
+                # 記憶體管理
+                self._manage_memory()
+
                 # 更新最後檢查時間
                 self.last_check_time = datetime.now()
 
                 # 等待下一次檢查
-                time.sleep(self.check_interval)
+                time.sleep(self.config.check_interval)
             except Exception as e:
-                logger.error(f"監控循環發生錯誤: {e}")
+                logger.error("監控循環發生錯誤: %s", e)
                 time.sleep(10)
+
+    def _manage_memory(self):
+        """記憶體管理"""
+        current_time = datetime.now()
+
+        # 定期垃圾回收
+        if (
+            current_time - self.last_gc_time
+        ).total_seconds() > MonitorConstants.GC_INTERVAL:
+            # 清理過多的事件記錄
+            if len(self.events) > MonitorConstants.MAX_EVENTS_IN_MEMORY:
+                # 保留最新的事件
+                self.events = self.events[-MonitorConstants.MAX_EVENTS_IN_MEMORY // 2 :]
+                logger.info("清理事件記錄，保留最新 %d 個事件", len(self.events))
+
+            # 執行垃圾回收
+            gc.collect()
+            self.last_gc_time = current_time
+
+            # 記錄記憶體使用情況
+            process = psutil.Process()
+            memory_info = process.memory_info()
+            logger.debug(
+                "記憶體使用: RSS=%d MB, VMS=%d MB",
+                memory_info.rss // 1024 // 1024,
+                memory_info.vms // 1024 // 1024,
+            )
 
     def _check_price_anomaly(self):
         """檢查價格異常"""
-        if self.price_df is None:
+        if self.price_df is None or len(self.price_df) < 2:
             return
 
-        # 獲取最新價格
-        latest_prices = self.price_df.iloc[-1]
+        try:
+            # 獲取最新價格和前一天價格
+            latest_prices = self.price_df.iloc[-1]
+            previous_prices = self.price_df.iloc[-2]
 
-        # 獲取前一天價格
-        previous_prices = self.price_df.iloc[-2] if len(self.price_df) > 1 else None
+            # 計算價格變化率
+            price_changes = (latest_prices - previous_prices) / previous_prices
 
-        if previous_prices is None:
-            return
-
-        # 計算價格變化率
-        price_changes = (latest_prices - previous_prices) / previous_prices
-
-        # 檢查異常
-        for stock_id, change in price_changes.items():
-            if abs(change) > self.price_threshold:
-                if self.use_event_engine:
-                    # 使用新的事件處理引擎
-                    event = Event(
-                        event_type=EventType.PRICE_ANOMALY,
-                        source=EventSource.MARKET_DATA,
-                        subject=stock_id,
-                        severity=(
-                            EventSeverity.ERROR
-                            if abs(change) > self.price_threshold * 2
-                            else EventSeverity.WARNING
-                        ),
-                        message=f"價格異常變化: {change:.2%}",
-                        data={
-                            "stock_id": stock_id,
-                            "price": float(latest_prices[stock_id]),
-                            "previous_price": float(previous_prices[stock_id]),
-                            "change": float(change),
-                            "threshold": self.price_threshold,
-                        },
-                        tags=["price", "anomaly", "market"],
+            # 檢查異常
+            for stock_id, change in price_changes.items():
+                if abs(change) > self.config.price_threshold:
+                    self._create_price_anomaly_event(
+                        stock_id, change, latest_prices, previous_prices
                     )
+        except Exception as e:
+            logger.error("檢查價格異常時發生錯誤: %s", e)
 
-                    # 發布事件
-                    event_bus.publish(event)
-                else:
-                    # 使用舊的事件處理方式
-                    event = Event(
-                        event_type=EventType.PRICE_ANOMALY,
-                        stock_id=stock_id,
-                        content=f"價格異常變化: {change:.2%}",
-                        severity=(
-                            "high"
-                            if abs(change) > self.price_threshold * 2
-                            else "medium"
-                        ),
-                    )
+    def _create_price_anomaly_event(
+        self,
+        stock_id: str,
+        change: float,
+        latest_prices: pd.Series,
+        previous_prices: pd.Series,
+    ):
+        """
+        創建價格異常事件
 
-                    # 添加事件
-                    self.events.append(event)
+        Args:
+            stock_id: 股票代號
+            change: 價格變化率
+            latest_prices: 最新價格
+            previous_prices: 前一天價格
+        """
+        # 判斷嚴重程度
+        is_high_severity = (
+            abs(change)
+            > self.config.price_threshold * MonitorConstants.HIGH_SEVERITY_MULTIPLIER
+        )
 
-                    # 發送通知
-                    self._send_notification(event)
+        if self.config.use_event_engine:
+            # 使用新的事件處理引擎
+            event = Event(
+                event_type=EventType.PRICE_ANOMALY,
+                source=EventSource.MARKET_DATA,
+                subject=stock_id,
+                severity=(
+                    EventSeverity.ERROR if is_high_severity else EventSeverity.WARNING
+                ),
+                message=f"價格異常變化: {change:.2%}",
+                data={
+                    "stock_id": stock_id,
+                    "price": float(latest_prices[stock_id]),
+                    "previous_price": float(previous_prices[stock_id]),
+                    "change": float(change),
+                    "threshold": self.config.price_threshold,
+                },
+                tags=["price", "anomaly", "market"],
+            )
+            event_bus.publish(event)
+        else:
+            # 使用舊的事件處理方式
+            event = Event(
+                event_type=EventType.PRICE_ANOMALY,
+                stock_id=stock_id,
+                content=f"價格異常變化: {change:.2%}",
+                severity="high" if is_high_severity else "medium",
+            )
+            self.events.append(event)
+            self._send_notification(event)
 
     def _check_volume_anomaly(self):
         """檢查成交量異常"""
-        if self.volume_df is None:
+        if self.volume_df is None or len(self.volume_df) < 6:
             return
 
-        # 獲取最新成交量
-        latest_volumes = self.volume_df.iloc[-1]
+        try:
+            # 獲取最新成交量和平均成交量
+            latest_volumes = self.volume_df.iloc[-1]
+            avg_volumes = self.volume_df.iloc[-6:-1].mean()
 
-        # 計算過去 5 天的平均成交量
-        avg_volumes = (
-            self.volume_df.iloc[-6:-1].mean() if len(self.volume_df) > 5 else None
+            # 計算成交量變化率
+            volume_changes = latest_volumes / avg_volumes
+
+            # 檢查異常
+            for stock_id, change in volume_changes.items():
+                if change > self.config.volume_threshold:
+                    self._create_volume_anomaly_event(
+                        stock_id, change, latest_volumes, avg_volumes
+                    )
+        except Exception as e:
+            logger.error("檢查成交量異常時發生錯誤: %s", e)
+
+    def _create_volume_anomaly_event(
+        self,
+        stock_id: str,
+        change: float,
+        latest_volumes: pd.Series,
+        avg_volumes: pd.Series,
+    ):
+        """
+        創建成交量異常事件
+
+        Args:
+            stock_id: 股票代號
+            change: 成交量變化率
+            latest_volumes: 最新成交量
+            avg_volumes: 平均成交量
+        """
+        # 判斷嚴重程度
+        is_high_severity = (
+            change
+            > self.config.volume_threshold * MonitorConstants.HIGH_SEVERITY_MULTIPLIER
         )
 
-        if avg_volumes is None:
-            return
-
-        # 計算成交量變化率
-        volume_changes = latest_volumes / avg_volumes
-
-        # 檢查異常
-        for stock_id, change in volume_changes.items():
-            if change > self.volume_threshold:
-                if self.use_event_engine:
-                    # 使用新的事件處理引擎
-                    event = Event(
-                        event_type=EventType.VOLUME_ANOMALY,
-                        source=EventSource.MARKET_DATA,
-                        subject=stock_id,
-                        severity=(
-                            EventSeverity.ERROR
-                            if change > self.volume_threshold * 2
-                            else EventSeverity.WARNING
-                        ),
-                        message=f"成交量異常變化: {change:.2f}倍",
-                        data={
-                            "stock_id": stock_id,
-                            "volume": float(latest_volumes[stock_id]),
-                            "avg_volume": float(avg_volumes[stock_id]),
-                            "change": float(change),
-                            "threshold": self.volume_threshold,
-                        },
-                        tags=["volume", "anomaly", "market"],
-                    )
-
-                    # 發布事件
-                    event_bus.publish(event)
-                else:
-                    # 使用舊的事件處理方式
-                    event = Event(
-                        event_type=EventType.VOLUME_ANOMALY,
-                        stock_id=stock_id,
-                        content=f"成交量異常變化: {change:.2f}倍",
-                        severity=(
-                            "high" if change > self.volume_threshold * 2 else "medium"
-                        ),
-                    )
-
-                    # 添加事件
-                    self.events.append(event)
-
-                    # 發送通知
-                    self._send_notification(event)
+        if self.config.use_event_engine:
+            # 使用新的事件處理引擎
+            event = Event(
+                event_type=EventType.VOLUME_ANOMALY,
+                source=EventSource.MARKET_DATA,
+                subject=stock_id,
+                severity=(
+                    EventSeverity.ERROR if is_high_severity else EventSeverity.WARNING
+                ),
+                message=f"成交量異常變化: {change:.2f}倍",
+                data={
+                    "stock_id": stock_id,
+                    "volume": float(latest_volumes[stock_id]),
+                    "avg_volume": float(avg_volumes[stock_id]),
+                    "change": float(change),
+                    "threshold": self.config.volume_threshold,
+                },
+                tags=["volume", "anomaly", "market"],
+            )
+            event_bus.publish(event)
+        else:
+            # 使用舊的事件處理方式
+            event = Event(
+                event_type=EventType.VOLUME_ANOMALY,
+                stock_id=stock_id,
+                content=f"成交量異常變化: {change:.2f}倍",
+                severity="high" if is_high_severity else "medium",
+            )
+            self.events.append(event)
+            self._send_notification(event)
 
     def _check_news(self):
         """檢查新聞"""
-        for source in self.news_sources:
+        for source in self.config.news_sources:
             try:
                 # 獲取新聞
                 news_list = self._fetch_news(source)
@@ -534,374 +880,125 @@ class EventMonitor:
                 for news in news_list:
                     # 檢查是否為重要新聞
                     if self._is_important_news(news):
-                        if self.use_event_engine:
-                            # 使用新的事件處理引擎
-                            event = Event(
-                                event_type=EventType.NEWS,
-                                source=EventSource.NEWS_FEED,
-                                subject=news.get("stock_id", "market"),
-                                severity=(
-                                    EventSeverity.ERROR
-                                    if news.get("severity") == "high"
-                                    else EventSeverity.WARNING
-                                ),
-                                message=news.get("title", ""),
-                                data={
-                                    "stock_id": news.get("stock_id"),
-                                    "title": news.get("title"),
-                                    "content": news.get("content", ""),
-                                    "url": news.get("url", ""),
-                                    "source": source,
-                                    "timestamp": (
-                                        news.get(
-                                            "timestamp", datetime.now()
-                                        ).isoformat()
-                                        if isinstance(news.get("timestamp"), datetime)
-                                        else news.get(
-                                            "timestamp", datetime.now().isoformat()
-                                        )
-                                    ),
-                                },
-                                tags=[
-                                    "news",
-                                    "important",
-                                    news.get("severity", "medium"),
-                                ],
-                            )
-
-                            # 發布事件
-                            event_bus.publish(event)
-                        else:
-                            # 使用舊的事件處理方式
-                            event = Event(
-                                event_type=EventType.NEWS,
-                                stock_id=news.get("stock_id"),
-                                content=news.get("title"),
-                                source=source,
-                                severity=news.get("severity", "medium"),
-                            )
-
-                            # 添加事件
-                            self.events.append(event)
-
-                            # 發送通知
-                            self._send_notification(event)
+                        self._create_news_event(news, source)
             except Exception as e:
-                logger.error(f"獲取新聞時發生錯誤: {e}")
+                logger.error("獲取新聞時發生錯誤: %s", e)
 
-    def _fetch_news(self, source):
+    def _create_news_event(self, news: Dict[str, str], source: str):
+        """
+        創建新聞事件
+
+        Args:
+            news: 新聞資料
+            source: 新聞來源
+        """
+        # 判斷嚴重程度
+        is_high_severity = news.get("severity") == "high"
+
+        if self.config.use_event_engine:
+            # 使用新的事件處理引擎
+            event = Event(
+                event_type=EventType.NEWS,
+                source=EventSource.NEWS_FEED,
+                subject=news.get("stock_id", "market"),
+                severity=(
+                    EventSeverity.ERROR if is_high_severity else EventSeverity.WARNING
+                ),
+                message=news.get("title", ""),
+                data={
+                    "stock_id": news.get("stock_id"),
+                    "title": news.get("title"),
+                    "content": news.get("content", ""),
+                    "url": news.get("url", ""),
+                    "source": source,
+                    "timestamp": self._format_timestamp(news.get("timestamp")),
+                },
+                tags=["news", "important", news.get("severity", "medium")],
+            )
+            event_bus.publish(event)
+        else:
+            # 使用舊的事件處理方式
+            event = Event(
+                event_type=EventType.NEWS,
+                stock_id=news.get("stock_id"),
+                content=news.get("title"),
+                source=source,
+                severity=news.get("severity", "medium"),
+            )
+            self.events.append(event)
+            self._send_notification(event)
+
+    def _format_timestamp(self, timestamp) -> str:
+        """
+        格式化時間戳
+
+        Args:
+            timestamp: 時間戳
+
+        Returns:
+            str: 格式化後的時間戳
+        """
+        if isinstance(timestamp, datetime):
+            return timestamp.isoformat()
+        if timestamp:
+            return str(timestamp)
+        return datetime.now().isoformat()
+
+    def _fetch_news(self, source: str) -> List[Dict[str, str]]:
         """
         獲取新聞
 
         Args:
-            source (str): 新聞來源
+            source: 新聞來源URL
 
         Returns:
-            list: 新聞列表
+            List[Dict[str, str]]: 新聞列表
         """
-        # 這裡簡化了新聞獲取的邏輯，實際實現可能需要更複雜的爬蟲
         try:
-            response = requests.get(source, headers={"User-Agent": "Mozilla/5.0"})
+            # 發送請求
+            response = requests.get(
+                source,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=MonitorConstants.REQUEST_TIMEOUT,
+            )
+            response.raise_for_status()
+
+            # 解析HTML
             soup = BeautifulSoup(response.text, "html.parser")
 
-            # 根據不同的新聞來源，使用不同的解析邏輯
-            if "cnyes.com" in source:
-                return self._parse_cnyes_news(soup)
-            elif "moneydj.com" in source:
-                return self._parse_moneydj_news(soup)
-            elif "twse.com.tw" in source:
-                return self._parse_twse_news(soup)
-            else:
-                return []
+            # 使用新聞處理器工廠獲取對應的處理器
+            processor = self.news_processor_factory.get_processor(source)
+            if processor:
+                return processor.parse_news(soup)
+
+            logger.warning("未找到適合的新聞處理器: %s", source)
+            return []
+        except requests.RequestException as e:
+            logger.error("請求新聞時發生錯誤: %s", e)
+            return []
         except Exception as e:
-            logger.error(f"獲取新聞時發生錯誤: {e}")
+            logger.error("獲取新聞時發生錯誤: %s", e)
             return []
 
-    def _parse_cnyes_news(self, soup):
-        """
-        解析鉅亨網新聞
-
-        Args:
-            soup (BeautifulSoup): BeautifulSoup 物件
-
-        Returns:
-            list: 新聞列表
-        """
-        news_list = []
-
-        # 獲取新聞列表
-        news_items = soup.select("div._2bFl")
-
-        for item in news_items:
-            try:
-                # 獲取標題
-                title_elem = item.select_one("a")
-                if not title_elem:
-                    continue
-
-                title = title_elem.text.strip()
-                url = (
-                    "https://news.cnyes.com" + title_elem["href"]
-                    if title_elem.has_attr("href")
-                    else ""
-                )
-
-                # 獲取時間
-                time_elem = item.select_one("time")
-                timestamp = datetime.now()
-                if time_elem and time_elem.has_attr("datetime"):
-                    timestamp = datetime.fromisoformat(time_elem["datetime"])
-
-                # 創建新聞
-                news = {
-                    "title": title,
-                    "url": url,
-                    "timestamp": timestamp,
-                    "source": "鉅亨網",
-                }
-
-                news_list.append(news)
-            except Exception as e:
-                logger.error(f"解析鉅亨網新聞時發生錯誤: {e}")
-
-        return news_list
-
-    def _parse_moneydj_news(self, soup):
-        """
-        解析 MoneyDJ 新聞
-
-        Args:
-            soup (BeautifulSoup): BeautifulSoup 物件
-
-        Returns:
-            list: 新聞列表
-        """
-        news_list = []
-
-        # 獲取新聞列表
-        news_items = soup.select("table.forumtable tr")
-
-        for item in news_items[1:]:  # 跳過表頭
-            try:
-                # 獲取標題
-                title_elem = item.select_one("td:nth-child(3) a")
-                if not title_elem:
-                    continue
-
-                title = title_elem.text.strip()
-                url = (
-                    "https://www.moneydj.com" + title_elem["href"]
-                    if title_elem.has_attr("href")
-                    else ""
-                )
-
-                # 獲取時間
-                time_elem = item.select_one("td:nth-child(4)")
-                timestamp = datetime.now()
-                if time_elem:
-                    try:
-                        timestamp = datetime.strptime(
-                            time_elem.text.strip(), "%Y-%m-%d %H:%M:%S"
-                        )
-                    except BaseException:
-                        pass
-
-                # 創建新聞
-                news = {
-                    "title": title,
-                    "url": url,
-                    "timestamp": timestamp,
-                    "source": "MoneyDJ",
-                }
-
-                news_list.append(news)
-            except Exception as e:
-                logger.error(f"解析 MoneyDJ 新聞時發生錯誤: {e}")
-
-        return news_list
-
-    def _parse_twse_news(self, soup):
-        """
-        解析證交所新聞
-
-        Args:
-            soup (BeautifulSoup): BeautifulSoup 物件
-
-        Returns:
-            list: 新聞列表
-        """
-        news_list = []
-
-        # 獲取新聞列表
-        news_items = soup.select("table.grid tr")
-
-        for item in news_items[1:]:  # 跳過表頭
-            try:
-                # 獲取標題
-                title_elem = item.select_one("td:nth-child(2) a")
-                if not title_elem:
-                    continue
-
-                title = title_elem.text.strip()
-                url = (
-                    "https://www.twse.com.tw" + title_elem["href"]
-                    if title_elem.has_attr("href")
-                    else ""
-                )
-
-                # 獲取時間
-                time_elem = item.select_one("td:nth-child(3)")
-                timestamp = datetime.now()
-                if time_elem:
-                    try:
-                        timestamp = datetime.strptime(
-                            time_elem.text.strip(), "%Y/%m/%d"
-                        )
-                    except BaseException:
-                        pass
-
-                # 創建新聞
-                news = {
-                    "title": title,
-                    "url": url,
-                    "timestamp": timestamp,
-                    "source": "證交所",
-                }
-
-                news_list.append(news)
-            except Exception as e:
-                logger.error(f"解析證交所新聞時發生錯誤: {e}")
-
-        return news_list
-
-    def _is_important_news(self, news):
+    def _is_important_news(self, news: Dict[str, str]) -> bool:
         """
         判斷是否為重要新聞
 
         Args:
-            news (dict): 新聞
+            news: 新聞資料
 
         Returns:
             bool: 是否為重要新聞
         """
-        # 檢查新聞標題是否包含關鍵字
-        important_keywords = [
-            "盈餘",
-            "財報",
-            "營收",
-            "獲利",
-            "虧損",
-            "配息",
-            "配股",
-            "除權",
-            "除息",
-            "合併",
-            "收購",
-            "策略聯盟",
-            "重大投資",
-            "重大交易",
-            "重大訊息",
-            "重大事件",
-            "董事會",
-            "股東會",
-            "增資",
-            "減資",
-            "私募",
-            "下市",
-            "下櫃",
-            "停牌",
-            "恢復交易",
-            "財務危機",
-            "破產",
-            "重整",
-            "接管",
-            "解散",
-            "清算",
-            "裁員",
-            "裁撤",
-            "關廠",
-            "罰款",
-            "訴訟",
-            "糾紛",
-            "違約",
-            "違法",
-            "調查",
-            "檢調",
-            "約談",
-            "搜索",
-            "疫情",
-            "天災",
-            "事故",
-            "火災",
-            "爆炸",
-            "污染",
-            "罷工",
-            "抗議",
-            "抵制",
-            "升息",
-            "降息",
-            "升評",
-            "降評",
-            "信評",
-            "評等",
-            "評級",
-            "評價",
-            "評比",
-            "漲停",
-            "跌停",
-            "暴漲",
-            "暴跌",
-            "崩盤",
-            "熔斷",
-            "恐慌",
-            "瘋狂",
-            "狂熱",
-            "創新高",
-            "創新低",
-            "突破",
-            "跌破",
-            "反彈",
-            "反轉",
-            "回檔",
-            "修正",
-            "整理",
-            "利多",
-            "利空",
-            "買進",
-            "賣出",
-            "加碼",
-            "減碼",
-            "進場",
-            "出場",
-            "建倉",
-            "出清",
-        ]
-
         title = news.get("title", "")
 
-        for keyword in important_keywords:
+        # 檢查新聞標題是否包含重要關鍵字
+        for keyword in MonitorConstants.IMPORTANT_KEYWORDS:
             if keyword in title:
                 # 設定新聞嚴重程度
-                if any(
-                    k in title
-                    for k in [
-                        "重大",
-                        "緊急",
-                        "立即",
-                        "破產",
-                        "接管",
-                        "停牌",
-                        "下市",
-                        "下櫃",
-                    ]
-                ):
-                    news["severity"] = "high"
-                else:
-                    news["severity"] = "medium"
+                news["severity"] = self._determine_news_severity(title)
 
                 # 嘗試從標題中提取股票代號
-                import re
-
                 stock_id_match = re.search(r"(\d{4,6})", title)
                 if stock_id_match:
                     news["stock_id"] = stock_id_match.group(1)
@@ -910,29 +1007,59 @@ class EventMonitor:
 
         return False
 
+    def _determine_news_severity(self, title: str) -> str:
+        """
+        判斷新聞嚴重程度
+
+        Args:
+            title: 新聞標題
+
+        Returns:
+            str: 嚴重程度 ("high" 或 "medium")
+        """
+        for keyword in MonitorConstants.HIGH_SEVERITY_KEYWORDS:
+            if keyword in title:
+                return "high"
+        return "medium"
+
     def _send_notification(self, event):
         """
         發送通知
 
         Args:
-            event (Event): 事件
+            event: 事件物件
         """
         # 根據不同的通知渠道發送通知
-        for channel in self.notification_channels:
-            if channel == "log":
-                # 記錄到日誌
-                logger.info(
-                    f"事件: {event.event_type}, 股票: {event.stock_id}, 內容: {event.content}, 嚴重程度: {event.severity}"
-                )
-            elif channel == "email":
-                # 發送電子郵件
-                self._send_email(event)
-            elif channel == "line":
-                # 發送 Line 通知
-                self._send_line(event)
-            elif channel == "telegram":
-                # 發送 Telegram 通知
-                self._send_telegram(event)
+        for channel in self.config.notification_channels:
+            try:
+                if channel == "log":
+                    self._send_log_notification(event)
+                elif channel == "email":
+                    self._send_email(event)
+                elif channel == "line":
+                    self._send_line(event)
+                elif channel == "telegram":
+                    self._send_telegram(event)
+                else:
+                    logger.warning("未知的通知渠道: %s", channel)
+            except Exception as e:
+                logger.error("發送 %s 通知時發生錯誤: %s", channel, e)
+
+    def _send_log_notification(self, event):
+        """
+        發送日誌通知
+
+        Args:
+            event: 事件物件
+        """
+        # 記錄到日誌
+        logger.info(
+            "事件: %s, 股票: %s, 內容: %s, 嚴重程度: %s",
+            event.event_type,
+            getattr(event, "stock_id", "N/A"),
+            getattr(event, "content", getattr(event, "message", "N/A")),
+            getattr(event, "severity", "N/A"),
+        )
 
     def _send_email(self, event):
         """
@@ -943,7 +1070,10 @@ class EventMonitor:
         """
         # 這裡簡化了電子郵件發送的邏輯，實際實現可能需要更複雜的郵件發送功能
         logger.info(
-            f"發送電子郵件通知: {event.event_type}, {event.stock_id}, {event.content}"
+            "發送電子郵件通知: %s, %s, %s",
+            event.event_type,
+            event.stock_id,
+            event.content,
         )
 
     def _send_line(self, event):
@@ -955,7 +1085,10 @@ class EventMonitor:
         """
         # 這裡簡化了 Line 通知發送的邏輯，實際實現可能需要使用 Line Notify API
         logger.info(
-            f"發送 Line 通知: {event.event_type}, {event.stock_id}, {event.content}"
+            "發送 Line 通知: %s, %s, %s",
+            event.event_type,
+            event.stock_id,
+            event.content,
         )
 
     def _send_telegram(self, event):
@@ -967,7 +1100,10 @@ class EventMonitor:
         """
         # 這裡簡化了 Telegram 通知發送的邏輯，實際實現可能需要使用 Telegram Bot API
         logger.info(
-            f"發送 Telegram 通知: {event.event_type}, {event.stock_id}, {event.content}"
+            "發送 Telegram 通知: %s, %s, %s",
+            event.event_type,
+            event.stock_id,
+            event.content,
         )
 
     def get_events(
@@ -1046,7 +1182,7 @@ class EventMonitor:
                         )
                 news_list.extend(filtered_news[:max_news])
         except Exception as e:
-            logger.error(f"使用 FinMind 獲取新聞時發生錯誤: {e}")
+            logger.error("使用 FinMind 獲取新聞時發生錯誤: %s", e)
 
         # 方法二：使用 RSS 獲取新聞
         if len(news_list) < max_news:
@@ -1075,8 +1211,6 @@ class EventMonitor:
 
                         # 提取股票代號
                         stock_id = ""
-                        import re
-
                         stock_id_match = re.search(r"(\d{4,6})", entry.title)
                         if stock_id_match:
                             stock_id = stock_id_match.group(1)
@@ -1095,7 +1229,7 @@ class EventMonitor:
                         if len(news_list) >= max_news:
                             break
                 except Exception as e:
-                    logger.error(f"使用 RSS 獲取新聞時發生錯誤: {e}")
+                    logger.error("使用 RSS 獲取新聞時發生錯誤: %s", e)
 
         return news_list
 
@@ -1419,10 +1553,11 @@ def start(callback=None):
 
     # 定義監控循環
     def monitor_loop():
-    """
-    monitor_loop
-    
-    """
+        """
+        監控循環函數
+
+        持續監控新聞和市場事件。
+        """
         while monitor.running:
             try:
                 # 拉取最新新聞

@@ -175,7 +175,7 @@ def moving_average_crossover(
         np.ndarray: 訊號陣列
     """
     if price_col not in X.columns:
-        logger.error(f"特徵資料中缺少價格欄位: {price_col}")
+        logger.error("特徵資料中缺少價格欄位: %s", price_col)
         raise ValueError(f"特徵資料中缺少價格欄位: {price_col}")
 
     # 計算移動平均線
@@ -213,7 +213,7 @@ def rsi_strategy(
         np.ndarray: 訊號陣列
     """
     if price_col not in X.columns:
-        logger.error(f"特徵資料中缺少價格欄位: {price_col}")
+        logger.error("特徵資料中缺少價格欄位: %s", price_col)
         raise ValueError(f"特徵資料中缺少價格欄位: {price_col}")
 
     # 計算價格變化
@@ -263,7 +263,7 @@ def bollinger_bands_strategy(
         np.ndarray: 訊號陣列
     """
     if price_col not in X.columns:
-        logger.error(f"特徵資料中缺少價格欄位: {price_col}")
+        logger.error("特徵資料中缺少價格欄位: %s", price_col)
         raise ValueError(f"特徵資料中缺少價格欄位: {price_col}")
 
     # 計算移動平均線

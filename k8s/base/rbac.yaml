@@ -1,0 +1,199 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ai-trading-service-account
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: rbac
+automountServiceAccountToken: true
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-trading-role
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: rbac
+rules:
+# 允許讀取 ConfigMaps 和 Secrets
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+
+# 允許讀取 Services 和 Endpoints (用於服務發現)
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+
+# 允許讀取 Pods (用於健康檢查和監控)
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+# 允許創建和更新 Events (用於日誌記錄)
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+
+# 允許讀取 PersistentVolumeClaims
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+
+# 允許讀取 Deployments 狀態
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+
+# 允許讀取 Ingress 配置
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-trading-role-binding
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: rbac
+subjects:
+- kind: ServiceAccount
+  name: ai-trading-service-account
+  namespace: ai-trading
+roleRef:
+  kind: Role
+  name: ai-trading-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# 監控服務帳戶 (用於 Prometheus)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ai-trading-monitoring-service-account
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: monitoring
+automountServiceAccountToken: true
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ai-trading-monitoring-cluster-role
+  labels:
+    app: ai-trading-system
+    component: monitoring
+rules:
+# 允許 Prometheus 讀取所有 Pods 和 Services 的指標
+- apiGroups: [""]
+  resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods"]
+  verbs: ["get", "list", "watch"]
+
+# 允許讀取 Ingress 和 NetworkPolicies
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+
+# 允許讀取 ConfigMaps (用於 Prometheus 配置)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+
+# 允許讀取非資源 URL (如 /metrics)
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-trading-monitoring-cluster-role-binding
+  labels:
+    app: ai-trading-system
+    component: monitoring
+subjects:
+- kind: ServiceAccount
+  name: ai-trading-monitoring-service-account
+  namespace: ai-trading
+roleRef:
+  kind: ClusterRole
+  name: ai-trading-monitoring-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# 網路策略 - 限制網路訪問
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-trading-network-policy
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: security
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-trading-system
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # 允許來自同一命名空間的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ai-trading
+  
+  # 允許來自 Ingress Controller 的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8501
+    - protocol: TCP
+      port: 8000
+  
+  # 允許來自監控系統的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9091
+  
+  egress:
+  # 允許 DNS 查詢
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # 允許 HTTPS 出站流量 (用於外部 API 調用)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # 允許 HTTP 出站流量 (用於外部 API 調用)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+  
+  # 允許訪問同一命名空間內的服務
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: ai-trading

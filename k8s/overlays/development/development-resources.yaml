@@ -1,0 +1,245 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-trading-app
+  namespace: ai-trading
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # 開發環境使用 Recreate 策略以節省資源
+  template:
+    spec:
+      containers:
+      - name: ai-trading-app
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+            ephemeral-storage: "500Mi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+        env:
+        - name: API_WORKERS
+          value: "2"
+        - name: DEBUG
+          value: "true"
+        - name: LOG_LEVEL
+          value: "DEBUG"
+        - name: PERFORMANCE_MONITORING
+          value: "false"
+        - name: MEMORY_PROFILING
+          value: "true"
+        - name: MOCK_EXTERNAL_APIS
+          value: "true"
+        - name: CACHE_TTL
+          value: "300"
+        # 開發環境較寬鬆的健康檢查
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8501
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+      # 開發環境不需要節點親和性
+      affinity: {}
+      tolerations: []
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: ai-trading
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: postgres
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+            ephemeral-storage: "200Mi"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+            ephemeral-storage: "500Mi"
+        env:
+        - name: POSTGRES_SHARED_BUFFERS
+          value: "64MB"
+        - name: POSTGRES_EFFECTIVE_CACHE_SIZE
+          value: "256MB"
+        - name: POSTGRES_WORK_MEM
+          value: "2MB"
+        - name: POSTGRES_MAINTENANCE_WORK_MEM
+          value: "16MB"
+        # 開發環境較寬鬆的健康檢查
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+      affinity: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ai-trading
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: redis
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+            ephemeral-storage: "100Mi"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+            ephemeral-storage: "200Mi"
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --requirepass
+        - $(REDIS_PASSWORD)
+        - --maxmemory
+        - "192mb"
+        - --maxmemory-policy
+        - "allkeys-lru"
+        # 開發環境較寬鬆的健康檢查
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 15
+          timeoutSeconds: 3
+          failureThreshold: 5
+      affinity: {}
+
+---
+# 開發環境專用服務 - 添加 NodePort 以便本地訪問
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-trading-app-nodeport-dev
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+    environment: development
+spec:
+  type: NodePort
+  ports:
+  - name: http-ui
+    port: 8501
+    targetPort: 8501
+    nodePort: 30501
+    protocol: TCP
+  - name: http-api
+    port: 8000
+    targetPort: 8000
+    nodePort: 30500
+    protocol: TCP
+  - name: metrics
+    port: 9091
+    targetPort: 9091
+    nodePort: 30591
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: app
+
+---
+# 開發環境資料庫 NodePort 服務
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-nodeport-dev
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: database
+    environment: development
+spec:
+  type: NodePort
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    nodePort: 30432
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: database
+
+---
+# 開發環境 Redis NodePort 服務
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-nodeport-dev
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: cache
+    environment: development
+spec:
+  type: NodePort
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    nodePort: 30379
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: cache

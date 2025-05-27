@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>效能測試報告</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; }
+        .summary { display: flex; justify-content: space-around; margin: 20px 0; }
+        .metric { text-align: center; padding: 15px; background-color: #e9e9e9; border-radius: 5px; }
+        .metric h3 { margin: 0; color: #333; }
+        .metric p { margin: 5px 0; font-size: 24px; font-weight: bold; color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 API 效能測試報告</h1>
+        <p>生成時間: 2025-05-27 10:39:50</p>
+        <p>測試項目數量: 4</p>
+    </div>
+    
+    <div class="summary">
+        <div class="metric">
+            <h3>總請求數</h3>
+            <p>80</p>
+        </div>
+        <div class="metric">
+            <h3>成功率</h3>
+            <p>100.0%</p>
+        </div>
+        <div class="metric">
+            <h3>平均回應時間</h3>
+            <p>0.7ms</p>
+        </div>
+        <div class="metric">
+            <h3>平均吞吐量</h3>
+            <p>19.8 req/s</p>
+        </div>
+    </div>
+    
+    <h2>📊 詳細測試結果</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>測試名稱</th>
+                <th>持續時間(s)</th>
+                <th>總請求數</th>
+                <th>成功請求</th>
+                <th>失敗請求</th>
+                <th>平均回應時間(ms)</th>
+                <th>P95回應時間(ms)</th>
+                <th>P99回應時間(ms)</th>
+                <th>吞吐量(req/s)</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+                <td>健康檢查</td>
+                <td>1.0</td>
+                <td>20</td>
+                <td>20</td>
+                <td>0</td>
+                <td>0.7</td>
+                <td>1.0</td>
+                <td>1.0</td>
+                <td>19.9</td>
+                <td class="pass">✅ 通過</td>
+            </tr>
+
+            <tr>
+                <td>API 資訊</td>
+                <td>1.0</td>
+                <td>20</td>
+                <td>20</td>
+                <td>0</td>
+                <td>0.7</td>
+                <td>1.2</td>
+                <td>1.2</td>
+                <td>19.8</td>
+                <td class="pass">✅ 通過</td>
+            </tr>
+
+            <tr>
+                <td>資料管理</td>
+                <td>1.0</td>
+                <td>20</td>
+                <td>20</td>
+                <td>0</td>
+                <td>0.7</td>
+                <td>1.1</td>
+                <td>1.1</td>
+                <td>19.7</td>
+                <td class="pass">✅ 通過</td>
+            </tr>
+
+            <tr>
+                <td>策略管理</td>
+                <td>1.0</td>
+                <td>20</td>
+                <td>20</td>
+                <td>0</td>
+                <td>0.9</td>
+                <td>2.0</td>
+                <td>2.0</td>
+                <td>19.8</td>
+                <td class="pass">✅ 通過</td>
+            </tr>
+
+        </tbody>
+    </table>
+    
+    <h2>🔍 錯誤分析</h2>
+<p>✅ 沒有發現錯誤</p>
+    <h2>📈 效能建議</h2>
+    <ul>
+<li>⚠️ 吞吐量較低，建議檢查系統瓶頸</li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-trading
+  labels:
+    name: ai-trading
+    app: ai-trading-system
+    version: v1.0.0
+  annotations:
+    description: "AI 股票自動交易系統命名空間"
+    maintainer: "AI Trading Team"
+    created-by: "kubernetes-deployment"

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Backtrader 整合模組
+"""Backtrader 整合模組
 
 此模組提供與 Backtrader 回測框架的整合功能，包括：
 - 資料饋送轉換
@@ -9,6 +8,7 @@ Backtrader 整合模組
 - 結果分析
 """
 
+import json
 import logging
 import os
 from datetime import datetime
@@ -29,8 +29,7 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 
 
 class PandasDataFeed(btfeeds.PandasData):
-    """
-    Pandas 資料饋送
+    """Pandas 資料饋送
 
     擴展 Backtrader 的 PandasData 類，支援更多欄位。
     """
@@ -40,8 +39,7 @@ class PandasDataFeed(btfeeds.PandasData):
 
 
 class ModelSignalStrategy(bt.Strategy):
-    """
-    模型訊號策略
+    """模型訊號策略
 
     基於模型訊號的 Backtrader 策略。
     """
@@ -65,9 +63,7 @@ class ModelSignalStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        """
-        初始化策略
-        """
+        """初始化策略"""
         # 初始化指標
         self.atr = (
             bt.indicators.ATR(self.data, period=self.p.atr_period)
@@ -88,8 +84,7 @@ class ModelSignalStrategy(bt.Strategy):
             raise ValueError("必須提供模型或推論管道")
 
     def log(self, txt, dt=None):
-        """
-        記錄訊息
+        """記錄訊息
 
         Args:
             txt (str): 訊息
@@ -100,8 +95,7 @@ class ModelSignalStrategy(bt.Strategy):
             print(f"{dt.isoformat()}, {txt}")
 
     def notify_order(self, order):
-        """
-        訂單通知
+        """訂單通知
 
         Args:
             order (Order): 訂單
@@ -114,7 +108,9 @@ class ModelSignalStrategy(bt.Strategy):
             # 訂單已完成
             if order.isbuy():
                 self.log(
-                    f"買入執行: 價格={order.executed.price:.2f}, 成本={order.executed.value:.2f}, 手續費={order.executed.comm:.2f}"
+                    f"買入執行: 價格={order.executed.price:.2f}, "
+                    f"成本={order.executed.value:.2f}, "
+                    f"手續費={order.executed.comm:.2f}"
                 )
 
                 # 設定止損和止盈
@@ -139,7 +135,9 @@ class ModelSignalStrategy(bt.Strategy):
                     self.take_profit_orders[order.data._name] = take_profit_order
             else:
                 self.log(
-                    f"賣出執行: 價格={order.executed.price:.2f}, 成本={order.executed.value:.2f}, 手續費={order.executed.comm:.2f}"
+                    f"賣出執行: 價格={order.executed.price:.2f}, "
+                    f"成本={order.executed.value:.2f}, "
+                    f"手續費={order.executed.comm:.2f}"
                 )
 
                 # 清除止損和止盈訂單
@@ -159,8 +157,7 @@ class ModelSignalStrategy(bt.Strategy):
         self.order = None
 
     def notify_trade(self, trade):
-        """
-        交易通知
+        """交易通知
 
         Args:
             trade (Trade): 交易
@@ -171,8 +168,7 @@ class ModelSignalStrategy(bt.Strategy):
         self.log(f"交易利潤: 毛利={trade.pnl:.2f}, 淨利={trade.pnlcomm:.2f}")
 
     def prepare_features(self):
-        """
-        準備特徵
+        """準備特徵
 
         Returns:
             pd.DataFrame: 特徵資料框
@@ -200,9 +196,43 @@ class ModelSignalStrategy(bt.Strategy):
 
         return features_df
 
-    def generate_signals(self):
+    def _process_predictions(self, predictions):
+        """處理預測結果
+
+        Args:
+            predictions: 模型預測結果
+
+        Returns:
+            Dict[str, float]: 訊號字典
         """
-        生成訊號
+        signals = {}
+        for i, data in enumerate(self.datas):
+            if isinstance(predictions, list) and len(predictions) > i:
+                signals[data._name] = predictions[i]
+            elif isinstance(predictions, np.ndarray) and len(predictions) > i:
+                signals[data._name] = predictions[i]
+            elif isinstance(predictions, (int, float)):
+                signals[data._name] = predictions
+            else:
+                signals[data._name] = 0.0
+        return signals
+
+    def _get_data_signals(self):
+        """從資料中獲取訊號
+
+        Returns:
+            Dict[str, float]: 訊號字典
+        """
+        signals = {}
+        for data in self.datas:
+            if hasattr(data.lines, "signal"):
+                signals[data._name] = data.lines.signal[0]
+            else:
+                signals[data._name] = 0.0
+        return signals
+
+    def generate_signals(self):
+        """生成訊號
 
         Returns:
             Dict[str, float]: 訊號字典，鍵為資料名稱，值為訊號值
@@ -210,51 +240,19 @@ class ModelSignalStrategy(bt.Strategy):
         # 準備特徵
         self.features_df = self.prepare_features()
 
-        # 生成訊號
-        signals = {}
-
         if self.p.inference_pipeline is not None:
             # 使用推論管道生成訊號
             predictions = self.p.inference_pipeline.predict(self.features_df)
-
-            # 處理預測結果
-            for i, data in enumerate(self.datas):
-                if isinstance(predictions, list) and len(predictions) > i:
-                    signals[data._name] = predictions[i]
-                elif isinstance(predictions, np.ndarray) and len(predictions) > i:
-                    signals[data._name] = predictions[i]
-                elif isinstance(predictions, (int, float)):
-                    signals[data._name] = predictions
-                else:
-                    signals[data._name] = 0.0
-        elif self.p.model is not None:
+            return self._process_predictions(predictions)
+        if self.p.model is not None:
             # 使用模型生成訊號
             predictions = self.p.model.predict(self.features_df)
-
-            # 處理預測結果
-            for i, data in enumerate(self.datas):
-                if isinstance(predictions, list) and len(predictions) > i:
-                    signals[data._name] = predictions[i]
-                elif isinstance(predictions, np.ndarray) and len(predictions) > i:
-                    signals[data._name] = predictions[i]
-                elif isinstance(predictions, (int, float)):
-                    signals[data._name] = predictions
-                else:
-                    signals[data._name] = 0.0
-        else:
-            # 使用資料中的訊號
-            for data in self.datas:
-                if hasattr(data.lines, "signal"):
-                    signals[data._name] = data.lines.signal[0]
-                else:
-                    signals[data._name] = 0.0
-
-        return signals
+            return self._process_predictions(predictions)
+        # 使用資料中的訊號
+        return self._get_data_signals()
 
     def next(self):
-        """
-        策略主邏輯
-        """
+        """策略主邏輯"""
         # 檢查是否需要再平衡
         current_date = self.datas[0].datetime.date(0)
         if (
@@ -323,8 +321,7 @@ class ModelSignalStrategy(bt.Strategy):
                             )
 
     def calculate_position_size(self, data):
-        """
-        計算倉位大小
+        """計算倉位大小
 
         Args:
             data (Data): 資料
@@ -344,8 +341,7 @@ class ModelSignalStrategy(bt.Strategy):
         return max(1, size)
 
     def get_position_count(self):
-        """
-        獲取持倉數量
+        """獲取持倉數量
 
         Returns:
             int: 持倉數量
@@ -360,8 +356,7 @@ class ModelSignalStrategy(bt.Strategy):
 
 
 class BacktestEngine:
-    """
-    回測引擎
+    """回測引擎
 
     提供回測功能。
     """
@@ -378,8 +373,7 @@ class BacktestEngine:
         tax: float = 0.003,
         output_dir: Optional[str] = None,
     ):
-        """
-        初始化回測引擎
+        """初始化回測引擎
 
         Args:
             data (Optional[pd.DataFrame]): 資料
@@ -442,8 +436,7 @@ class BacktestEngine:
         fromdate: Optional[datetime] = None,
         todate: Optional[datetime] = None,
     ) -> None:
-        """
-        添加資料
+        """添加資料
 
         Args:
             data (Optional[pd.DataFrame]): 資料
@@ -486,15 +479,14 @@ class BacktestEngine:
                 )
                 self.cerebro.adddata(data_feed)
             else:
-                logger.error(f"不支援的資料格式: {data_path}")
+                logger.error("不支援的資料格式: %s", data_path)
                 raise ValueError(f"不支援的資料格式: {data_path}")
         else:
             logger.error("必須提供資料或資料路徑")
             raise ValueError("必須提供資料或資料路徑")
 
     def add_strategy(self, strategy: bt.Strategy, **kwargs) -> None:
-        """
-        添加策略
+        """添加策略
 
         Args:
             strategy (bt.Strategy): 策略
@@ -503,8 +495,7 @@ class BacktestEngine:
         self.cerebro.addstrategy(strategy, **kwargs)
 
     def run(self) -> Dict[str, Any]:
-        """
-        執行回測
+        """執行回測
 
         Returns:
             Dict[str, Any]: 回測結果
@@ -565,8 +556,7 @@ class BacktestEngine:
         return result
 
     def plot(self, filename: Optional[str] = None, **kwargs) -> None:
-        """
-        繪製回測結果
+        """繪製回測結果
 
         Args:
             filename (Optional[str]): 檔案名稱
@@ -585,13 +575,12 @@ class BacktestEngine:
         self.cerebro.plot(**kwargs)[0][0].savefig(filename)
         plt.close()
 
-        logger.info(f"回測結果已繪製至: {filename}")
+        logger.info("回測結果已繪製至: %s", filename)
 
     def save_results(
         self, result: Dict[str, Any], filename: Optional[str] = None
     ) -> None:
-        """
-        保存回測結果
+        """保存回測結果
 
         Args:
             result (Dict[str, Any]): 回測結果
@@ -602,16 +591,13 @@ class BacktestEngine:
             filename = os.path.join(self.output_dir, "backtest_results.json")
 
         # 保存結果
-        import json
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=4, default=str, ensure_ascii=False)
 
-        with open(filename, "w") as f:
-            json.dump(result, f, indent=4, default=str)
-
-        logger.info(f"回測結果已保存至: {filename}")
+        logger.info("回測結果已保存至: %s", filename)
 
     def get_equity_curve(self) -> pd.DataFrame:
-        """
-        獲取權益曲線
+        """獲取權益曲線
 
         Returns:
             pd.DataFrame: 權益曲線

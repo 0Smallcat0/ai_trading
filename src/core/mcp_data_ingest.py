@@ -231,7 +231,7 @@ class MCPDataIngestor:
 
             def on_open():
                 """連接建立回調"""
-                logger.info(f"WebSocket 連接已建立，訂閱新聞")
+                logger.info("WebSocket 連接已建立，訂閱新聞")
                 # 訂閱新聞
                 if symbols:
                     self.websocket_client.send(

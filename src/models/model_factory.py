@@ -10,7 +10,7 @@ from typing import Dict, Optional, Type
 
 from src.config import LOG_LEVEL
 
-from .dl_models import GRUModel, LSTMModel, TransformerModel
+from .dl_models import GRUModel, LSTMModel
 from .ml_models import LightGBMModel, RandomForestModel, SVMModel, XGBoostModel
 from .model_base import ModelBase
 from .rule_based_models import RuleBasedModel
@@ -29,7 +29,6 @@ MODEL_TYPES = {
     # 深度學習模型
     "lstm": LSTMModel,
     "gru": GRUModel,
-    "transformer": TransformerModel,
     # 規則型模型
     "rule_based": RuleBasedModel,
 }
@@ -51,7 +50,7 @@ def create_model(model_type: str, name: Optional[str] = None, **kwargs) -> Model
         ValueError: 如果指定的模型類型不存在
     """
     if model_type not in MODEL_TYPES:
-        logger.error(f"未知的模型類型: {model_type}")
+        logger.error("未知的模型類型: %s", model_type)
         raise ValueError(
             f"未知的模型類型: {model_type}，可用類型: {list(MODEL_TYPES.keys())}"
         )
@@ -66,7 +65,7 @@ def create_model(model_type: str, name: Optional[str] = None, **kwargs) -> Model
     # 創建模型實例
     model = model_class(name=name, **kwargs)
 
-    logger.info(f"已創建 {model_type} 模型: {name}")
+    logger.info("已創建 %s 模型: %s", model_type, name)
     return model
 
 
@@ -82,11 +81,11 @@ def register_model(model_type: str, model_class: Type[ModelBase]) -> None:
         TypeError: 如果模型類不是 ModelBase 的子類
     """
     if not issubclass(model_class, ModelBase):
-        logger.error(f"模型類 {model_class.__name__} 不是 ModelBase 的子類")
-        raise TypeError(f"模型類必須是 ModelBase 的子類")
+        logger.error("模型類 %s 不是 ModelBase 的子類", model_class.__name__)
+        raise TypeError("模型類必須是 ModelBase 的子類")
 
     MODEL_TYPES[model_type] = model_class
-    logger.info(f"已註冊模型類型: {model_type}")
+    logger.info("已註冊模型類型: %s", model_type)
 
 
 def get_available_models() -> Dict[str, Type[ModelBase]]:

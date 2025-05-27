@@ -25,8 +25,7 @@ from src.config import CACHE_DIR, DATA_DIR, DB_PATH
 from src.data_sources.data_collector import DataCollector, RetryStrategy
 from src.data_sources.twse_crawler import TwseCrawler
 from src.data_sources.yahoo_adapter import YahooFinanceAdapter
-from src.database.schema import (MarketDaily, MarketMinute, MarketType,
-                                 TimeGranularity)
+from src.database.schema import MarketDaily, MarketMinute, MarketType, TimeGranularity
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -65,7 +64,9 @@ class MarketDataCollector(DataCollector):
 
         # 初始化資料適配器
         if source == "yahoo":
-            self.adapter = YahooFinanceAdapter(use_cache=use_cache, cache_expiry_days=cache_expiry_days)
+            self.adapter = YahooFinanceAdapter(
+                use_cache=use_cache, cache_expiry_days=cache_expiry_days
+            )
         elif source == "twse":
             self.adapter = TwseCrawler()
         else:
@@ -130,7 +131,7 @@ class MarketDataCollector(DataCollector):
                     if not data.empty:
                         results[symbol] = data
                         logger.info(f"成功收集 {symbol} 的日線資料，共 {len(data)} 筆")
-                        
+
                         # 儲存到資料庫
                         if save_to_db:
                             self._save_daily_data_to_db(data)
@@ -194,15 +195,19 @@ class MarketDataCollector(DataCollector):
                     data = future.result()
                     if not data.empty:
                         results[symbol] = data
-                        logger.info(f"成功收集 {symbol} 的 {interval} 分鐘線資料，共 {len(data)} 筆")
-                        
+                        logger.info(
+                            f"成功收集 {symbol} 的 {interval} 分鐘線資料，共 {len(data)} 筆"
+                        )
+
                         # 儲存到資料庫
                         if save_to_db:
                             self._save_minute_data_to_db(data)
                     else:
                         logger.warning(f"收集 {symbol} 的 {interval} 分鐘線資料為空")
                 except Exception as e:
-                    logger.error(f"收集 {symbol} 的 {interval} 分鐘線資料時發生錯誤: {e}")
+                    logger.error(
+                        f"收集 {symbol} 的 {interval} 分鐘線資料時發生錯誤: {e}"
+                    )
 
         logger.info(f"完成收集 {interval} 分鐘線資料，成功收集 {len(results)} 檔股票")
         return results
@@ -218,10 +223,14 @@ class MarketDataCollector(DataCollector):
         try:
             for _, row in data.iterrows():
                 # 檢查是否已存在相同的記錄
-                existing = session.query(MarketDaily).filter(
-                    MarketDaily.symbol == row["symbol"],
-                    MarketDaily.date == row["date"],
-                ).first()
+                existing = (
+                    session.query(MarketDaily)
+                    .filter(
+                        MarketDaily.symbol == row["symbol"],
+                        MarketDaily.date == row["date"],
+                    )
+                    .first()
+                )
 
                 if existing:
                     # 更新現有記錄
@@ -267,11 +276,15 @@ class MarketDataCollector(DataCollector):
         try:
             for _, row in data.iterrows():
                 # 檢查是否已存在相同的記錄
-                existing = session.query(MarketMinute).filter(
-                    MarketMinute.symbol == row["symbol"],
-                    MarketMinute.timestamp == row["timestamp"],
-                    MarketMinute.granularity == row["granularity"],
-                ).first()
+                existing = (
+                    session.query(MarketMinute)
+                    .filter(
+                        MarketMinute.symbol == row["symbol"],
+                        MarketMinute.timestamp == row["timestamp"],
+                        MarketMinute.granularity == row["granularity"],
+                    )
+                    .first()
+                )
 
                 if existing:
                     # 更新現有記錄
@@ -308,10 +321,7 @@ class MarketDataCollector(DataCollector):
             session.close()
 
     def collect(
-        self,
-        symbols: List[str],
-        data_type: str = "daily",
-        **kwargs
+        self, symbols: List[str], data_type: str = "daily", **kwargs
     ) -> Dict[str, pd.DataFrame]:
         """
         收集資料的實現方法
@@ -330,4 +340,3 @@ class MarketDataCollector(DataCollector):
             return self.collect_minute_data(symbols, **kwargs)
         else:
             raise ValueError(f"不支援的資料類型: {data_type}")
-"""

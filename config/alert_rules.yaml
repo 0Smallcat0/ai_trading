@@ -1,0 +1,343 @@
+# AI 交易系統告警規則配置
+# Phase 5.3: 監控與告警系統建立
+
+# 告警規則組
+groups:
+  # 系統資源告警規則
+  - name: "system_alerts"
+    interval: 30s
+    rules:
+      # CPU 使用率告警
+      - alert: "HighCPUUsage"
+        expr: system_cpu_usage_percent > 90
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "system"
+          component: "cpu"
+        annotations:
+          summary: "CPU 使用率過高"
+          description: "CPU 使用率已達到 {{ $value }}%，超過 90% 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/high-cpu"
+          
+      - alert: "ModerateCPUUsage"
+        expr: system_cpu_usage_percent > 70
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "system"
+          component: "cpu"
+        annotations:
+          summary: "CPU 使用率偏高"
+          description: "CPU 使用率已達到 {{ $value }}%，超過 70% 閾值"
+          
+      # 記憶體使用率告警
+      - alert: "HighMemoryUsage"
+        expr: system_memory_usage_percent > 95
+        for: 1m
+        labels:
+          severity: "critical"
+          category: "system"
+          component: "memory"
+        annotations:
+          summary: "記憶體使用率過高"
+          description: "記憶體使用率已達到 {{ $value }}%，超過 95% 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/high-memory"
+          
+      - alert: "ModerateMemoryUsage"
+        expr: system_memory_usage_percent > 80
+        for: 3m
+        labels:
+          severity: "warning"
+          category: "system"
+          component: "memory"
+        annotations:
+          summary: "記憶體使用率偏高"
+          description: "記憶體使用率已達到 {{ $value }}%，超過 80% 閾值"
+          
+      # 磁碟使用率告警
+      - alert: "HighDiskUsage"
+        expr: system_disk_usage_percent > 95
+        for: 1m
+        labels:
+          severity: "critical"
+          category: "system"
+          component: "disk"
+        annotations:
+          summary: "磁碟使用率過高"
+          description: "磁碟使用率已達到 {{ $value }}%，超過 95% 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/high-disk"
+          
+      - alert: "ModerateDiskUsage"
+        expr: system_disk_usage_percent > 85
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "system"
+          component: "disk"
+        annotations:
+          summary: "磁碟使用率偏高"
+          description: "磁碟使用率已達到 {{ $value }}%，超過 85% 閾值"
+          
+      # 系統負載告警
+      - alert: "HighSystemLoad"
+        expr: system_load_average_5m > 4.0
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "system"
+          component: "load"
+        annotations:
+          summary: "系統負載過高"
+          description: "5分鐘平均負載已達到 {{ $value }}，超過 4.0 閾值"
+          
+      - alert: "ModerateSystemLoad"
+        expr: system_load_average_5m > 2.0
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "system"
+          component: "load"
+        annotations:
+          summary: "系統負載偏高"
+          description: "5分鐘平均負載已達到 {{ $value }}，超過 2.0 閾值"
+
+  # 交易系統告警規則
+  - name: "trading_alerts"
+    interval: 30s
+    rules:
+      # 訂單成功率告警
+      - alert: "LowOrderSuccessRate"
+        expr: trading_order_success_rate < 80
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "trading"
+          component: "orders"
+        annotations:
+          summary: "訂單成功率過低"
+          description: "{{ $labels.order_type }} 訂單成功率降至 {{ $value }}%，低於 80% 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/low-order-success"
+          
+      - alert: "ModerateOrderSuccessRate"
+        expr: trading_order_success_rate < 90
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "trading"
+          component: "orders"
+        annotations:
+          summary: "訂單成功率偏低"
+          description: "{{ $labels.order_type }} 訂單成功率降至 {{ $value }}%，低於 90% 閾值"
+          
+      # 資金使用率告警
+      - alert: "HighCapitalUtilization"
+        expr: trading_capital_utilization_percent > 98
+        for: 1m
+        labels:
+          severity: "critical"
+          category: "trading"
+          component: "capital"
+        annotations:
+          summary: "資金使用率過高"
+          description: "資金使用率已達到 {{ $value }}%，超過 98% 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/high-capital-usage"
+          
+      - alert: "ModerateCapitalUtilization"
+        expr: trading_capital_utilization_percent > 90
+        for: 3m
+        labels:
+          severity: "warning"
+          category: "trading"
+          component: "capital"
+        annotations:
+          summary: "資金使用率偏高"
+          description: "資金使用率已達到 {{ $value }}%，超過 90% 閾值"
+          
+      # 交易延遲告警
+      - alert: "HighTradingLatency"
+        expr: histogram_quantile(0.95, trading_order_latency_seconds_bucket) > 1.0
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "trading"
+          component: "latency"
+        annotations:
+          summary: "交易延遲過高"
+          description: "{{ $labels.order_type }} 訂單 P95 延遲達到 {{ $value }}秒，超過 1 秒閾值"
+          
+      - alert: "ModerateTradingLatency"
+        expr: histogram_quantile(0.95, trading_order_latency_seconds_bucket) > 0.5
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "trading"
+          component: "latency"
+        annotations:
+          summary: "交易延遲偏高"
+          description: "{{ $labels.order_type }} 訂單 P95 延遲達到 {{ $value }}秒，超過 0.5 秒閾值"
+
+  # API 效能告警規則
+  - name: "api_alerts"
+    interval: 30s
+    rules:
+      # API 錯誤率告警
+      - alert: "HighAPIErrorRate"
+        expr: |
+          (
+            sum(rate(api_requests_total{status_code=~"5.."}[5m])) by (endpoint) /
+            sum(rate(api_requests_total[5m])) by (endpoint)
+          ) * 100 > 10
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "api"
+          component: "errors"
+        annotations:
+          summary: "API 錯誤率過高"
+          description: "{{ $labels.endpoint }} API 錯誤率達到 {{ $value }}%，超過 10% 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/high-api-errors"
+          
+      - alert: "ModerateAPIErrorRate"
+        expr: |
+          (
+            sum(rate(api_requests_total{status_code=~"5.."}[5m])) by (endpoint) /
+            sum(rate(api_requests_total[5m])) by (endpoint)
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "api"
+          component: "errors"
+        annotations:
+          summary: "API 錯誤率偏高"
+          description: "{{ $labels.endpoint }} API 錯誤率達到 {{ $value }}%，超過 5% 閾值"
+          
+      # API 回應時間告警
+      - alert: "HighAPILatency"
+        expr: histogram_quantile(0.99, api_request_duration_seconds_bucket) > 5.0
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "api"
+          component: "latency"
+        annotations:
+          summary: "API 回應時間過長"
+          description: "{{ $labels.endpoint }} API P99 回應時間達到 {{ $value }}秒，超過 5 秒閾值"
+          
+      - alert: "ModerateAPILatency"
+        expr: histogram_quantile(0.99, api_request_duration_seconds_bucket) > 1.0
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "api"
+          component: "latency"
+        annotations:
+          summary: "API 回應時間偏長"
+          description: "{{ $labels.endpoint }} API P99 回應時間達到 {{ $value }}秒，超過 1 秒閾值"
+          
+      # API 連接數告警
+      - alert: "HighAPIConnections"
+        expr: api_active_connections > 2000
+        for: 1m
+        labels:
+          severity: "critical"
+          category: "api"
+          component: "connections"
+        annotations:
+          summary: "API 活躍連接數過高"
+          description: "API 活躍連接數達到 {{ $value }}，超過 2000 閾值"
+          
+      - alert: "ModerateAPIConnections"
+        expr: api_active_connections > 1000
+        for: 3m
+        labels:
+          severity: "warning"
+          category: "api"
+          component: "connections"
+        annotations:
+          summary: "API 活躍連接數偏高"
+          description: "API 活躍連接數達到 {{ $value }}，超過 1000 閾值"
+
+  # 業務邏輯告警規則
+  - name: "business_alerts"
+    interval: 60s
+    rules:
+      # 系統健康分數告警
+      - alert: "LowSystemHealthScore"
+        expr: system_health_score < 60
+        for: 2m
+        labels:
+          severity: "critical"
+          category: "business"
+          component: "health"
+        annotations:
+          summary: "系統健康分數過低"
+          description: "系統健康分數降至 {{ $value }}，低於 60 閾值"
+          runbook_url: "https://docs.trading-system.com/runbooks/low-health-score"
+          
+      - alert: "ModerateSystemHealthScore"
+        expr: system_health_score < 80
+        for: 5m
+        labels:
+          severity: "warning"
+          category: "business"
+          component: "health"
+        annotations:
+          summary: "系統健康分數偏低"
+          description: "系統健康分數降至 {{ $value }}，低於 80 閾值"
+          
+      # 活躍警報數量告警
+      - alert: "TooManyActiveAlerts"
+        expr: sum(active_alerts_count) > 20
+        for: 1m
+        labels:
+          severity: "warning"
+          category: "business"
+          component: "alerts"
+        annotations:
+          summary: "活躍警報數量過多"
+          description: "當前活躍警報數量為 {{ $value }}，超過 20 個閾值"
+          
+      # 嚴重警報告警
+      - alert: "CriticalAlertsPresent"
+        expr: active_alerts_count{severity="CRITICAL"} > 0
+        for: 0s
+        labels:
+          severity: "critical"
+          category: "business"
+          component: "alerts"
+        annotations:
+          summary: "存在嚴重警報"
+          description: "當前有 {{ $value }} 個嚴重警報需要立即處理"
+          runbook_url: "https://docs.trading-system.com/runbooks/critical-alerts"
+
+  # 服務可用性告警規則
+  - name: "availability_alerts"
+    interval: 30s
+    rules:
+      # 服務下線告警
+      - alert: "ServiceDown"
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: "critical"
+          category: "availability"
+          component: "service"
+        annotations:
+          summary: "服務不可用"
+          description: "{{ $labels.instance }} 服務已下線超過 1 分鐘"
+          runbook_url: "https://docs.trading-system.com/runbooks/service-down"
+          
+      # 資料庫連接告警
+      - alert: "DatabaseConnectionFailed"
+        expr: database_connection_status == 0
+        for: 30s
+        labels:
+          severity: "critical"
+          category: "availability"
+          component: "database"
+        annotations:
+          summary: "資料庫連接失敗"
+          description: "資料庫連接已失敗超過 30 秒"
+          runbook_url: "https://docs.trading-system.com/runbooks/database-connection"

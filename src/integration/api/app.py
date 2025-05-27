@@ -308,9 +308,11 @@ if __name__ == "__main__":
             logger.info(f"使用現有 TLS 證書: {ssl_certfile}")
 
     # 啟動應用程序
+    # 使用 127.0.0.1 而不是 0.0.0.0 以提高安全性
+    host = "127.0.0.1"  # 僅綁定本地接口
     uvicorn.run(
         "app:create_app",
-        host="0.0.0.0",
+        host=host,
         port=port,
         reload=True,
         factory=True,

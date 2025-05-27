@@ -1,5 +1,4 @@
-"""
-資料清理與處理模組
+"""資料清理與處理模組
 
 此模組提供全面的資料清理和處理功能，包括：
 - 缺失值處理（插補、刪除等）
@@ -29,18 +28,17 @@ logger = logging.getLogger(__name__)
 
 
 class MissingValueHandler:
-    """
-    缺失值處理器
+    """缺失值處理器
 
     提供多種缺失值填補方法，包括統計方法、插值方法和機器學習方法。
     """
 
     def __init__(self, method="interpolate", **kwargs):
-        """
-        初始化缺失值處理器
+        """初始化缺失值處理器
 
         Args:
-            method (str): 填補方法，可選 'interpolate', 'mean', 'median', 'mode', 'knn', 'ffill', 'bfill'
+            method (str): 填補方法，可選 'interpolate', 'mean', 'median',
+                'mode', 'knn', 'ffill', 'bfill'
             **kwargs: 填補方法的其他參數
         """
         self.method = method
@@ -53,8 +51,7 @@ class MissingValueHandler:
             self.imputer = KNNImputer(n_neighbors=n_neighbors)
 
     def fit(self, df: pd.DataFrame, columns: Optional[List[str]] = None):
-        """
-        擬合填補器（僅適用於需要擬合的方法，如 KNN）
+        """擬合填補器（僅適用於需要擬合的方法，如 KNN）
 
         Args:
             df (pd.DataFrame): 輸入資料
@@ -74,8 +71,7 @@ class MissingValueHandler:
     def transform(
         self, df: pd.DataFrame, columns: Optional[List[str]] = None
     ) -> pd.DataFrame:
-        """
-        填補缺失值
+        """填補缺失值
 
         Args:
             df (pd.DataFrame): 輸入資料
@@ -131,8 +127,7 @@ class MissingValueHandler:
     def fit_transform(
         self, df: pd.DataFrame, columns: Optional[List[str]] = None
     ) -> pd.DataFrame:
-        """
-        擬合並填補缺失值
+        """擬合並填補缺失值
 
         Args:
             df (pd.DataFrame): 輸入資料
@@ -146,19 +141,18 @@ class MissingValueHandler:
 
 
 class OutlierHandler:
-    """
-    異常值處理器
+    """異常值處理器
 
     提供多種異常值檢測和處理方法，包括統計方法和機器學習方法。
     """
 
     def __init__(self, detection_method="z-score", treatment_method="clip", **kwargs):
-        """
-        初始化異常值處理器
+        """初始化異常值處理器
 
         Args:
             detection_method (str): 檢測方法，可選 'z-score', 'iqr', 'isolation-forest'
-            treatment_method (str): 處理方法，可選 'clip', 'remove', 'mean', 'median', 'winsorize'
+            treatment_method (str): 處理方法，可選 'clip', 'remove', 'mean',
+                'median', 'winsorize'
             **kwargs: 其他參數，如 z_threshold, iqr_multiplier 等
         """
         self.detection_method = detection_method
@@ -173,8 +167,7 @@ class OutlierHandler:
     def detect_outliers(
         self, df: pd.DataFrame, columns: Optional[List[str]] = None
     ) -> pd.DataFrame:
-        """
-        檢測異常值
+        """檢測異常值
 
         Args:
             df (pd.DataFrame): 輸入資料
@@ -230,8 +223,7 @@ class OutlierHandler:
         outliers: Optional[pd.DataFrame] = None,
         columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
-        """
-        處理異常值
+        """處理異常值
 
         Args:
             df (pd.DataFrame): 輸入資料
@@ -312,15 +304,13 @@ class OutlierHandler:
 
 
 class PriceStandardizer:
-    """
-    價格標準化器
+    """價格標準化器
 
     提供價格標準化功能，包括調整收盤價邏輯、處理股票分割和股息等。
     """
 
     def __init__(self, adjust_method="adj_close"):
-        """
-        初始化價格標準化器
+        """初始化價格標準化器
 
         Args:
             adjust_method (str): 調整方法，可選 'adj_close', 'adj_factor'
@@ -330,8 +320,7 @@ class PriceStandardizer:
     def standardize_prices(
         self, df: pd.DataFrame, symbol: Optional[str] = None
     ) -> pd.DataFrame:
-        """
-        標準化價格
+        """標準化價格
 
         Args:
             df (pd.DataFrame): 輸入資料，必須包含 OHLCV 欄位
@@ -350,7 +339,7 @@ class PriceStandardizer:
         required_cols = ["open", "high", "low", "close", "volume"]
         missing_cols = [col for col in required_cols if col not in result.columns]
         if missing_cols:
-            logger.warning(f"缺少必要的欄位: {missing_cols}, 無法進行價格標準化")
+            logger.warning("缺少必要的欄位: {missing_cols}, 無法進行價格標準化")
             return result
 
         # 根據調整方法標準化價格
@@ -386,7 +375,7 @@ class PriceStandardizer:
                 result["low"] = result["low"] * result["adj_factor"]
                 result["close"] = result["close"] * result["adj_factor"]
 
-                logger.info(f"使用調整因子邏輯標準化價格 {symbol if symbol else ''}")
+                logger.info("使用調整因子邏輯標準化價格 {symbol if symbol else ''}")
             else:
                 logger.warning(
                     f"缺少 adj_factor 欄位，無法使用調整因子邏輯 {symbol if symbol else ''}"
@@ -397,8 +386,7 @@ class PriceStandardizer:
     def handle_stock_splits(
         self, df: pd.DataFrame, split_events: Dict[date, float]
     ) -> pd.DataFrame:
-        """
-        處理股票分割
+        """處理股票分割
 
         Args:
             df (pd.DataFrame): 輸入資料，必須包含 OHLCV 欄位和日期索引
@@ -430,14 +418,13 @@ class PriceStandardizer:
             result.loc[mask, "close"] = result.loc[mask, "close"] / split_ratio
             result.loc[mask, "volume"] = result.loc[mask, "volume"] * split_ratio
 
-            logger.info(f"處理股票分割: {split_date}, 比例: {split_ratio}")
+            logger.info("處理股票分割: {split_date}, 比例: {split_ratio}")
 
         return result
 
 
 class DataCleaningPipeline:
-    """
-    資料清理管道
+    """資料清理管道
 
     提供完整的資料清理流程，包括缺失值處理、異常值處理和價格標準化。
     """
@@ -449,8 +436,7 @@ class DataCleaningPipeline:
         price_standardizer: Optional[PriceStandardizer] = None,
         **kwargs,
     ):
-        """
-        初始化資料清理管道
+        """初始化資料清理管道
 
         Args:
             missing_value_handler (MissingValueHandler, optional): 缺失值處理器
@@ -473,8 +459,7 @@ class DataCleaningPipeline:
     def clean(
         self, df: pd.DataFrame, symbol: Optional[str] = None
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """
-        清理資料
+        """清理資料
 
         Args:
             df (pd.DataFrame): 輸入資料
@@ -540,8 +525,7 @@ class DataCleaningPipeline:
         cleaned_df: pd.DataFrame,
         report: Dict[str, Any],
     ):
-        """
-        生成視覺化報告
+        """生成視覺化報告
 
         Args:
             original_df (pd.DataFrame): 原始資料
@@ -562,8 +546,7 @@ def clean_stock_data(
     standardize_prices: bool = True,
     symbol: Optional[str] = None,
 ) -> pd.DataFrame:
-    """
-    清理股票資料的便捷函數
+    """清理股票資料的便捷函數
 
     Args:
         df (pd.DataFrame): 輸入資料

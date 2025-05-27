@@ -1,5 +1,4 @@
-"""
-警報管理器
+"""警報管理器
 
 此模組提供警報管理功能，用於處理系統警報和通知。
 """
@@ -61,8 +60,7 @@ class Alert:
         details: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
     ):
-        """
-        初始化警報
+        """初始化警報
 
         Args:
             alert_id: 警報 ID
@@ -91,8 +89,7 @@ class Alert:
         self.acknowledged_by = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        轉換為字典
+        """轉換為字典
 
         Returns:
             Dict[str, Any]: 字典
@@ -120,8 +117,7 @@ class Alert:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Alert":
-        """
-        從字典創建警報
+        """從字典創建警報
 
         Args:
             data: 字典
@@ -150,8 +146,7 @@ class Alert:
         return alert
 
     def acknowledge(self, user: str) -> None:
-        """
-        確認警報
+        """確認警報
 
         Args:
             user: 用戶
@@ -188,8 +183,7 @@ class AlertManager:
         slack_webhook_url: Optional[str] = None,
         sms_config: Optional[Dict[str, Any]] = None,
     ):
-        """
-        初始化警報管理器
+        """初始化警報管理器
 
         Args:
             alert_log_dir: 警報日誌目錄
@@ -199,7 +193,7 @@ class AlertManager:
             sms_config: SMS 配置
         """
         # 避免重複初始化
-        if self._initialized:
+        if hasattr(self, '_initialized') and self._initialized:
             return
 
         self.alert_log_dir = alert_log_dir
@@ -272,7 +266,7 @@ class AlertManager:
                 # 等待下一個檢查間隔
                 time.sleep(self.check_interval)
             except Exception as e:
-                logger.error(f"警報處理循環發生錯誤: {e}")
+                logger.error("警報處理循環發生錯誤: %s", e)
                 time.sleep(10)  # 發生錯誤時等待較長時間
 
     def _check_sla(self):
@@ -287,14 +281,14 @@ class AlertManager:
                 # 檢查是否超過 SLA
                 if alert_time > sla_time:
                     logger.warning(
-                        f"警報 {alert.alert_id} 已超過 SLA: {alert_time:.2f} 秒 > {sla_time} 秒"
+                        "警報 %s 已超過 SLA: %.2f 秒 > %s 秒",
+                        alert.alert_id, alert_time, sla_time
                     )
                     # 升級警報
                     self._escalate_alert(alert)
 
     def _escalate_alert(self, alert: Alert):
-        """
-        升級警報
+        """升級警報
 
         Args:
             alert: 警報
@@ -324,8 +318,7 @@ class AlertManager:
         details: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
     ) -> Alert:
-        """
-        創建警報
+        """創建警報
 
         Args:
             alert_type: 警報類型
@@ -369,14 +362,13 @@ class AlertManager:
             try:
                 callback(alert)
             except Exception as e:
-                logger.error(f"調用警報回調時發生錯誤: {e}")
+                logger.error("調用警報回調時發生錯誤: %s", e)
 
-        logger.info(f"已創建警報: {alert_id} - {title}")
+        logger.info("已創建警報: %s - %s", alert_id, title)
         return alert
 
     def _log_alert(self, alert: Alert):
-        """
-        記錄警報
+        """記錄警報
 
         Args:
             alert: 警報
@@ -391,13 +383,12 @@ class AlertManager:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(alert.to_dict(), ensure_ascii=False) + "\n")
         except Exception as e:
-            logger.error(f"寫入警報日誌時發生錯誤: {e}")
+            logger.error("寫入警報日誌時發生錯誤: %s", e)
 
     def _send_notification(
         self, alert: Alert, title: Optional[str] = None, message: Optional[str] = None
     ):
-        """
-        發送通知
+        """發送通知
 
         Args:
             alert: 警報
@@ -424,11 +415,10 @@ class AlertManager:
             self._send_slack(alert, title, message)
         else:
             # 只記錄日誌
-            logger.info(f"警報通知: {title} - {message}")
+            logger.info("警報通知: %s - %s", title, message)
 
     def _send_email(self, alert: Alert, title: str, message: str):
-        """
-        發送電子郵件
+        """發送電子郵件
 
         Args:
             alert: 警報
@@ -479,13 +469,12 @@ class AlertManager:
                     )
                 server.send_message(msg)
 
-            logger.info(f"已發送電子郵件通知: {title}")
+            logger.info("已發送電子郵件通知: %s", title)
         except Exception as e:
-            logger.error(f"發送電子郵件通知時發生錯誤: {e}")
+            logger.error("發送電子郵件通知時發生錯誤: %s", e)
 
     def _send_slack(self, alert: Alert, title: str, message: str):
-        """
-        發送 Slack 消息
+        """發送 Slack 消息
 
         Args:
             alert: 警報
@@ -534,13 +523,12 @@ class AlertManager:
             )
             response.raise_for_status()
 
-            logger.info(f"已發送 Slack 通知: {title}")
+            logger.info("已發送 Slack 通知: %s", title)
         except Exception as e:
-            logger.error(f"發送 Slack 通知時發生錯誤: {e}")
+            logger.error("發送 Slack 通知時發生錯誤: %s", e)
 
     def _send_sms(self, alert: Alert, title: str, message: str):
-        """
-        發送 SMS
+        """發送 SMS 消息
 
         Args:
             alert: 警報
@@ -554,9 +542,9 @@ class AlertManager:
         try:
             # 這裡應該實現 SMS 發送邏輯
             # 由於 SMS 服務提供商不同，這裡只是一個示例
-            logger.info(f"已發送 SMS 通知: {title}")
+            logger.info("已發送 SMS 通知: %s", title)
         except Exception as e:
-            logger.error(f"發送 SMS 通知時發生錯誤: {e}")
+            logger.error("發送 SMS 通知時發生錯誤: %s", e)
 
     def get_alerts(
         self,
@@ -568,8 +556,7 @@ class AlertManager:
         end_time: Optional[datetime] = None,
         limit: int = 100,
     ) -> List[Alert]:
-        """
-        獲取警報
+        """獲取警報列表
 
         Args:
             alert_type: 警報類型
@@ -627,15 +614,14 @@ class AlertManager:
             if alert.alert_id == alert_id:
                 alert.acknowledge(user)
                 self._log_alert(alert)
-                logger.info(f"警報 {alert_id} 已被 {user} 確認")
+                logger.info("警報 %s 已被 %s 確認", alert_id, user)
                 return True
 
-        logger.warning(f"找不到警報 {alert_id}")
+        logger.warning("找不到警報 %s", alert_id)
         return False
 
     def resolve_alert(self, alert_id: str) -> bool:
-        """
-        解決警報
+        """解決警報
 
         Args:
             alert_id: 警報 ID
@@ -647,15 +633,14 @@ class AlertManager:
             if alert.alert_id == alert_id:
                 alert.resolve()
                 self._log_alert(alert)
-                logger.info(f"警報 {alert_id} 已解決")
+                logger.info("警報 %s 已解決", alert_id)
                 return True
 
-        logger.warning(f"找不到警報 {alert_id}")
+        logger.warning("找不到警報 %s", alert_id)
         return False
 
     def add_callback(self, callback: Callable[[Alert], None]):
-        """
-        添加回調
+        """添加警報回調
 
         Args:
             callback: 回調函數
@@ -663,8 +648,7 @@ class AlertManager:
         self.alert_callbacks.append(callback)
 
     def remove_callback(self, callback: Callable[[Alert], None]):
-        """
-        移除回調
+        """移除警報回調
 
         Args:
             callback: 回調函數

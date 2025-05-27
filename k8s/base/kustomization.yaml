@@ -1,0 +1,76 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: ai-trading-base
+  annotations:
+    description: "AI 股票自動交易系統基礎 Kubernetes 配置"
+    maintainer: "AI Trading Team"
+    version: "v1.0.0"
+
+# 命名空間
+namespace: ai-trading
+
+# 通用標籤
+commonLabels:
+  app: ai-trading-system
+  version: v1.0.0
+  managed-by: kustomize
+
+# 通用註解
+commonAnnotations:
+  deployment.kubernetes.io/revision: "1"
+  app.kubernetes.io/managed-by: "kustomize"
+
+# 資源檔案
+resources:
+- namespace.yaml
+- configmap.yaml
+- secret.yaml
+- rbac.yaml
+- pvc.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+
+# 映像檔案
+images:
+- name: ai-trading
+  newTag: latest
+
+# 配置生成器
+configMapGenerator:
+- name: ai-trading-runtime-config
+  literals:
+  - DEPLOYMENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  - KUSTOMIZE_VERSION=v1.0.0
+  - BUILD_ENV=base
+
+# Secret 生成器 (用於自動生成的 secrets)
+secretGenerator:
+- name: ai-trading-generated-secrets
+  type: Opaque
+  literals:
+  - DEPLOYMENT_ID=$(uuidgen)
+
+# 資源修補
+patchesStrategicMerge: []
+
+# JSON 修補
+patchesJson6902: []
+
+# 替換
+replacements: []
+
+# 變數
+vars: []
+
+# 生成選項
+generatorOptions:
+  disableNameSuffixHash: false
+  labels:
+    app: ai-trading-system
+    component: generated
+  annotations:
+    generated-by: kustomize
+    generated-at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")

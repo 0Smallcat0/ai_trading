@@ -1,5 +1,4 @@
-"""
-訊號產生模組
+"""訊號產生模組
 
 此模組負責根據不同的策略生成交易訊號，
 包括基本面、動量、均值回歸和新聞情緒等策略。
@@ -84,8 +83,7 @@ class SignalGenerator:
         news_data=None,
         model_manager=None,
     ):
-        """
-        初始化訊號產生器
+        """初始化訊號產生器
 
         Args:
             price_data (pandas.DataFrame, optional): 價格資料，索引為 (股票代號, 日期)
@@ -117,7 +115,7 @@ class SignalGenerator:
                 self.model_manager = ModelManager()
                 logger.info("已創建模型管理器")
             except Exception as e:
-                logger.warning(f"創建模型管理器失敗: {e}")
+                logger.warning("創建模型管理器失敗: %s", e)
                 self.model_manager = None
 
         # 如果有價格資料且 indicators 模組可用，初始化技術指標
@@ -126,7 +124,7 @@ class SignalGenerator:
                 try:
                     self.tech_indicators = TechnicalIndicators(self.price_data)
                 except Exception as e:
-                    logger.warning(f"初始化技術指標時發生錯誤: {e}")
+                    logger.warning("初始化技術指標時發生錯誤: %s", e)
                     self.tech_indicators = None
 
             # 如果有財務資料，初始化基本面指標
@@ -134,7 +132,7 @@ class SignalGenerator:
                 try:
                     self.fund_indicators = FundamentalIndicators(self.financial_data)
                 except Exception as e:
-                    logger.warning(f"初始化基本面指標時發生錯誤: {e}")
+                    logger.warning("初始化基本面指標時發生錯誤: %s", e)
                     self.fund_indicators = None
 
             # 如果有新聞資料，初始化情緒指標
@@ -142,14 +140,13 @@ class SignalGenerator:
                 try:
                     self.sent_indicators = SentimentIndicators(self.news_data)
                 except Exception as e:
-                    logger.warning(f"初始化情緒指標時發生錯誤: {e}")
+                    logger.warning("初始化情緒指標時發生錯誤: %s", e)
                     self.sent_indicators = None
 
     def generate_basic(
         self, pe_threshold=15, pb_threshold=1.5, dividend_yield_threshold=3.0
     ):
-        """
-        生成基本面策略訊號
+        """生成基本面策略訊號
 
         基於本益比、股價淨值比和殖利率等基本面指標生成訊號
 
@@ -203,8 +200,7 @@ class SignalGenerator:
         return signals
 
     def generate_momentum(self, short_window=5, medium_window=20, long_window=60):
-        """
-        生成動量策略訊號
+        """生成動量策略訊號
 
         基於價格動量、相對強弱指標 (RSI) 和移動平均線等技術指標生成訊號
 
@@ -217,7 +213,7 @@ class SignalGenerator:
             pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
         if self.price_data is None:
-            logger.warning(LOG_MSGS["no_price"].format(strategy="動量"))
+            logger.warning(LOG_MSGS["no_price"], "動量")
             return pd.DataFrame()
 
         # 確保價格資料有 'close' 列
@@ -250,8 +246,14 @@ class SignalGenerator:
 
             # 根據移動平均線交叉生成訊號
             signals.loc[stock_id, "signal"] = 0
+            # 短期均線 > 中期均線，買入訊號
             signals.loc[(stock_id, short_ma.index[short_ma > medium_ma]), "signal"] += 1
+            # 短期均線 < 中期均線，賣出訊號
             signals.loc[(stock_id, short_ma.index[short_ma < medium_ma]), "signal"] -= 1
+            # 中期均線 > 長期均線，額外買入訊號
+            signals.loc[(stock_id, medium_ma.index[medium_ma > long_ma]), "signal"] += 1
+            # 中期均線 < 長期均線，額外賣出訊號
+            signals.loc[(stock_id, medium_ma.index[medium_ma < long_ma]), "signal"] -= 1
 
             # 根據 RSI 生成訊號
             signals.loc[(stock_id, rsi.index[rsi < 30]), "signal"] += 1  # 超賣
@@ -268,8 +270,7 @@ class SignalGenerator:
         return signals
 
     def generate_reversion(self, window=20, std_dev=2.0):
-        """
-        生成均值回歸策略訊號
+        """生成均值回歸策略訊號
 
         基於價格偏離移動平均線的程度生成訊號
 
@@ -281,7 +282,7 @@ class SignalGenerator:
             pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
         if self.price_data is None:
-            logger.warning(LOG_MSGS["no_price"].format(strategy="均值回歸"))
+            logger.warning(LOG_MSGS["no_price"], "均值回歸")
             return pd.DataFrame()
 
         # 確保價格資料有 'close' 列
@@ -323,8 +324,7 @@ class SignalGenerator:
         return signals
 
     def generate_sentiment(self, sentiment_threshold=0.5):
-        """
-        生成新聞情緒策略訊號
+        """生成新聞情緒策略訊號
 
         基於新聞情緒分析結果生成訊號
 
@@ -361,8 +361,7 @@ class SignalGenerator:
         return signals
 
     def combine_signals(self, weights=None):
-        """
-        合併多策略訊號
+        """合併多策略訊號
 
         Args:
             weights (dict, optional): 各策略權重，如 {'basic': 0.3, 'momentum': 0.3, 'reversion': 0.2, 'sentiment': 0.2}
@@ -420,8 +419,7 @@ class SignalGenerator:
         return combined_signals
 
     def generate_ai_model_signals(self, model_name, version=None, signal_threshold=0.5):
-        """
-        使用 AI 模型生成訊號
+        """使用 AI 模型生成訊號
 
         Args:
             model_name (str): 模型名稱
@@ -432,7 +430,7 @@ class SignalGenerator:
             pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
         if self.price_data is None:
-            logger.warning(LOG_MSGS["no_price"].format(strategy="AI 模型"))
+            logger.warning(LOG_MSGS["no_price"], "AI 模型")
             return pd.DataFrame()
 
         if self.model_manager is None:
@@ -440,8 +438,8 @@ class SignalGenerator:
                 try:
                     self.model_manager = ModelManager()
                     logger.info("已創建模型管理器")
-                except Exception as e:
-                    logger.warning(f"創建模型管理器失敗: {e}")
+                except Exception:
+                    logger.warning("創建模型管理器失敗")
                     logger.warning(LOG_MSGS["no_model"])
                     return pd.DataFrame()
             else:
@@ -526,8 +524,7 @@ class SignalGenerator:
             return pd.DataFrame()
 
     def _prepare_model_features(self):
-        """
-        準備模型特徵
+        """準備模型特徵
 
         Returns:
             pandas.DataFrame: 特徵資料
@@ -577,8 +574,7 @@ class SignalGenerator:
     def generate_all_signals(
         self, include_advanced=True, include_ai=True, ai_models=None
     ):
-        """
-        生成所有策略訊號
+        """生成所有策略訊號
 
         Args:
             include_advanced (bool): 是否包含進階策略訊號（突破、交叉、背離）
@@ -616,8 +612,7 @@ class SignalGenerator:
         return self.signals
 
     def get_signal_stats(self):
-        """
-        獲取訊號統計資訊
+        """獲取訊號統計資訊
 
         Returns:
             pandas.DataFrame: 訊號統計資訊
@@ -645,8 +640,7 @@ class SignalGenerator:
         return pd.DataFrame(stats).T
 
     def generate_breakout_signals(self, window=20, threshold_pct=0.02):
-        """
-        生成突破策略訊號
+        """生成突破策略訊號
 
         基於價格突破前期高點或跌破前期低點生成訊號
 
@@ -658,7 +652,7 @@ class SignalGenerator:
             pandas.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
         if self.price_data is None:
-            logger.warning(LOG_MSGS["no_price"].format(strategy="突破"))
+            logger.warning(LOG_MSGS["no_price"], "突破")
             return pd.DataFrame()
 
         # 確保價格資料有 'close' 列
@@ -753,7 +747,7 @@ class SignalGenerator:
                 fast_line = macd
                 slow_line = signal_line
             else:
-                logger.warning(f"未知的訊號類型: {signal_type}")
+                logger.warning("未知的訊號類型: %ssignal_type")
                 return pd.DataFrame()
 
             # 計算交叉
@@ -967,7 +961,7 @@ class SignalGenerator:
         elif strategy in self.signals:
             signals = self.signals[strategy]
         else:
-            logger.warning(f"未知的策略: {strategy}")
+            logger.warning("未知的策略: %sstrategy")
             return pd.DataFrame()
 
         # 確保訊號資料有正確的格式
@@ -995,7 +989,7 @@ class SignalGenerator:
                 backtest_signals.to_json(file_path)
                 return file_path
             else:
-                logger.warning(f"未知的輸出格式: {output_format}")
+                logger.warning("未知的輸出格式: %soutput_format")
                 return backtest_signals
         except Exception as e:
             logger.error(LOG_MSGS["export_error"].format(error=str(e)))
@@ -1028,7 +1022,7 @@ class SignalGenerator:
             signals = self.signals[strategy]
             strategy_name = strategy
         else:
-            logger.warning(f"未知的策略: {strategy}")
+            logger.warning("未知的策略: %sstrategy")
             return None
 
         # 確保訊號資料有正確的格式

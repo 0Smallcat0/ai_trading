@@ -1,0 +1,310 @@
+# AI 交易系統監控配置
+# Phase 5.3: 監控與告警系統建立
+
+# Prometheus 配置
+prometheus:
+  # 指標收集配置
+  collection:
+    interval: 15  # 收集間隔（秒）
+    timeout: 10   # 收集超時（秒）
+    enabled: true
+    
+  # 指標保留配置
+  retention:
+    raw_data_days: 7      # 原始數據保留天數
+    aggregated_data_days: 90  # 聚合數據保留天數
+    
+  # 聚合規則配置
+  aggregation:
+    rules:
+      - name: "system_metrics_5m"
+        interval: "5m"
+        metrics:
+          - "system_cpu_usage_percent"
+          - "system_memory_usage_percent"
+          - "system_disk_usage_percent"
+      
+      - name: "trading_metrics_1m"
+        interval: "1m"
+        metrics:
+          - "trading_order_success_rate"
+          - "trading_capital_utilization_percent"
+          - "api_request_duration_seconds"
+
+# Grafana 配置
+grafana:
+  # 連接配置
+  connection:
+    url: "http://localhost:3000"
+    username: "admin"
+    password: "admin"
+    api_key: null  # 優先使用 API 金鑰
+    
+  # 儀表板配置
+  dashboards:
+    auto_deploy: true
+    backup_enabled: true
+    backup_schedule: "0 2 * * *"  # 每日凌晨 2 點備份
+    
+  # 數據源配置
+  datasources:
+    prometheus:
+      url: "http://localhost:9090"
+      timeout: 30
+      query_timeout: 60
+
+# 告警配置
+alerting:
+  # 全域告警設定
+  global:
+    enabled: true
+    evaluation_interval: 30  # 評估間隔（秒）
+    notification_timeout: 30  # 通知超時（秒）
+    
+  # 告警閾值配置
+  thresholds:
+    # 系統資源閾值
+    system:
+      cpu_usage:
+        warning: 70.0
+        critical: 90.0
+      memory_usage:
+        warning: 80.0
+        critical: 95.0
+      disk_usage:
+        warning: 85.0
+        critical: 95.0
+      load_average:
+        warning: 2.0
+        critical: 4.0
+        
+    # 交易系統閾值
+    trading:
+      order_success_rate:
+        warning: 90.0  # 低於此值觸發警告
+        critical: 80.0  # 低於此值觸發嚴重警報
+      api_latency_p95:
+        warning: 0.1    # 100ms
+        critical: 0.5   # 500ms
+      capital_utilization:
+        warning: 90.0
+        critical: 98.0
+        
+    # API 效能閾值
+    api:
+      error_rate:
+        warning: 5.0    # 5%
+        critical: 10.0  # 10%
+      response_time_p99:
+        warning: 1.0    # 1秒
+        critical: 5.0   # 5秒
+      active_connections:
+        warning: 1000
+        critical: 2000
+
+# 通知配置
+notifications:
+  # 通知渠道配置
+  channels:
+    email:
+      enabled: true
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      username: ""  # 從環境變數讀取
+      password: ""  # 從環境變數讀取
+      from_address: "alerts@trading-system.com"
+      to_addresses:
+        - "admin@trading-system.com"
+        - "ops@trading-system.com"
+      
+    webhook:
+      enabled: true
+      urls:
+        - "http://localhost:8080/webhook/alerts"
+      timeout: 10
+      retry_count: 3
+      
+    line:
+      enabled: false
+      bot_token: ""  # 從環境變數讀取
+      channel_id: ""
+      
+    telegram:
+      enabled: false
+      bot_token: ""  # 從環境變數讀取
+      chat_id: ""
+      
+    slack:
+      enabled: false
+      webhook_url: ""  # 從環境變數讀取
+      channel: "#alerts"
+      
+  # 通知規則配置
+  rules:
+    # 通知抑制規則
+    suppression:
+      enabled: true
+      duration: 300  # 抑制時間（秒）
+      
+    # 通知升級規則
+    escalation:
+      enabled: true
+      levels:
+        - level: 1
+          delay: 0      # 立即通知
+          channels: ["webhook"]
+        - level: 2
+          delay: 300    # 5分鐘後升級
+          channels: ["email", "webhook"]
+        - level: 3
+          delay: 900    # 15分鐘後升級
+          channels: ["email", "webhook", "slack"]
+
+# 健康檢查配置
+health_check:
+  # 檢查間隔
+  interval: 60  # 秒
+  
+  # 檢查項目
+  checks:
+    database:
+      enabled: true
+      timeout: 5
+      
+    api_endpoints:
+      enabled: true
+      timeout: 10
+      endpoints:
+        - "/health"
+        - "/api/v1/monitoring/health"
+        
+    external_services:
+      enabled: true
+      timeout: 15
+      services:
+        - name: "prometheus"
+          url: "http://localhost:9090/-/healthy"
+        - name: "grafana"
+          url: "http://localhost:3000/api/health"
+          
+    system_resources:
+      enabled: true
+      checks:
+        - "cpu_usage"
+        - "memory_usage"
+        - "disk_usage"
+        - "network_connectivity"
+
+# 效能監控配置
+performance:
+  # API 效能監控
+  api_monitoring:
+    enabled: true
+    sample_rate: 1.0  # 採樣率（1.0 = 100%）
+    slow_request_threshold: 1.0  # 慢請求閾值（秒）
+    
+  # 資料庫效能監控
+  database_monitoring:
+    enabled: true
+    slow_query_threshold: 1.0  # 慢查詢閾值（秒）
+    
+  # 記憶體監控
+  memory_monitoring:
+    enabled: true
+    profiling_interval: 300  # 記憶體分析間隔（秒）
+    
+  # 效能基準
+  benchmarks:
+    api_response_time:
+      target_p95: 0.1   # 100ms
+      target_p99: 0.5   # 500ms
+    database_query_time:
+      target_p95: 0.05  # 50ms
+      target_p99: 0.2   # 200ms
+    system_resource_usage:
+      cpu_target: 70.0
+      memory_target: 80.0
+      disk_target: 85.0
+
+# 日誌配置
+logging:
+  # 日誌級別
+  level: "INFO"
+  
+  # 日誌格式
+  format: "json"
+  
+  # 日誌輸出
+  outputs:
+    - type: "file"
+      path: "logs/monitoring.log"
+      max_size: "100MB"
+      max_files: 10
+    - type: "console"
+      enabled: true
+      
+  # 日誌保留
+  retention:
+    days: 30
+    
+  # 敏感資料遮罩
+  sensitive_fields:
+    - "password"
+    - "token"
+    - "api_key"
+    - "secret"
+
+# 安全配置
+security:
+  # API 安全
+  api_security:
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 100
+      
+    authentication:
+      required: true
+      jwt_secret: ""  # 從環境變數讀取
+      
+  # 資料加密
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    
+  # 審計日誌
+  audit:
+    enabled: true
+    events:
+      - "alert_created"
+      - "alert_acknowledged"
+      - "alert_resolved"
+      - "dashboard_created"
+      - "dashboard_modified"
+      - "configuration_changed"
+
+# 維護配置
+maintenance:
+  # 自動清理
+  cleanup:
+    enabled: true
+    schedule: "0 3 * * *"  # 每日凌晨 3 點
+    tasks:
+      - "expired_metrics"
+      - "old_logs"
+      - "temporary_files"
+      
+  # 備份配置
+  backup:
+    enabled: true
+    schedule: "0 1 * * *"  # 每日凌晨 1 點
+    retention_days: 30
+    
+  # 系統優化
+  optimization:
+    enabled: true
+    schedule: "0 4 * * 0"  # 每週日凌晨 4 點
+    tasks:
+      - "database_vacuum"
+      - "index_rebuild"
+      - "cache_cleanup"

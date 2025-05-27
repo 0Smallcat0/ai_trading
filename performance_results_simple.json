@@ -1,0 +1,44 @@
+{
+  "Prometheus 收集器": {
+    "init_time_ms": 0.4269999990356155,
+    "collection_time_ms": 1.3951000000815839,
+    "start_time_ms": 1.0842000010597985,
+    "stop_time_ms": 1.0959000010188902,
+    "init_ok": true,
+    "collection_ok": true,
+    "start_ok": true,
+    "stop_ok": true
+  },
+  "Grafana 配置管理器": {
+    "init_time_ms": 0.5232000003161374,
+    "status_time_ms": 0.6751999990228796,
+    "health_time_ms": 0.19909999900846742,
+    "init_ok": true,
+    "status_ok": true,
+    "health_ok": true
+  },
+  "監控系統": {
+    "init_time_ms": 1.1220999986107927,
+    "status_time_ms": 1.3906000003771624,
+    "health_time_ms": 0.04939999962516595,
+    "init_ok": true,
+    "status_ok": true,
+    "health_ok": true
+  },
+  "並發效能": {
+    "total_time_ms": 18.478699999832315,
+    "throughput_ops_per_sec": 8117.454149986805,
+    "total_operations": 150,
+    "time_ok": true,
+    "throughput_ok": true
+  },
+  "擴展業務指標": {
+    "init_time_ms": 0.15410000014526304,
+    "summary_time_ms": 0.00399999953515362,
+    "update_time_ms": 0.9908000010909745,
+    "total_metrics": 15,
+    "init_ok": true,
+    "summary_ok": true,
+    "update_ok": true
+  }
+}

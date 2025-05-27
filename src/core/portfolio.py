@@ -1,5 +1,4 @@
-"""
-策略組合與資金配置模組
+"""策略組合與資金配置模組
 
 此模組負責根據交易訊號和風險偏好，決定資金如何分配到不同的股票上，
 實現投資組合的最佳化，以達到風險和收益的平衡。
@@ -11,19 +10,57 @@
 - 投資組合再平衡
 """
 
-from typing import Dict
+from typing import Dict, Optional, Any
+import logging
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.optimize as sco
-import seaborn as sns
+
+# 可選依賴處理
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
+
+try:
+    import scipy.optimize as sco
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    sco = None
+
+try:
+    import seaborn as sns
+    SEABORN_AVAILABLE = True
+except ImportError:
+    SEABORN_AVAILABLE = False
+    sns = None
 
 try:
     from pypfopt import EfficientFrontier, expected_returns, risk_models
-except ImportError as e:
-    raise ImportError("請先安裝 pypfopt 套件：pip install pypfopt") from e
+    PYPFOPT_AVAILABLE = True
+except ImportError:
+    PYPFOPT_AVAILABLE = False
+    EfficientFrontier = None
+    expected_returns = None
+    risk_models = None
+
 from .data_ingest import load_data
+
+# 設定日誌
+logger = logging.getLogger(__name__)
+
+
+class PortfolioOptimizationError(Exception):
+    """投資組合最佳化錯誤"""
+    pass
+
+
+class DependencyError(Exception):
+    """依賴套件錯誤"""
+    pass
 
 
 class Portfolio:
@@ -61,47 +98,53 @@ class Portfolio:
         self.history = []  # 歷史狀態記錄
         self.transactions = []  # 交易記錄
 
-    def optimize(self, signals, price_df=None):
-        """
-        最佳化投資組合
+    def optimize(self, signals: pd.DataFrame, price_df: Optional[pd.DataFrame] = None) -> Dict[str, float]:
+        """最佳化投資組合
 
         Args:
-            signals (pandas.DataFrame): 交易訊號
-            price_df (pandas.DataFrame, optional): 價格資料
+            signals: 交易訊號
+            price_df: 價格資料
 
         Returns:
-            pandas.DataFrame: 投資組合權重
+            最佳化後的權重
+
+        Raises:
+            NotImplementedError: 子類必須實現此方法
         """
         # 基類不實現具體的最佳化邏輯
         # 子類應該覆寫此方法
         raise NotImplementedError("子類必須實現 optimize 方法")
 
-    def evaluate(self, weights, price_df):
-        """
-        評估投資組合表現
+    def evaluate(self, weights: Dict[str, float], price_df: pd.DataFrame) -> Dict[str, Any]:
+        """評估投資組合表現
 
         Args:
-            weights (pandas.DataFrame): 投資組合權重
-            price_df (pandas.DataFrame): 價格資料
+            weights: 投資組合權重
+            price_df: 價格資料
 
         Returns:
-            dict: 評估結果
+            評估結果
+
+        Raises:
+            NotImplementedError: 子類必須實現此方法
         """
         # 基類不實現具體的評估邏輯
         # 子類應該覆寫此方法
         raise NotImplementedError("子類必須實現 evaluate 方法")
 
-    def rebalance(self, weights, price_df, frequency="M"):
-        """
-        再平衡投資組合
+    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+        """再平衡投資組合
 
         Args:
-            weights (pandas.DataFrame): 投資組合權重
-            price_df (pandas.DataFrame): 價格資料
-            frequency (str): 再平衡頻率，可選 'D', 'W', 'M', 'Q', 'Y'
+            weights: 投資組合權重
+            price_df: 價格資料
+            frequency: 再平衡頻率，可選 'D', 'W', 'M', 'Q', 'Y'
 
         Returns:
-            pandas.DataFrame: 再平衡後的投資組合權重
+            再平衡後的投資組合權重
+
+        Raises:
+            NotImplementedError: 子類必須實現此方法
         """
         # 基類不實現具體的再平衡邏輯
         # 子類應該覆寫此方法
@@ -771,26 +814,30 @@ class MeanVariancePortfolio(Portfolio):
         return weights
 
     def _optimize_weights(self, expected_returns, cov_matrix):
-        """
-        最佳化投資組合權重
+        """最佳化投資組合權重
 
         Args:
-            expected_returns (pandas.Series): 預期收益率
-            cov_matrix (pandas.DataFrame): 協方差矩陣
+            expected_returns: 預期收益率
+            cov_matrix: 協方差矩陣
 
         Returns:
-            numpy.ndarray: 最佳化權重
+            最佳化權重
+
+        Raises:
+            DependencyError: 當scipy不可用時
         """
+        if not SCIPY_AVAILABLE:
+            raise DependencyError("scipy套件不可用，無法進行投資組合最佳化")
+
         n = len(expected_returns)
 
         # 定義目標函數
         def objective(weights):
-        """
-        objective
-        
-        Args:
-            weights: 
-        """
+            """計算目標函數值
+
+            Args:
+                weights: 投資組合權重
+            """
             portfolio_return = np.sum(expected_returns * weights)
             portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
             return -portfolio_return + self.risk_aversion * portfolio_variance
@@ -802,16 +849,26 @@ class MeanVariancePortfolio(Portfolio):
         # 初始猜測
         initial_weights = np.ones(n) / n
 
-        # 最佳化
-        result = sco.minimize(
-            objective,
-            initial_weights,
-            method="SLSQP",
-            bounds=bounds,
-            constraints=constraints,
-        )
+        try:
+            # 最佳化
+            result = sco.minimize(
+                objective,
+                initial_weights,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=constraints,
+            )
 
-        return result["x"]
+            if not result.success:
+                logger.warning(f"最佳化未收斂: {result.message}")
+                # 返回等權重作為備選方案
+                return np.ones(n) / n
+
+            return result["x"]
+        except Exception as e:
+            logger.error(f"最佳化過程中發生錯誤: {e}")
+            # 返回等權重作為備選方案
+            return np.ones(n) / n
 
     def evaluate(self, weights, price_df):
         """
@@ -885,6 +942,46 @@ class MeanVariancePortfolio(Portfolio):
             "sharpe_ratio": sharpe_ratio,
             "max_drawdown": max_drawdown,
         }
+
+    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+        """再平衡均值方差投資組合
+
+        Args:
+            weights: 當前投資組合權重
+            price_df: 價格資料
+            frequency: 再平衡頻率
+
+        Returns:
+            再平衡後的投資組合權重
+        """
+        # 對於均值方差投資組合，重新計算最佳權重
+        try:
+            # 獲取股票列表
+            symbols = list(weights.keys())
+
+            # 計算歷史收益率
+            historical_returns = price_df.loc[symbols, "收盤價"].pct_change().dropna()
+
+            if len(historical_returns) < 30:  # 資料不足
+                logger.warning("歷史資料不足，使用等權重")
+                equal_weight = 1.0 / len(symbols)
+                return {symbol: equal_weight for symbol in symbols}
+
+            # 計算預期收益率和協方差矩陣
+            expected_returns = historical_returns.mean() * 252  # 年化
+            cov_matrix = historical_returns.cov() * 252  # 年化
+
+            # 重新最佳化
+            optimized_weights = self._optimize_weights(expected_returns, cov_matrix)
+
+            # 轉換為字典格式
+            return dict(zip(symbols, optimized_weights))
+
+        except Exception as e:
+            logger.error(f"再平衡失敗: {e}")
+            # 返回等權重作為備選方案
+            equal_weight = 1.0 / len(weights)
+            return {symbol: equal_weight for symbol in weights.keys()}
 
 
 class RiskParityPortfolio(Portfolio):
@@ -1000,13 +1097,12 @@ class RiskParityPortfolio(Portfolio):
 
         # 定義目標函數
         def objective(weights):
-            # 計算每個資產的風險貢獻
-        """
-        objective
-        
-        Args:
-            weights: 
-        """
+            """
+            計算每個資產的風險貢獻
+
+            Args:
+                weights: 投資組合權重
+            """
             portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
             risk_contribution = (
                 weights * np.dot(cov_matrix, weights) / portfolio_variance
@@ -1035,6 +1131,181 @@ class RiskParityPortfolio(Portfolio):
         )
 
         return result["x"]
+
+    def evaluate(self, weights: Dict[str, float], price_df: pd.DataFrame) -> Dict[str, Any]:
+        """評估風險平價投資組合表現
+
+        Args:
+            weights: 投資組合權重
+            price_df: 價格資料
+
+        Returns:
+            評估結果字典，包含風險貢獻分析和績效指標
+        """
+        try:
+            # 計算每日收益率
+            if "收盤價" not in price_df.columns:
+                raise ValueError("價格資料框架必須包含 '收盤價' 欄位")
+
+            daily_returns = price_df["收盤價"].astype(float).pct_change()
+
+            # 計算投資組合收益率
+            portfolio_returns = pd.Series(
+                0.0, index=daily_returns.index.get_level_values("date").unique()
+            )
+
+            for date in portfolio_returns.index:
+                # 獲取該日期的權重
+                date_weights = (
+                    weights.xs(date, level="date", drop_level=False)
+                    if hasattr(weights, 'xs') and date in weights.index.get_level_values("date")
+                    else pd.DataFrame()
+                )
+
+                if date_weights.empty:
+                    continue
+
+                # 獲取該日期的收益率
+                date_returns = daily_returns.xs(date, level="date", drop_level=False)
+
+                # 計算該日期的投資組合收益率
+                portfolio_return = 0.0
+                for stock_id, stock_weight in date_weights["weight"].items():
+                    if (stock_id, date) in date_returns.index:
+                        portfolio_return += (
+                            stock_weight * date_returns.loc[(stock_id, date)]
+                        )
+
+                portfolio_returns[date] = portfolio_return
+
+            # 計算累積收益率
+            cumulative_returns = (1 + portfolio_returns).cumprod()
+
+            # 計算年化收益率
+            annual_return = portfolio_returns.mean() * 252
+
+            # 計算年化波動率
+            annual_volatility = portfolio_returns.std() * np.sqrt(252)
+
+            # 計算夏普比率
+            sharpe_ratio = (
+                annual_return / annual_volatility if annual_volatility != 0 else 0
+            )
+
+            # 計算最大回撤
+            max_drawdown = (cumulative_returns / cumulative_returns.cummax() - 1).min()
+
+            # 計算風險貢獻分析
+            risk_contribution = self._calculate_risk_contribution(weights, daily_returns)
+
+            return {
+                "cumulative_returns": (
+                    cumulative_returns.iloc[-1] if not cumulative_returns.empty else 1.0
+                ),
+                "annual_return": annual_return,
+                "annual_volatility": annual_volatility,
+                "sharpe_ratio": sharpe_ratio,
+                "max_drawdown": max_drawdown,
+                "risk_contribution": risk_contribution,
+            }
+
+        except Exception as e:
+            logger.error("風險平價投資組合評估失敗: %s", str(e))
+            return {
+                "cumulative_returns": 1.0,
+                "annual_return": 0.0,
+                "annual_volatility": 0.0,
+                "sharpe_ratio": 0.0,
+                "max_drawdown": 0.0,
+                "risk_contribution": {},
+            }
+
+    def _calculate_risk_contribution(self, weights: Dict[str, float], returns: pd.Series) -> Dict[str, float]:
+        """計算風險貢獻
+
+        Args:
+            weights: 投資組合權重
+            returns: 收益率資料
+
+        Returns:
+            各資產的風險貢獻
+        """
+        try:
+            if isinstance(weights, dict):
+                # 如果weights是字典，轉換為Series
+                weight_series = pd.Series(weights)
+            else:
+                # 假設weights是DataFrame，取最新的權重
+                weight_series = weights.groupby(level="stock_id")["weight"].last()
+
+            # 計算協方差矩陣
+            symbols = list(weight_series.index)
+            symbol_returns = returns.unstack(level="stock_id")[symbols].dropna()
+
+            if symbol_returns.empty:
+                return {symbol: 0.0 for symbol in symbols}
+
+            cov_matrix = symbol_returns.cov()
+
+            # 計算投資組合方差
+            portfolio_variance = np.dot(weight_series.values, np.dot(cov_matrix.values, weight_series.values))
+
+            # 計算風險貢獻
+            risk_contributions = {}
+            for symbol in symbols:
+                if symbol in weight_series.index and symbol in cov_matrix.index:
+                    marginal_contrib = np.dot(cov_matrix.loc[symbol].values, weight_series.values)
+                    risk_contrib = weight_series[symbol] * marginal_contrib / portfolio_variance
+                    risk_contributions[symbol] = risk_contrib
+                else:
+                    risk_contributions[symbol] = 0.0
+
+            return risk_contributions
+
+        except Exception as e:
+            logger.error("風險貢獻計算失敗: %s", str(e))
+            if isinstance(weights, dict):
+                return {symbol: 0.0 for symbol in weights.keys()}
+            else:
+                return {}
+
+    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+        """再平衡風險平價投資組合
+
+        Args:
+            weights: 當前投資組合權重
+            price_df: 價格資料
+            frequency: 再平衡頻率
+
+        Returns:
+            再平衡後的投資組合權重
+        """
+        try:
+            # 獲取股票列表
+            symbols = list(weights.keys())
+
+            # 計算歷史收益率
+            historical_returns = price_df.loc[symbols, "收盤價"].pct_change().dropna()
+
+            if len(historical_returns) < 30:  # 資料不足
+                logger.warning("歷史資料不足，使用等權重")
+                equal_weight = 1.0 / len(symbols)
+                return {symbol: equal_weight for symbol in symbols}
+
+            # 計算協方差矩陣
+            cov_matrix = historical_returns.cov() * 252  # 年化
+
+            # 重新最佳化風險平價權重
+            optimized_weights = self._optimize_weights(cov_matrix)
+
+            # 轉換為字典格式
+            return dict(zip(symbols, optimized_weights))
+
+        except Exception as e:
+            logger.error("風險平價再平衡失敗: %s", str(e))
+            # 返回等權重作為備選方案
+            equal_weight = 1.0 / len(weights)
+            return {symbol: equal_weight for symbol in weights.keys()}
 
 
 class MaxSharpePortfolio(Portfolio):
@@ -1161,12 +1432,12 @@ class MaxSharpePortfolio(Portfolio):
 
         # 定義目標函數 (負的夏普比率，因為我們要最大化)
         def objective(weights):
-        """
-        objective
-        
-        Args:
-            weights: 
-        """
+            """
+            計算負的夏普比率
+
+            Args:
+                weights: 投資組合權重
+            """
             portfolio_return = np.sum(expected_returns * weights)
             portfolio_volatility = np.sqrt(
                 np.dot(weights.T, np.dot(cov_matrix, weights))
@@ -1273,6 +1544,45 @@ class MaxSharpePortfolio(Portfolio):
             "sharpe_ratio": sharpe_ratio,
             "max_drawdown": max_drawdown,
         }
+
+    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+        """再平衡最大夏普比率投資組合
+
+        Args:
+            weights: 當前投資組合權重
+            price_df: 價格資料
+            frequency: 再平衡頻率
+
+        Returns:
+            再平衡後的投資組合權重
+        """
+        try:
+            # 獲取股票列表
+            symbols = list(weights.keys())
+
+            # 計算歷史收益率
+            historical_returns = price_df.loc[symbols, "收盤價"].pct_change().dropna()
+
+            if len(historical_returns) < 30:  # 資料不足
+                logger.warning("歷史資料不足，使用等權重")
+                equal_weight = 1.0 / len(symbols)
+                return {symbol: equal_weight for symbol in symbols}
+
+            # 計算預期收益率和協方差矩陣
+            expected_returns = historical_returns.mean() * 252  # 年化
+            cov_matrix = historical_returns.cov() * 252  # 年化
+
+            # 重新最佳化最大夏普比率權重
+            optimized_weights = self._optimize_weights(expected_returns, cov_matrix)
+
+            # 轉換為字典格式
+            return dict(zip(symbols, optimized_weights))
+
+        except Exception as e:
+            logger.error("最大夏普比率再平衡失敗: %s", str(e))
+            # 返回等權重作為備選方案
+            equal_weight = 1.0 / len(weights)
+            return {symbol: equal_weight for symbol in weights.keys()}
 
 
 class MinVariancePortfolio(Portfolio):
@@ -1389,12 +1699,12 @@ class MinVariancePortfolio(Portfolio):
 
         # 定義目標函數 (投資組合方差)
         def objective(weights):
-        """
-        objective
-        
-        Args:
-            weights: 
-        """
+            """
+            計算投資組合方差
+
+            Args:
+                weights: 投資組合權重
+            """
             return np.dot(weights.T, np.dot(cov_matrix, weights))
 
         # 定義約束條件
@@ -1487,6 +1797,44 @@ class MinVariancePortfolio(Portfolio):
             "sharpe_ratio": sharpe_ratio,
             "max_drawdown": max_drawdown,
         }
+
+    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+        """再平衡最小方差投資組合
+
+        Args:
+            weights: 當前投資組合權重
+            price_df: 價格資料
+            frequency: 再平衡頻率
+
+        Returns:
+            再平衡後的投資組合權重
+        """
+        try:
+            # 獲取股票列表
+            symbols = list(weights.keys())
+
+            # 計算歷史收益率
+            historical_returns = price_df.loc[symbols, "收盤價"].pct_change().dropna()
+
+            if len(historical_returns) < 30:  # 資料不足
+                logger.warning("歷史資料不足，使用等權重")
+                equal_weight = 1.0 / len(symbols)
+                return {symbol: equal_weight for symbol in symbols}
+
+            # 計算協方差矩陣
+            cov_matrix = historical_returns.cov() * 252  # 年化
+
+            # 重新最佳化最小方差權重
+            optimized_weights = self._optimize_weights(cov_matrix)
+
+            # 轉換為字典格式
+            return dict(zip(symbols, optimized_weights))
+
+        except Exception as e:
+            logger.error("最小方差再平衡失敗: %s", str(e))
+            # 返回等權重作為備選方案
+            equal_weight = 1.0 / len(weights)
+            return {symbol: equal_weight for symbol in weights.keys()}
 
 
 def optimize(signals, portfolio_type="equal_weight", **portfolio_params):

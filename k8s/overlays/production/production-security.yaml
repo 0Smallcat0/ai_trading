@@ -1,0 +1,227 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-trading-app
+  namespace: ai-trading
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: ai-trading-app
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE  # 允許綁定特權端口 (如果需要)
+          seccompProfile:
+            type: RuntimeDefault
+        # 環境變數安全設定
+        env:
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: SECURE_MODE
+          value: "true"
+        # 只讀檔案系統的臨時目錄掛載
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: var-tmp-volume
+          mountPath: /var/tmp
+        - name: app-cache-volume
+          mountPath: /app/.cache
+      volumes:
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: var-tmp-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: app-cache-volume
+        emptyDir:
+          sizeLimit: 2Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: ai-trading
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: false  # PostgreSQL 需要特定用戶
+        runAsUser: 999  # postgres 用戶
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: postgres
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # PostgreSQL 需要寫入權限
+          runAsNonRoot: false
+          runAsUser: 999
+          runAsGroup: 999
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ai-trading
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999  # redis 用戶
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: redis
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # Redis 需要寫入權限
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 999
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+
+---
+# Pod 安全策略 (如果集群支援)
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: ai-trading-psp
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: security
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: false  # 某些容器需要寫入權限
+  seccompProfile:
+    type: RuntimeDefault
+
+---
+# 網路策略 - 生產環境更嚴格的網路隔離
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-trading-production-network-policy
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: security
+    environment: production
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-trading-system
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # 只允許來自 Ingress Controller 的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8501
+    - protocol: TCP
+      port: 8000
+  
+  # 允許來自監控系統的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - podSelector:
+        matchLabels:
+          app: ai-trading-system
+          component: monitoring
+    ports:
+    - protocol: TCP
+      port: 9091
+  
+  # 允許同一命名空間內的 Pod 間通信
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ai-trading-system
+  
+  egress:
+  # 允許 DNS 查詢
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  
+  # 允許 HTTPS 出站流量 (用於外部 API 調用)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # 允許訪問同一命名空間內的服務
+  - to:
+    - podSelector:
+        matchLabels:
+          app: ai-trading-system
+  
+  # 允許訪問外部股票 API (特定端口)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080

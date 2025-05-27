@@ -10,13 +10,13 @@ import sys
 import time
 from typing import Dict, Optional
 
+from src.core.logger import logger
+from src.integration.workflows.manager import workflow_manager
+
 # 添加項目根目錄到路徑
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 )
-
-from src.core.logger import logger
-from src.integration.workflows.manager import workflow_manager
 
 
 def init_workflows(
@@ -48,7 +48,7 @@ def init_workflows(
     if activate:
         for workflow_id in workflow_ids.values():
             workflow_manager.activate_workflow(workflow_id)
-            logger.info(f"已激活工作流: {workflow_id}")
+            logger.info("已激活工作流: %s", workflow_id)
 
     # 啟動監控
     if monitor:
@@ -76,7 +76,7 @@ def main():
     )
 
     # 輸出工作流ID
-    logger.info(f"已創建工作流: {workflow_ids}")
+    logger.info("已創建工作流: %s", workflow_ids)
 
     # 如果啟動了監控，則保持腳本運行
     if args.monitor:

@@ -7,6 +7,14 @@
 - 特徵處理
 - 資料集載入
 - 時間序列資料處理
+
+Example:
+    >>> from src.models.dataset import TimeSeriesSplit, FeatureProcessor, DatasetLoader
+    >>> splitter = TimeSeriesSplit(test_size=0.2, val_size=0.2)
+    >>> train, val, test = splitter.split(data)
+
+Note:
+    此模組依賴於sklearn和pandas，確保已正確安裝相關套件
 """
 
 import logging
@@ -18,14 +26,21 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from src.config import LOG_LEVEL
-from src.core.features import (
-    calculate_fundamental_indicators,
-    calculate_technical_indicators,
-)
+from src.core.features import FeatureCalculator
 
 # 設定日誌
 logger = logging.getLogger(__name__)
 logger.setLevel(getattr(logging, LOG_LEVEL))
+
+
+class DatasetError(Exception):
+    """資料集處理相關錯誤"""
+    pass
+
+
+class ValidationError(DatasetError):
+    """資料驗證錯誤"""
+    pass
 
 
 class TimeSeriesSplit:
@@ -34,22 +49,58 @@ class TimeSeriesSplit:
 
     用於將時間序列資料分割為訓練集、驗證集和測試集，
     確保時間順序，避免前瞻偏差。
+
+    Attributes:
+        test_size: 測試集比例
+        val_size: 驗證集比例
+        date_column: 日期欄位名稱
+
+    Example:
+        >>> splitter = TimeSeriesSplit(test_size=0.2, val_size=0.2)
+        >>> train, val, test = splitter.split(data)
     """
 
     def __init__(
         self, test_size: float = 0.2, val_size: float = 0.2, date_column: str = "date"
-    ):
+    ) -> None:
         """
         初始化時間序列分割器
 
         Args:
-            test_size (float): 測試集比例
-            val_size (float): 驗證集比例
-            date_column (str): 日期欄位名稱
+            test_size: 測試集比例，範圍 (0, 1)
+            val_size: 驗證集比例，範圍 (0, 1)
+            date_column: 日期欄位名稱
+
+        Raises:
+            ValidationError: 當參數無效時
         """
+        self._validate_split_params(test_size, val_size)
+
         self.test_size = test_size
         self.val_size = val_size
         self.date_column = date_column
+
+    def _validate_split_params(self, test_size: float, val_size: float) -> None:
+        """
+        驗證分割參數
+
+        Args:
+            test_size: 測試集比例
+            val_size: 驗證集比例
+
+        Raises:
+            ValidationError: 當參數無效時
+        """
+        if not 0 < test_size < 1:
+            raise ValidationError(f"測試集比例必須在 (0, 1) 範圍內，得到: {test_size}")
+
+        if not 0 < val_size < 1:
+            raise ValidationError(f"驗證集比例必須在 (0, 1) 範圍內，得到: {val_size}")
+
+        if test_size + val_size >= 1:
+            raise ValidationError(
+                f"測試集和驗證集比例總和必須小於1，得到: {test_size + val_size}"
+            )
 
     def split(
         self, df: pd.DataFrame
@@ -58,30 +109,69 @@ class TimeSeriesSplit:
         分割資料集
 
         Args:
-            df (pd.DataFrame): 資料集
+            df: 輸入資料集
 
         Returns:
-            Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: 訓練集、驗證集、測試集
+            訓練集、驗證集、測試集的元組
+
+        Raises:
+            ValidationError: 當資料集無效時
+            DatasetError: 當分割失敗時
+
+        Example:
+            >>> train, val, test = splitter.split(data)
+            >>> print(f"訓練集: {len(train)}, 驗證集: {len(val)}, 測試集: {len(test)}")
         """
-        # 確保資料按日期排序
-        if self.date_column in df.columns:
-            df = df.sort_values(by=self.date_column)
+        try:
+            self._validate_dataframe(df)
 
-        # 計算分割點
-        n = len(df)
-        test_idx = int(n * (1 - self.test_size))
-        val_idx = int(test_idx * (1 - self.val_size))
+            # 確保資料按日期排序
+            if self.date_column in df.columns:
+                df = df.sort_values(by=self.date_column).reset_index(drop=True)
 
-        # 分割資料
-        train = df.iloc[:val_idx].copy()
-        val = df.iloc[val_idx:test_idx].copy()
-        test = df.iloc[test_idx:].copy()
+            # 計算分割點
+            n = len(df)
+            if n < 3:
+                raise ValidationError(f"資料集太小，無法分割，至少需要3筆資料，得到: {n}")
 
-        logger.info(
-            f"資料集分割完成: 訓練集 {len(train)} 筆, 驗證集 {len(val)} 筆, 測試集 {len(test)} 筆"
-        )
+            test_idx = int(n * (1 - self.test_size))
+            val_idx = int(test_idx * (1 - self.val_size))
 
-        return train, val, test
+            # 確保每個集合至少有一筆資料
+            if val_idx < 1 or test_idx - val_idx < 1 or n - test_idx < 1:
+                raise ValidationError("分割參數導致某個資料集為空，請調整test_size和val_size")
+
+            # 分割資料
+            train = df.iloc[:val_idx].copy()
+            val = df.iloc[val_idx:test_idx].copy()
+            test = df.iloc[test_idx:].copy()
+
+            logger.info(
+                f"資料集分割完成: 訓練集 {len(train)} 筆, 驗證集 {len(val)} 筆, 測試集 {len(test)} 筆"
+            )
+
+            return train, val, test
+
+        except Exception as e:
+            logger.error(f"資料集分割失敗: {e}")
+            raise DatasetError(f"資料集分割失敗: {e}") from e
+
+    def _validate_dataframe(self, df: pd.DataFrame) -> None:
+        """
+        驗證資料框
+
+        Args:
+            df: 要驗證的資料框
+
+        Raises:
+            ValidationError: 當資料框無效時
+        """
+        if df is None or df.empty:
+            raise ValidationError("資料集不能為空")
+
+        if self.date_column not in df.columns:
+            logger.warning(f"資料集中缺少日期欄位: {self.date_column}")
+            # 不拋出異常，允許按索引分割
 
     def split_by_date(
         self,
@@ -346,25 +436,44 @@ class DatasetLoader:
 
         # 計算技術指標
         if technical_indicators:
-            tech_indicators = calculate_technical_indicators(
-                self.price_data, price_column=self.price_column
-            )
-            features = pd.merge(
-                features,
-                tech_indicators,
-                on=[self.date_column, self.symbol_column],
-                how="left",
-            )
+            try:
+                # 創建特徵計算器實例
+                feature_calc = FeatureCalculator(data_dict={"price": self.price_data})
+                tech_indicators = feature_calc.calculate_technical_indicators()
+                if not tech_indicators.empty:
+                    # 重設索引以便合併
+                    tech_indicators = tech_indicators.reset_index()
+                    features = pd.merge(
+                        features,
+                        tech_indicators,
+                        on=[self.date_column, self.symbol_column],
+                        how="left",
+                    )
+            except Exception as e:
+                logger.warning(f"計算技術指標時發生錯誤: {e}")
 
         # 合併基本面指標
         if fundamental_indicators and self.fundamental_data is not None:
-            fund_indicators = calculate_fundamental_indicators(self.fundamental_data)
-            features = pd.merge(
-                features,
-                fund_indicators,
-                on=[self.date_column, self.symbol_column],
-                how="left",
-            )
+            try:
+                # 創建特徵計算器實例
+                feature_calc = FeatureCalculator(
+                    data_dict={
+                        "price": self.price_data,
+                        "fundamental": self.fundamental_data,
+                    }
+                )
+                fund_indicators = feature_calc.calculate_fundamental_indicators()
+                if not fund_indicators.empty:
+                    # 重設索引以便合併
+                    fund_indicators = fund_indicators.reset_index()
+                    features = pd.merge(
+                        features,
+                        fund_indicators,
+                        on=[self.date_column, self.symbol_column],
+                        how="left",
+                    )
+            except Exception as e:
+                logger.warning(f"計算基本面指標時發生錯誤: {e}")
 
         # 合併情緒指標
         if sentiment_indicators and self.sentiment_data is not None:
@@ -374,6 +483,14 @@ class DatasetLoader:
                 on=[self.date_column, self.symbol_column],
                 how="left",
             )
+
+        # 添加額外特徵
+        if additional_features:
+            available_features = [col for col in additional_features if col in features.columns]
+            if available_features:
+                logger.info(f"添加額外特徵: {available_features}")
+            else:
+                logger.warning(f"額外特徵 {additional_features} 在資料集中不存在")
 
         # 計算目標變數
         if target_type == "return":

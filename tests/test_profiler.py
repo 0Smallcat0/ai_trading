@@ -90,7 +90,9 @@ class TestProfiler(unittest.TestCase):
 
         # 檢查分析結果是否包含記憶體使用資訊
         for filename in os.listdir(self.output_dir):
-            if filename.startswith("test_function_memory_") and filename.endswith(".txt"):
+            if filename.startswith("test_function_memory_") and filename.endswith(
+                ".txt"
+            ):
                 with open(os.path.join(self.output_dir, filename), "r") as f:
                     content = f.read()
                     self.assertIn("記憶體使用", content)
@@ -109,17 +111,17 @@ class TestProfiler(unittest.TestCase):
             """測試函數"""
             # 創建臨時檔案
             temp_file = os.path.join(self.output_dir, "test.csv")
-            
+
             # 寫入檔案
             df = pd.DataFrame(np.random.random((1000, 10)))
             df.to_csv(temp_file)
-            
+
             # 讀取檔案
             df2 = pd.read_csv(temp_file)
-            
+
             # 刪除檔案
             os.remove(temp_file)
-            
+
             return len(df2)
 
         # 執行測試函數

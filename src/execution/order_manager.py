@@ -1,5 +1,4 @@
-"""
-訂單管理模組
+"""訂單管理模組
 
 此模組負責管理訂單的生命週期，包括：
 - 訂單創建與提交
@@ -38,8 +37,7 @@ class OrderManager:
         retry_interval: int = 5,
         auto_reconnect: bool = True,
     ):
-        """
-        初始化訂單管理器
+        """初始化訂單管理器
 
         Args:
             broker (BrokerBase): 券商 API 適配器
@@ -142,7 +140,7 @@ class OrderManager:
 
         # 將訂單加入隊列
         self.order_queue.put(order)
-        logger.info(f"訂單已加入隊列: {order}")
+        logger.info("訂單已加入隊列: %s", order)
 
         return order.order_id
 
@@ -162,15 +160,15 @@ class OrderManager:
             # 如果訂單尚未提交，則直接從隊列中移除
             if order.status == OrderStatus.PENDING:
                 self.pending_orders.pop(order_id)
-                logger.info(f"訂單已從隊列中移除: {order_id}")
+                logger.info("訂單已從隊列中移除: %s", order_id)
                 return True
 
         # 嘗試通過券商 API 取消訂單
         result = self.broker.cancel_order(order_id)
         if result:
-            logger.info(f"訂單已取消: {order_id}")
+            logger.info("訂單已取消: %s", order_id)
         else:
-            logger.error(f"取消訂單失敗: {order_id}")
+            logger.error("取消訂單失敗: %s", order_id)
         return result
 
     def get_order(self, order_id: str) -> Optional[Order]:
@@ -275,7 +273,7 @@ class OrderManager:
                         continue
 
                 # 提交訂單
-                logger.info(f"正在提交訂單: {order}")
+                logger.info("正在提交訂單: %s", order)
                 order_id = self._submit_order_with_retry(order)
 
                 if order_id:
@@ -283,7 +281,7 @@ class OrderManager:
                     order.order_id = order_id
                     order.status = OrderStatus.SUBMITTED
                     self.pending_orders[order_id] = order
-                    logger.info(f"訂單提交成功: {order_id}")
+                    logger.info("訂單提交成功: %s", order_id)
                     self._log_order(order)
                     if self.on_order_status_change:
                         self.on_order_status_change(order)
@@ -291,14 +289,14 @@ class OrderManager:
                     # 訂單提交失敗
                     order.status = OrderStatus.REJECTED
                     order.error_message = "訂單提交失敗"
-                    logger.error(f"訂單提交失敗: {order}")
+                    logger.error("訂單提交失敗: %s", order)
                     self._log_order(order)
                     if self.on_order_rejected:
                         self.on_order_rejected(order)
 
                 self.order_queue.task_done()
             except Exception as e:
-                logger.exception(f"處理訂單時發生錯誤: {e}")
+                logger.exception("處理訂單時發生錯誤: %s", e)
 
     @retry(max_retries=3)
     def _submit_order_with_retry(self, order: Order) -> Optional[str]:

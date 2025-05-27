@@ -1,2 +1,35 @@
 [flake8]
-ignore = E501 
+# 忽略特定的錯誤代碼
+ignore = 
+    # W503: line break before binary operator (與 PEP 8 建議衝突)
+    W503,
+    # W504: line break after binary operator (與 W503 衝突)
+    W504,
+    # E203: whitespace before ':' (與 black 格式化工具衝突)
+    E203
+
+# 設定最大行長度
+max-line-length = 88
+
+# 排除特定目錄和文件
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    .env,
+    build,
+    dist,
+    *.egg-info,
+    .pytest_cache,
+    .coverage,
+    htmlcov,
+    .mypy_cache
+
+# 設定每行最大複雜度
+max-complexity = 10
+
+# 設定統計信息
+statistics = True
+count = True

@@ -32,6 +32,8 @@ from .models import (
     TradeRequestModel,
     TradeResponseModel,
     UserModel,
+    WorkflowExecutionRequestModel,
+    WorkflowExecutionResponseModel,
     WorkflowRequestModel,
     WorkflowResponseModel,
 )

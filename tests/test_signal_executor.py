@@ -95,11 +95,14 @@ class TestSignalExecutor(unittest.TestCase):
     def test_execute_signals_buy(self):
         """測試執行買入訊號"""
         # 創建買入訊號
-        signals = pd.DataFrame({
-            "buy_signal": [1, 0, 1],
-            "sell_signal": [0, 0, 0],
-            "close": [100.0, 150.0, 200.0],
-        }, index=["AAPL", "MSFT", "GOOG"])
+        signals = pd.DataFrame(
+            {
+                "buy_signal": [1, 0, 1],
+                "sell_signal": [0, 0, 0],
+                "close": [100.0, 150.0, 200.0],
+            },
+            index=["AAPL", "MSFT", "GOOG"],
+        )
 
         # 執行訊號
         order_ids = self.signal_executor.execute_signals(signals)
@@ -136,11 +139,14 @@ class TestSignalExecutor(unittest.TestCase):
         }
 
         # 創建賣出訊號
-        signals = pd.DataFrame({
-            "buy_signal": [0, 0],
-            "sell_signal": [1, 0],
-            "close": [100.0, 150.0],
-        }, index=["AAPL", "MSFT"])
+        signals = pd.DataFrame(
+            {
+                "buy_signal": [0, 0],
+                "sell_signal": [1, 0],
+                "close": [100.0, 150.0],
+            },
+            index=["AAPL", "MSFT"],
+        )
 
         # 執行訊號
         order_ids = self.signal_executor.execute_signals(signals)
@@ -171,11 +177,14 @@ class TestSignalExecutor(unittest.TestCase):
         }
 
         # 創建混合訊號
-        signals = pd.DataFrame({
-            "buy_signal": [0, 1, 1],
-            "sell_signal": [1, 0, 0],
-            "close": [100.0, 150.0, 200.0],
-        }, index=["AAPL", "MSFT", "GOOG"])
+        signals = pd.DataFrame(
+            {
+                "buy_signal": [0, 1, 1],
+                "sell_signal": [1, 0, 0],
+                "close": [100.0, 150.0, 200.0],
+            },
+            index=["AAPL", "MSFT", "GOOG"],
+        )
 
         # 執行訊號
         order_ids = self.signal_executor.execute_signals(signals)
@@ -185,8 +194,12 @@ class TestSignalExecutor(unittest.TestCase):
         self.assertEqual(len(self.broker.orders), 3)
 
         # 檢查訂單詳情
-        sell_orders = [order for order in self.broker.orders.values() if order.action == "sell"]
-        buy_orders = [order for order in self.broker.orders.values() if order.action == "buy"]
+        sell_orders = [
+            order for order in self.broker.orders.values() if order.action == "sell"
+        ]
+        buy_orders = [
+            order for order in self.broker.orders.values() if order.action == "buy"
+        ]
 
         self.assertEqual(len(sell_orders), 1)
         self.assertEqual(len(buy_orders), 2)
@@ -203,11 +216,14 @@ class TestSignalExecutor(unittest.TestCase):
         self.signal_executor._on_order_rejected = MagicMock()
 
         # 創建買入訊號
-        signals = pd.DataFrame({
-            "buy_signal": [1],
-            "sell_signal": [0],
-            "close": [100.0],
-        }, index=["AAPL"])
+        signals = pd.DataFrame(
+            {
+                "buy_signal": [1],
+                "sell_signal": [0],
+                "close": [100.0],
+            },
+            index=["AAPL"],
+        )
 
         # 執行訊號
         order_ids = self.signal_executor.execute_signals(signals)

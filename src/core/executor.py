@@ -422,7 +422,7 @@ class SimulatedBrokerAPI(BrokerAPI):
 
         # 檢查訂單是否存在
         if order_id not in self.orders:
-            logger.error(f"訂單 {order_id} 不存在")
+            logger.error("訂單 %s 不存在", order_id)
             return False
 
         # 獲取訂單
@@ -434,7 +434,7 @@ class SimulatedBrokerAPI(BrokerAPI):
             OrderStatus.CANCELLED,
             OrderStatus.REJECTED,
         ]:
-            logger.error(f"訂單 {order_id} 狀態為 {order.status}，無法取消")
+            logger.error("訂單 %s 狀態為 %s，無法取消", order_id, order.status)
             return False
 
         # 更新訂單狀態
@@ -460,7 +460,7 @@ class SimulatedBrokerAPI(BrokerAPI):
 
         # 檢查訂單是否存在
         if order_id not in self.orders:
-            logger.error(f"訂單 {order_id} 不存在")
+            logger.error("訂單 %s 不存在", order_id)
             return None
 
         # 獲取訂單
@@ -479,12 +479,14 @@ class SimulatedBrokerAPI(BrokerAPI):
         latest_price = self._get_latest_price(order.stock_id)
 
         if latest_price is None:
-            logger.error(f"無法獲取股票 {order.stock_id} 的價格")
+            logger.error("無法獲取股票 %s 的價格", order.stock_id)
             order.status = OrderStatus.REJECTED
             order.updated_at = datetime.now()
             return
 
         # 根據訂單類型計算成交價格
+        execution_price = latest_price  # 預設為最新價格
+
         if order.order_type == OrderType.MARKET:
             # 市價單
             execution_price = latest_price
@@ -493,7 +495,7 @@ class SimulatedBrokerAPI(BrokerAPI):
             if order.action == "buy" and latest_price > order.price:
                 # 買入限價單，價格高於限價，不成交
                 return
-            elif order.action == "sell" and latest_price < order.price:
+            if order.action == "sell" and latest_price < order.price:
                 # 賣出限價單，價格低於限價，不成交
                 return
             execution_price = order.price
@@ -502,7 +504,7 @@ class SimulatedBrokerAPI(BrokerAPI):
             if order.action == "buy" and latest_price < order.stop_price:
                 # 買入停損單，價格低於停損價，不成交
                 return
-            elif order.action == "sell" and latest_price > order.stop_price:
+            if order.action == "sell" and latest_price > order.stop_price:
                 # 賣出停損單，價格高於停損價，不成交
                 return
             execution_price = latest_price
@@ -511,7 +513,7 @@ class SimulatedBrokerAPI(BrokerAPI):
             if order.action == "buy" and latest_price < order.stop_price:
                 # 買入停損限價單，價格低於停損價，不成交
                 return
-            elif order.action == "sell" and latest_price > order.stop_price:
+            if order.action == "sell" and latest_price > order.stop_price:
                 # 賣出停損限價單，價格高於停損價，不成交
                 return
 
@@ -519,7 +521,7 @@ class SimulatedBrokerAPI(BrokerAPI):
             if order.action == "buy" and latest_price > order.price:
                 # 買入限價單，價格高於限價，不成交
                 return
-            elif order.action == "sell" and latest_price < order.price:
+            if order.action == "sell" and latest_price < order.price:
                 # 賣出限價單，價格低於限價，不成交
                 return
             execution_price = order.price
@@ -531,7 +533,7 @@ class SimulatedBrokerAPI(BrokerAPI):
         if order.action == "buy":
             # 檢查資金是否足夠
             if self.cash < execution_amount:
-                logger.error(f"資金不足，無法執行買入訂單 {order.order_id}")
+                logger.error("資金不足，無法執行買入訂單 %s", order.order_id)
                 order.status = OrderStatus.REJECTED
                 order.updated_at = datetime.now()
                 return
@@ -570,7 +572,7 @@ class SimulatedBrokerAPI(BrokerAPI):
                 order.stock_id not in self.positions
                 or self.positions[order.stock_id]["shares"] < order.quantity
             ):
-                logger.error(f"持倉不足，無法執行賣出訂單 {order.order_id}")
+                logger.error("持倉不足，無法執行賣出訂單 %s", order.order_id)
                 order.status = OrderStatus.REJECTED
                 order.updated_at = datetime.now()
                 return
@@ -609,7 +611,12 @@ class SimulatedBrokerAPI(BrokerAPI):
         order.updated_at = datetime.now()
 
         logger.info(
-            f"訂單 {order.order_id} 已成交，股票 {order.stock_id}，動作 {order.action}，數量 {order.quantity}，價格 {execution_price}"
+            "訂單 %s 已成交，股票 %s，動作 %s，數量 %s，價格 %s",
+            order.order_id,
+            order.stock_id,
+            order.action,
+            order.quantity,
+            execution_price,
         )
 
     def _get_latest_price(self, stock_id):
@@ -677,7 +684,7 @@ class ShioajiBrokerAPI(BrokerAPI):
             logger.info("已連接永豐證券 API")
             return True
         except Exception as e:
-            logger.error(f"連接永豐證券 API 失敗: {e}")
+            logger.error("連接永豐證券 API 失敗: %s", e)
             self.connected = False
             return False
 
@@ -694,7 +701,7 @@ class ShioajiBrokerAPI(BrokerAPI):
             logger.info("已斷開永豐證券 API 連接")
             return True
         except Exception as e:
-            logger.error(f"斷開永豐證券 API 連接失敗: {e}")
+            logger.error("斷開永豐證券 API 連接失敗: %s", e)
             return False
 
     def get_account_info(self):
@@ -723,7 +730,7 @@ class ShioajiBrokerAPI(BrokerAPI):
                 "total_value": balance.acc_balance + positions_value,
             }
         except Exception as e:
-            logger.error(f"獲取帳戶資訊失敗: {e}")
+            logger.error("獲取帳戶資訊失敗: %s", e)
             return {}
 
     def get_positions(self):
@@ -765,7 +772,7 @@ class ShioajiBrokerAPI(BrokerAPI):
 
             return positions
         except Exception as e:
-            logger.error(f"獲取持倉資訊失敗: {e}")
+            logger.error("獲取持倉資訊失敗: %s", e)
             return {}
 
     def get_orders(self, status=None):
@@ -830,7 +837,7 @@ class ShioajiBrokerAPI(BrokerAPI):
 
             return orders
         except Exception as e:
-            logger.error(f"獲取訂單資訊失敗: {e}")
+            logger.error("獲取訂單資訊失敗: %s", e)
             return []
 
     @retry(max_retries=3)
@@ -881,11 +888,11 @@ class ShioajiBrokerAPI(BrokerAPI):
             order.status = OrderStatus.SUBMITTED
             order.updated_at = datetime.now()
 
-            logger.info(f"訂單已提交: {order.order_id}")
+            logger.info("訂單已提交: %s", order.order_id)
 
             return order.order_id
         except Exception as e:
-            logger.error(f"下單失敗: {e}")
+            logger.error("下單失敗: %s", e)
             order.status = OrderStatus.REJECTED
             return None
 
@@ -910,17 +917,17 @@ class ShioajiBrokerAPI(BrokerAPI):
             api_order = next((o for o in api_orders if o.id == order_id), None)
 
             if api_order is None:
-                logger.error(f"訂單 {order_id} 不存在")
+                logger.error("訂單 %s 不存在", order_id)
                 return False
 
             # 取消訂單
             self.api.cancel_order(api_order)
 
-            logger.info(f"訂單 {order_id} 已取消")
+            logger.info("訂單 %s 已取消", order_id)
 
             return True
         except Exception as e:
-            logger.error(f"取消訂單失敗: {e}")
+            logger.error("取消訂單失敗: %s", e)
             return False
 
     def get_order_status(self, order_id):
@@ -943,22 +950,21 @@ class ShioajiBrokerAPI(BrokerAPI):
             api_order = next((o for o in api_orders if o.id == order_id), None)
 
             if api_order is None:
-                logger.error(f"訂單 {order_id} 不存在")
+                logger.error("訂單 %s 不存在", order_id)
                 return None
 
             # 轉換訂單狀態
             if api_order.status.status == "Filled":
                 return OrderStatus.FILLED
-            elif api_order.status.status == "PartFilled":
+            if api_order.status.status == "PartFilled":
                 return OrderStatus.PARTIALLY_FILLED
-            elif api_order.status.status == "Cancelled":
+            if api_order.status.status == "Cancelled":
                 return OrderStatus.CANCELLED
-            elif api_order.status.status == "Rejected":
+            if api_order.status.status == "Rejected":
                 return OrderStatus.REJECTED
-            else:
-                return OrderStatus.SUBMITTED
+            return OrderStatus.SUBMITTED
         except Exception as e:
-            logger.error(f"獲取訂單狀態失敗: {e}")
+            logger.error("獲取訂單狀態失敗: %s", e)
             return None
 
     @retry(max_retries=3)
@@ -981,10 +987,9 @@ class ShioajiBrokerAPI(BrokerAPI):
 
             if stock_id is not None:
                 return positions.get(stock_id, {})
-            else:
-                return positions
+            return positions
         except Exception as e:
-            logger.error(f"查詢持倉失敗: {e}")
+            logger.error("查詢持倉失敗: %s", e)
             return {}
 
 
@@ -1159,12 +1164,11 @@ class Executor:
         """
         if hasattr(self.broker, "query_position"):
             return self.broker.query_position(stock_id)
-        else:
-            return (
-                self.broker.get_positions().get(stock_id, {})
-                if stock_id
-                else self.broker.get_positions()
-            )
+        return (
+            self.broker.get_positions().get(stock_id, {})
+            if stock_id
+            else self.broker.get_positions()
+        )
 
     async def start_market_data_loop(self, callback=None, interval=1):
         """
@@ -1188,7 +1192,7 @@ class Executor:
                 # 等待下一次更新
                 await asyncio.sleep(interval)
             except Exception as e:
-                logger.error(f"市場資料循環發生錯誤: {e}")
+                logger.error("市場資料循環發生錯誤: %s", e)
                 await asyncio.sleep(10)
 
     async def start_order_execution_loop(self, callback=None, interval=1):
@@ -1213,7 +1217,7 @@ class Executor:
                 # 等待下一次更新
                 await asyncio.sleep(interval)
             except Exception as e:
-                logger.error(f"訂單執行循環發生錯誤: {e}")
+                logger.error("訂單執行循環發生錯誤: %s", e)
                 await asyncio.sleep(10)
 
     def start_async_loops(

@@ -74,7 +74,7 @@ class MCPClient:
             headers = {"Authorization": f"Bearer {self.api_key}"}
 
             # 發送請求
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=30)
 
             # 檢查響應
             if response.status_code == 200:
@@ -112,7 +112,7 @@ class MCPClient:
             headers = {"Authorization": f"Bearer {self.api_key}"}
 
             # 發送請求
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=30)
 
             # 檢查響應
             if response.status_code == 200:
@@ -149,7 +149,7 @@ class MCPClient:
             }
 
             # 發送請求
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=30)
 
             # 檢查響應
             if response.status_code == 200:
@@ -184,7 +184,7 @@ class MCPClient:
 
             # 發送請求
             response = requests.post(
-                url, headers=headers, json={"instances": data_list}
+                url, headers=headers, json={"instances": data_list}, timeout=30
             )
 
             # 檢查響應
@@ -213,7 +213,7 @@ class MCPClient:
             headers = {"Authorization": f"Bearer {self.api_key}"}
 
             # 發送請求
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=30)
 
             # 檢查響應
             if response.status_code == 200:

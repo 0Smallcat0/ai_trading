@@ -119,10 +119,10 @@ class ModelBase(ABC):
         }
 
         metadata_path = os.path.join(self.model_dir, "metadata.json")
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
 
-        logger.info(f"模型已保存至 {path}")
+        logger.info("模型已保存至 %s", path)
         return path
 
     def load(self, path: str) -> None:
@@ -141,7 +141,7 @@ class ModelBase(ABC):
         metadata_path = os.path.join(model_dir, "metadata.json")
 
         if os.path.exists(metadata_path):
-            with open(metadata_path, "r") as f:
+            with open(metadata_path, "r", encoding="utf-8") as f:
                 metadata = json.load(f)
 
             self.name = metadata.get("name", self.name)
@@ -151,7 +151,7 @@ class ModelBase(ABC):
             self.model_params = metadata.get("model_params", self.model_params)
             self.metrics = metadata.get("metrics", self.metrics)
 
-        logger.info(f"模型已從 {path} 載入")
+        logger.info("模型已從 %s 載入", path)
 
     def feature_importance(self) -> pd.DataFrame:
         """
@@ -190,7 +190,7 @@ class ModelBase(ABC):
 
             return importance_df
         except Exception as e:
-            logger.error(f"獲取特徵重要性時發生錯誤: {e}")
+            logger.error("獲取特徵重要性時發生錯誤: %s", e)
             return pd.DataFrame()
 
     def get_params(self) -> Dict[str, Any]:

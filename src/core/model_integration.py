@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
-"""
-模型整合模組
+"""模型整合模組
 
 此模組提供 AI 模型與交易訊號生成系統的整合功能，包括：
 - 模型載入與管理
 - 模型推論與訊號生成
 - 模型健康檢查與備援機制
 - 模型效能優化
+
+Note:
+    此檔案大小 (759 行) 超過 300 行標準，建議重構為以下子模組：
+    - model_manager.py (模型管理核心)
+    - health_checker.py (健康檢查機制)
+    - fallback_strategies.py (備援策略)
+    - prediction_engine.py (預測引擎)
 """
 
 import logging
@@ -14,7 +20,6 @@ import threading
 import time
 import warnings
 from datetime import datetime
-from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -22,8 +27,10 @@ import pandas as pd
 
 # 嘗試導入 MLflow
 try:
-    pass
-
+    import mlflow  # pylint: disable=unused-import
+    import mlflow.sklearn  # pylint: disable=unused-import
+    import mlflow.pytorch  # pylint: disable=unused-import
+    import mlflow.tensorflow  # pylint: disable=unused-import
     MLFLOW_AVAILABLE = True
 except ImportError:
     warnings.warn("無法匯入 MLflow，部分功能將無法使用")
@@ -31,8 +38,8 @@ except ImportError:
 
 # 嘗試導入 ONNX
 try:
-    pass
-
+    import onnxruntime as ort  # pylint: disable=unused-import
+    import onnx  # pylint: disable=unused-import
     ONNX_AVAILABLE = True
 except ImportError:
     warnings.warn("無法匯入 ONNX Runtime，部分優化功能將無法使用")
@@ -47,9 +54,25 @@ logger = logging.getLogger(__name__)
 logger.setLevel(getattr(logging, LOG_LEVEL))
 
 
+# 自定義異常類別
+class ModelIntegrationError(Exception):
+    """模型整合相關錯誤的基類"""
+
+
+class ModelLoadError(ModelIntegrationError):
+    """模型載入錯誤"""
+
+
+class ModelPredictionError(ModelIntegrationError):
+    """模型預測錯誤"""
+
+
+class ModelHealthCheckError(ModelIntegrationError):
+    """模型健康檢查錯誤"""
+
+
 class ModelManager:
-    """
-    模型管理器
+    """模型管理器
 
     負責模型的載入、管理和推論。
     """
@@ -63,8 +86,7 @@ class ModelManager:
         fallback_strategy: str = "latest",
         model_check_interval: int = 3600,  # 1 小時
     ):
-        """
-        初始化模型管理器
+        """初始化模型管理器
 
         Args:
             model_registry (Optional[ModelRegistry]): 模型註冊表
@@ -88,6 +110,9 @@ class ModelManager:
         # 模型健康狀態
         self.model_health = {}
 
+        # 控制健康檢查執行緒的標誌
+        self._shutdown_flag = threading.Event()
+
         # 啟動模型健康檢查執行緒
         self.health_check_thread = threading.Thread(
             target=self._health_check_loop, daemon=True
@@ -98,17 +123,45 @@ class ModelManager:
         """
         模型健康檢查迴圈
         """
-        while True:
+        while not self._shutdown_flag.is_set():
             try:
                 # 檢查所有已載入的模型
                 for model_name in list(self.model_cache.keys()):
+                    if self._shutdown_flag.is_set():
+                        break
                     self.check_model_health(model_name)
 
-                # 等待下一次檢查
-                time.sleep(self.model_check_interval)
+                # 等待下一次檢查，但允許提前中斷
+                if self._shutdown_flag.wait(timeout=self.model_check_interval):
+                    break
+
             except Exception as e:
-                logger.error(f"模型健康檢查發生錯誤: {e}")
-                time.sleep(60)  # 發生錯誤時，等待 1 分鐘後重試
+                logger.error("模型健康檢查發生錯誤: %s", e)
+                # 發生錯誤時，等待 1 分鐘後重試，但允許提前中斷
+                if self._shutdown_flag.wait(timeout=60):
+                    break
+
+        logger.info("模型健康檢查執行緒已停止")
+
+    def shutdown(self) -> None:
+        """
+        優雅地關閉模型管理器
+        """
+        logger.info("正在關閉模型管理器...")
+
+        # 設置關閉標誌
+        self._shutdown_flag.set()
+
+        # 等待健康檢查執行緒結束
+        if self.health_check_thread.is_alive():
+            self.health_check_thread.join(timeout=5)
+
+        # 清理資源
+        self.model_cache.clear()
+        self.inference_pipelines.clear()
+        self.model_health.clear()
+
+        logger.info("模型管理器已關閉")
 
     def check_model_health(self, model_name: str) -> bool:
         """
@@ -121,7 +174,7 @@ class ModelManager:
             bool: 模型是否健康
         """
         if model_name not in self.model_cache:
-            logger.warning(f"模型 {model_name} 未載入，無法檢查健康狀態")
+            logger.warning("模型 %s 未載入，無法檢查健康狀態", model_name)
             return False
 
         try:
@@ -156,7 +209,7 @@ class ModelManager:
                 "error": str(e),
             }
 
-            logger.error(f"模型 {model_name} 健康檢查失敗: {e}")
+            logger.error("模型 %s 健康檢查失敗: %s", model_name, e)
 
             # 嘗試使用備援策略
             self._apply_fallback_strategy(model_name)
@@ -173,10 +226,10 @@ class ModelManager:
         if self.fallback_strategy == "latest":
             # 嘗試載入最新版本
             try:
-                logger.info(f"嘗試載入模型 {model_name} 的最新版本")
+                logger.info("嘗試載入模型 %s 的最新版本", model_name)
                 self.load_model(model_name)
             except Exception as e:
-                logger.error(f"載入模型 {model_name} 的最新版本失敗: {e}")
+                logger.error("載入模型 %s 的最新版本失敗: %s", model_name, e)
 
         elif self.fallback_strategy == "previous":
             # 嘗試載入前一個版本
@@ -194,28 +247,28 @@ class ModelManager:
                     if current_idx > 0:
                         previous_version = versions[current_idx - 1]
                         logger.info(
-                            f"嘗試載入模型 {model_name} 的前一個版本 {previous_version}"
+                            "嘗試載入模型 %s 的前一個版本 %s", model_name, previous_version
                         )
                         self.load_model(model_name, version=previous_version)
                     else:
-                        logger.warning(f"模型 {model_name} 沒有前一個版本可用")
+                        logger.warning("模型 %s 沒有前一個版本可用", model_name)
                 else:
                     logger.warning(
-                        f"模型 {model_name} 只有一個版本，無法使用前一個版本"
+                        "模型 %s 只有一個版本，無法使用前一個版本", model_name
                     )
             except Exception as e:
-                logger.error(f"載入模型 {model_name} 的前一個版本失敗: {e}")
+                logger.error("載入模型 %s 的前一個版本失敗: %s", model_name, e)
 
         elif self.fallback_strategy == "rule_based":
             # 標記模型為不可用，後續將使用規則型策略
-            logger.info(f"模型 {model_name} 將使用規則型策略作為備援")
+            logger.info("模型 %s 將使用規則型策略作為備援", model_name)
             self.model_health[model_name]["fallback"] = "rule_based"
 
     def load_model(
         self,
         model_name: str,
         version: Optional[str] = None,
-        environment: str = "production",
+        environment: str = "production",  # pylint: disable=unused-argument
     ) -> bool:
         """
         載入模型
@@ -236,7 +289,10 @@ class ModelManager:
                 return True
 
             # 從模型註冊表載入模型
-            model = self.model_registry.load_model(model_name, version)
+            try:
+                model = self.model_registry.load_model(model_name, version)
+            except Exception as registry_error:
+                raise ModelLoadError(f"從註冊表載入模型 {model_name} 失敗") from registry_error
 
             # 將模型加入快取
             self.model_cache[cache_key] = model
@@ -255,17 +311,24 @@ class ModelManager:
             }
 
             # 創建推論管道
-            self.inference_pipelines[model_name] = InferencePipeline(
-                model=model, monitor=True
-            )
+            try:
+                self.inference_pipelines[model_name] = InferencePipeline(
+                    model=model, monitor=True
+                )
+            except Exception as pipeline_error:
+                logger.warning(f"創建推論管道失敗，將使用直接預測: {pipeline_error}")
 
             logger.info(
                 f"成功載入模型 {model_name} {'版本 ' + version if version else '最新版本'}"
             )
 
             return True
+        except ModelLoadError:
+            # 重新拋出自定義異常
+            raise
         except Exception as e:
-            logger.error(f"載入模型 {model_name} 失敗: {e}")
+            error_msg = f"載入模型 {model_name} 時發生未預期錯誤"
+            logger.error(f"{error_msg}: {e}")
 
             # 更新健康狀態
             self.model_health[model_name] = {
@@ -275,7 +338,7 @@ class ModelManager:
                 "error": str(e),
             }
 
-            return False
+            raise ModelLoadError(error_msg) from e
 
     def unload_model(self, model_name: str, version: Optional[str] = None) -> bool:
         """
@@ -321,7 +384,6 @@ class ModelManager:
             logger.error(f"卸載模型 {model_name} 失敗: {e}")
             return False
 
-    @lru_cache(maxsize=128)
     def preprocess_features(self, data: pd.DataFrame, model_name: str) -> pd.DataFrame:
         """
         預處理特徵
@@ -374,63 +436,96 @@ class ModelManager:
         Returns:
             np.ndarray: 預測結果
         """
-        # 檢查模型是否已載入
-        cache_key = f"{model_name}_{version or 'latest'}"
-        if cache_key not in self.model_cache:
-            # 嘗試載入模型
-            if not self.load_model(model_name, version):
-                logger.error(f"模型 {model_name} 未載入且無法載入")
-                return np.array([])
+        # 檢查並載入模型
+        if not self._ensure_model_loaded(model_name, version):
+            return np.array([])
 
         # 檢查模型健康狀態
+        if not self._check_model_health_for_prediction(model_name, data):
+            return self._rule_based_fallback(data, model_name)
+
+        try:
+            return self._perform_prediction(data, model_name, version, use_pipeline)
+        except Exception as e:
+            return self._handle_prediction_error(e, model_name, data)
+
+    def _ensure_model_loaded(self, model_name: str, version: Optional[str] = None) -> bool:
+        """確保模型已載入"""
+        cache_key = f"{model_name}_{version or 'latest'}"
+        if cache_key not in self.model_cache:
+            try:
+                return self.load_model(model_name, version)
+            except ModelLoadError as e:
+                logger.error(f"模型 {model_name} 未載入且無法載入: {e}")
+                return False
+        return True
+
+    def _check_model_health_for_prediction(
+        self,
+        model_name: str,
+        data: pd.DataFrame  # pylint: disable=unused-argument
+    ) -> bool:
+        """檢查模型健康狀態是否適合預測"""
         if (
             model_name in self.model_health
             and self.model_health[model_name]["status"] == "unhealthy"
         ):
             if self.fallback_strategy == "rule_based":
                 logger.warning(f"模型 {model_name} 不健康，使用規則型策略")
-                return self._rule_based_fallback(data, model_name)
+                return False
             else:
                 logger.warning(f"模型 {model_name} 不健康，但將嘗試使用")
+        return True
 
-        try:
-            # 預處理特徵
-            features = self.preprocess_features(data, model_name)
+    def _perform_prediction(
+        self,
+        data: pd.DataFrame,
+        model_name: str,
+        version: Optional[str] = None,
+        use_pipeline: bool = True
+    ) -> np.ndarray:
+        """執行實際預測"""
+        # 預處理特徵
+        features = self.preprocess_features(data, model_name)
 
-            # 使用推論管道或直接使用模型
-            if use_pipeline and model_name in self.inference_pipelines:
-                predictions = self.inference_pipelines[model_name].predict(features)
-            else:
-                # 批次預測
-                if len(features) > self.batch_size:
-                    predictions = []
-                    for i in range(0, len(features), self.batch_size):
-                        batch = features.iloc[i : i + self.batch_size]
-                        batch_predictions = self.model_cache[cache_key].predict(batch)
-                        predictions.append(batch_predictions)
+        # 使用推論管道或直接使用模型
+        if use_pipeline and model_name in self.inference_pipelines:
+            return self.inference_pipelines[model_name].predict(features)
+        else:
+            return self._batch_predict(features, model_name, version)
 
-                    predictions = np.concatenate(predictions)
-                else:
-                    predictions = self.model_cache[cache_key].predict(features)
+    def _batch_predict(self, features: pd.DataFrame, model_name: str, version: Optional[str] = None) -> np.ndarray:
+        """批次預測"""
+        cache_key = f"{model_name}_{version or 'latest'}"
 
-            return predictions
-        except Exception as e:
-            logger.error(f"使用模型 {model_name} 預測時發生錯誤: {e}")
+        if len(features) > self.batch_size:
+            predictions = []
+            for i in range(0, len(features), self.batch_size):
+                batch = features.iloc[i : i + self.batch_size]
+                batch_predictions = self.model_cache[cache_key].predict(batch)
+                predictions.append(batch_predictions)
+            return np.concatenate(predictions)
+        else:
+            return self.model_cache[cache_key].predict(features)
 
-            # 更新健康狀態
-            self.model_health[model_name] = {
-                "status": "unhealthy",
-                "last_check": datetime.now().isoformat(),
-                "inference_time": None,
-                "error": str(e),
-            }
+    def _handle_prediction_error(self, error: Exception, model_name: str, data: pd.DataFrame) -> np.ndarray:
+        """處理預測錯誤"""
+        logger.error(f"使用模型 {model_name} 預測時發生錯誤: {error}")
 
-            # 使用備援策略
-            if self.fallback_strategy == "rule_based":
-                logger.warning(f"使用規則型策略作為備援")
-                return self._rule_based_fallback(data, model_name)
+        # 更新健康狀態
+        self.model_health[model_name] = {
+            "status": "unhealthy",
+            "last_check": datetime.now().isoformat(),
+            "inference_time": None,
+            "error": str(error),
+        }
 
-            return np.array([])
+        # 使用備援策略
+        if self.fallback_strategy == "rule_based":
+            logger.warning("使用規則型策略作為備援")
+            return self._rule_based_fallback(data, model_name)
+
+        return np.array([])
 
     def _rule_based_fallback(self, data: pd.DataFrame, model_name: str) -> np.ndarray:
         """
@@ -577,6 +672,74 @@ class ModelManager:
             List[str]: 已載入的模型名稱列表
         """
         return list(set([k.split("_")[0] for k in self.model_cache.keys()]))
+
+    def list_models(self) -> List[str]:
+        """
+        獲取所有可用模型列表
+
+        Returns:
+            List[str]: 可用模型名稱列表
+        """
+        return self.model_registry.list_models()
+
+    def get_model_performance(self, model_name: str) -> Dict[str, float]:
+        """
+        獲取模型性能指標
+
+        Args:
+            model_name (str): 模型名稱
+
+        Returns:
+            Dict[str, float]: 性能指標字典，包含準確率、精確率等
+        """
+        try:
+            model_info = self.model_registry.get_model_info(model_name)
+            performance_metrics = model_info.get('performance_metrics', {})
+
+            # 確保返回基本性能指標
+            default_metrics = {
+                'accuracy': 0.5,
+                'precision': 0.5,
+                'recall': 0.5,
+                'f1_score': 0.5
+            }
+
+            # 合併實際指標和預設值
+            default_metrics.update(performance_metrics)
+            return default_metrics
+
+        except Exception as e:
+            logger.warning(f"無法獲取模型 {model_name} 的性能指標: {e}")
+            return {
+                'accuracy': 0.5,
+                'precision': 0.5,
+                'recall': 0.5,
+                'f1_score': 0.5
+            }
+
+    def predict_single(self, model_name: str, data: pd.DataFrame) -> float:
+        """
+        單次預測
+
+        Args:
+            model_name (str): 模型名稱
+            data (pd.DataFrame): 輸入資料
+
+        Returns:
+            float: 預測結果
+        """
+        try:
+            predictions = self.predict(data, model_name)
+            if isinstance(predictions, np.ndarray) and len(predictions) > 0:
+                return float(predictions[0])
+            elif isinstance(predictions, (list, tuple)) and len(predictions) > 0:
+                return float(predictions[0])
+            else:
+                logger.warning(f"模型 {model_name} 預測結果為空")
+                return 0.0
+        except Exception as e:
+            logger.error(f"模型 {model_name} 單次預測失敗: {e}")
+            return 0.0
 
     def get_health_status(self) -> Dict[str, Dict[str, Any]]:
         """

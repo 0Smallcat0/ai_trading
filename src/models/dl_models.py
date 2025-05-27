@@ -23,10 +23,6 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.layers import GRU, LSTM, Dense, Dropout
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import Adam
 
 from src.config import LOG_LEVEL, MODELS_DIR
 
@@ -35,6 +31,18 @@ from .model_base import ModelBase
 # 設定日誌
 logger = logging.getLogger(__name__)
 logger.setLevel(getattr(logging, LOG_LEVEL))
+
+# 檢查 TensorFlow 是否可用
+try:
+    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+    from tensorflow.keras.layers import GRU, LSTM, Dense, Dropout
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.optimizers import Adam
+
+    TENSORFLOW_AVAILABLE = True
+except ImportError:
+    TENSORFLOW_AVAILABLE = False
+    logger.warning("TensorFlow 未安裝，深度學習模型功能將無法使用")
 
 
 class LSTMModel(ModelBase):
@@ -47,7 +55,7 @@ class LSTMModel(ModelBase):
         name: str = "lstm",
         is_classifier: bool = False,
         input_shape: Tuple[int, int] = None,
-        units: List[int] = [64, 32],
+        units: List[int] = None,
         dropout: float = 0.2,
         learning_rate: float = 0.001,
         **kwargs,
@@ -64,6 +72,10 @@ class LSTMModel(ModelBase):
             learning_rate (float): 學習率
             **kwargs: 其他參數
         """
+        # 設定預設值
+        if units is None:
+            units = [64, 32]
+
         super().__init__(
             name=name,
             is_classifier=is_classifier,
@@ -88,6 +100,9 @@ class LSTMModel(ModelBase):
         """
         構建 LSTM 模型
         """
+        if not TENSORFLOW_AVAILABLE:
+            raise ImportError("TensorFlow 未安裝，無法構建 LSTM 模型")
+
         model = Sequential()
 
         # 添加 LSTM 層
@@ -151,8 +166,7 @@ class LSTMModel(ModelBase):
 
         if y is not None:
             return X_reshaped, y.values
-        else:
-            return X_reshaped
+        return X_reshaped
 
     def train(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, Any]:
         """
@@ -278,7 +292,7 @@ class GRUModel(ModelBase):
         name: str = "gru",
         is_classifier: bool = False,
         input_shape: Tuple[int, int] = None,
-        units: List[int] = [64, 32],
+        units: List[int] = None,
         dropout: float = 0.2,
         learning_rate: float = 0.001,
         **kwargs,
@@ -295,6 +309,10 @@ class GRUModel(ModelBase):
             learning_rate (float): 學習率
             **kwargs: 其他參數
         """
+        # 設定預設值
+        if units is None:
+            units = [64, 32]
+
         super().__init__(
             name=name,
             is_classifier=is_classifier,
@@ -319,6 +337,9 @@ class GRUModel(ModelBase):
         """
         構建 GRU 模型
         """
+        if not TENSORFLOW_AVAILABLE:
+            raise ImportError("TensorFlow 未安裝，無法構建 GRU 模型")
+
         model = Sequential()
 
         # 添加 GRU 層

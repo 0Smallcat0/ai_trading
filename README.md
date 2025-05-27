@@ -27,13 +27,24 @@ AI 股票自動交易系統是一個整合人工智能技術的自動化交易�
 
 ### 策略管理
 
-- 支援多種交易策略類型
-  - 技術分析策略
-  - 基本面策略
-  - 統計套利策略
-  - 機器學習策略
-- 策略回測與優化
-- 策略組合與資產配置
+- **模組化策略架構** (Phase 2.2 重構)
+  - 基礎策略框架 (`src.strategy.base`)
+  - 技術分析策略 (`src.strategy.technical`)
+  - 機器學習策略 (`src.strategy.ml`)
+  - 工具函數庫 (`src.strategy.utils`)
+  - 評估指標模組 (`src.strategy.metrics`)
+
+- **支援的策略類型**
+  - 移動平均線交叉策略
+  - RSI 相對強弱指標策略
+  - 機器學習預測策略
+  - 自定義策略開發框架
+
+- **策略功能**
+  - 自動參數優化
+  - 策略回測與評估
+  - 策略組合與資產配置
+  - 向後相容性支援
 
 ### 交易執行
 
@@ -86,6 +97,8 @@ AI 股票自動交易系統是一個整合人工智能技術的自動化交易�
    poetry shell
    ```
 
+   > **注意**：使用 Poetry 虛擬環境可以避免全局依賴項衝突，確保專案在不同環境中的一致性。
+
 3. **設置環境變數**：
    ```bash
    # 複製環境變數範例
@@ -113,12 +126,28 @@ AI 股票自動交易系統是一個整合人工智能技術的自動化交易�
 
 ### 啟動系統
 
+#### 使用啟動腳本
+
+最簡單的方法是使用提供的啟動腳本：
+
 ```bash
-# 啟動交易系統
-python -m src.core.main
+# Windows
+.\scripts\powershell\start_app.ps1
 ```
 
-啟動後，可以通過瀏覽器訪問系統儀表板：`http://localhost:8080`
+#### 使用 Poetry 命令
+
+您也可以使用 Poetry 命令運行應用：
+
+```bash
+# 使用 Poetry 腳本
+poetry run web
+
+# 或者直接運行 Streamlit
+poetry run python -m streamlit run src\ui\web_ui.py --server.address=127.0.0.1 --server.port=8501 --server.headless=true
+```
+
+啟動後，可以通過瀏覽器訪問系統儀表板：`http://localhost:8501`
 
 ## 使用案例
 
@@ -153,11 +182,76 @@ python -m src.core.main
 
 ## 文檔導航
 
+### 使用者文檔
 - [使用者手冊](docs/使用者手冊.md) - 系統使用指南
-- [策略開發指南](docs/策略開發指南.md) - 自定義策略開發
-- [API 文檔](docs/共用工具說明/API整理.md) - API 使用說明
 - [常見問題](docs/Q&A常見問題.md) - 常見問題與解答
 - [配置說明](docs/配置說明.md) - 系統配置結構與使用方法
+
+### 開發者文檔
+- [策略開發指南](docs/策略開發指南.md) - 自定義策略開發
+- [API 文檔](docs/共用工具說明/API整理.md) - API 使用說明
+- [策略模組結構](docs/modules/strategy_module_structure.md) - Phase 2.2 模組化架構
+- [Phase 2.2 遷移指南](docs/Phase2.2_遷移指南.md) - 從舊 API 遷移到新 API
+
+### 維運文檔
+- [系統監控指南](docs/維運指南/系統監控指南.md) - 系統健康狀態監控、效能指標追蹤、告警機制設定
+- [備份和恢復程序](docs/維運指南/備份和恢復程序.md) - 資料庫備份策略、設定檔備份、系統狀態快照及恢復流程
+- [災難恢復計劃](docs/維運指南/災難恢復計劃.md) - 系統故障應對方案、資料遺失恢復程序、服務中斷處理流程
+- [效能調優指南](docs/維運指南/效能調優指南.md) - 系統效能瓶頸診斷、資源使用優化、交易延遲改善
+
+## 開發指南
+
+### 虛擬環境管理
+
+本專案使用 Poetry 進行依賴管理和虛擬環境設置，以下是一些常用的 Poetry 命令：
+
+- **進入虛擬環境**：
+  ```bash
+  poetry shell
+  ```
+
+- **添加新依賴**：
+  ```bash
+  # 添加運行時依賴
+  poetry add package-name
+
+  # 添加開發依賴
+  poetry add --group dev package-name
+  ```
+
+- **更新依賴**：
+  ```bash
+  # 更新所有依賴
+  poetry update
+
+  # 更新特定依賴
+  poetry update package-name
+  ```
+
+- **查看虛擬環境信息**：
+  ```bash
+  poetry env info
+  ```
+
+- **列出所有依賴**：
+  ```bash
+  poetry show
+  ```
+
+### 常見問題解決
+
+- **端口被占用**：如果啟動時提示端口被占用，可以使用以下命令查找並終止占用端口的進程：
+  ```bash
+  # Windows
+  netstat -ano | findstr 8501
+  taskkill /F /PID <進程ID>
+  ```
+
+- **依賴衝突**：如果遇到依賴衝突，可以嘗試更新 pyproject.toml 文件中的依賴版本，然後運行：
+  ```bash
+  poetry lock --no-update
+  poetry install
+  ```
 
 ## 社群與支援
 

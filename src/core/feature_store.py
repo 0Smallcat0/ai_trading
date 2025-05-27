@@ -296,7 +296,7 @@ class FeatureStore:
             str: 版本字符串
         """
         # 使用特徵資料的哈希值和當前時間生成版本
-        hasher = hashlib.md5()
+        hasher = hashlib.md5(usedforsecurity=False)
         hasher.update(pd.util.hash_pandas_object(features_df).values.tobytes())
         hasher.update(str(datetime.datetime.now()).encode())
         hash_str = hasher.hexdigest()[:8]

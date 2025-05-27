@@ -1,0 +1,244 @@
+{
+  "monitoring_config": {
+    "version": "1.0",
+    "environment": "production",
+    "updated": "2024-12-25",
+    "description": "代碼品質審計後的生產環境監控配置"
+  },
+  
+  "error_tracking": {
+    "enabled": true,
+    "description": "改進的錯誤處理模式監控",
+    "chained_exceptions": {
+      "enabled": true,
+      "track_exception_chains": true,
+      "log_original_exceptions": true,
+      "format": "raise ... from e"
+    },
+    "lazy_logging": {
+      "enabled": true,
+      "format": "logger.error('message: %s', variable)",
+      "avoid_fstring_in_logging": true,
+      "performance_optimized": true
+    },
+    "error_categories": [
+      "authentication_errors",
+      "api_errors", 
+      "database_errors",
+      "validation_errors",
+      "system_errors"
+    ]
+  },
+  
+  "performance_monitoring": {
+    "enabled": true,
+    "description": "驗證改進不影響效能",
+    "api_response_times": {
+      "enabled": true,
+      "threshold_ms": 1000,
+      "track_endpoints": [
+        "/api/v1/auth/login",
+        "/api/v1/auth/logout", 
+        "/api/v1/auth/refresh",
+        "/health",
+        "/api/info"
+      ],
+      "percentiles": [50, 90, 95, 99]
+    },
+    "error_rates": {
+      "enabled": true,
+      "threshold_percent": 5.0,
+      "track_by_endpoint": true,
+      "track_by_error_type": true
+    },
+    "resolution_times": {
+      "enabled": true,
+      "track_debugging_efficiency": true,
+      "measure_error_to_fix_time": true
+    }
+  },
+  
+  "structured_logging": {
+    "enabled": true,
+    "description": "結構化日誌以進行更好的日誌分析",
+    "format": "json",
+    "level": "INFO",
+    "include_traceback": true,
+    "fields": {
+      "timestamp": true,
+      "level": true,
+      "logger_name": true,
+      "message": true,
+      "module": true,
+      "function": true,
+      "line_number": true,
+      "exception_chain": true,
+      "request_id": true,
+      "user_id": true,
+      "session_id": true
+    },
+    "handlers": {
+      "console": {
+        "enabled": true,
+        "level": "INFO"
+      },
+      "file": {
+        "enabled": true,
+        "level": "DEBUG",
+        "rotation": "daily",
+        "retention": "30 days",
+        "path": "logs/app.log"
+      },
+      "centralized": {
+        "enabled": false,
+        "type": "elasticsearch",
+        "host": "localhost:9200",
+        "index": "ai-trading-logs"
+      }
+    }
+  },
+  
+  "code_quality_monitoring": {
+    "enabled": true,
+    "description": "監控代碼品質指標和錯誤模式",
+    "pylint_scores": {
+      "track_scores": true,
+      "minimum_threshold": 9.0,
+      "modules": [
+        "src/ui/web_ui.py",
+        "src/api/routers/auth.py",
+        "src/api/main.py", 
+        "src/core/authentication_service.py",
+        "src/ui/components/auth.py"
+      ]
+    },
+    "error_patterns": {
+      "track_patterns": true,
+      "common_errors": [
+        "import_errors",
+        "syntax_errors", 
+        "type_errors",
+        "authentication_failures",
+        "database_connection_errors"
+      ]
+    },
+    "debugging_metrics": {
+      "exception_chain_usage": true,
+      "error_context_availability": true,
+      "resolution_efficiency": true
+    }
+  },
+  
+  "alerts": {
+    "enabled": true,
+    "description": "關鍵錯誤條件的警報",
+    "channels": {
+      "email": {
+        "enabled": false,
+        "recipients": ["admin@trading-system.com"]
+      },
+      "slack": {
+        "enabled": false,
+        "webhook_url": ""
+      },
+      "console": {
+        "enabled": true
+      }
+    },
+    "rules": [
+      {
+        "name": "high_error_rate",
+        "condition": "error_rate > 10%",
+        "severity": "critical",
+        "description": "錯誤率過高"
+      },
+      {
+        "name": "slow_api_response",
+        "condition": "api_response_time_p95 > 2000ms",
+        "severity": "warning", 
+        "description": "API 回應時間過慢"
+      },
+      {
+        "name": "authentication_failures",
+        "condition": "auth_failure_rate > 20%",
+        "severity": "high",
+        "description": "認證失敗率過高"
+      },
+      {
+        "name": "code_quality_degradation",
+        "condition": "pylint_score < 9.0",
+        "severity": "medium",
+        "description": "代碼品質下降"
+      },
+      {
+        "name": "exception_chain_missing",
+        "condition": "unchained_exceptions > 5%",
+        "severity": "low",
+        "description": "缺少異常鏈"
+      }
+    ]
+  },
+  
+  "dashboards": {
+    "enabled": true,
+    "description": "監控儀表板配置",
+    "grafana": {
+      "enabled": false,
+      "url": "http://localhost:3000",
+      "dashboards": [
+        "api-performance",
+        "error-tracking", 
+        "code-quality",
+        "authentication-metrics"
+      ]
+    },
+    "prometheus": {
+      "enabled": false,
+      "url": "http://localhost:9090",
+      "scrape_interval": "15s"
+    },
+    "custom": {
+      "enabled": true,
+      "metrics": [
+        "request_count",
+        "error_count",
+        "response_time",
+        "active_sessions",
+        "code_quality_score"
+      ]
+    }
+  },
+  
+  "health_checks": {
+    "enabled": true,
+    "description": "系統健康檢查",
+    "endpoints": [
+      {
+        "name": "api_health",
+        "url": "/health",
+        "interval": "30s",
+        "timeout": "5s"
+      },
+      {
+        "name": "database_health", 
+        "type": "database",
+        "interval": "60s",
+        "timeout": "10s"
+      },
+      {
+        "name": "authentication_service",
+        "type": "service",
+        "interval": "60s",
+        "timeout": "5s"
+      }
+    ]
+  },
+  
+  "backup_monitoring": {
+    "enabled": true,
+    "description": "部署備份監控",
+    "track_deployments": true,
+    "backup_verification": true,
+    "rollback_readiness": true
+  }
+}

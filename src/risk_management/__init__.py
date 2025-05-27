@@ -37,7 +37,10 @@ from .position_sizing import (
     RiskBasedPositionSizing,
     VolatilityPositionSizing,
 )
-from .risk_manager import RiskManager
+# from .risk_manager_new import RiskManager  # Temporarily commented due to snownlp dependency
+from .risk_manager_base import RiskManagerBase
+from .strategy_manager import StrategyManager
+from .risk_monitor import RiskMonitor
 from .risk_metrics import (
     ConditionalValueAtRisk,
     MaximumDrawdown,
@@ -111,5 +114,8 @@ __all__ = [
     "TimeCircuitBreaker",
     "CompositeCircuitBreaker",
     # 風險管理器
-    "RiskManager",
+    # "RiskManager",  # Temporarily commented due to snownlp dependency
+    "RiskManagerBase",
+    "StrategyManager",
+    "RiskMonitor",
 ]

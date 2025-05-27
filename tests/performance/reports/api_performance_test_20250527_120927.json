@@ -1,0 +1,88 @@
+{
+  "report_info": {
+    "generated_at": "2025-05-27T12:09:27.904720",
+    "test_count": 4,
+    "report_type": "performance"
+  },
+  "summary": {
+    "total_requests": 80,
+    "total_successful": 80,
+    "total_failed": 0,
+    "avg_response_time": 0.8639425039291382,
+    "avg_throughput": 19.793737237413495
+  },
+  "test_results": [
+    {
+      "test_name": "健康檢查",
+      "duration": 1.008082,
+      "total_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "avg_response_time": 0.8439779281616211,
+      "min_response_time": 0.0,
+      "max_response_time": 2.000570297241211,
+      "p95_response_time": 2.000570297241211,
+      "p99_response_time": 2.000570297241211,
+      "throughput": 19.839655901008054,
+      "avg_memory_usage": 367.9296875,
+      "max_memory_usage": 367.9296875,
+      "avg_cpu_usage": 0.0,
+      "max_cpu_usage": 0.0,
+      "errors": []
+    },
+    {
+      "test_name": "API 資訊",
+      "duration": 1.013461,
+      "total_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "avg_response_time": 0.8000493049621582,
+      "min_response_time": 0.0,
+      "max_response_time": 2.001523971557617,
+      "p95_response_time": 2.001523971557617,
+      "p99_response_time": 2.001523971557617,
+      "throughput": 19.734355836090387,
+      "avg_memory_usage": 367.9296875,
+      "max_memory_usage": 367.9296875,
+      "avg_cpu_usage": 0.0,
+      "max_cpu_usage": 0.0,
+      "errors": []
+    },
+    {
+      "test_name": "資料管理",
+      "duration": 1.009127,
+      "total_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "avg_response_time": 0.8614778518676758,
+      "min_response_time": 0.0,
+      "max_response_time": 1.1358261108398438,
+      "p95_response_time": 1.1358261108398438,
+      "p99_response_time": 1.1358261108398438,
+      "throughput": 19.81911097413903,
+      "avg_memory_usage": 367.93359375,
+      "max_memory_usage": 367.93359375,
+      "avg_cpu_usage": 0.0,
+      "max_cpu_usage": 0.0,
+      "errors": []
+    },
+    {
+      "test_name": "策略管理",
+      "duration": 1.011029,
+      "total_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "avg_response_time": 0.9502649307250977,
+      "min_response_time": 0.0,
+      "max_response_time": 2.0046234130859375,
+      "p95_response_time": 2.0046234130859375,
+      "p99_response_time": 2.0046234130859375,
+      "throughput": 19.781826238416507,
+      "avg_memory_usage": 367.93359375,
+      "max_memory_usage": 367.93359375,
+      "avg_cpu_usage": 0.0,
+      "max_cpu_usage": 0.0,
+      "errors": []
+    }
+  ]
+}

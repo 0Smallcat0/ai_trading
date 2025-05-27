@@ -4,6 +4,7 @@ Test script for strategy research module (Section 3.1)
 
 import os
 import sys
+import pytest
 import pandas as pd
 import numpy as np
 
@@ -96,6 +97,27 @@ def test_time_series_split():
     )
 
     return train, val, test
+
+
+@pytest.fixture
+def train():
+    """Create train data fixture"""
+    train_data, _, _ = test_time_series_split()
+    return train_data
+
+
+@pytest.fixture
+def val():
+    """Create validation data fixture"""
+    _, val_data, _ = test_time_series_split()
+    return val_data
+
+
+@pytest.fixture
+def test():
+    """Create test data fixture"""
+    _, _, test_data = test_time_series_split()
+    return test_data
 
 
 def test_feature_processor(train, val, test):

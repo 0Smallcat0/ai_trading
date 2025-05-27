@@ -1,424 +1,385 @@
-"""
-監控系統
+"""監控系統
 
-此模組提供監控系統的初始化和管理功能。
+此模組提供監控系統的初始化和管理功能，整合各個子模組：
+- 系統資源監控（CPU、記憶體、磁碟使用率）
+- API 效能監控（延遲、錯誤率、QPS）
+- 模型效能監控（準確率、延遲、漂移檢測）
+- 交易監控（成功率、資本變化、風險指標）
+
+遵循 Google Style Docstring 標準和 Phase 5.3 開發規範。
 """
 
 import argparse
+import logging
 import os
 import sys
-import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # 添加項目根目錄到路徑
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from src.core.logger import get_logger
-from src.monitoring.alert_manager import AlertSeverity, AlertType, alert_manager
+try:
+    from src.core.logger import get_logger
+except ImportError:
+    def get_logger(name: str) -> logging.Logger:
+        """Fallback logger function"""
+        return logging.getLogger(name)
+
+try:
+    from .monitor_modules import (
+        AlertHandler,
+        SystemMonitor,
+        ThresholdChecker,
+    )
+except ImportError:
+    # 提供 fallback
+    AlertHandler = None
+    SystemMonitor = None
+    ThresholdChecker = None
 
 # 導入配置
-from src.monitoring.config import (
-    ALERT_CHECK_INTERVAL,
-    ALERT_LOG_DIR,
-    API_ENDPOINTS,
-    EMAIL_CONFIG,
-    GRAFANA_PORT,
-    PROMETHEUS_COLLECTION_INTERVAL,
-    PROMETHEUS_PORT,
-    SLACK_WEBHOOK_URL,
-    SMS_CONFIG,
-    THRESHOLDS,
-)
+try:
+    from .config import (
+        ALERT_CHECK_INTERVAL,
+        ALERT_LOG_DIR,
+        API_ENDPOINTS,
+        EMAIL_CONFIG,
+        GRAFANA_PORT,
+        PROMETHEUS_COLLECTION_INTERVAL,
+        PROMETHEUS_PORT,
+        SLACK_WEBHOOK_URL,
+        SMS_CONFIG,
+        THRESHOLDS,
+    )
+except ImportError:
+    # 提供預設值
+    ALERT_CHECK_INTERVAL = 60
+    ALERT_LOG_DIR = "logs/alerts"
+    API_ENDPOINTS = []
+    EMAIL_CONFIG = {}
+    GRAFANA_PORT = 3000
+    PROMETHEUS_COLLECTION_INTERVAL = 15
+    PROMETHEUS_PORT = 9090
+    SLACK_WEBHOOK_URL = ""
+    SMS_CONFIG = {}
+    THRESHOLDS = {
+        "system": {"cpu_usage": 80, "memory_usage": 80, "disk_usage": 85},
+        "api": {"latency": 1.0, "error_rate": 0.05},
+        "model": {"accuracy": 0.8, "latency": 1.0, "drift": 0.1},
+        "trade": {"success_rate": 0.7, "capital_change": -10.0}
+    }
 
 # 導入監控組件
-from src.monitoring.prometheus_exporter import prometheus_exporter
+try:
+    from .prometheus_exporter import prometheus_exporter
+except ImportError:
+    prometheus_exporter = None
+
+try:
+    from .alert_manager import alert_manager
+except ImportError:
+    alert_manager = None
 
 # 設置日誌
 logger = get_logger("monitor_system")
 
 
 class MonitorSystem:
-    """監控系統"""
+    """監控系統
 
-    def __init__(
-        self,
-        prometheus_port: int = PROMETHEUS_PORT,
-        grafana_port: int = GRAFANA_PORT,
-        prometheus_collection_interval: int = PROMETHEUS_COLLECTION_INTERVAL,
-        alert_check_interval: int = ALERT_CHECK_INTERVAL,
-        email_config: Optional[Dict[str, Any]] = None,
-        slack_webhook_url: Optional[str] = None,
-        sms_config: Optional[Dict[str, Any]] = None,
-        api_endpoints: Optional[List[Dict[str, Any]]] = None,
-    ):
-        """
-        初始化監控系統
+    整合各個子模組的監控系統，提供統一的監控管理介面。
+
+    Attributes:
+        prometheus_exporter: Prometheus 指標導出器
+        alert_handler: 警報處理器
+        threshold_checker: 閾值檢查器
+        system_monitor: 系統監控器
+        config: 系統配置
+    """
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """初始化監控系統
 
         Args:
-            prometheus_port: Prometheus 端口
-            grafana_port: Grafana 端口
-            prometheus_collection_interval: Prometheus 收集間隔（秒）
-            alert_check_interval: 警報檢查間隔（秒）
-            email_config: 電子郵件配置
-            slack_webhook_url: Slack Webhook URL
-            sms_config: SMS 配置
-            api_endpoints: API 端點列表
+            config: 監控系統配置字典
+
+        Raises:
+            ImportError: 當必要模組未安裝時
         """
-        self.prometheus_port = prometheus_port
-        self.grafana_port = grafana_port
-        self.prometheus_collection_interval = prometheus_collection_interval
-        self.alert_check_interval = alert_check_interval
-        self.email_config = email_config or EMAIL_CONFIG
-        self.slack_webhook_url = slack_webhook_url or SLACK_WEBHOOK_URL
-        self.sms_config = sms_config or SMS_CONFIG
-        self.api_endpoints = api_endpoints or API_ENDPOINTS
+        self.config = config or self._get_default_config()
 
-        # 初始化 Prometheus 指標導出器
-        self.prometheus_exporter = prometheus_exporter
-        self.prometheus_exporter.__init__(
-            port=prometheus_port,
-            collection_interval=prometheus_collection_interval,
-            api_endpoints=api_endpoints,
-        )
+        # 檢查必要組件
+        if not all([AlertHandler, SystemMonitor, ThresholdChecker]):
+            raise ImportError("監控模組未正確安裝")
 
-        # 初始化警報管理器
-        self.alert_manager = alert_manager
-        self.alert_manager.__init__(
-            alert_log_dir=ALERT_LOG_DIR,
-            check_interval=alert_check_interval,
-            email_config=email_config,
-            slack_webhook_url=slack_webhook_url,
-            sms_config=sms_config,
-        )
+        # 初始化組件
+        self._init_components()
 
-        # 監控線程
-        self.monitoring_thread = None
-        self.running = False
+        logger.info("監控系統初始化成功")
 
-        logger.info("監控系統已初始化")
+    def _get_default_config(self) -> Dict[str, Any]:
+        """獲取預設配置
 
-    def start(self):
-        """啟動監控系統"""
-        if self.running:
-            logger.warning("監控系統已經在運行中")
-            return
+        Returns:
+            Dict[str, Any]: 預設配置字典
+        """
+        return {
+            "prometheus_port": PROMETHEUS_PORT,
+            "grafana_port": GRAFANA_PORT,
+            "prometheus_collection_interval": PROMETHEUS_COLLECTION_INTERVAL,
+            "alert_check_interval": ALERT_CHECK_INTERVAL,
+            "email_config": EMAIL_CONFIG,
+            "slack_webhook_url": SLACK_WEBHOOK_URL,
+            "sms_config": SMS_CONFIG,
+            "api_endpoints": API_ENDPOINTS,
+            "thresholds": THRESHOLDS,
+            "alert_log_dir": ALERT_LOG_DIR,
+        }
 
-        # 啟動 Prometheus 指標導出器
-        self.prometheus_exporter.start()
-
-        # 啟動警報管理器
-        self.alert_manager.start()
-
-        # 啟動監控線程
-        self.running = True
-        self.monitoring_thread = threading.Thread(target=self._monitoring_loop)
-        self.monitoring_thread.daemon = True
-        self.monitoring_thread.start()
-
-        logger.info("監控系統已啟動")
-
-    def stop(self):
-        """停止監控系統"""
-        if not self.running:
-            logger.warning("監控系統未運行")
-            return
-
-        # 停止 Prometheus 指標導出器
-        self.prometheus_exporter.stop()
-
-        # 停止警報管理器
-        self.alert_manager.stop()
-
-        # 停止監控線程
-        self.running = False
-        if self.monitoring_thread:
-            self.monitoring_thread.join(timeout=10)
-
-        logger.info("監控系統已停止")
-
-    def _monitoring_loop(self):
-        """監控循環"""
-        while self.running:
-            try:
-                # 檢查閾值
-                self._check_thresholds()
-
-                # 等待下一個檢查間隔
-                time.sleep(self.alert_check_interval)
-            except Exception as e:
-                logger.error(f"監控循環發生錯誤: {e}")
-                time.sleep(10)  # 發生錯誤時等待較長時間
-
-    def _check_thresholds(self):
-        """檢查閾值"""
+    def _init_components(self) -> None:
+        """初始化各個組件"""
         try:
-            # 獲取指標
-            metrics = self.prometheus_exporter.get_metrics()
-
-            # 檢查系統指標
-            self._check_system_metrics(metrics)
-
-            # 檢查 API 指標
-            self._check_api_metrics(metrics)
-
-            # 檢查模型指標
-            self._check_model_metrics(metrics)
-
-            # 檢查交易指標
-            self._check_trade_metrics(metrics)
-        except Exception as e:
-            logger.error(f"檢查閾值時發生錯誤: {e}")
-
-    def _check_system_metrics(self, metrics: Dict[str, Any]):
-        """
-        檢查系統指標
-
-        Args:
-            metrics: 指標數據
-        """
-        # 檢查 CPU 使用率
-        cpu_usage = metrics.get("system", {}).get("cpu_usage")
-        if cpu_usage is not None and cpu_usage > THRESHOLDS["system"]["cpu_usage"]:
-            self.alert_manager.create_alert(
-                alert_type=AlertType.SYSTEM,
-                severity=AlertSeverity.WARNING,
-                title="高 CPU 使用率",
-                description=f"CPU 使用率超過閾值: {cpu_usage:.2f}% > {THRESHOLDS['system']['cpu_usage']}%",
-                source="monitor_system",
-                details={
-                    "cpu_usage": cpu_usage,
-                    "threshold": THRESHOLDS["system"]["cpu_usage"],
-                },
-            )
-
-        # 檢查內存使用率
-        memory_usage = metrics.get("system", {}).get("memory_usage")
-        if (
-            memory_usage is not None
-            and memory_usage > THRESHOLDS["system"]["memory_usage"]
-        ):
-            self.alert_manager.create_alert(
-                alert_type=AlertType.SYSTEM,
-                severity=AlertSeverity.WARNING,
-                title="高內存使用率",
-                description=f"內存使用率超過閾值: {memory_usage:.2f}% > {THRESHOLDS['system']['memory_usage']}%",
-                source="monitor_system",
-                details={
-                    "memory_usage": memory_usage,
-                    "threshold": THRESHOLDS["system"]["memory_usage"],
-                },
-            )
-
-        # 檢查磁盤使用率
-        disk_usage = metrics.get("system", {}).get("disk_usage")
-        if disk_usage is not None and disk_usage > THRESHOLDS["system"]["disk_usage"]:
-            self.alert_manager.create_alert(
-                alert_type=AlertType.SYSTEM,
-                severity=AlertSeverity.WARNING,
-                title="高磁盤使用率",
-                description=f"磁盤使用率超過閾值: {disk_usage:.2f}% > {THRESHOLDS['system']['disk_usage']}%",
-                source="monitor_system",
-                details={
-                    "disk_usage": disk_usage,
-                    "threshold": THRESHOLDS["system"]["disk_usage"],
-                },
-            )
-
-    def _check_api_metrics(self, metrics: Dict[str, Any]):
-        """
-        檢查 API 指標
-
-        Args:
-            metrics: 指標數據
-        """
-        # 檢查 API 延遲
-        api_latency = metrics.get("api", {}).get("latency", {})
-        for endpoint, latency in api_latency.items():
-            if latency > THRESHOLDS["api"]["latency"]:
-                self.alert_manager.create_alert(
-                    alert_type=AlertType.API,
-                    severity=AlertSeverity.WARNING,
-                    title="高 API 延遲",
-                    description=f"API 延遲超過閾值: {endpoint} - {latency:.2f}s > {THRESHOLDS['api']['latency']}s",
-                    source="monitor_system",
-                    details={
-                        "endpoint": endpoint,
-                        "latency": latency,
-                        "threshold": THRESHOLDS["api"]["latency"],
-                    },
+            # 初始化 Prometheus 指標導出器
+            self.prometheus_exporter = prometheus_exporter
+            if (self.prometheus_exporter and
+                    hasattr(self.prometheus_exporter, 'configure')):
+                self.prometheus_exporter.configure(
+                    port=self.config["prometheus_port"],
+                    collection_interval=self.config["prometheus_collection_interval"],
+                    api_endpoints=self.config["api_endpoints"],
                 )
 
-        # 檢查 API 錯誤率
-        api_requests = metrics.get("api", {}).get("requests_total", {})
-        api_errors = metrics.get("api", {}).get("errors_total", {})
-        for endpoint in api_requests:
-            if endpoint in api_errors and api_requests[endpoint] > 0:
-                error_rate = api_errors[endpoint] / api_requests[endpoint]
-                if error_rate > THRESHOLDS["api"]["error_rate"]:
-                    self.alert_manager.create_alert(
-                        alert_type=AlertType.API,
-                        severity=AlertSeverity.WARNING,
-                        title="高 API 錯誤率",
-                        description=f"API 錯誤率超過閾值: {endpoint} - {error_rate:.2%} > {THRESHOLDS['api']['error_rate']:.2%}",
-                        source="monitor_system",
-                        details={
-                            "endpoint": endpoint,
-                            "error_rate": error_rate,
-                            "threshold": THRESHOLDS["api"]["error_rate"],
-                            "requests": api_requests[endpoint],
-                            "errors": api_errors[endpoint],
-                        },
+            # 初始化警報處理器
+            self.alert_handler = None
+            if alert_manager and AlertHandler:
+                # 配置警報管理器
+                if hasattr(alert_manager, 'configure'):
+                    alert_manager.configure(
+                        alert_log_dir=self.config["alert_log_dir"],
+                        check_interval=self.config["alert_check_interval"],
+                        email_config=self.config["email_config"],
+                        slack_webhook_url=self.config["slack_webhook_url"],
+                        sms_config=self.config["sms_config"],
                     )
 
-    def _check_model_metrics(self, metrics: Dict[str, Any]):
-        """
-        檢查模型指標
+                self.alert_handler = AlertHandler(alert_manager)
 
-        Args:
-            metrics: 指標數據
-        """
-        # 檢查模型準確率
-        model_accuracy = metrics.get("model", {}).get("prediction_accuracy", {})
-        for model_name, accuracy in model_accuracy.items():
-            if accuracy < THRESHOLDS["model"]["accuracy"]:
-                self.alert_manager.create_alert(
-                    alert_type=AlertType.MODEL,
-                    severity=AlertSeverity.WARNING,
-                    title="低模型準確率",
-                    description=f"模型準確率低於閾值: {model_name} - {accuracy:.2%} < {THRESHOLDS['model']['accuracy']:.2%}",
-                    source="monitor_system",
-                    details={
-                        "model_name": model_name,
-                        "accuracy": accuracy,
-                        "threshold": THRESHOLDS["model"]["accuracy"],
-                    },
+            # 初始化閾值檢查器
+            self.threshold_checker = None
+            if self.alert_handler and ThresholdChecker:
+                self.threshold_checker = ThresholdChecker(
+                    self.config["thresholds"],
+                    self.alert_handler
                 )
 
-        # 檢查模型延遲
-        model_latency = metrics.get("model", {}).get("prediction_latency", {})
-        for model_name, latency in model_latency.items():
-            if latency > THRESHOLDS["model"]["latency"]:
-                self.alert_manager.create_alert(
-                    alert_type=AlertType.MODEL,
-                    severity=AlertSeverity.WARNING,
-                    title="高模型延遲",
-                    description=f"模型延遲超過閾值: {model_name} - {latency:.2f}s > {THRESHOLDS['model']['latency']}s",
-                    source="monitor_system",
-                    details={
-                        "model_name": model_name,
-                        "latency": latency,
-                        "threshold": THRESHOLDS["model"]["latency"],
-                    },
+            # 初始化系統監控器
+            self.system_monitor = None
+            if self.prometheus_exporter and self.threshold_checker and SystemMonitor:
+                self.system_monitor = SystemMonitor(
+                    self.prometheus_exporter,
+                    self.threshold_checker,
+                    self.config["alert_check_interval"]
                 )
 
-        # 檢查模型漂移
-        model_drift = metrics.get("model", {}).get("drift", {})
-        for model_name, drift in model_drift.items():
-            if drift > THRESHOLDS["model"]["drift"]:
-                self.alert_manager.create_alert(
-                    alert_type=AlertType.MODEL,
-                    severity=AlertSeverity.WARNING,
-                    title="高模型漂移",
-                    description=f"模型漂移超過閾值: {model_name} - {drift:.2f} > {THRESHOLDS['model']['drift']}",
-                    source="monitor_system",
-                    details={
-                        "model_name": model_name,
-                        "drift": drift,
-                        "threshold": THRESHOLDS["model"]["drift"],
-                    },
+            logger.info("監控系統組件初始化完成")
+
+        except Exception as e:
+            logger.error("初始化監控系統組件失敗: %s", e)
+            raise
+
+    def start(self) -> bool:
+        """啟動監控系統
+
+        Returns:
+            bool: 啟動成功返回 True，否則返回 False
+        """
+        try:
+            if not self.system_monitor:
+                logger.error("系統監控器未初始化")
+                return False
+
+            # 啟動警報管理器
+            if alert_manager and hasattr(alert_manager, 'start'):
+                alert_manager.start()
+
+            # 啟動系統監控器
+            success = self.system_monitor.start()
+
+            if success:
+                logger.info("監控系統已啟動")
+            else:
+                logger.error("監控系統啟動失敗")
+
+            return success
+
+        except Exception as e:
+            logger.error("啟動監控系統失敗: %s", e)
+            return False
+
+    def stop(self) -> bool:
+        """停止監控系統
+
+        Returns:
+            bool: 停止成功返回 True，否則返回 False
+        """
+        try:
+            success = True
+
+            # 停止系統監控器
+            if self.system_monitor:
+                if not self.system_monitor.stop():
+                    success = False
+
+            # 停止警報管理器
+            if alert_manager and hasattr(alert_manager, 'stop'):
+                alert_manager.stop()
+
+            if success:
+                logger.info("監控系統已停止")
+            else:
+                logger.warning("監控系統停止時發生部分錯誤")
+
+            return success
+
+        except Exception as e:
+            logger.error("停止監控系統失敗: %s", e)
+            return False
+
+    def get_status(self) -> Dict[str, Any]:
+        """獲取監控系統狀態
+
+        Returns:
+            Dict[str, Any]: 系統狀態字典
+        """
+        status = {
+            "components": {
+                "prometheus_exporter": self.prometheus_exporter is not None,
+                "alert_handler": self.alert_handler is not None,
+                "threshold_checker": self.threshold_checker is not None,
+                "system_monitor": self.system_monitor is not None,
+            },
+            "health": {
+                "overall": False,
+                "details": {}
+            }
+        }
+
+        try:
+            # 獲取系統監控器狀態
+            if self.system_monitor:
+                monitor_status = self.system_monitor.get_status()
+                status["system_monitor"] = monitor_status
+                status["health"]["details"]["system_monitor"] = (
+                    self.system_monitor.is_healthy()
                 )
 
-    def _check_trade_metrics(self, metrics: Dict[str, Any]):
+            # 獲取警報處理器狀態
+            if self.alert_handler:
+                alert_stats = self.alert_handler.get_alert_stats()
+                status["alert_handler"] = alert_stats
+                status["health"]["details"]["alert_handler"] = (
+                    self.alert_handler.is_healthy()
+                )
+
+            # 計算整體健康狀態
+            health_checks = list(status["health"]["details"].values())
+            status["health"]["overall"] = all(health_checks) if health_checks else False
+
+        except Exception as e:
+            logger.error("獲取系統狀態失敗: %s", e)
+            status["error"] = str(e)
+
+        return status
+
+    def force_check(self) -> bool:
+        """強制執行一次監控檢查
+
+        Returns:
+            bool: 檢查成功返回 True，否則返回 False
         """
-        檢查交易指標
+        try:
+            if not self.system_monitor:
+                logger.error("系統監控器未初始化")
+                return False
 
-        Args:
-            metrics: 指標數據
+            return self.system_monitor.force_check()
+
+        except Exception as e:
+            logger.error("強制檢查失敗: %s", e)
+            return False
+
+    def is_healthy(self) -> bool:
+        """檢查監控系統整體健康狀態
+
+        Returns:
+            bool: 健康返回 True，否則返回 False
         """
-        # 檢查交易成功率
-        trade_success_rate = metrics.get("trade", {}).get("success_rate")
-        if (
-            trade_success_rate is not None
-            and trade_success_rate < THRESHOLDS["trade"]["success_rate"]
-        ):
-            self.alert_manager.create_alert(
-                alert_type=AlertType.TRADE,
-                severity=AlertSeverity.WARNING,
-                title="低交易成功率",
-                description=f"交易成功率低於閾值: {trade_success_rate:.2%} < {THRESHOLDS['trade']['success_rate']:.2%}",
-                source="monitor_system",
-                details={
-                    "success_rate": trade_success_rate,
-                    "threshold": THRESHOLDS["trade"]["success_rate"],
-                },
-            )
+        try:
+            # 檢查核心組件
+            if not self.system_monitor:
+                return False
 
-        # 檢查資本變化
-        capital_change = metrics.get("trade", {}).get("capital_change")
-        if (
-            capital_change is not None
-            and capital_change < THRESHOLDS["trade"]["capital_change"]
-        ):
-            self.alert_manager.create_alert(
-                alert_type=AlertType.TRADE,
-                severity=AlertSeverity.CRITICAL,
-                title="資本大幅下降",
-                description=f"資本下降超過閾值: {capital_change:.2f}% < {THRESHOLDS['trade']['capital_change']}%",
-                source="monitor_system",
-                details={
-                    "capital_change": capital_change,
-                    "threshold": THRESHOLDS["trade"]["capital_change"],
-                },
-            )
+            # 檢查系統監控器健康狀態
+            return self.system_monitor.is_healthy()
+
+        except Exception as e:
+            logger.error("健康檢查失敗: %s", e)
+            return False
 
 
-def main():
+def main() -> None:
     """主函數"""
     # 解析命令行參數
-    parser = argparse.ArgumentParser(description="監控系統")
+    parser = argparse.ArgumentParser(description="AI 交易系統監控")
     parser.add_argument(
-        "--prometheus-port", type=int, default=PROMETHEUS_PORT, help="Prometheus 端口"
-    )
-    parser.add_argument(
-        "--grafana-port", type=int, default=GRAFANA_PORT, help="Grafana 端口"
-    )
-    parser.add_argument(
-        "--collection-interval",
+        "--prometheus-port",
         type=int,
-        default=PROMETHEUS_COLLECTION_INTERVAL,
-        help="收集間隔（秒）",
+        default=PROMETHEUS_PORT,
+        help="Prometheus 端口"
     )
     parser.add_argument(
-        "--alert-interval",
+        "--grafana-port",
+        type=int,
+        default=GRAFANA_PORT,
+        help="Grafana 端口"
+    )
+    parser.add_argument(
+        "--check-interval",
         type=int,
         default=ALERT_CHECK_INTERVAL,
-        help="警報檢查間隔（秒）",
-    )
-    parser.add_argument(
-        "--slack-webhook", type=str, default=SLACK_WEBHOOK_URL, help="Slack Webhook URL"
+        help="監控檢查間隔（秒）",
     )
     args = parser.parse_args()
 
-    # 創建監控系統
-    monitor_system = MonitorSystem(
-        prometheus_port=args.prometheus_port,
-        grafana_port=args.grafana_port,
-        prometheus_collection_interval=args.collection_interval,
-        alert_check_interval=args.alert_interval,
-        slack_webhook_url=args.slack_webhook,
-    )
+    # 創建配置
+    config = {
+        "prometheus_port": args.prometheus_port,
+        "grafana_port": args.grafana_port,
+        "alert_check_interval": args.check_interval,
+    }
 
-    # 啟動監控系統
-    monitor_system.start()
-
+    # 創建並啟動監控系統
     try:
-        # 保持腳本運行
-        while True:
-            time.sleep(1)
+        monitor_system = MonitorSystem(config)
+
+        if monitor_system.start():
+            logger.info("監控系統啟動成功")
+
+            # 保持腳本運行
+            while True:
+                time.sleep(1)
+        else:
+            logger.error("監控系統啟動失敗")
+            sys.exit(1)
+
     except KeyboardInterrupt:
-        # 停止監控系統
-        monitor_system.stop()
+        logger.info("收到中斷信號，正在停止監控系統...")
+        if 'monitor_system' in locals():
+            monitor_system.stop()
+    except Exception as e:
+        logger.error("監控系統運行失敗: %s", e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

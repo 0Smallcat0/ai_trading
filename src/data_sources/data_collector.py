@@ -262,14 +262,14 @@ class DataCollector(ABC):
             try:
                 # 執行排定的任務
                 self.scheduler.run_pending()
-                
+
                 # 檢查是否有手動觸發的任務
                 try:
                     func, args, kwargs = self.scheduler_queue.get(block=False)
                     func(*args, **kwargs)
                 except queue.Empty:
                     pass
-                    
+
                 time.sleep(1)
             except Exception as e:
                 logger.error(f"排程器執行錯誤: {e}\n{traceback.format_exc()}")
@@ -350,4 +350,3 @@ class DataCollector(ABC):
         else:
             logger.warning(f"{self.name} 排程器未啟動，無法觸發執行")
             return self.run(*args, **kwargs)
-"""

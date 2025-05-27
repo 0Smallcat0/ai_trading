@@ -12,11 +12,15 @@
 - 風險指標計算
 """
 
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy import stats
+
+# 設置 logger
+logger = logging.getLogger(__name__)
 
 try:
     from src.core.data_ingest import load_data
@@ -210,9 +214,18 @@ class RiskManager:
         Returns:
             float: 部位大小（金額）
         """
-        # 獲取最新價格
+        # 驗證資料格式和存在性
         assert isinstance(price_df, pd.DataFrame), "price_df 必須為 pandas.DataFrame"
-        stock_prices = price_df.xs(stock_id, level="stock_id")["收盤價"].astype(float)
+        try:
+            stock_prices = price_df.xs(stock_id, level="stock_id")["收盤價"].astype(
+                float
+            )
+            if stock_prices.empty:
+                logger.warning("股票 %s 沒有價格資料", stock_id)
+                return 0
+        except KeyError:
+            logger.warning("找不到股票 %s 的價格資料", stock_id)
+            return 0
 
         # 計算波動率
         volatility = self._calculate_volatility(stock_id, price_df)
@@ -590,7 +603,7 @@ class StopLossStrategy:
         時間停損
 
         Args:
-            entry_price (float): 進場價格
+            entry_price (float): 進場價格（保留以維持接口一致性）
             current_price (float): 當前價格
             entry_date (datetime.date): 進場日期
             current_date (datetime.date): 當前日期
@@ -598,6 +611,9 @@ class StopLossStrategy:
         Returns:
             float: 停損價格或 None（表示不需要停損）
         """
+        # 忽略未使用的參數警告（entry_price 在時間停損中不需要使用）
+        _ = entry_price
+
         max_days = self.params.get("max_days", 20)
 
         if entry_date is None or current_date is None:

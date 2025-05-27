@@ -1,12 +1,11 @@
-"""
-回測模組
+"""回測模組
 
 此模組提供回測功能，用於評估交易策略的表現。
 """
 
-import datetime
 import warnings
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from src.core.data_ingest import load_data
@@ -19,8 +18,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 class Backtest:
-    """
-    回測類，用於回測交易策略
+    """回測類，用於回測交易策略
 
     主要功能：
     - 策略執行迴圈（包含資金/部位追蹤）
@@ -37,8 +35,7 @@ class Backtest:
         slippage=0.001,
         tax=0.003,
     ):
-        """
-        初始化回測環境
+        """初始化回測環境
 
         Args:
             start_date (datetime.date, optional): 回測開始日期
@@ -68,8 +65,7 @@ class Backtest:
         self.transactions = None
 
     def run(self, signals, weights=None):
-        """
-        執行回測
+        """執行回測
 
         Args:
             signals (pd.DataFrame): 交易信號，MultiIndex (stock_id, date)
@@ -86,7 +82,6 @@ class Backtest:
                 - 'metrics': 績效指標
         """
         price_df = self.price_df
-        close_col = self.close_col
 
         signals = ensure_multiindex(signals)
         if weights is not None:
@@ -148,7 +143,9 @@ class Backtest:
 
         return self.results
 
-    def _process_day_trading(self, day, day_prices, day_signals, day_weights, portfolio, transactions):
+    def _process_day_trading(
+        self, day, day_prices, day_signals, day_weights, portfolio, transactions
+    ):
         """
         處理當日交易
 
@@ -161,12 +158,18 @@ class Backtest:
             transactions (list): 交易記錄
         """
         # 處理賣出信號
-        self._process_sell_signals(day, day_prices, day_signals, portfolio, transactions)
+        self._process_sell_signals(
+            day, day_prices, day_signals, portfolio, transactions
+        )
 
         # 處理買入信號
-        self._process_buy_signals(day, day_prices, day_signals, day_weights, portfolio, transactions)
+        self._process_buy_signals(
+            day, day_prices, day_signals, day_weights, portfolio, transactions
+        )
 
-    def _process_sell_signals(self, day, day_prices, day_signals, portfolio, transactions):
+    def _process_sell_signals(
+        self, day, day_prices, day_signals, portfolio, transactions
+    ):
         """
         處理賣出信號
 
@@ -185,16 +188,21 @@ class Backtest:
         # 如果有 sell_signal 欄位，使用它
         if "sell_signal" in day_signals.columns:
             sell_signals = day_signals[day_signals["sell_signal"] == 1]
-            stocks_to_sell.extend(sell_signals.index.get_level_values("stock_id").tolist())
+            stocks_to_sell.extend(
+                sell_signals.index.get_level_values("stock_id").tolist()
+            )
 
         # 如果有 signal 欄位，使用它（負值表示賣出）
         if "signal" in day_signals.columns:
             sell_signals = day_signals[day_signals["signal"] < 0]
-            stocks_to_sell.extend(sell_signals.index.get_level_values("stock_id").tolist())
+            stocks_to_sell.extend(
+                sell_signals.index.get_level_values("stock_id").tolist()
+            )
 
         # 賣出持倉中的股票
         for stock_id in list(portfolio["positions"].keys()):
-            if stock_id in stocks_to_sell or stock_id not in day_prices.index.get_level_values("stock_id"):
+            if (stock_id in stocks_to_sell
+                    or stock_id not in day_prices.index.get_level_values("stock_id")):
                 if stock_id in day_prices.index.get_level_values("stock_id"):
                     # 獲取當日收盤價
                     price = day_prices.loc[(stock_id, day), close_col]
@@ -212,22 +220,26 @@ class Backtest:
                     portfolio["cash"] += sell_amount - fee - tax
 
                     # 記錄交易
-                    transactions.append({
-                        "date": day,
-                        "stock_id": stock_id,
-                        "action": "sell",
-                        "price": sell_price,
-                        "shares": position["shares"],
-                        "amount": sell_amount,
-                        "fee": fee,
-                        "tax": tax,
-                        "cash_after": portfolio["cash"]
-                    })
+                    transactions.append(
+                        {
+                            "date": day,
+                            "stock_id": stock_id,
+                            "action": "sell",
+                            "price": sell_price,
+                            "shares": position["shares"],
+                            "amount": sell_amount,
+                            "fee": fee,
+                            "tax": tax,
+                            "cash_after": portfolio["cash"],
+                        }
+                    )
 
                 # 移除持倉
                 del portfolio["positions"][stock_id]
 
-    def _process_buy_signals(self, day, day_prices, day_signals, day_weights, portfolio, transactions):
+    def _process_buy_signals(
+        self, day, day_prices, day_signals, day_weights, portfolio, transactions
+    ):
         """
         處理買入信號
 
@@ -247,12 +259,16 @@ class Backtest:
         # 如果有 buy_signal 欄位，使用它
         if "buy_signal" in day_signals.columns:
             buy_signals = day_signals[day_signals["buy_signal"] == 1]
-            stocks_to_buy.extend(buy_signals.index.get_level_values("stock_id").tolist())
+            stocks_to_buy.extend(
+                buy_signals.index.get_level_values("stock_id").tolist()
+            )
 
         # 如果有 signal 欄位，使用它（正值表示買入）
         if "signal" in day_signals.columns:
             buy_signals = day_signals[day_signals["signal"] > 0]
-            stocks_to_buy.extend(buy_signals.index.get_level_values("stock_id").tolist())
+            stocks_to_buy.extend(
+                buy_signals.index.get_level_values("stock_id").tolist()
+            )
 
         # 如果沒有買入信號，直接返回
         if not stocks_to_buy:
@@ -304,21 +320,23 @@ class Backtest:
                     portfolio["positions"][stock_id] = {
                         "shares": shares,
                         "cost": buy_price,
-                        "date": day
+                        "date": day,
                     }
 
                     # 記錄交易
-                    transactions.append({
-                        "date": day,
-                        "stock_id": stock_id,
-                        "action": "buy",
-                        "price": buy_price,
-                        "shares": shares,
-                        "amount": actual_buy_amount,
-                        "fee": actual_fee,
-                        "tax": 0,
-                        "cash_after": portfolio["cash"]
-                    })
+                    transactions.append(
+                        {
+                            "date": day,
+                            "stock_id": stock_id,
+                            "action": "buy",
+                            "price": buy_price,
+                            "shares": shares,
+                            "amount": actual_buy_amount,
+                            "fee": actual_fee,
+                            "tax": 0,
+                            "cash_after": portfolio["cash"],
+                        }
+                    )
 
     def _update_portfolio_value(self, day, day_prices, portfolio):
         """
@@ -343,12 +361,14 @@ class Backtest:
         portfolio["total_value"] = portfolio["cash"] + positions_value
 
         # 記錄歷史
-        portfolio["history"].append({
-            "date": day,
-            "cash": portfolio["cash"],
-            "positions_value": positions_value,
-            "total_value": portfolio["total_value"]
-        })
+        portfolio["history"].append(
+            {
+                "date": day,
+                "cash": portfolio["cash"],
+                "positions_value": positions_value,
+                "total_value": portfolio["total_value"],
+            }
+        )
 
     def _calculate_performance_metrics(self, portfolio):
         """
@@ -391,25 +411,33 @@ class Backtest:
             # 計算每筆交易的盈虧
             trades = []
             for buy in buy_transactions.itertuples():
-                sell_records = sell_transactions[sell_transactions["stock_id"] == buy.stock_id]
+                sell_records = sell_transactions[
+                    sell_transactions["stock_id"] == buy.stock_id
+                ]
                 if not sell_records.empty:
                     sell = sell_records.iloc[0]
-                    profit = (sell["price"] - buy.price) * buy.shares - buy.fee - sell["fee"] - sell["tax"]
-                    trades.append({
-                        "stock_id": buy.stock_id,
-                        "buy_date": buy.date,
-                        "sell_date": sell["date"],
-                        "buy_price": buy.price,
-                        "sell_price": sell["price"],
-                        "shares": buy.shares,
-                        "profit": profit,
-                        "return": profit / (buy.price * buy.shares)
-                    })
+                    profit = ((sell["price"] - buy.price) * buy.shares
+                              - buy.fee - sell["fee"] - sell["tax"])
+                    trades.append(
+                        {
+                            "stock_id": buy.stock_id,
+                            "buy_date": buy.date,
+                            "sell_date": sell["date"],
+                            "buy_price": buy.price,
+                            "sell_price": sell["price"],
+                            "shares": buy.shares,
+                            "profit": profit,
+                            "return": profit / (buy.price * buy.shares),
+                        }
+                    )
 
             trades_df = pd.DataFrame(trades)
             if not trades_df.empty:
                 win_rate = (trades_df["profit"] > 0).mean()
-                profit_loss_ratio = abs(trades_df[trades_df["profit"] > 0]["profit"].mean()) / abs(trades_df[trades_df["profit"] < 0]["profit"].mean()) if (trades_df["profit"] < 0).any() else float("inf")
+                profit_loss_ratio = (abs(trades_df[trades_df["profit"] > 0]["profit"].mean())
+                                      / abs(trades_df[trades_df["profit"] < 0]["profit"].mean())
+                                      if (trades_df["profit"] < 0).any()
+                                      else float("inf"))
             else:
                 win_rate = 0
                 profit_loss_ratio = 0
@@ -432,9 +460,9 @@ class Backtest:
                 "sharpe_ratio": sharpe,
                 "max_drawdown": max_drawdown,
                 "win_rate": win_rate,
-                "profit_loss_ratio": profit_loss_ratio
+                "profit_loss_ratio": profit_loss_ratio,
             },
-            "trades": trades_df
+            "trades": trades_df,
         }
 
     def plot_equity_curve(self):
@@ -488,9 +516,6 @@ class Backtest:
         """
         if self.results is None:
             raise ValueError("請先執行回測")
-
-        import matplotlib.pyplot as plt
-        import numpy as np
 
         equity_curve = self.results["equity_curve"]
         running_max = equity_curve.cummax()

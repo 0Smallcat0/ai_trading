@@ -1,5 +1,4 @@
-"""
-回測工具模組
+"""回測工具模組
 
 此模組提供回測過程中使用的工具函數，包括資料處理、績效計算等。
 """
@@ -17,8 +16,7 @@ __all__ = [
 
 
 def detect_close_col(df):
-    """
-    自動偵測收盤價欄位名稱
+    """自動偵測收盤價欄位名稱
 
     Args:
         df (pd.DataFrame): 價格資料 DataFrame
@@ -36,8 +34,7 @@ def detect_close_col(df):
 
 
 def ensure_multiindex(df):
-    """
-    確保 index 為 (stock_id, date) MultiIndex
+    """確保 index 為 (stock_id, date) MultiIndex
 
     Args:
         df (pd.DataFrame): 輸入的 DataFrame
@@ -50,15 +47,13 @@ def ensure_multiindex(df):
     """
     if isinstance(df.index, pd.MultiIndex):
         return df
-    elif "stock_id" in df.columns and "date" in df.columns:
+    if "stock_id" in df.columns and "date" in df.columns:
         return df.set_index(["stock_id", "date"])
-    else:
-        raise ValueError("資料必須有 MultiIndex 或包含 'stock_id' 和 'date' 欄位")
+    raise ValueError("資料必須有 MultiIndex 或包含 'stock_id' 和 'date' 欄位")
 
 
 def calculate_sharpe(equity_curve, risk_free_rate=0.0, periods_per_year=252):
-    """
-    計算夏普比率
+    """計算夏普比率
 
     Args:
         equity_curve (pd.Series): 權益曲線
@@ -73,15 +68,14 @@ def calculate_sharpe(equity_curve, risk_free_rate=0.0, periods_per_year=252):
     annual_volatility = returns.std() * np.sqrt(periods_per_year)
     sharpe = (
         (annual_return - risk_free_rate) / annual_volatility
-        if annual_volatility != 0
+        if annual_volatility
         else 0
     )
     return sharpe
 
 
 def calculate_max_drawdown(equity_curve):
-    """
-    計算最大回撤
+    """計算最大回撤
 
     Args:
         equity_curve (pd.Series): 權益曲線
@@ -96,8 +90,7 @@ def calculate_max_drawdown(equity_curve):
 
 
 def align_timeseries(df1, df2):
-    """
-    對齊兩個時間序列的索引
+    """對齊兩個時間序列的索引
 
     Args:
         df1 (pd.DataFrame): 第一個 DataFrame

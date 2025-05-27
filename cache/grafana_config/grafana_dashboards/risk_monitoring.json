@@ -1,0 +1,58 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AI 交易系統 - 風險監控",
+    "tags": [
+      "trading",
+      "risk",
+      "monitoring"
+    ],
+    "timezone": "Asia/Taipei",
+    "panels": [
+      {
+        "id": 1,
+        "title": "活躍警報",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(active_alerts_count)",
+            "legendFormat": "總警報數"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 5
+                },
+                {
+                  "color": "red",
+                  "value": 10
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  },
+  "overwrite": true
+}

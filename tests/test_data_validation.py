@@ -174,7 +174,10 @@ def test_validate_time_series_continuity(sample_data):
 
     # 測試日線資料連續性
     result = validator.validate_time_series_continuity(
-        MarketDaily, "2330.TW", pd.to_datetime(date(2023, 1, 2)).date(), pd.to_datetime(date(2023, 1, 10)).date()
+        MarketDaily,
+        "2330.TW",
+        pd.to_datetime(date(2023, 1, 2)).date(),
+        pd.to_datetime(date(2023, 1, 10)).date(),
     )
 
     # 檢查結果
@@ -203,7 +206,10 @@ def test_check_missing_values(sample_data):
 
     # 測試日線資料缺失值
     result = validator.check_missing_values(
-        MarketDaily, "2330.TW", pd.to_datetime(date(2023, 1, 2)).date(), pd.to_datetime(date(2023, 1, 10)).date()
+        MarketDaily,
+        "2330.TW",
+        pd.to_datetime(date(2023, 1, 2)).date(),
+        pd.to_datetime(date(2023, 1, 10)).date(),
     )
 
     # 檢查結果
@@ -220,8 +226,11 @@ def test_detect_outliers(sample_data):
 
     # 測試日線資料異常值
     result = validator.detect_outliers(
-        MarketDaily, "2330.TW", pd.to_datetime(date(2023, 1, 2)).date(), pd.to_datetime(date(2023, 1, 10)).date(),
-        threshold=2.0  # 降低閾值以檢測更多異常值
+        MarketDaily,
+        "2330.TW",
+        pd.to_datetime(date(2023, 1, 2)).date(),
+        pd.to_datetime(date(2023, 1, 10)).date(),
+        threshold=2.0,  # 降低閾值以檢測更多異常值
     )
 
     # 檢查結果
@@ -241,6 +250,7 @@ def test_verify_data_integrity(sample_data):
     checksum_fields = ["symbol", "date", "open", "high", "low", "close", "volume"]
     import json
     import hashlib
+
     record_data = {
         field: getattr(record, field)
         for field in checksum_fields

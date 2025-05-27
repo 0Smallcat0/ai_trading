@@ -1,5 +1,4 @@
-"""
-監控配置模組
+"""監控配置模組
 
 此模組提供監控系統的配置。
 """
@@ -194,7 +193,10 @@ ALERT_RULES = [
     # API 警報規則
     {
         "name": "high_api_latency",
-        "expr": "histogram_quantile(0.95, sum(rate(api_latency_seconds_bucket[5m])) by (le, endpoint)) > 0.2",
+        "expr": (
+            "histogram_quantile(0.95, "
+            "sum(rate(api_latency_seconds_bucket[5m])) by (le, endpoint)) > 0.2"
+        ),
         "for": "5m",
         "labels": {"severity": "warning", "type": "api"},
         "annotations": {
@@ -204,7 +206,10 @@ ALERT_RULES = [
     },
     {
         "name": "high_api_error_rate",
-        "expr": "sum(rate(api_errors_total[5m])) by (endpoint) / sum(rate(api_requests_total[5m])) by (endpoint) > 0.05",
+        "expr": (
+            "sum(rate(api_errors_total[5m])) by (endpoint) / "
+            "sum(rate(api_requests_total[5m])) by (endpoint) > 0.05"
+        ),
         "for": "5m",
         "labels": {"severity": "warning", "type": "api"},
         "annotations": {

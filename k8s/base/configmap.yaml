@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-trading-config
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: config
+data:
+  # 應用程式配置
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  
+  # API 配置
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  API_WORKERS: "4"
+  
+  # 資料庫配置
+  POSTGRES_DB: "ai_trading"
+  POSTGRES_USER: "postgres"
+  
+  # Redis 配置
+  REDIS_URL: "redis://redis-service:6379/0"
+  
+  # 監控配置
+  PROMETHEUS_HOST: "prometheus-service"
+  PROMETHEUS_PORT: "9090"
+  GRAFANA_HOST: "grafana-service"
+  GRAFANA_PORT: "3000"
+  
+  # 交易配置
+  TRADING_HOURS_START: "09:00:00"
+  TRADING_HOURS_END: "13:30:00"
+  TRADING_TIMEZONE: "Asia/Taipei"
+  
+  # 風險管理配置
+  MAX_POSITION_SIZE: "0.2"
+  STOP_LOSS_THRESHOLD: "0.05"
+  MAX_DAILY_LOSS: "5000.0"
+  RISK_FREE_RATE: "0.02"
+  
+  # 快取配置
+  CACHE_ENABLED: "true"
+  CACHE_TTL: "3600"
+  CACHE_MAX_SIZE: "1000"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+    rule_files:
+      - "rules/alert_rules.yml"
+
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      - job_name: 'ai-trading-app'
+        static_configs:
+          - targets: ['ai-trading-app-service:9091']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      - job_name: 'postgres'
+        static_configs:
+          - targets: ['postgres-service:9187']
+
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-service:9121']

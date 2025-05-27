@@ -2,10 +2,17 @@
 Basic test script to verify functionality without importing project modules
 """
 
+import pytest
 import pandas as pd
 import numpy as np
 import talib
 import backtrader as bt
+
+
+@pytest.fixture
+def df():
+    """Create test DataFrame fixture"""
+    return test_pandas()
 
 
 def test_pandas():

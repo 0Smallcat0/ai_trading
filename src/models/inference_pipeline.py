@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-推論管道模組
+"""推論管道模組
 
 此模組提供模型推論功能，包括：
 - 批次推論
@@ -28,8 +27,7 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 
 
 class InferencePipeline:
-    """
-    推論管道
+    """推論管道
 
     提供模型推論功能。
     """
@@ -45,8 +43,7 @@ class InferencePipeline:
         registry: Optional[ModelRegistry] = None,
         monitor: bool = True,
     ):
-        """
-        初始化推論管道
+        """初始化推論管道
 
         Args:
             model (Optional[ModelBase]): 模型，如果提供則直接使用
@@ -98,8 +95,7 @@ class InferencePipeline:
         self.results = []
 
     def preprocess(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        預處理資料
+        """預處理資料
 
         Args:
             data (pd.DataFrame): 原始資料
@@ -110,12 +106,11 @@ class InferencePipeline:
         # 如果有特徵處理器，則使用特徵處理器處理資料
         if self.feature_processor is not None:
             return self.feature_processor.transform(data)
-        else:
-            return data
+
+        return data
 
     def postprocess(self, predictions: np.ndarray, data: pd.DataFrame) -> Any:
-        """
-        後處理預測結果
+        """後處理預測結果
 
         Args:
             predictions (np.ndarray): 預測結果
@@ -127,8 +122,8 @@ class InferencePipeline:
         # 如果有後處理函數，則使用後處理函數處理預測結果
         if self.post_processor is not None:
             return self.post_processor(predictions, data)
-        else:
-            return predictions
+
+        return predictions
 
     def predict(
         self,
@@ -245,14 +240,13 @@ class InferencePipeline:
         return results
 
     def save_results(
-        self, output_path: Optional[str] = None, format: str = "csv"
+        self, output_path: Optional[str] = None, file_format: str = "csv"
     ) -> str:
-        """
-        保存結果
+        """保存結果
 
         Args:
             output_path (Optional[str]): 輸出路徑
-            format (str): 格式，可選 "csv", "json", "pickle"
+            file_format (str): 格式，可選 "csv", "json", "pickle"
 
         Returns:
             str: 輸出路徑
@@ -291,32 +285,31 @@ class InferencePipeline:
             os.makedirs(output_dir, exist_ok=True)
 
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            output_path = os.path.join(output_dir, f"predictions_{timestamp}.{format}")
+            output_path = os.path.join(output_dir, f"predictions_{timestamp}.{file_format}")
 
         # 保存結果
-        if format == "csv":
+        if file_format == "csv":
             results_df.to_csv(output_path, index=False)
-        elif format == "json":
+        elif file_format == "json":
             results_df.to_json(output_path, orient="records", indent=4)
-        elif format == "pickle":
+        elif file_format == "pickle":
             results_df.to_pickle(output_path)
         else:
-            logger.error(f"未知的格式: {format}")
-            raise ValueError(f"未知的格式: {format}")
+            logger.error("未知的格式: %s", file_format)
+            raise ValueError(f"未知的格式: {file_format}")
 
-        logger.info(f"結果已保存至: {output_path}")
+        logger.info("結果已保存至: %s", output_path)
 
         return output_path
 
     def calculate_metrics(self) -> Dict[str, float]:
-        """
-        計算指標
+        """計算指標
 
         Returns:
             Dict[str, float]: 指標
         """
         if self.monitor is not None:
             return self.monitor.calculate_metrics()
-        else:
-            logger.warning("沒有監控器，無法計算指標")
-            return {}
+
+        logger.warning("沒有監控器，無法計算指標")
+        return {}

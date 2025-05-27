@@ -1,5 +1,4 @@
-"""
-技術與基本面指標計算模組
+"""技術與基本面指標計算模組
 
 此模組負責計算各種技術指標和基本面指標，為策略研究提供必要的特徵。
 
@@ -39,17 +38,18 @@ except ImportError as e:
 
     # 創建空的 abstract 模組以避免錯誤
     class DummyAbstract:
-    """
-    DummyAbstract
-    
-    """
+        """DummyAbstract
+
+        """
+
         def __getattr__(self, name):
-        """
-        __getattr__
-        
-        Args:
-            name: 
-        """
+            """__getattr__
+
+            Args:
+                name: 屬性名稱
+            """
+            # 忽略未使用的參數警告
+            _ = name
             return None
 
     abstract = DummyAbstract()
@@ -82,16 +82,14 @@ except ImportError:
 
 
 class RollingWindowFeatureGenerator:
-    """
-    滾動視窗特徵生成器
+    """滾動視窗特徵生成器
 
     用於生成基於滾動視窗的特徵，如移動平均、標準差等。
     支援自定義視窗大小和函數。
     """
 
     def __init__(self, window_sizes=None, functions=None):
-        """
-        初始化滾動視窗特徵生成器
+        """初始化滾動視窗特徵生成器
 
         Args:
             window_sizes (list, optional): 視窗大小列表，如果為 None 則使用預設值 [5, 10, 20, 60]
@@ -116,8 +114,7 @@ class RollingWindowFeatureGenerator:
         self.functions = functions or default_functions
 
     def generate(self, df, columns=None):
-        """
-        生成滾動視窗特徵
+        """生成滾動視窗特徵
 
         Args:
             df (pandas.DataFrame): 輸入資料
@@ -149,8 +146,7 @@ class RollingWindowFeatureGenerator:
 
 
 class DataCleaner:
-    """
-    資料清理器
+    """資料清理器
 
     用於清理和預處理資料，包括異常值處理和缺失值填補。
     """
@@ -162,13 +158,13 @@ class DataCleaner:
         imputation_method="interpolate",
         imputation_params=None,
     ):
-        """
-        初始化資料清理器
+        """初始化資料清理器
 
         Args:
             outlier_method (str): 異常值檢測方法，可選 'z-score', 'iqr'
             outlier_threshold (float): 異常值閾值，z-score 方法使用標準差倍數，iqr 方法使用四分位距倍數
-            imputation_method (str): 缺失值填補方法，可選 'interpolate', 'mean', 'median', 'knn', 'forward', 'backward'
+            imputation_method (str): 缺失值填補方法，可選 'interpolate',
+                'mean', 'median', 'knn', 'forward', 'backward'
             imputation_params (dict, optional): 填補方法的參數
         """
         self.outlier_method = outlier_method
@@ -177,8 +173,7 @@ class DataCleaner:
         self.imputation_params = imputation_params or {}
 
     def detect_outliers(self, df, columns=None):
-        """
-        檢測異常值
+        """檢測異常值
 
         Args:
             df (pandas.DataFrame): 輸入資料
@@ -217,8 +212,7 @@ class DataCleaner:
         return outliers
 
     def treat_outliers(self, df, outliers=None, method="clip", columns=None):
-        """
-        處理異常值
+        """處理異常值
 
         Args:
             df (pandas.DataFrame): 輸入資料
@@ -281,8 +275,7 @@ class DataCleaner:
         return result
 
     def impute_missing_values(self, df, columns=None):
-        """
-        填補缺失值
+        """填補缺失值
 
         Args:
             df (pandas.DataFrame): 輸入資料
@@ -338,8 +331,7 @@ class DataCleaner:
         impute_missing=True,
         columns=None,
     ):
-        """
-        清理資料
+        """清理資料
 
         Args:
             df (pandas.DataFrame): 輸入資料
@@ -383,8 +375,7 @@ class FeatureCalculator:
     """特徵計算器類別，用於計算各種技術和基本面指標"""
 
     def __init__(self, data_dict=None, use_distributed=False, chunk_size=10000):
-        """
-        初始化特徵計算器
+        """初始化特徵計算器
 
         Args:
             data_dict (dict, optional): 包含各種資料的字典，如果為 None 則自動載入
@@ -413,8 +404,7 @@ class FeatureCalculator:
     def calculate_technical_indicators(
         self, stock_id=None, indicators=None, multipliers=None, custom_params=None
     ):
-        """
-        計算技術指標
+        """計算技術指標
 
         Args:
             stock_id (str, optional): 股票代號，如果為 None 則計算所有股票
@@ -424,8 +414,7 @@ class FeatureCalculator:
 
         Returns:
             pandas.DataFrame: 包含技術指標的資料框架
-        """
-        # 預設指標列表
+        """# 預設指標列表
         if indicators is None:
             indicators = [
                 "RSI",  # 相對強弱指標
@@ -503,16 +492,14 @@ class FeatureCalculator:
         return pd.DataFrame(features)
 
     def _prepare_ohlcv_data(self, price_df):
-        """
-        準備 OHLCV 資料
+        """準備 OHLCV 資料
 
         Args:
             price_df (pandas.DataFrame): 價格資料
 
         Returns:
             dict: OHLCV 資料字典
-        """
-        # 準備 OHLCV 資料
+        """# 準備 OHLCV 資料
         ohlcv_dict = {}
 
         # 處理中文欄位名稱
@@ -564,8 +551,7 @@ class FeatureCalculator:
     def _calculate_single_indicator(
         self, name, ohlcv_dict, multipliers, custom_params=None
     ):
-        """
-        計算單一技術指標
+        """計算單一技術指標
 
         Args:
             name (str): 指標名稱
@@ -660,8 +646,7 @@ class FeatureCalculator:
     def _calculate_indicators_with_dask(
         self, ohlcv_dict, indicators, multipliers, custom_params
     ):
-        """
-        使用 Dask 計算技術指標
+        """使用 Dask 計算技術指標
 
         Args:
             ohlcv_dict (dict): OHLCV 資料字典
@@ -671,8 +656,7 @@ class FeatureCalculator:
 
         Returns:
             pandas.DataFrame: 技術指標資料框架
-        """
-        # 將 OHLCV 資料轉換為 Dask DataFrame
+        """# 將 OHLCV 資料轉換為 Dask DataFrame
         dask_dict = {}
         for k, v in ohlcv_dict.items():
             dask_dict[k] = dd.from_pandas(
@@ -681,16 +665,14 @@ class FeatureCalculator:
 
         # 定義計算單一指標的函數
         def calculate_indicator(name, ohlcv_dict, multipliers, custom_params):
-            # 將 Dask DataFrame 轉換為 pandas DataFrame
-        """
-        calculate_indicator
-        
-        Args:
-            name: 
-            ohlcv_dict: 
-            multipliers: 
-            custom_params: 
-        """
+            """calculate_indicator
+
+            Args:
+                name: 指標名稱
+                ohlcv_dict: OHLCV 資料字典
+                multipliers: 參數倍數列表
+                custom_params: 自定義參數
+            """# 將 Dask DataFrame 轉換為 pandas DataFrame
             pandas_dict = {}
             for k, v in ohlcv_dict.items():
                 pandas_dict[k] = v.compute()
@@ -720,13 +702,11 @@ class FeatureCalculator:
         return pd.DataFrame(features)
 
     def calculate_fundamental_indicators(self):
-        """
-        計算基本面指標
+        """計算基本面指標
 
         Returns:
             pandas.DataFrame: 包含基本面指標的資料框架
-        """
-        # 檢查是否有必要的資料
+        """# 檢查是否有必要的資料
         required_tables = ["income_sheet", "balance_sheet", "cash_flows"]
         for table in required_tables:
             if table not in self.data_dict:
@@ -769,13 +749,11 @@ class FeatureCalculator:
         return pd.DataFrame()
 
     def calculate_custom_features(self):
-        """
-        計算自定義特徵
+        """計算自定義特徵
 
         Returns:
             pandas.DataFrame: 包含自定義特徵的資料框架
-        """
-        # 這裡可以實現自定義的特徵計算邏輯
+        """# 這裡可以實現自定義的特徵計算邏輯
         # 例如，計算價格動量、波動率等
 
         price_df = self.data_dict["price"]
@@ -849,8 +827,7 @@ class FeatureCalculator:
         return pd.concat(features, axis=1)
 
     def combine_features(self, technical=True, fundamental=True, custom=True):
-        """
-        組合各種特徵
+        """組合各種特徵
 
         Args:
             technical (bool): 是否包含技術指標
@@ -886,8 +863,7 @@ class FeatureCalculator:
         return combined_features
 
     def normalize_features(self, features_df, method="standard"):
-        """
-        標準化特徵
+        """標準化特徵
 
         Args:
             features_df (pandas.DataFrame): 特徵資料框架
@@ -923,8 +899,7 @@ class FeatureCalculator:
             return None, features_df
 
     def drop_extreme_values(self, features_df, threshold=0.01):
-        """
-        刪除極端值
+        """刪除極端值
 
         Args:
             features_df (pandas.DataFrame): 特徵資料框架
@@ -946,8 +921,7 @@ class FeatureCalculator:
         return features_df[~extreme_cases]
 
     def select_features(self, features_df, target_df=None, method="f_regression", k=10):
-        """
-        特徵選擇
+        """特徵選擇
 
         使用不同的特徵選擇方法選擇最重要的特徵。
 
@@ -1043,8 +1017,7 @@ class FeatureCalculator:
     def reduce_dimensions(
         self, features_df, n_components=None, method="pca", variance_ratio=0.95
     ):
-        """
-        降維
+        """降維
 
         使用不同的降維方法減少特徵維度。
 
@@ -1101,8 +1074,7 @@ class FeatureCalculator:
     def calculate_feature_importance(
         self, features_df, target_df=None, method="random_forest"
     ):
-        """
-        計算特徵重要性
+        """計算特徵重要性
 
         使用不同的方法計算特徵的重要性。
 
@@ -1180,8 +1152,7 @@ class FeatureCalculator:
     def plot_feature_importance(
         self, importance, top_n=20, figsize=(12, 8), save_path=None
     ):
-        """
-        繪製特徵重要性圖
+        """繪製特徵重要性圖
 
         Args:
             importance (pandas.Series): 特徵重要性
@@ -1224,8 +1195,7 @@ class FeatureCalculator:
 def process_chunk(
     chunk, calculator, normalize=True, remove_extremes=True, clean_data=True
 ):
-    """
-    處理資料分塊
+    """處理資料分塊
 
     Args:
         chunk (pandas.DataFrame): 資料分塊
@@ -1236,7 +1206,9 @@ def process_chunk(
 
     Returns:
         pandas.DataFrame: 處理後的特徵
-    """
+    """# 忽略未使用的參數警告（chunk 在此函數中不直接使用，但在調用者中有用）
+    _ = chunk
+
     # 計算特徵
     features = calculator.combine_features()
 
@@ -1274,8 +1246,7 @@ def compute_features(
     feature_name="combined_features",
     feature_tags=None,
 ):
-    """
-    計算特徵的主函數
+    """計算特徵的主函數
 
     Args:
         start_date (datetime.date, optional): 開始日期
@@ -1298,8 +1269,7 @@ def compute_features(
 
     Returns:
         pandas.DataFrame: 計算好的特徵資料框架
-    """
-    # 載入資料
+    """# 載入資料
     data_dict = load_data(start_date, end_date)
 
     # 創建特徵計算器
@@ -1351,7 +1321,7 @@ def compute_features(
 
     # 特徵選擇
     if feature_selection and not features.empty:
-        selected_features, selector = calculator.select_features(
+        selected_features, _ = calculator.select_features(
             features, method=feature_selection_method, k=feature_selection_k
         )
         if not selected_features.empty:
@@ -1415,8 +1385,7 @@ def compute_features(
 def _compute_features_with_dask(
     calculator, normalize, remove_extremes, clean_data, chunk_size
 ):
-    """
-    使用 Dask 進行分散式特徵計算
+    """使用 Dask 進行分散式特徵計算
 
     Args:
         calculator (FeatureCalculator): 特徵計算器
@@ -1437,13 +1406,11 @@ def _compute_features_with_dask(
 
         # 定義 map_partitions 函數
         def process_partition(partition):
-            # 創建臨時資料字典
-        """
-        process_partition
-        
-        Args:
-            partition: 
-        """
+            """process_partition
+
+            Args:
+                partition: 資料分區
+            """# 創建臨時資料字典
             temp_dict = calculator.data_dict.copy()
             temp_dict["price"] = partition
 
@@ -1486,8 +1453,7 @@ def _compute_features_with_dask(
 def _compute_features_with_ray(
     calculator, normalize, remove_extremes, clean_data, chunk_size
 ):
-    """
-    使用 Ray 進行分散式特徵計算
+    """使用 Ray 進行分散式特徵計算
 
     Args:
         calculator (FeatureCalculator): 特徵計算器
@@ -1515,18 +1481,17 @@ def _compute_features_with_ray(
         # 定義 Ray 任務
         @ray.remote
         def process_chunk_ray(
-        """
-        process_chunk_ray
-        
-        Args:
-            chunk: 
-            data_dict_copy: 
-            normalize: 
-            remove_extremes: 
-            clean_data: 
-        """
             chunk, data_dict_copy, normalize, remove_extremes, clean_data
         ):
+            """process_chunk_ray
+
+            Args:
+                chunk: 資料分塊
+                data_dict_copy: 資料字典副本
+                normalize: 是否標準化
+                remove_extremes: 是否移除極端值
+                clean_data: 是否清理資料
+            """
             # 創建臨時資料字典
             temp_dict = data_dict_copy.copy()
             temp_dict["price"] = chunk

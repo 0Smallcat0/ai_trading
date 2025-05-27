@@ -68,22 +68,22 @@ class FunctionProfiler:
         """
 
         def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        decorator
-        
-        Args:
-            func: 
-        
-        Returns:
-            Callable[...]: 
-        """
+            """
+            decorator
+
+            Args:
+                func:
+
+            Returns:
+                Callable[...]:
+            """
+
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-                # 創建分析器
-            """
-            wrapper
-            
-            """
+                """
+                wrapper
+
+                """
                 profiler = cProfile.Profile()
                 # 啟動分析器
                 profiler.enable()
@@ -153,22 +153,22 @@ class MemoryProfiler:
         """
 
         def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        decorator
-        
-        Args:
-            func: 
-        
-        Returns:
-            Callable[...]: 
-        """
+            """
+            decorator
+
+            Args:
+                func:
+
+            Returns:
+                Callable[...]:
+            """
+
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-                # 啟動記憶體追蹤
-            """
-            wrapper
-            
-            """
+                """
+                wrapper
+
+                """
                 tracemalloc.start()
                 # 執行函數
                 result = func(*args, **kwargs)
@@ -231,22 +231,22 @@ class IOProfiler:
         """
 
         def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        decorator
-        
-        Args:
-            func: 
-        
-        Returns:
-            Callable[...]: 
-        """
+            """
+            decorator
+
+            Args:
+                func:
+
+            Returns:
+                Callable[...]:
+            """
+
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-                # 獲取進程
-            """
-            wrapper
-            
-            """
+                """
+                wrapper
+
+                """
                 process = psutil.Process(os.getpid())
                 # 獲取初始 I/O 計數
                 io_before = process.io_counters()

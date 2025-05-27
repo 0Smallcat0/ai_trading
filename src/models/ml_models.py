@@ -12,22 +12,39 @@
 import logging
 from typing import Any, Dict
 
-import lightgbm as lgb
+try:
+    import lightgbm as lgb
+    LIGHTGBM_AVAILABLE = True
+except ImportError:
+    lgb = None
+    LIGHTGBM_AVAILABLE = False
+
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    xgb = None
+    XGBOOST_AVAILABLE = False
+
 import numpy as np
 import pandas as pd
-import xgboost as xgb
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    mean_absolute_error,
-    mean_squared_error,
-    precision_score,
-    r2_score,
-    recall_score,
-)
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.svm import SVC, SVR
+
+try:
+    from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+    from sklearn.metrics import (
+        accuracy_score,
+        f1_score,
+        mean_absolute_error,
+        mean_squared_error,
+        precision_score,
+        r2_score,
+        recall_score,
+    )
+    from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+    from sklearn.svm import SVC, SVR
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
 
 from src.config import LOG_LEVEL
 
@@ -53,9 +70,18 @@ class RandomForestModel(ModelBase):
             name (str): 模型名稱
             is_classifier (bool): 是否為分類模型
             **kwargs: 其他參數，將傳遞給 RandomForestClassifier 或 RandomForestRegressor
+
+        Raises:
+            ImportError: 當 scikit-learn 套件未安裝時
         """
         super().__init__(name=name, is_classifier=is_classifier, **kwargs)
         self.is_classifier = is_classifier
+
+        # 檢查 scikit-learn 是否可用
+        if not SKLEARN_AVAILABLE:
+            raise ImportError(
+                "scikit-learn 套件未安裝。請使用 'pip install scikit-learn' 或 'poetry add scikit-learn' 安裝。"
+            )
 
         # 創建模型
         if is_classifier:
@@ -185,7 +211,7 @@ class RandomForestModel(ModelBase):
         elif method == "random":
             search = RandomizedSearchCV(self.model, param_grid, n_iter=n_iter, cv=cv)
         else:
-            logger.error(f"未知的調優方法: {method}")
+            logger.error("未知的調優方法: %s", method)
             raise ValueError(f"未知的調優方法: {method}，可用方法: grid, random")
 
         # 執行調優
@@ -218,9 +244,18 @@ class XGBoostModel(ModelBase):
             name (str): 模型名稱
             is_classifier (bool): 是否為分類模型
             **kwargs: 其他參數，將傳遞給 XGBClassifier 或 XGBRegressor
+
+        Raises:
+            ImportError: 當 XGBoost 套件未安裝時
         """
         super().__init__(name=name, is_classifier=is_classifier, **kwargs)
         self.is_classifier = is_classifier
+
+        # 檢查 XGBoost 是否可用
+        if not XGBOOST_AVAILABLE:
+            raise ImportError(
+                "XGBoost 套件未安裝。請使用 'pip install xgboost' 或 'poetry add xgboost' 安裝。"
+            )
 
         # 創建模型
         if is_classifier:
@@ -335,9 +370,18 @@ class LightGBMModel(ModelBase):
             name (str): 模型名稱
             is_classifier (bool): 是否為分類模型
             **kwargs: 其他參數，將傳遞給 LGBMClassifier 或 LGBMRegressor
+
+        Raises:
+            ImportError: 當 LightGBM 套件未安裝時
         """
         super().__init__(name=name, is_classifier=is_classifier, **kwargs)
         self.is_classifier = is_classifier
+
+        # 檢查 LightGBM 是否可用
+        if not LIGHTGBM_AVAILABLE:
+            raise ImportError(
+                "LightGBM 套件未安裝。請使用 'pip install lightgbm' 或 'poetry add lightgbm' 安裝。"
+            )
 
         # 創建模型
         if is_classifier:
@@ -452,9 +496,18 @@ class SVMModel(ModelBase):
             name (str): 模型名稱
             is_classifier (bool): 是否為分類模型
             **kwargs: 其他參數，將傳遞給 SVC 或 SVR
+
+        Raises:
+            ImportError: 當 scikit-learn 套件未安裝時
         """
         super().__init__(name=name, is_classifier=is_classifier, **kwargs)
         self.is_classifier = is_classifier
+
+        # 檢查 scikit-learn 是否可用
+        if not SKLEARN_AVAILABLE:
+            raise ImportError(
+                "scikit-learn 套件未安裝。請使用 'pip install scikit-learn' 或 'poetry add scikit-learn' 安裝。"
+            )
 
         # 創建模型
         if is_classifier:

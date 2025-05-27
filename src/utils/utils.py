@@ -254,18 +254,19 @@ def retry(max_retries=3):
     """
 
     def decorator(func):
-    """
-    decorator
-    
-    Args:
-        func: 
-    """
+        """
+        decorator
+
+        Args:
+            func:
+        """
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-        """
-        wrapper
-        
-        """
+            """
+            wrapper
+
+            """
             retries = 0
             while retries < max_retries:
                 try:
@@ -313,21 +314,38 @@ def cache_dataframe(fn):
             return pd.DataFrame(...)
     """
     import hashlib
-    import pickle
+    import json
+    # 移除不安全的 pickle 模組，使用 JSON 序列化
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
+        """
+        wrapper
+
+        """
         # 創建快取目錄
-    """
-    wrapper
-    
-    """
         cache_dir = Path("cache")
         cache_dir.mkdir(exist_ok=True)
         # 生成快取檔案名稱（用 hash 處理參數）
         try:
-            key_bytes = pickle.dumps((args, kwargs))
-            cache_key = hashlib.md5(key_bytes).hexdigest()
+            # 使用 JSON 序列化替代 pickle，更安全但功能有限
+            # 只序列化基本類型，複雜對象使用函數名稱
+            serializable_args = []
+            for arg in args:
+                if isinstance(arg, (str, int, float, bool, list, dict)):
+                    serializable_args.append(arg)
+                else:
+                    serializable_args.append(str(type(arg).__name__))
+
+            serializable_kwargs = {}
+            for k, v in kwargs.items():
+                if isinstance(v, (str, int, float, bool, list, dict)):
+                    serializable_kwargs[k] = v
+                else:
+                    serializable_kwargs[k] = str(type(v).__name__)
+
+            key_string = json.dumps((serializable_args, serializable_kwargs), sort_keys=True)
+            cache_key = hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
         except Exception:
             cache_key = fn.__name__
         cache_file = cache_dir / f"{fn.__name__}_{cache_key}.csv"
@@ -434,3 +452,34 @@ def clean_data(df, remove_outliers=True, fill_na=True, method="ffill"):
             cleaned_df = cleaned_df.interpolate(method="linear")
 
     return cleaned_df
+
+
+def get_trading_dates(start_date, end_date):
+    """
+    獲取指定日期範圍內的交易日期（排除週末和假日）
+
+    Args:
+        start_date (datetime.date or str): 開始日期
+        end_date (datetime.date or str): 結束日期
+
+    Returns:
+        List[datetime.date]: 交易日期列表
+    """
+    import datetime
+
+    # 轉換日期格式
+    if isinstance(start_date, str):
+        start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+    if isinstance(end_date, str):
+        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    # 生成日期範圍
+    date_range = pd.date_range(start=start_date, end=end_date, freq='D')
+
+    # 過濾週末（週六=5, 週日=6）
+    trading_dates = [d.date() for d in date_range if d.weekday() < 5]
+
+    # 這裡可以進一步過濾假日，目前簡化處理
+    # 實際應用中可以使用 pandas_market_calendars 或其他假日日曆
+
+    return trading_dates

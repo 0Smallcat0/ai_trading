@@ -1,22 +1,57 @@
 # -*- coding: utf-8 -*-
 """
-績效指標模組
+績效指標模組 (向後兼容)
 
-此模組提供各種金融和交易績效指標的計算功能，包括：
-- 夏普比率 (Sharpe Ratio)
-- 索提諾比率 (Sortino Ratio)
-- 卡爾馬比率 (Calmar Ratio)
-- 最大回撤 (Maximum Drawdown)
-- 勝率 (Win Rate)
-- 盈虧比 (Profit/Loss Ratio)
+此模組提供績效指標計算功能的向後兼容介面。
+新的模組化實現位於 performance_metrics 子模組中。
+
+Functions:
+    calculate_all_metrics: 計算所有績效指標（向後兼容）
+    calculate_sharpe_ratio: 計算夏普比率（向後兼容）
+    calculate_sortino_ratio: 計算索提諾比率（向後兼容）
+    calculate_calmar_ratio: 計算卡爾馬比率（向後兼容）
+    calculate_max_drawdown: 計算最大回撤（向後兼容）
+    calculate_volatility: 計算波動率（向後兼容）
+    calculate_var: 計算風險值（向後兼容）
+    calculate_win_rate: 計算勝率（向後兼容）
+    calculate_pnl_ratio: 計算盈虧比（向後兼容）
+    calculate_expectancy: 計算期望值（向後兼容）
+
+Example:
+    >>> from src.models.performance_metrics import calculate_all_metrics
+    >>> metrics = calculate_all_metrics(returns, risk_free_rate=0.02)
+    >>> print(f"Sharpe Ratio: {metrics['sharpe_ratio']:.4f}")
+
+Note:
+    建議使用新的模組化介面：
+    from src.models.performance_metrics import calculate_sharpe_ratio
 """
 
+import warnings
 from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-# 風險調整收益指標
+# 導入新的模組化實現
+from .performance_metrics.legacy_interface import calculate_all_metrics as _calculate_all_metrics
+from .performance_metrics.trading_metrics import (
+    calculate_sharpe_ratio as _calculate_sharpe_ratio,
+    calculate_sortino_ratio as _calculate_sortino_ratio,
+    calculate_calmar_ratio as _calculate_calmar_ratio
+)
+from .performance_metrics.risk_metrics import (
+    calculate_max_drawdown as _calculate_max_drawdown,
+    calculate_volatility as _calculate_volatility,
+    calculate_var as _calculate_var
+)
+from .performance_metrics.statistical_metrics import (
+    calculate_win_rate as _calculate_win_rate,
+    calculate_pnl_ratio as _calculate_pnl_ratio,
+    calculate_expectancy as _calculate_expectancy
+)
+
+# 向後兼容的函數介面
 
 
 def calculate_sharpe_ratio(
@@ -25,35 +60,23 @@ def calculate_sharpe_ratio(
     periods_per_year: int = 252,
 ) -> float:
     """
-    計算夏普比率
+    計算夏普比率 (向後兼容函數)
 
     夏普比率 = (年化收益率 - 無風險利率) / 年化波動率
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        risk_free_rate (float): 無風險利率
-        periods_per_year (int): 每年期數，日頻為 252，週頻為 52，月頻為 12
+        returns: 收益率序列
+        risk_free_rate: 無風險利率
+        periods_per_year: 每年期數，日頻為 252，週頻為 52，月頻為 12
 
     Returns:
-        float: 夏普比率
+        夏普比率
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> sharpe = calculate_sharpe_ratio(returns, risk_free_rate=0.02)
     """
-    if len(returns) == 0:
-        return 0.0
-
-    # 計算年化收益率
-    annual_return = np.mean(returns) * periods_per_year
-
-    # 計算年化波動率
-    annual_volatility = np.std(returns) * np.sqrt(periods_per_year)
-
-    # 避免除以零
-    if annual_volatility == 0:
-        return 0.0
-
-    # 計算夏普比率
-    sharpe_ratio = (annual_return - risk_free_rate) / annual_volatility
-
-    return sharpe_ratio
+    return _calculate_sharpe_ratio(returns, risk_free_rate, periods_per_year)
 
 
 def calculate_sortino_ratio(
@@ -63,37 +86,24 @@ def calculate_sortino_ratio(
     target_return: float = 0.0,
 ) -> float:
     """
-    計算索提諾比率
+    計算索提諾比率 (向後兼容函數)
 
     索提諾比率 = (年化收益率 - 無風險利率) / 年化下行風險
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        risk_free_rate (float): 無風險利率
-        periods_per_year (int): 每年期數，日頻為 252，週頻為 52，月頻為 12
-        target_return (float): 目標收益率
+        returns: 收益率序列
+        risk_free_rate: 無風險利率
+        periods_per_year: 每年期數
+        target_return: 目標收益率
 
     Returns:
-        float: 索提諾比率
+        索提諾比率
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> sortino = calculate_sortino_ratio(returns, target_return=0.005)
     """
-    if len(returns) == 0:
-        return 0.0
-
-    # 計算年化收益率
-    annual_return = np.mean(returns) * periods_per_year
-
-    # 計算下行風險
-    downside_returns = np.minimum(returns - target_return, 0)
-    downside_risk = np.sqrt(np.mean(downside_returns**2)) * np.sqrt(periods_per_year)
-
-    # 避免除以零
-    if downside_risk == 0:
-        return 0.0
-
-    # 計算索提諾比率
-    sortino_ratio = (annual_return - risk_free_rate) / downside_risk
-
-    return sortino_ratio
+    return _calculate_sortino_ratio(returns, risk_free_rate, periods_per_year, target_return)
 
 
 def calculate_calmar_ratio(
@@ -102,38 +112,23 @@ def calculate_calmar_ratio(
     periods_per_year: int = 252,
 ) -> float:
     """
-    計算卡爾馬比率
+    計算卡爾馬比率 (向後兼容函數)
 
     卡爾馬比率 = 年化收益率 / 最大回撤
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        prices (Optional[Union[pd.Series, np.ndarray]]): 價格序列，如果提供則使用價格計算最大回撤
-        periods_per_year (int): 每年期數，日頻為 252，週頻為 52，月頻為 12
+        returns: 收益率序列
+        prices: 價格序列
+        periods_per_year: 每年期數
 
     Returns:
-        float: 卡爾馬比率
+        卡爾馬比率
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> calmar = calculate_calmar_ratio(returns)
     """
-    if len(returns) == 0:
-        return 0.0
-
-    # 計算年化收益率
-    annual_return = np.mean(returns) * periods_per_year
-
-    # 計算最大回撤
-    max_drawdown = calculate_max_drawdown(returns, prices)
-
-    # 避免除以零
-    if max_drawdown == 0:
-        return 0.0
-
-    # 計算卡爾馬比率
-    calmar_ratio = annual_return / abs(max_drawdown)
-
-    return calmar_ratio
-
-
-# 風險指標
+    return _calculate_calmar_ratio(returns, prices, periods_per_year)
 
 
 def calculate_max_drawdown(
@@ -141,79 +136,66 @@ def calculate_max_drawdown(
     prices: Optional[Union[pd.Series, np.ndarray]] = None,
 ) -> float:
     """
-    計算最大回撤
+    計算最大回撤 (向後兼容函數)
 
     最大回撤 = (最低點價格 - 最高點價格) / 最高點價格
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        prices (Optional[Union[pd.Series, np.ndarray]]): 價格序列，如果提供則使用價格計算最大回撤
+        returns: 收益率序列
+        prices: 價格序列
 
     Returns:
-        float: 最大回撤
-    """
-    if prices is not None:
-        # 使用價格計算最大回撤
-        cumulative_max = np.maximum.accumulate(prices)
-        drawdown = (prices - cumulative_max) / cumulative_max
-        max_drawdown = np.min(drawdown)
-    else:
-        # 使用收益率計算最大回撤
-        cumulative_returns = (1 + returns).cumprod()
-        cumulative_max = np.maximum.accumulate(cumulative_returns)
-        drawdown = (cumulative_returns - cumulative_max) / cumulative_max
-        max_drawdown = np.min(drawdown)
+        最大回撤
 
-    return max_drawdown
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> max_dd = calculate_max_drawdown(returns)
+    """
+    return _calculate_max_drawdown(returns, prices)
 
 
 def calculate_volatility(
-    returns: Union[pd.Series, np.ndarray], periods_per_year: int = 252
+    returns: Union[pd.Series, np.ndarray],
+    periods_per_year: int = 252
 ) -> float:
     """
-    計算波動率
+    計算波動率 (向後兼容函數)
 
     波動率 = 收益率標準差 * sqrt(每年期數)
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        periods_per_year (int): 每年期數，日頻為 252，週頻為 52，月頻為 12
+        returns: 收益率序列
+        periods_per_year: 每年期數
 
     Returns:
-        float: 年化波動率
+        年化波動率
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> vol = calculate_volatility(returns)
     """
-    if len(returns) == 0:
-        return 0.0
-
-    # 計算年化波動率
-    annual_volatility = np.std(returns) * np.sqrt(periods_per_year)
-
-    return annual_volatility
+    return _calculate_volatility(returns, periods_per_year)
 
 
 def calculate_var(
-    returns: Union[pd.Series, np.ndarray], confidence_level: float = 0.95
+    returns: Union[pd.Series, np.ndarray],
+    confidence_level: float = 0.95
 ) -> float:
     """
-    計算風險值 (Value at Risk)
+    計算風險值 (向後兼容函數)
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        confidence_level (float): 置信水平
+        returns: 收益率序列
+        confidence_level: 置信水平
 
     Returns:
-        float: 風險值
+        風險值
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> var_95 = calculate_var(returns, confidence_level=0.95)
     """
-    if len(returns) == 0:
-        return 0.0
-
-    # 計算風險值
-    var = np.percentile(returns, 100 * (1 - confidence_level))
-
-    return var
-
-
-# 交易統計指標
+    return _calculate_var(returns, confidence_level)
 
 
 def calculate_win_rate(
@@ -221,40 +203,24 @@ def calculate_win_rate(
     trades: Optional[Union[pd.Series, np.ndarray]] = None,
 ) -> float:
     """
-    計算勝率
+    計算勝率 (向後兼容函數)
 
     勝率 = 盈利交易次數 / 總交易次數
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        trades (Optional[Union[pd.Series, np.ndarray]]): 交易序列，如果提供則使用交易計算勝率
+        returns: 收益率序列
+        trades: 交易序列（可選）
 
     Returns:
-        float: 勝率
+        勝率
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> win_rate = calculate_win_rate(returns)
     """
-    if trades is not None:
-        # 使用交易計算勝率
-        if len(trades) == 0:
-            return 0.0
-
-        win_trades = np.sum(trades > 0)
-        total_trades = len(trades)
-    else:
-        # 使用收益率計算勝率
-        if len(returns) == 0:
-            return 0.0
-
-        win_trades = np.sum(returns > 0)
-        total_trades = len(returns)
-
-    # 避免除以零
-    if total_trades == 0:
-        return 0.0
-
-    # 計算勝率
-    win_rate = win_trades / total_trades
-
-    return win_rate
+    # 使用交易序列或收益率序列
+    analysis_data = trades if trades is not None else returns
+    return _calculate_win_rate(analysis_data)
 
 
 def calculate_pnl_ratio(
@@ -262,44 +228,24 @@ def calculate_pnl_ratio(
     trades: Optional[Union[pd.Series, np.ndarray]] = None,
 ) -> float:
     """
-    計算盈虧比
+    計算盈虧比 (向後兼容函數)
 
     盈虧比 = 平均盈利 / 平均虧損
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        trades (Optional[Union[pd.Series, np.ndarray]]): 交易序列，如果提供則使用交易計算盈虧比
+        returns: 收益率序列
+        trades: 交易序列（可選）
 
     Returns:
-        float: 盈虧比
+        盈虧比
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> pnl_ratio = calculate_pnl_ratio(returns)
     """
-    if trades is not None:
-        # 使用交易計算盈虧比
-        if len(trades) == 0:
-            return 0.0
-
-        win_trades = trades[trades > 0]
-        loss_trades = trades[trades < 0]
-    else:
-        # 使用收益率計算盈虧比
-        if len(returns) == 0:
-            return 0.0
-
-        win_trades = returns[returns > 0]
-        loss_trades = returns[returns < 0]
-
-    # 計算平均盈利和平均虧損
-    avg_win = np.mean(win_trades) if len(win_trades) > 0 else 0
-    avg_loss = np.mean(loss_trades) if len(loss_trades) > 0 else 0
-
-    # 避免除以零
-    if avg_loss == 0:
-        return 0.0
-
-    # 計算盈虧比
-    pnl_ratio = abs(avg_win / avg_loss)
-
-    return pnl_ratio
+    # 使用交易序列或收益率序列
+    analysis_data = trades if trades is not None else returns
+    return _calculate_pnl_ratio(analysis_data)
 
 
 def calculate_expectancy(
@@ -307,47 +253,24 @@ def calculate_expectancy(
     trades: Optional[Union[pd.Series, np.ndarray]] = None,
 ) -> float:
     """
-    計算期望值
+    計算期望值 (向後兼容函數)
 
     期望值 = 勝率 * 平均盈利 - (1 - 勝率) * 平均虧損
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        trades (Optional[Union[pd.Series, np.ndarray]]): 交易序列，如果提供則使用交易計算期望值
+        returns: 收益率序列
+        trades: 交易序列（可選）
 
     Returns:
-        float: 期望值
+        期望值
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> expectancy = calculate_expectancy(returns)
     """
-    if trades is not None:
-        # 使用交易計算期望值
-        if len(trades) == 0:
-            return 0.0
-
-        win_trades = trades[trades > 0]
-        loss_trades = trades[trades < 0]
-
-        win_rate = len(win_trades) / len(trades) if len(trades) > 0 else 0
-    else:
-        # 使用收益率計算期望值
-        if len(returns) == 0:
-            return 0.0
-
-        win_trades = returns[returns > 0]
-        loss_trades = returns[returns < 0]
-
-        win_rate = len(win_trades) / len(returns) if len(returns) > 0 else 0
-
-    # 計算平均盈利和平均虧損
-    avg_win = np.mean(win_trades) if len(win_trades) > 0 else 0
-    avg_loss = np.mean(loss_trades) if len(loss_trades) > 0 else 0
-
-    # 計算期望值
-    expectancy = win_rate * avg_win - (1 - win_rate) * abs(avg_loss)
-
-    return expectancy
-
-
-# 綜合指標
+    # 使用交易序列或收益率序列
+    analysis_data = trades if trades is not None else returns
+    return _calculate_expectancy(analysis_data)
 
 
 def calculate_all_metrics(
@@ -356,46 +279,32 @@ def calculate_all_metrics(
     trades: Optional[Union[pd.Series, np.ndarray]] = None,
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252,
+    **kwargs
 ) -> Dict[str, float]:
     """
-    計算所有績效指標
+    計算所有績效指標 (向後兼容函數)
 
     Args:
-        returns (Union[pd.Series, np.ndarray]): 收益率序列
-        prices (Optional[Union[pd.Series, np.ndarray]]): 價格序列
-        trades (Optional[Union[pd.Series, np.ndarray]]): 交易序列
-        risk_free_rate (float): 無風險利率
-        periods_per_year (int): 每年期數，日頻為 252，週頻為 52，月頻為 12
+        returns: 收益率序列
+        prices: 價格序列（可選）
+        trades: 交易序列（可選）
+        risk_free_rate: 無風險利率
+        periods_per_year: 每年期數
+        **kwargs: 其他參數
 
     Returns:
-        Dict[str, float]: 所有績效指標
+        所有績效指標的字典
+
+    Example:
+        >>> returns = pd.Series([0.01, -0.02, 0.015])
+        >>> metrics = calculate_all_metrics(returns, risk_free_rate=0.02)
+        >>> print(f"Sharpe Ratio: {metrics['sharpe_ratio']:.4f}")
     """
-    metrics = {}
-
-    # 風險調整收益指標
-    metrics["sharpe_ratio"] = calculate_sharpe_ratio(
-        returns, risk_free_rate, periods_per_year
+    return _calculate_all_metrics(
+        returns=returns,
+        prices=prices,
+        trades=trades,
+        risk_free_rate=risk_free_rate,
+        periods_per_year=periods_per_year,
+        **kwargs
     )
-    metrics["sortino_ratio"] = calculate_sortino_ratio(
-        returns, risk_free_rate, periods_per_year
-    )
-    metrics["calmar_ratio"] = calculate_calmar_ratio(returns, prices, periods_per_year)
-
-    # 風險指標
-    metrics["max_drawdown"] = calculate_max_drawdown(returns, prices)
-    metrics["volatility"] = calculate_volatility(returns, periods_per_year)
-    metrics["var_95"] = calculate_var(returns, 0.95)
-
-    # 交易統計指標
-    metrics["win_rate"] = calculate_win_rate(returns, trades)
-    metrics["pnl_ratio"] = calculate_pnl_ratio(returns, trades)
-    metrics["expectancy"] = calculate_expectancy(returns, trades)
-
-    # 收益指標
-    metrics["total_return"] = (1 + returns).prod() - 1 if len(returns) > 0 else 0.0
-    metrics["annual_return"] = (
-        np.mean(returns) * periods_per_year if len(returns) > 0 else 0.0
-    )
-    metrics["avg_return"] = np.mean(returns) if len(returns) > 0 else 0.0
-
-    return metrics

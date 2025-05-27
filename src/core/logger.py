@@ -72,23 +72,23 @@ class JsonFormatter(logging.Formatter):
     """JSON格式化器，將日誌格式化為JSON格式"""
 
     def __init__(self, fmt_dict=None):
-    """
-    __init__
-    
-    Args:
-        fmt_dict: 
-    """
+        """
+        初始化JSON格式化器
+
+        Args:
+            fmt_dict: 格式字典
+        """
         super(JsonFormatter, self).__init__()
         self.fmt_dict = fmt_dict if fmt_dict else JSON_LOG_FORMAT
         self.hostname = socket.gethostname()
 
     def format(self, record):
-    """
-    format
-    
-    Args:
-        record: 
-    """
+        """
+        格式化日誌記錄
+
+        Args:
+            record: 日誌記錄
+        """
         record_dict = self.fmt_dict.copy()
 
         # 填充記錄字典
@@ -289,7 +289,7 @@ class LogAnomalyDetector:
             with open(self.log_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
         except Exception as e:
-            system_logger.error(f"讀取日誌文件時發生錯誤: {e}")
+            system_logger.error("讀取日誌文件時發生錯誤: %s", e)
             return anomalies
 
         # 過濾時間窗口內的日誌
@@ -307,7 +307,7 @@ class LogAnomalyDetector:
 
                 if log_timestamp >= window_start_time:
                     window_logs.append(log_data)
-            except:
+            except (json.JSONDecodeError, ValueError, KeyError):
                 # 如果不是JSON格式，嘗試解析標準格式
                 try:
                     log_time_str = line.split(" - ")[0]
@@ -316,7 +316,7 @@ class LogAnomalyDetector:
 
                     if log_timestamp >= window_start_time:
                         window_logs.append({"message": line, "timestamp": log_time_str})
-                except:
+                except (ValueError, IndexError):
                     # 如果無法解析時間，則跳過
                     continue
 
@@ -346,7 +346,10 @@ class LogAnomalyDetector:
 
                 # 記錄異常
                 system_logger.warning(
-                    f"檢測到日誌異常: 模式 '{pattern}' 在 {self.window_size} 秒內出現 {count} 次",
+                    "檢測到日誌異常: 模式 '%s' 在 %s 秒內出現 %s 次",
+                    pattern,
+                    self.window_size,
+                    count,
                     extra={"data": anomaly},
                 )
 
@@ -416,7 +419,7 @@ class LogAnalyzer:
                             continue
 
                         logs.append(log_data)
-                    except:
+                    except (json.JSONDecodeError, ValueError, KeyError):
                         # 如果不是JSON格式，嘗試解析標準格式
                         try:
                             parts = line.split(" - ")
@@ -438,11 +441,11 @@ class LogAnalyzer:
                                 "message": parts[3] if len(parts) > 3 else line,
                             }
                             logs.append(log_data)
-                        except:
+                        except (ValueError, IndexError):
                             # 如果無法解析，則跳過
                             continue
             except Exception as e:
-                system_logger.error(f"解析日誌文件 {log_file} 時發生錯誤: {e}")
+                system_logger.error("解析日誌文件 %s 時發生錯誤: %s", log_file, e)
 
         return logs
 
@@ -474,7 +477,7 @@ class LogAnalyzer:
                     error_counts[hour_key] = 0
 
                 error_counts[hour_key] += 1
-            except:
+            except (ValueError, KeyError):
                 continue
 
         return error_counts
@@ -644,7 +647,7 @@ class TradeLogger:
         self._save_records()
 
         # 記錄到日誌
-        logger.info(f"交易記錄: {trade}")
+        logger.info("交易記錄: %s", trade)
 
     def log_order(self, order):
         """
@@ -673,7 +676,7 @@ class TradeLogger:
         self._save_records()
 
         # 記錄到日誌
-        logger.info(f"訂單記錄: {order}")
+        logger.info("訂單記錄: %s", order)
 
     def log_portfolio_value(self, portfolio_value):
         """
@@ -699,7 +702,7 @@ class TradeLogger:
         self._save_records()
 
         # 記錄到日誌
-        logger.info(f"投資組合價值記錄: {portfolio_value}")
+        logger.info("投資組合價值記錄: %s", portfolio_value)
 
     def get_trades(self, stock_id=None, action=None, start_time=None, end_time=None):
         """

@@ -51,18 +51,20 @@ def pipeline(temp_db_path):
 def test_ingest_data(pipeline):
     """測試資料擷取"""
     # 創建測試資料
-    data = pd.DataFrame({
-        "symbol": ["2330.TW", "2317.TW"],
-        "market_type": [MarketType.STOCK, MarketType.STOCK],
-        "date": pd.to_datetime([date(2023, 1, 2), date(2023, 1, 2)]),
-        "open": [500.0, 100.0],
-        "high": [510.0, 105.0],
-        "low": [495.0, 98.0],
-        "close": [505.0, 102.0],
-        "volume": [10000000.0, 5000000.0],
-        "data_source": ["yahoo", "yahoo"],
-        "is_adjusted": [True, True],
-    })
+    data = pd.DataFrame(
+        {
+            "symbol": ["2330.TW", "2317.TW"],
+            "market_type": [MarketType.STOCK, MarketType.STOCK],
+            "date": pd.to_datetime([date(2023, 1, 2), date(2023, 1, 2)]),
+            "open": [500.0, 100.0],
+            "high": [510.0, 105.0],
+            "low": [495.0, 98.0],
+            "close": [505.0, 102.0],
+            "volume": [10000000.0, 5000000.0],
+            "data_source": ["yahoo", "yahoo"],
+            "is_adjusted": [True, True],
+        }
+    )
 
     # 擷取資料
     success, record_ids = pipeline.ingest_data(data, MarketDaily)
@@ -93,42 +95,57 @@ def test_ingest_data(pipeline):
 def test_validate_data_quality(pipeline):
     """測試資料品質驗證"""
     # 創建測試資料
-    data = pd.DataFrame({
-        "symbol": ["2330.TW"] * 5,
-        "market_type": [MarketType.STOCK] * 5,
-        "date": pd.to_datetime([
-            date(2023, 1, 2),  # 週一
-            date(2023, 1, 3),  # 週二
-            date(2023, 1, 4),  # 週三
-            # 缺少 2023-01-05 (週四)
-            date(2023, 1, 6),  # 週五
-            date(2023, 1, 9),  # 週一
-        ]),
-        "open": [500.0, 505.0, 510.0, 515.0, 520.0],
-        "high": [510.0, 515.0, 520.0, 525.0, None],  # 缺失值
-        "low": [495.0, 500.0, 505.0, 510.0, 515.0],
-        "close": [505.0, 510.0, 515.0, 520.0, 525.0],
-        "volume": [10000000.0, 12000000.0, 15000000.0, 11000000.0, 50000000.0],  # 異常值
-        "data_source": ["yahoo"] * 5,
-        "is_adjusted": [True] * 5,
-    })
+    data = pd.DataFrame(
+        {
+            "symbol": ["2330.TW"] * 5,
+            "market_type": [MarketType.STOCK] * 5,
+            "date": pd.to_datetime(
+                [
+                    date(2023, 1, 2),  # 週一
+                    date(2023, 1, 3),  # 週二
+                    date(2023, 1, 4),  # 週三
+                    # 缺少 2023-01-05 (週四)
+                    date(2023, 1, 6),  # 週五
+                    date(2023, 1, 9),  # 週一
+                ]
+            ),
+            "open": [500.0, 505.0, 510.0, 515.0, 520.0],
+            "high": [510.0, 515.0, 520.0, 525.0, None],  # 缺失值
+            "low": [495.0, 500.0, 505.0, 510.0, 515.0],
+            "close": [505.0, 510.0, 515.0, 520.0, 525.0],
+            "volume": [
+                10000000.0,
+                12000000.0,
+                15000000.0,
+                11000000.0,
+                50000000.0,
+            ],  # 異常值
+            "data_source": ["yahoo"] * 5,
+            "is_adjusted": [True] * 5,
+        }
+    )
 
     # 擷取資料
     pipeline.ingest_data(data, MarketDaily)
 
     # 驗證資料品質
     # 修改 DataValidator 的 detect_outliers 方法，使用較低的閾值
-    pipeline.validator.detect_outliers = lambda table_class, symbol, start_date, end_date: {
-        "has_outliers": True,
-        "outlier_counts": {"volume": 1},
-        "outlier_percentages": {"volume": 20.0},
-        "total_outliers": 1,
-        "total_rows": 5,
-        "outlier_data": pd.DataFrame(),
-    }
+    pipeline.validator.detect_outliers = (
+        lambda table_class, symbol, start_date, end_date: {
+            "has_outliers": True,
+            "outlier_counts": {"volume": 1},
+            "outlier_percentages": {"volume": 20.0},
+            "total_outliers": 1,
+            "total_rows": 5,
+            "outlier_data": pd.DataFrame(),
+        }
+    )
 
     result = pipeline.validate_data_quality(
-        MarketDaily, "2330.TW", pd.to_datetime(date(2023, 1, 2)).date(), pd.to_datetime(date(2023, 1, 9)).date()
+        MarketDaily,
+        "2330.TW",
+        pd.to_datetime(date(2023, 1, 2)).date(),
+        pd.to_datetime(date(2023, 1, 9)).date(),
     )
 
     # 檢查結果
@@ -158,31 +175,38 @@ def test_validate_data_quality(pipeline):
 def test_create_and_load_data_shard(pipeline):
     """測試創建和讀取資料分片"""
     # 創建測試資料
-    data = pd.DataFrame({
-        "symbol": ["2330.TW"] * 5,
-        "market_type": [MarketType.STOCK] * 5,
-        "date": pd.to_datetime([
-            date(2023, 1, 2),
-            date(2023, 1, 3),
-            date(2023, 1, 4),
-            date(2023, 1, 5),
-            date(2023, 1, 6),
-        ]),
-        "open": [500.0, 505.0, 510.0, 515.0, 520.0],
-        "high": [510.0, 515.0, 520.0, 525.0, 530.0],
-        "low": [495.0, 500.0, 505.0, 510.0, 515.0],
-        "close": [505.0, 510.0, 515.0, 520.0, 525.0],
-        "volume": [10000000.0, 12000000.0, 15000000.0, 11000000.0, 13000000.0],
-        "data_source": ["yahoo"] * 5,
-        "is_adjusted": [True] * 5,
-    })
+    data = pd.DataFrame(
+        {
+            "symbol": ["2330.TW"] * 5,
+            "market_type": [MarketType.STOCK] * 5,
+            "date": pd.to_datetime(
+                [
+                    date(2023, 1, 2),
+                    date(2023, 1, 3),
+                    date(2023, 1, 4),
+                    date(2023, 1, 5),
+                    date(2023, 1, 6),
+                ]
+            ),
+            "open": [500.0, 505.0, 510.0, 515.0, 520.0],
+            "high": [510.0, 515.0, 520.0, 525.0, 530.0],
+            "low": [495.0, 500.0, 505.0, 510.0, 515.0],
+            "close": [505.0, 510.0, 515.0, 520.0, 525.0],
+            "volume": [10000000.0, 12000000.0, 15000000.0, 11000000.0, 13000000.0],
+            "data_source": ["yahoo"] * 5,
+            "is_adjusted": [True] * 5,
+        }
+    )
 
     # 擷取資料
     pipeline.ingest_data(data, MarketDaily)
 
     # 創建資料分片
     shard, file_path = pipeline.create_data_shard(
-        MarketDaily, pd.to_datetime(date(2023, 1, 2)).date(), pd.to_datetime(date(2023, 1, 6)).date(), ["2330.TW"]
+        MarketDaily,
+        pd.to_datetime(date(2023, 1, 2)).date(),
+        pd.to_datetime(date(2023, 1, 6)).date(),
+        ["2330.TW"],
     )
 
     # 檢查結果
@@ -236,18 +260,20 @@ def test_update_schema_version(pipeline):
 def test_track_data_change(pipeline):
     """測試追蹤資料變更"""
     # 創建測試資料
-    data = pd.DataFrame({
-        "symbol": ["2330.TW"],
-        "market_type": [MarketType.STOCK],
-        "date": pd.to_datetime([date(2023, 1, 2)]),
-        "open": [500.0],
-        "high": [510.0],
-        "low": [495.0],
-        "close": [505.0],
-        "volume": [10000000.0],
-        "data_source": ["yahoo"],
-        "is_adjusted": [True],
-    })
+    data = pd.DataFrame(
+        {
+            "symbol": ["2330.TW"],
+            "market_type": [MarketType.STOCK],
+            "date": pd.to_datetime([date(2023, 1, 2)]),
+            "open": [500.0],
+            "high": [510.0],
+            "low": [495.0],
+            "close": [505.0],
+            "volume": [10000000.0],
+            "data_source": ["yahoo"],
+            "is_adjusted": [True],
+        }
+    )
 
     # 擷取資料
     success, record_ids = pipeline.ingest_data(data, MarketDaily)

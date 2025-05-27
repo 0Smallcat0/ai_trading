@@ -1,5 +1,4 @@
-"""
-風險管理器模組
+"""風險管理器模組
 
 此模組實現了風險管理器，整合了各種風險管理策略和機制。
 """
@@ -25,8 +24,7 @@ from .take_profit import TakeProfitStrategy
 
 
 class RiskManager:
-    """
-    風險管理器
+    """風險管理器
 
     整合各種風險管理策略和機制，提供全面的風險管理功能。
     """
@@ -34,7 +32,7 @@ class RiskManager:
     _instance = None
     _lock = threading.Lock()
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
         """實現單例模式"""
         with cls._lock:
             if cls._instance is None:
@@ -43,8 +41,7 @@ class RiskManager:
             return cls._instance
 
     def __init__(self, config_path: Optional[str] = None):
-        """
-        初始化風險管理器
+        """初始化風險管理器
 
         Args:
             config_path: 配置文件路徑
@@ -93,8 +90,7 @@ class RiskManager:
         logger.info("風險管理器已初始化")
 
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
-        """
-        加載配置
+        """加載配置
 
         Args:
             config_path: 配置文件路徑
@@ -120,15 +116,14 @@ class RiskManager:
                     # 合併默認配置
                     return {**default_config, **config}
             except Exception as e:
-                logger.error(f"加載配置文件時發生錯誤: {e}")
+                logger.error("加載配置文件時發生錯誤: %s", e)
 
         return default_config
 
     def register_stop_loss_strategy(
         self, name: str, strategy: StopLossStrategy
     ) -> bool:
-        """
-        註冊停損策略
+        """註冊停損策略
 
         Args:
             name: 策略名稱
@@ -138,11 +133,11 @@ class RiskManager:
             bool: 是否成功註冊
         """
         if name in self.stop_loss_strategies:
-            logger.warning(f"停損策略 '{name}' 已存在")
+            logger.warning("停損策略 '%s' 已存在", name)
             return False
 
         self.stop_loss_strategies[name] = strategy
-        logger.info(f"已註冊停損策略: {name}")
+        logger.info("已註冊停損策略: %s", name)
         return True
 
     def register_take_profit_strategy(
@@ -159,11 +154,11 @@ class RiskManager:
             bool: 是否成功註冊
         """
         if name in self.take_profit_strategies:
-            logger.warning(f"停利策略 '{name}' 已存在")
+            logger.warning("停利策略 '%s' 已存在", name)
             return False
 
         self.take_profit_strategies[name] = strategy
-        logger.info(f"已註冊停利策略: {name}")
+        logger.info("已註冊停利策略: %s", name)
         return True
 
     def register_position_sizing_strategy(
@@ -180,11 +175,11 @@ class RiskManager:
             bool: 是否成功註冊
         """
         if name in self.position_sizing_strategies:
-            logger.warning(f"倉位大小策略 '{name}' 已存在")
+            logger.warning("倉位大小策略 '%sname' 已存在")
             return False
 
         self.position_sizing_strategies[name] = strategy
-        logger.info(f"已註冊倉位大小策略: {name}")
+        logger.info("已註冊倉位大小策略: %sname")
         return True
 
     def register_circuit_breaker(self, name: str, breaker: CircuitBreaker) -> bool:
@@ -199,11 +194,11 @@ class RiskManager:
             bool: 是否成功註冊
         """
         if name in self.circuit_breakers:
-            logger.warning(f"熔斷機制 '{name}' 已存在")
+            logger.warning("熔斷機制 '%sname' 已存在")
             return False
 
         self.circuit_breakers[name] = breaker
-        logger.info(f"已註冊熔斷機制: {name}")
+        logger.info("已註冊熔斷機制: %sname")
         return True
 
     def check_stop_loss(
@@ -222,7 +217,7 @@ class RiskManager:
             bool: 是否應該停損
         """
         if strategy_name not in self.stop_loss_strategies:
-            logger.warning(f"停損策略 '{strategy_name}' 不存在")
+            logger.warning("停損策略 '%sstrategy_name' 不存在")
             return False
 
         strategy = self.stop_loss_strategies[strategy_name]
@@ -265,7 +260,7 @@ class RiskManager:
             bool: 是否應該停利
         """
         if strategy_name not in self.take_profit_strategies:
-            logger.warning(f"停利策略 '{strategy_name}' 不存在")
+            logger.warning("停利策略 '%sstrategy_name' 不存在")
             return False
 
         strategy = self.take_profit_strategies[strategy_name]
@@ -309,7 +304,7 @@ class RiskManager:
             float: 倉位大小（金額）
         """
         if strategy_name not in self.position_sizing_strategies:
-            logger.warning(f"倉位大小策略 '{strategy_name}' 不存在")
+            logger.warning("倉位大小策略 '%sstrategy_name' 不存在")
             return 0.0
 
         strategy = self.position_sizing_strategies[strategy_name]
@@ -339,7 +334,7 @@ class RiskManager:
             int: 股數
         """
         if strategy_name not in self.position_sizing_strategies:
-            logger.warning(f"倉位大小策略 '{strategy_name}' 不存在")
+            logger.warning("倉位大小策略 '%sstrategy_name' 不存在")
             return 0
 
         strategy = self.position_sizing_strategies[strategy_name]
@@ -371,7 +366,7 @@ class RiskManager:
         result = self.portfolio_risk_manager.check_all_limits(symbol, value, sector)
 
         if not result:
-            logger.warning(f"倉位 {symbol} 不符合投資組合限制")
+            logger.warning("倉位 %ssymbol 不符合投資組合限制")
 
             # 記錄風險事件
             self._record_risk_event(
@@ -398,7 +393,7 @@ class RiskManager:
         for name, breaker in self.circuit_breakers.items():
             try:
                 if breaker.check(**kwargs):
-                    logger.warning(f"熔斷機制 '{name}' 已觸發")
+                    logger.warning("熔斷機制 '%sname' 已觸發")
 
                     # 停止交易
                     self.stop_trading(
@@ -414,7 +409,7 @@ class RiskManager:
 
                     return True
             except Exception as e:
-                logger.error(f"檢查熔斷機制 '{name}' 時發生錯誤: {e}")
+                logger.error("檢查熔斷機制 '%sname' 時發生錯誤: %se")
 
         return False
 
@@ -426,7 +421,7 @@ class RiskManager:
             reason: 停止原因
         """
         self.trading_enabled = False
-        logger.warning(f"交易已停止: {reason}")
+        logger.warning("交易已停止: %sreason")
 
         # 記錄風險事件
         self._record_risk_event(event_type="trading_stopped", reason=reason)
@@ -447,7 +442,7 @@ class RiskManager:
 
             event_bus.publish(event)
         except Exception as e:
-            logger.error(f"發送事件時發生錯誤: {e}")
+            logger.error("發送事件時發生錯誤: %se")
 
     def resume_trading(self, reason: str) -> None:
         """
@@ -457,7 +452,7 @@ class RiskManager:
             reason: 恢復原因
         """
         self.trading_enabled = True
-        logger.info(f"交易已恢復: {reason}")
+        logger.info("交易已恢復: %sreason")
 
         # 重置所有熔斷機制
         for breaker in self.circuit_breakers.values():
@@ -482,7 +477,7 @@ class RiskManager:
 
             event_bus.publish(event)
         except Exception as e:
-            logger.error(f"發送事件時發生錯誤: {e}")
+            logger.error("發送事件時發生錯誤: %se")
 
     def is_trading_enabled(self) -> bool:
         """
@@ -512,7 +507,7 @@ class RiskManager:
         # 計算所有風險指標
         self.risk_metrics = calculator.calculate_all_metrics()
 
-        logger.info(f"更新風險指標: {self.risk_metrics}")
+        logger.info("更新風險指標: %sself.risk_metrics")
 
         return self.risk_metrics
 
@@ -563,7 +558,7 @@ class RiskManager:
 
             event_bus.publish(event_obj)
         except Exception as e:
-            logger.error(f"發送事件時發生錯誤: {e}")
+            logger.error("發送事件時發生錯誤: %se")
 
     def get_risk_events(
         self, event_type: Optional[str] = None, limit: int = 100
@@ -638,7 +633,7 @@ class RiskManager:
                 # 等待下一個監控間隔
                 time.sleep(self.config.get("monitoring_interval", 60))
             except Exception as e:
-                logger.error(f"風險監控循環發生錯誤: {e}")
+                logger.error("風險監控循環發生錯誤: %se")
                 time.sleep(10)  # 發生錯誤時等待較長時間
 
 

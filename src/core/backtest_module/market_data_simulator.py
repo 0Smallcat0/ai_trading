@@ -1,5 +1,4 @@
-"""
-市場數據模擬器模組
+"""市場數據模擬器模組
 
 此模組提供市場數據模擬功能，用於生成模擬數據和異常情境，
 以便在回測過程中測試策略在不同市場條件下的表現。
@@ -15,8 +14,7 @@ __all__ = ["MarketDataSimulator"]
 
 
 class MarketDataSimulator:
-    """
-    市場數據模擬器，用於生成模擬數據和異常情境
+    """市場數據模擬器，用於生成模擬數據和異常情境
 
     主要功能：
     - 生成正常市場數據
@@ -26,8 +24,7 @@ class MarketDataSimulator:
     """
 
     def __init__(self, base_data=None, seed=None):
-        """
-        初始化市場數據模擬器
+        """初始化市場數據模擬器
 
         Args:
             base_data (pd.DataFrame, optional): 基礎數據，用於生成模擬數據
