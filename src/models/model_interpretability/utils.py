@@ -18,7 +18,7 @@ Functions:
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import matplotlib.pyplot as plt
 import mlflow
@@ -262,7 +262,7 @@ def generate_explanation_report(
         </head>
         <body>
             <h1>Model Explanation Report</h1>
-            
+
             <div class="section">
                 <h2>Model Information</h2>
                 <table class="info-table">
@@ -273,7 +273,7 @@ def generate_explanation_report(
                     <tr><td>Trained</td><td>{model_info.get('trained', 'Unknown')}</td></tr>
                 </table>
             </div>
-            
+
             <div class="section">
                 <h2>Explanation Methods Used</h2>
                 <ul>
@@ -285,7 +285,7 @@ def generate_explanation_report(
         html_content += """
                 </ul>
             </div>
-            
+
             <div class="section">
                 <h2>Key Findings</h2>
                 <p>This report provides insights into model behavior using multiple explanation methods.</p>

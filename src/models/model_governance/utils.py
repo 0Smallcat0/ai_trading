@@ -16,7 +16,7 @@ Functions:
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -394,8 +394,8 @@ def _generate_html_report(registry, models: List[str]) -> str:
             h1, h2 { color: #333; }
             .model-section { margin: 30px 0; border: 1px solid #ddd; padding: 20px; }
             .metric-table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-            .metric-table th, .metric-table td { 
-                border: 1px solid #ddd; padding: 12px; text-align: left; 
+            .metric-table th, .metric-table td {
+                border: 1px solid #ddd; padding: 12px; text-align: left;
             }
             .metric-table th { background-color: #f2f2f2; }
             .status-active { color: green; font-weight: bold; }

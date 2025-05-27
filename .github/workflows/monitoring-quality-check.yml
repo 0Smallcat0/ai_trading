@@ -49,13 +49,13 @@ jobs:
         cd src
         echo "🔍 檢查 Prometheus 收集器..."
         pylint monitoring/prometheus_collector.py --score=y --disable=import-error,no-member
-        
+
         echo "🔍 檢查 Grafana 配置管理器..."
         pylint monitoring/grafana_config.py --score=y --disable=import-error,no-member
-        
+
         echo "🔍 檢查監控系統..."
         pylint monitoring/monitor_system.py --score=y --disable=import-error,no-member
-        
+
         echo "🔍 檢查子模組..."
         pylint monitoring/prometheus_modules/ --score=y --disable=import-error,no-member
         pylint monitoring/grafana_modules/ --score=y --disable=import-error,no-member
@@ -64,15 +64,15 @@ jobs:
     - name: Check file size limits
       run: |
         echo "📏 檢查檔案大小限制 (≤300 行)..."
-        
+
         check_file_size() {
           local file=$1
           local max_lines=300
-          
+
           if [ -f "$file" ]; then
             local lines=$(wc -l < "$file")
             echo "  $file: $lines 行"
-            
+
             if [ $lines -gt $max_lines ]; then
               echo "  ❌ 檔案過大: $lines > $max_lines 行"
               return 1
@@ -85,28 +85,28 @@ jobs:
             return 1
           fi
         }
-        
+
         cd src
         failed=0
-        
+
         # 檢查主要檔案
         check_file_size "monitoring/prometheus_collector.py" || failed=1
         check_file_size "monitoring/grafana_config.py" || failed=1
         check_file_size "monitoring/monitor_system.py" || failed=1
-        
+
         # 檢查子模組檔案
         for file in monitoring/prometheus_modules/*.py; do
           [ "$file" != "monitoring/prometheus_modules/__init__.py" ] && check_file_size "$file" || failed=1
         done
-        
+
         for file in monitoring/grafana_modules/*.py; do
           [ "$file" != "monitoring/grafana_modules/__init__.py" ] && check_file_size "$file" || failed=1
         done
-        
+
         for file in monitoring/monitor_modules/*.py; do
           [ "$file" != "monitoring/monitor_modules/__init__.py" ] && check_file_size "$file" || failed=1
         done
-        
+
         if [ $failed -eq 1 ]; then
           echo "❌ 檔案大小檢查失敗"
           exit 1
@@ -143,25 +143,25 @@ jobs:
     - name: Check Pylint scores
       run: |
         echo "📈 檢查 Pylint 評分要求 (≥9.0/10)..."
-        
+
         cd src
-        
+
         # 檢查主要模組的 Pylint 評分
         check_pylint_score() {
           local file=$1
           local min_score=9.0
-          
+
           echo "檢查 $file..."
           local output=$(pylint "$file" --score=y --disable=import-error,no-member 2>&1)
           local score=$(echo "$output" | grep "Your code has been rated at" | sed 's/.*rated at \([0-9.]*\).*/\1/')
-          
+
           if [ -z "$score" ]; then
             echo "  ⚠️ 無法獲取評分"
             return 1
           fi
-          
+
           echo "  評分: $score/10"
-          
+
           # 使用 awk 進行浮點數比較
           if awk "BEGIN {exit !($score >= $min_score)}"; then
             echo "  ✅ 評分符合要求 (≥$min_score)"
@@ -171,13 +171,13 @@ jobs:
             return 1
           fi
         }
-        
+
         failed=0
-        
+
         check_pylint_score "monitoring/prometheus_collector.py" || failed=1
         check_pylint_score "monitoring/grafana_config.py" || failed=1
         check_pylint_score "monitoring/monitor_system.py" || failed=1
-        
+
         if [ $failed -eq 1 ]; then
           echo "❌ Pylint 評分檢查失敗"
           exit 1
@@ -189,24 +189,24 @@ jobs:
       if: always()
       run: |
         echo "📋 生成品質報告..."
-        
+
         cat > quality_report.md << 'EOF'
         # 監控模組品質檢查報告
-        
+
         ## 檢查項目
-        
+
         ### ✅ 已檢查項目
         - [x] Pylint 程式碼品質 (≥9.0/10)
         - [x] 檔案大小限制 (≤300 行)
         - [x] 測試執行
         - [x] 測試覆蓋率 (目標 ≥70%)
-        
+
         ### 📊 品質指標
         - **Python 版本**: ${{ matrix.python-version }}
         - **檢查時間**: $(date)
         - **分支**: ${{ github.ref }}
         - **提交**: ${{ github.sha }}
-        
+
         ### 🔍 檢查範圍
         - `src/monitoring/prometheus_collector.py`
         - `src/monitoring/grafana_config.py`
@@ -214,9 +214,9 @@ jobs:
         - `src/monitoring/prometheus_modules/`
         - `src/monitoring/grafana_modules/`
         - `src/monitoring/monitor_modules/`
-        
+
         EOF
-        
+
         echo "品質報告已生成"
 
     - name: Comment PR with quality report
@@ -226,7 +226,7 @@ jobs:
         script: |
           const fs = require('fs');
           const report = fs.readFileSync('quality_report.md', 'utf8');
-          
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
@@ -238,11 +238,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Run security checks
       run: |
         echo "🔒 執行安全檢查..."
-        
+
         # 檢查是否有硬編碼的敏感資訊
         echo "檢查硬編碼密碼和 API 金鑰..."
         if grep -r -i "password\|api_key\|secret\|token" src/monitoring/ --include="*.py" | grep -v "# " | grep -v "\"\"\""; then
@@ -250,11 +250,11 @@ jobs:
         else
           echo "✅ 未發現硬編碼敏感資訊"
         fi
-        
+
         # 檢查是否有不安全的導入
         echo "檢查不安全的導入..."
         if grep -r "import os" src/monitoring/ --include="*.py" | grep -v "# "; then
           echo "⚠️ 發現 os 模組導入，請確保安全使用"
         fi
-        
+
         echo "✅ 安全檢查完成"

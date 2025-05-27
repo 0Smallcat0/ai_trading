@@ -1,6 +1,6 @@
 [flake8]
 # 忽略特定的錯誤代碼
-ignore = 
+ignore =
     # W503: line break before binary operator (與 PEP 8 建議衝突)
     W503,
     # W504: line break after binary operator (與 W503 衝突)
@@ -12,7 +12,7 @@ ignore =
 max-line-length = 88
 
 # 排除特定目錄和文件
-exclude = 
+exclude =
     .git,
     __pycache__,
     .venv,

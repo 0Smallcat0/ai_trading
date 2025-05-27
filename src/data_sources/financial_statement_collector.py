@@ -115,7 +115,7 @@ class FinancialStatementCollector(DataCollector):
                     if data:
                         results[symbol] = data
                         logger.info(f"成功收集 {symbol} 的公司基本資料")
-                        
+
                         # 儲存到資料庫
                         if save_to_db:
                             self._save_company_info_to_db(symbol, data)
@@ -167,7 +167,7 @@ class FinancialStatementCollector(DataCollector):
                     if not data.empty:
                         results[symbol] = data
                         logger.info(f"成功收集 {symbol} 的財務比率資料")
-                        
+
                         # 儲存到資料庫
                         if save_to_db:
                             self._save_financial_ratios_to_db(symbol, data)
@@ -245,7 +245,7 @@ class FinancialStatementCollector(DataCollector):
         try:
             # 提取需要的資料
             today = datetime.now().date()
-            
+
             # 檢查是否已存在相同的記錄
             existing = session.query(Fundamental).filter(
                 Fundamental.symbol == symbol,

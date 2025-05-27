@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """修復 flake8 格式問題的腳本"""
 
-import os
-import re
 from pathlib import Path
 
 

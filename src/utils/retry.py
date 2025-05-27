@@ -213,12 +213,12 @@ def retry(
         # 獲取函數的完整限定名稱
     """
     decorator
-    
+
     Args:
-        func: 
-    
+        func:
+
     Returns:
-        Callable[...]: 
+        Callable[...]:
     """
         module_name = func.__module__
         qualname = f"{module_name}.{func.__qualname__}"
@@ -237,10 +237,10 @@ def retry(
         def wrapper(*args: Any, **kwargs: Any) -> T:
         """
         wrapper
-        
-        
+
+
         Returns:
-            T: 
+            T:
         """
             last_exception = None
             for retry_count in range(retry_strategy.max_retries + 1):

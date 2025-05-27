@@ -348,12 +348,12 @@ def handle_errors(
         # 獲取函數的完整限定名稱
     """
     decorator
-    
+
     Args:
-        func: 
-    
+        func:
+
     Returns:
-        Callable[...]: 
+        Callable[...]:
     """
         module_name = func.__module__
         qualname = f"{module_name}.{func.__qualname__}"
@@ -372,10 +372,10 @@ def handle_errors(
         def wrapper(*args: Any, **kwargs: Any) -> T:
         """
         wrapper
-        
-        
+
+
         Returns:
-            T: 
+            T:
         """
             try:
                 # 執行函數

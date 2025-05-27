@@ -116,8 +116,8 @@ class ModelInference:
 
                 cursor.execute(
                     """
-                    SELECT * FROM model_inference_logs 
-                    WHERE model_id = ? 
+                    SELECT * FROM model_inference_logs
+                    WHERE model_id = ?
                     ORDER BY inference_time DESC
                     LIMIT ?
                     """,
@@ -163,7 +163,7 @@ class ModelInference:
 
                     cursor.execute(
                         """
-                        SELECT COUNT(*) FROM model_inference_logs 
+                        SELECT COUNT(*) FROM model_inference_logs
                         WHERE model_id = ? AND inference_time >= datetime('now', '-24 hours')
                         """,
                         (model_id,),
@@ -182,8 +182,8 @@ class ModelInference:
 
                     cursor.execute(
                         """
-                        SELECT model_id, COUNT(*) 
-                        FROM model_inference_logs 
+                        SELECT model_id, COUNT(*)
+                        FROM model_inference_logs
                         GROUP BY model_id
                         """
                     )

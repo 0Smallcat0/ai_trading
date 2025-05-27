@@ -35,7 +35,7 @@ except ImportError:
     class HealthStatus(Enum):
     """
     HealthStatus
-    
+
     """
         HEALTHY = "healthy"
         DEGRADED = "degraded"

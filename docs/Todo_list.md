@@ -2,15 +2,15 @@
 
 ## Phase 1: 基礎建設與資料處理
 
-[ ] 1.1 專案環境設定
+[X] 1.1 專案環境設定
 　　[X] 初始化 Git 並設定 .gitignore
-　　[ ] 採用 Git Flow 分支策略
+　　[X] 採用 Git Flow 分支策略
 　　[X] 使用 pyenv + poetry 管理套件依賴
-　　[ ] 建立多環境配置 (dev/test/prod)
+　　[X] 建立多環境配置 (dev/test/prod)
 　　[X] 新增模組化目錄結構
-　　[ ] 整合 pre-commit hook (Black/Flake8/Mypy)
-　　[ ] 採用 Google Style Docstring 規範
-　　[ ] 設定 pylint 靜態程式碼分析
+　　[X] 整合 pre-commit hook (Black/Flake8/Mypy)
+　　[X] 採用 Google Style Docstring 規範
+　　[X] 設定 pylint 靜態程式碼分析
 　　[X] 設定 GitHub Actions CI/CD 流程
 
 [X] 1.2 資料庫設計與實作
@@ -498,6 +498,33 @@
 
 [X] 6.2 程式碼品質提升 (部分完成)
 　　[X] 訊號產生器模組重構 (2024-12-25 完成)
+
+[X] 6.3 專案檔案結構整理 (2024-12-26 完成)
+　　[X] 根目錄檔案分類歸位
+　　　　[X] 測試檔案移動到 tests/ 目錄
+　　　　[X] 修復腳本移動到 scripts/maintenance/
+　　　　[X] 報告檔案移動到 docs/reports/
+　　　　[X] 效能測試移動到 tests/performance/
+　　[X] 重複檔案處理
+　　　　[X] 識別並刪除功能重複的檔案
+　　　　[X] 保留最完整、品質最高的版本
+　　[X] 臨時檔案清理
+　　　　[X] 刪除臨時測試檔案 (test_*.py)
+　　　　[X] 刪除效能測試結果檔案
+　　　　[X] 刪除日誌檔案 (*.log)
+　　[X] 目錄結構優化
+　　　　[X] 建立 docs/reports/ 目錄
+　　　　[X] 建立 scripts/maintenance/ 目錄
+　　　　[X] 建立 tests/performance/reports/ 目錄
+　　[X] 檔案命名規範化
+　　　　[X] 確保符合 PEP 8 命名規範
+　　　　[X] 維持檔案大小 ≤300 行標準
+　　[X] 環境配置檔案整理 (2024-12-26 完成)
+　　　　[X] 重複環境檔案合併 (.env.dev/.env.development 等)
+　　　　[X] 標準命名規範應用 (development/production/testing)
+　　　　[X] config/environments/ 目錄建立
+　　　　[X] 配置引用路徑更新 (src/config.py, config/environment_config.py)
+　　　　[X] 環境配置說明文檔 (config/environments/README.md)
 　　[X] 投資組合管理模組重構與修復 (2024-12-25 完成)
 　　[X] Web UI 模組優化重構 (2024-12-25 完成)
 　　[ ] 整合 pre-commit hook (Black/Flake8/Mypy)

@@ -8,7 +8,7 @@ import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class StrategyVersion:
 
                     cursor.execute(
                         f"""
-                        UPDATE strategies 
+                        UPDATE strategies
                         SET {update_fields}, version = ?, updated_at = ?
                         WHERE id = ?
                         """,
@@ -146,8 +146,8 @@ class StrategyVersion:
 
                 cursor.execute(
                     """
-                    SELECT * FROM strategy_versions 
-                    WHERE strategy_id = ? 
+                    SELECT * FROM strategy_versions
+                    WHERE strategy_id = ?
                     ORDER BY created_at DESC
                     """,
                     (strategy_id,),
@@ -190,7 +190,7 @@ class StrategyVersion:
 
                 cursor.execute(
                     """
-                    SELECT * FROM strategy_versions 
+                    SELECT * FROM strategy_versions
                     WHERE strategy_id = ? AND version = ?
                     """,
                     (strategy_id, version),

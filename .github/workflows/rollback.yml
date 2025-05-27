@@ -36,7 +36,7 @@ jobs:
             # Remove 'v' prefix if present
             ROLLBACK_VERSION=${ROLLBACK_VERSION#v}
           fi
-          
+
           echo "Rolling back to version: $ROLLBACK_VERSION"
           echo "rollback_version=$ROLLBACK_VERSION" >> $GITHUB_OUTPUT
       - name: Create rollback info file
@@ -170,10 +170,10 @@ jobs:
       - name: Send notification
         run: |
           echo "Sending rollback notification..."
-          
+
           # In a real scenario, you would:
           # 1. Send email notification
           # 2. Send Slack notification
           # 3. Update status page
-          
+
           echo "Rollback notification sent"

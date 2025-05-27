@@ -4,7 +4,7 @@
 
 此模組提供完整的超參數優化功能，包括：
 - 網格搜索 (Grid Search)
-- 隨機搜索 (Random Search)  
+- 隨機搜索 (Random Search)
 - 貝葉斯優化 (Bayesian Optimization)
 - 結果視覺化和分析
 
@@ -28,15 +28,15 @@ Example:
 """
 
 from .base import HyperparameterTuner
+from .bayesian_optimization import BayesianOptimizer
 from .grid_search import GridSearchOptimizer
 from .random_search import RandomSearchOptimizer
-from .bayesian_optimization import BayesianOptimizer
 from .utils import (
-    validate_param_grid,
-    log_tuning_params,
-    save_results,
-    plot_param_importance,
     compare_optimization_methods,
+    log_tuning_params,
+    plot_param_importance,
+    save_results,
+    validate_param_grid,
 )
 
 __all__ = [

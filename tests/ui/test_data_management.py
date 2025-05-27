@@ -9,7 +9,7 @@
 
 測試覆蓋範圍：
 - data_sources 模組
-- data_update 模組  
+- data_update 模組
 - data_query 模組
 - data_quality 模組
 - data_export 模組
@@ -24,10 +24,10 @@ Note:
     測試使用 pytest 框架，包含完整的錯誤處理和邊界條件測試。
 """
 
-import pytest
 import sys
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
+from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加專案根目錄到 Python 路徑
 sys.path.insert(0, "src")
@@ -46,11 +46,13 @@ class TestDataManagementModules:
             assert hasattr(data_management, "initialize_data_service")
 
             # 測試子模組導入
-            from src.ui.pages.data_management import data_sources
-            from src.ui.pages.data_management import data_update
-            from src.ui.pages.data_management import data_query
-            from src.ui.pages.data_management import data_quality
-            from src.ui.pages.data_management import data_export
+            from src.ui.pages.data_management import (
+                data_export,
+                data_quality,
+                data_query,
+                data_sources,
+                data_update,
+            )
 
             # 驗證主要函數存在
             assert hasattr(data_sources, "show_data_sources_management")
@@ -73,7 +75,7 @@ class TestDataManagementModules:
         ) as mock_service:
             mock_service.return_value = Mock()
 
-            service = initialize_data_service()
+            initialize_data_service()
 
             # 驗證服務已初始化
             assert "data_service" in mock_session_state
@@ -83,8 +85,8 @@ class TestDataManagementModules:
     def test_data_quality_functions(self):
         """測試資料品質模組功能"""
         from src.ui.pages.data_management.data_quality import (
-            get_data_quality_metrics,
             detect_data_anomalies,
+            get_data_quality_metrics,
         )
 
         # 測試品質指標獲取
@@ -110,12 +112,13 @@ class TestDataManagementModules:
 
     def test_data_export_functions(self):
         """測試資料匯出模組功能"""
+        import pandas as pd
+
         from src.ui.pages.data_management.data_export import (
+            export_data_to_format,
             get_available_export_types,
             get_export_formats,
-            export_data_to_format,
         )
-        import pandas as pd
 
         # 測試可用匯出類型
         export_types = get_available_export_types()
@@ -230,8 +233,6 @@ class TestDataManagementPerformance:
         if "src.ui.pages.data_management" in sys.modules:
             del sys.modules["src.ui.pages.data_management"]
 
-        from src.ui.pages import data_management
-
         load_time = time.time() - start_time
 
         # 模組載入時間應該少於 1 秒
@@ -239,8 +240,9 @@ class TestDataManagementPerformance:
 
     def test_function_response_time(self):
         """測試函數響應時間"""
-        from src.ui.pages.data_management.data_quality import get_data_quality_metrics
         import time
+
+        from src.ui.pages.data_management.data_quality import get_data_quality_metrics
 
         start_time = time.time()
         metrics = get_data_quality_metrics()

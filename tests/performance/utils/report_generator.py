@@ -5,14 +5,13 @@
 """
 
 import json
-import os
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 import statistics
+from datetime import datetime
+from pathlib import Path
+from typing import List
 
-from .performance_monitor import PerformanceResult
 from .memory_profiler import MemoryLeakResult
+from .performance_monitor import PerformanceResult
 
 
 class ReportGenerator:
@@ -131,7 +130,7 @@ class ReportGenerator:
         <p>生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         <p>測試項目數量: {len(results)}</p>
     </div>
-    
+
     <div class="summary">
         <div class="metric">
             <h3>總請求數</h3>
@@ -150,7 +149,7 @@ class ReportGenerator:
             <p>{avg_throughput:.1f} req/s</p>
         </div>
     </div>
-    
+
     <h2>📊 詳細測試結果</h2>
     <table>
         <thead>
@@ -200,7 +199,7 @@ class ReportGenerator:
         html_content += """
         </tbody>
     </table>
-    
+
     <h2>🔍 錯誤分析</h2>
 """
 
@@ -319,7 +318,7 @@ class ReportGenerator:
         <p>生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         <p>測試項目數量: {len(results)}</p>
     </div>
-    
+
     <h2>📊 測試結果</h2>
     <table>
         <thead>

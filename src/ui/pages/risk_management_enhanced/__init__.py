@@ -2,7 +2,7 @@
 
 此模組提供增強版風險管理頁面的主要入口點，整合所有子模組功能：
 - 增強版參數設定 (parameters_enhanced.py)
-- 增強版監控儀表板 (monitoring_enhanced.py)  
+- 增強版監控儀表板 (monitoring_enhanced.py)
 - 增強版控制面板 (controls_enhanced.py)
 - 數據服務層 (data_services.py)
 
@@ -16,17 +16,19 @@ Author: AI Trading System
 Version: 1.0.0
 """
 
-import streamlit as st
 from typing import Optional
+
+import streamlit as st
+
+from .data_services import (
+    calculate_risk_score,
+    get_risk_level,
+    load_risk_indicators,
+    load_risk_parameters,
+)
 
 # 導入子模組
 from .parameters_enhanced import show_enhanced_parameters
-from .data_services import (
-    load_risk_parameters,
-    load_risk_indicators,
-    calculate_risk_score,
-    get_risk_level,
-)
 
 
 def show() -> None:
@@ -49,13 +51,13 @@ def show() -> None:
     st.markdown(
         """
     **增強版風險管理系統** 提供先進的投資組合風險控制功能：
-    
+
     🎯 **智能特色**
     - 📱 響應式設計，支援桌面、平板、手機
     - ⚡ 即時數據更新和參數驗證
     - 📊 增強的視覺化圖表和儀表板
     - 🤖 智能風險評分和建議系統
-    
+
     🔧 **核心功能**
     - ⚙️ 增強版參數設定：智能表單驗證、批量管理
     - 📈 實時監控儀表板：動態圖表、風險熱圖
@@ -223,9 +225,9 @@ def _show_enhanced_footer() -> None:
     st.markdown(
         """
     ---
-    **增強版風險管理系統 v1.0.0** | 
-    [📱 移動端優化](docs/mobile_optimization.md) | 
-    [🎯 智能功能](docs/smart_features.md) | 
+    **增強版風險管理系統 v1.0.0** |
+    [📱 移動端優化](docs/mobile_optimization.md) |
+    [🎯 智能功能](docs/smart_features.md) |
     [🔧 API 文檔](docs/api_documentation.md) |
     [❓ 使用指南](docs/enhanced_user_guide.md)
     """

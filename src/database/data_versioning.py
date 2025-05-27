@@ -30,9 +30,9 @@ CustomJSONEncoder
     def default(self, obj):
     """
     default
-    
+
     Args:
-        obj: 
+        obj:
     """
         if isinstance(obj, (date, datetime)):
             return obj.isoformat()

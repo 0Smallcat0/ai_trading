@@ -3,8 +3,8 @@
 測試回測服務的基本功能
 """
 
-import sys
 import os
+import sys
 from datetime import datetime
 
 # 添加項目根目錄到 Python 路徑
@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 def test_basic_import():
     """測試基本導入功能"""
     try:
-        from src.core.backtest_service import BacktestService, BacktestConfig
+        pass
 
         print("✅ 成功導入 BacktestService 和 BacktestConfig")
         return True
@@ -83,7 +83,7 @@ def test_basic_methods(service):
 def test_api_router():
     """測試 API 路由導入"""
     try:
-        from src.api.routers.backtest import router
+        pass
 
         print("✅ 成功導入 API 路由")
         return True

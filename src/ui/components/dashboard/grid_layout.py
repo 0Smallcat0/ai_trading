@@ -4,10 +4,10 @@
 提供 12 欄網格系統和響應式佈局管理功能。
 """
 
-import streamlit as st
-import math
-from typing import Dict, List, Any, Tuple, Optional
 import logging
+from typing import Any, Dict, Optional, Tuple
+
+import streamlit as st
 
 logger = logging.getLogger(__name__)
 
@@ -395,7 +395,7 @@ class GridLayout:
             pointer-events: none;
             z-index: 1000;
         }}
-        
+
         .grid-line-vertical {{
             position: absolute;
             width: 1px;
@@ -403,7 +403,7 @@ class GridLayout:
             background-color: rgba(0, 0, 0, 0.1);
             border-left: 1px dashed #ccc;
         }}
-        
+
         .grid-line-horizontal {{
             position: absolute;
             width: 100%;

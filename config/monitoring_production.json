@@ -5,7 +5,7 @@
     "updated": "2024-12-25",
     "description": "代碼品質審計後的生產環境監控配置"
   },
-  
+
   "error_tracking": {
     "enabled": true,
     "description": "改進的錯誤處理模式監控",
@@ -23,13 +23,13 @@
     },
     "error_categories": [
       "authentication_errors",
-      "api_errors", 
+      "api_errors",
       "database_errors",
       "validation_errors",
       "system_errors"
     ]
   },
-  
+
   "performance_monitoring": {
     "enabled": true,
     "description": "驗證改進不影響效能",
@@ -38,7 +38,7 @@
       "threshold_ms": 1000,
       "track_endpoints": [
         "/api/v1/auth/login",
-        "/api/v1/auth/logout", 
+        "/api/v1/auth/logout",
         "/api/v1/auth/refresh",
         "/health",
         "/api/info"
@@ -57,7 +57,7 @@
       "measure_error_to_fix_time": true
     }
   },
-  
+
   "structured_logging": {
     "enabled": true,
     "description": "結構化日誌以進行更好的日誌分析",
@@ -97,7 +97,7 @@
       }
     }
   },
-  
+
   "code_quality_monitoring": {
     "enabled": true,
     "description": "監控代碼品質指標和錯誤模式",
@@ -107,7 +107,7 @@
       "modules": [
         "src/ui/web_ui.py",
         "src/api/routers/auth.py",
-        "src/api/main.py", 
+        "src/api/main.py",
         "src/core/authentication_service.py",
         "src/ui/components/auth.py"
       ]
@@ -116,7 +116,7 @@
       "track_patterns": true,
       "common_errors": [
         "import_errors",
-        "syntax_errors", 
+        "syntax_errors",
         "type_errors",
         "authentication_failures",
         "database_connection_errors"
@@ -128,7 +128,7 @@
       "resolution_efficiency": true
     }
   },
-  
+
   "alerts": {
     "enabled": true,
     "description": "關鍵錯誤條件的警報",
@@ -155,7 +155,7 @@
       {
         "name": "slow_api_response",
         "condition": "api_response_time_p95 > 2000ms",
-        "severity": "warning", 
+        "severity": "warning",
         "description": "API 回應時間過慢"
       },
       {
@@ -178,7 +178,7 @@
       }
     ]
   },
-  
+
   "dashboards": {
     "enabled": true,
     "description": "監控儀表板配置",
@@ -187,7 +187,7 @@
       "url": "http://localhost:3000",
       "dashboards": [
         "api-performance",
-        "error-tracking", 
+        "error-tracking",
         "code-quality",
         "authentication-metrics"
       ]
@@ -208,7 +208,7 @@
       ]
     }
   },
-  
+
   "health_checks": {
     "enabled": true,
     "description": "系統健康檢查",
@@ -220,7 +220,7 @@
         "timeout": "5s"
       },
       {
-        "name": "database_health", 
+        "name": "database_health",
         "type": "database",
         "interval": "60s",
         "timeout": "10s"
@@ -233,7 +233,7 @@
       }
     ]
   },
-  
+
   "backup_monitoring": {
     "enabled": true,
     "description": "部署備份監控",

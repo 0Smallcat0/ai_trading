@@ -145,14 +145,14 @@ spec:
   policyTypes:
   - Ingress
   - Egress
-  
+
   ingress:
   # 允許來自同一命名空間的流量
   - from:
     - namespaceSelector:
         matchLabels:
           name: ai-trading
-  
+
   # 允許來自 Ingress Controller 的流量
   - from:
     - namespaceSelector:
@@ -163,7 +163,7 @@ spec:
       port: 8501
     - protocol: TCP
       port: 8000
-  
+
   # 允許來自監控系統的流量
   - from:
     - namespaceSelector:
@@ -172,26 +172,26 @@ spec:
     ports:
     - protocol: TCP
       port: 9091
-  
+
   egress:
   # 允許 DNS 查詢
   - to: []
     ports:
     - protocol: UDP
       port: 53
-  
+
   # 允許 HTTPS 出站流量 (用於外部 API 調用)
   - to: []
     ports:
     - protocol: TCP
       port: 443
-  
+
   # 允許 HTTP 出站流量 (用於外部 API 調用)
   - to: []
     ports:
     - protocol: TCP
       port: 80
-  
+
   # 允許訪問同一命名空間內的服務
   - to:
     - namespaceSelector:

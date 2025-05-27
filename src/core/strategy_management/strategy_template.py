@@ -177,28 +177,28 @@ import numpy as np
 def generate_signals(data, short_window=20, long_window=50):
     """
     生成移動平均線交叉信號
-    
+
     Args:
         data: 價格數據 DataFrame
         short_window: 短期移動平均窗口
         long_window: 長期移動平均窗口
-    
+
     Returns:
         DataFrame: 包含信號的數據
     """
     # 計算移動平均線
     data['MA_short'] = data['close'].rolling(window=short_window).mean()
     data['MA_long'] = data['close'].rolling(window=long_window).mean()
-    
+
     # 生成信號
     data['signal'] = 0
     data['signal'][short_window:] = np.where(
         data['MA_short'][short_window:] > data['MA_long'][short_window:], 1, 0
     )
-    
+
     # 計算持倉變化
     data['positions'] = data['signal'].diff()
-    
+
     return data
 
 def calculate_returns(data):
@@ -256,11 +256,11 @@ def calculate_rsi(data, window=14):
 def generate_signals(data, rsi_window=14, oversold=30, overbought=70):
     """生成 RSI 信號"""
     data['RSI'] = calculate_rsi(data, rsi_window)
-    
+
     data['signal'] = 0
     data['signal'] = np.where(data['RSI'] < oversold, 1, data['signal'])
     data['signal'] = np.where(data['RSI'] > overbought, -1, data['signal'])
-    
+
     return data
 ''',
                 "parameters": {

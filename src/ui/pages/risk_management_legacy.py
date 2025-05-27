@@ -4,7 +4,7 @@
 
 新的模組化結構位於 src/ui/pages/risk_management/ 目錄下：
 - parameters.py: 風險參數設定
-- indicators.py: 風險指標監控  
+- indicators.py: 風險指標監控
 - controls.py: 風控機制管理
 - alerts.py: 風險警報記錄
 - utils.py: 共用工具函數
@@ -14,6 +14,7 @@ Version: 1.0.0 (Legacy Wrapper)
 """
 
 import warnings
+
 import streamlit as st
 
 # 發出棄用警告
@@ -30,9 +31,9 @@ def show_legacy_migration_notice():
     st.warning(
         """
     ⚠️ **模組已重構通知**
-    
+
     風險管理模組已重構為模組化架構，提供更好的維護性和擴展性。
-    
+
     **新的模組結構：**
     - 📁 `src/ui/pages/risk_management/`
       - `__init__.py` - 主入口
@@ -41,12 +42,12 @@ def show_legacy_migration_notice():
       - `controls.py` - 風控機制管理
       - `alerts.py` - 風險警報記錄
       - `utils.py` - 共用工具函數
-    
+
     **遷移指南：**
     1. 更新導入語句：`from src.ui.pages.risk_management import show`
     2. 使用新的模組化 API
     3. 參考新的文檔和示例
-    
+
     **優勢：**
     - ✅ 更好的代碼組織
     - ✅ 更容易維護和測試
@@ -58,14 +59,16 @@ def show_legacy_migration_notice():
 
 # 導入新的模組化實現
 try:
+    from .risk_management import (
+        get_default_risk_parameters,
+        get_risk_management_service,
+    )
     from .risk_management import show as new_show
     from .risk_management import (
-        show_risk_parameters,
-        show_risk_indicators,
-        show_risk_controls,
         show_risk_alerts,
-        get_risk_management_service,
-        get_default_risk_parameters,
+        show_risk_controls,
+        show_risk_indicators,
+        show_risk_parameters,
     )
 
     def show():
@@ -74,7 +77,7 @@ try:
         st.divider()
         new_show()
 
-except ImportError as e:
+except ImportError:
     # 如果新模組不可用，提供基本實現
     def show():
         st.error(f"新的風險管理模組不可用: {e}")

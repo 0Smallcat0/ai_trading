@@ -8,12 +8,12 @@ prometheus:
     interval: 15  # 收集間隔（秒）
     timeout: 10   # 收集超時（秒）
     enabled: true
-    
+
   # 指標保留配置
   retention:
     raw_data_days: 7      # 原始數據保留天數
     aggregated_data_days: 90  # 聚合數據保留天數
-    
+
   # 聚合規則配置
   aggregation:
     rules:
@@ -23,7 +23,7 @@ prometheus:
           - "system_cpu_usage_percent"
           - "system_memory_usage_percent"
           - "system_disk_usage_percent"
-      
+
       - name: "trading_metrics_1m"
         interval: "1m"
         metrics:
@@ -39,13 +39,13 @@ grafana:
     username: "admin"
     password: "admin"
     api_key: null  # 優先使用 API 金鑰
-    
+
   # 儀表板配置
   dashboards:
     auto_deploy: true
     backup_enabled: true
     backup_schedule: "0 2 * * *"  # 每日凌晨 2 點備份
-    
+
   # 數據源配置
   datasources:
     prometheus:
@@ -60,7 +60,7 @@ alerting:
     enabled: true
     evaluation_interval: 30  # 評估間隔（秒）
     notification_timeout: 30  # 通知超時（秒）
-    
+
   # 告警閾值配置
   thresholds:
     # 系統資源閾值
@@ -77,7 +77,7 @@ alerting:
       load_average:
         warning: 2.0
         critical: 4.0
-        
+
     # 交易系統閾值
     trading:
       order_success_rate:
@@ -89,7 +89,7 @@ alerting:
       capital_utilization:
         warning: 90.0
         critical: 98.0
-        
+
     # API 效能閾值
     api:
       error_rate:
@@ -116,36 +116,36 @@ notifications:
       to_addresses:
         - "admin@trading-system.com"
         - "ops@trading-system.com"
-      
+
     webhook:
       enabled: true
       urls:
         - "http://localhost:8080/webhook/alerts"
       timeout: 10
       retry_count: 3
-      
+
     line:
       enabled: false
       bot_token: ""  # 從環境變數讀取
       channel_id: ""
-      
+
     telegram:
       enabled: false
       bot_token: ""  # 從環境變數讀取
       chat_id: ""
-      
+
     slack:
       enabled: false
       webhook_url: ""  # 從環境變數讀取
       channel: "#alerts"
-      
+
   # 通知規則配置
   rules:
     # 通知抑制規則
     suppression:
       enabled: true
       duration: 300  # 抑制時間（秒）
-      
+
     # 通知升級規則
     escalation:
       enabled: true
@@ -164,20 +164,20 @@ notifications:
 health_check:
   # 檢查間隔
   interval: 60  # 秒
-  
+
   # 檢查項目
   checks:
     database:
       enabled: true
       timeout: 5
-      
+
     api_endpoints:
       enabled: true
       timeout: 10
       endpoints:
         - "/health"
         - "/api/v1/monitoring/health"
-        
+
     external_services:
       enabled: true
       timeout: 15
@@ -186,7 +186,7 @@ health_check:
           url: "http://localhost:9090/-/healthy"
         - name: "grafana"
           url: "http://localhost:3000/api/health"
-          
+
     system_resources:
       enabled: true
       checks:
@@ -202,17 +202,17 @@ performance:
     enabled: true
     sample_rate: 1.0  # 採樣率（1.0 = 100%）
     slow_request_threshold: 1.0  # 慢請求閾值（秒）
-    
+
   # 資料庫效能監控
   database_monitoring:
     enabled: true
     slow_query_threshold: 1.0  # 慢查詢閾值（秒）
-    
+
   # 記憶體監控
   memory_monitoring:
     enabled: true
     profiling_interval: 300  # 記憶體分析間隔（秒）
-    
+
   # 效能基準
   benchmarks:
     api_response_time:
@@ -230,10 +230,10 @@ performance:
 logging:
   # 日誌級別
   level: "INFO"
-  
+
   # 日誌格式
   format: "json"
-  
+
   # 日誌輸出
   outputs:
     - type: "file"
@@ -242,11 +242,11 @@ logging:
       max_files: 10
     - type: "console"
       enabled: true
-      
+
   # 日誌保留
   retention:
     days: 30
-    
+
   # 敏感資料遮罩
   sensitive_fields:
     - "password"
@@ -261,17 +261,17 @@ security:
     rate_limiting:
       enabled: true
       requests_per_minute: 100
-      
+
     authentication:
       required: true
       jwt_secret: ""  # 從環境變數讀取
-      
+
   # 資料加密
   encryption:
     enabled: true
     algorithm: "AES-256-GCM"
     key_rotation_days: 90
-    
+
   # 審計日誌
   audit:
     enabled: true
@@ -293,13 +293,13 @@ maintenance:
       - "expired_metrics"
       - "old_logs"
       - "temporary_files"
-      
+
   # 備份配置
   backup:
     enabled: true
     schedule: "0 1 * * *"  # 每日凌晨 1 點
     retention_days: 30
-    
+
   # 系統優化
   optimization:
     enabled: true

@@ -13,7 +13,7 @@ import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
@@ -313,44 +313,44 @@ class ReportExporterService:
             <style>
                 body {{ font-family: Arial, sans-serif; margin: 20px; }}
                 .header {{ text-align: center; margin-bottom: 30px; }}
-                .metrics {{ 
-                    display: grid; 
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-                    gap: 20px; 
-                    margin-bottom: 30px; 
+                .metrics {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 30px;
                 }}
-                .metric-card {{ 
-                    border: 1px solid #ddd; 
-                    padding: 15px; 
-                    border-radius: 5px; 
-                    text-align: center; 
+                .metric-card {{
+                    border: 1px solid #ddd;
+                    padding: 15px;
+                    border-radius: 5px;
+                    text-align: center;
                 }}
-                .metric-value {{ 
-                    font-size: 24px; 
-                    font-weight: bold; 
-                    color: #333; 
+                .metric-value {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #333;
                 }}
-                .metric-label {{ 
-                    font-size: 14px; 
-                    color: #666; 
-                    margin-top: 5px; 
+                .metric-label {{
+                    font-size: 14px;
+                    color: #666;
+                    margin-top: 5px;
                 }}
-                table {{ 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    margin-top: 20px; 
+                table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
                 }}
-                th, td {{ 
-                    border: 1px solid #ddd; 
-                    padding: 8px; 
-                    text-align: left; 
+                th, td {{
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: left;
                 }}
                 th {{ background-color: #f2f2f2; }}
-                .footer {{ 
-                    margin-top: 30px; 
-                    text-align: center; 
-                    color: #666; 
-                    font-size: 12px; 
+                .footer {{
+                    margin-top: 30px;
+                    text-align: center;
+                    color: #666;
+                    font-size: 12px;
                 }}
             </style>
         </head>
@@ -359,10 +359,10 @@ class ReportExporterService:
                 <h1>交易績效報表</h1>
                 <p>生成時間: {timestamp}</p>
             </div>
-            
+
             {metrics_section}
             {data_section}
-            
+
             <div class="footer">
                 <p>此報表由自動交易系統生成</p>
             </div>

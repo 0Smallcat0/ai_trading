@@ -3,12 +3,11 @@
 此腳本提供基本的效能測試，不依賴外部套件。
 """
 
-import time
-import threading
 import sys
-import os
+import threading
+import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # 添加 src 目錄到路徑
 sys.path.insert(0, str(Path(__file__).parent / "src"))

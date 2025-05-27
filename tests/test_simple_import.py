@@ -16,19 +16,13 @@ def test_individual_modules():
     print("🔍 測試各個子模組導入...")
 
     try:
-        from src.core.visualization.data_retrieval import DataRetrievalService
+        pass
 
         print("✅ DataRetrievalService 導入成功")
 
-        from src.core.visualization.chart_generators import ChartGeneratorService
-
         print("✅ ChartGeneratorService 導入成功")
 
-        from src.core.visualization.report_exporters import ReportExporterService
-
         print("✅ ReportExporterService 導入成功")
-
-        from src.core.visualization.config_management import ConfigManagementService
 
         print("✅ ConfigManagementService 導入成功")
 

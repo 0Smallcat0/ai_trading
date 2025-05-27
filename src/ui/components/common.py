@@ -5,13 +5,9 @@
 包含卡片、指標、狀態指示器、載入動畫等通用組件。
 """
 
-import time
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 import streamlit as st
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 
 class UIComponents:
@@ -294,16 +290,16 @@ class UIComponents:
             # 建立按鈕樣式
             button_style = (
                 """
-            background: #1f77b4; 
-            color: white; 
-            border: none; 
+            background: #1f77b4;
+            color: white;
+            border: none;
             border-radius: 0.25rem;
             """
                 if is_current
                 else """
-            background: transparent; 
-            color: #333; 
-            border: 1px solid #ddd; 
+            background: transparent;
+            color: #333;
+            border: 1px solid #ddd;
             border-radius: 0.25rem;
             """
             )
@@ -344,9 +340,9 @@ def _format_trend(trend: Dict[str, Any]) -> str:
 
     return f"""
     <div style="
-        display: flex; 
-        align-items: center; 
-        font-size: 0.8rem; 
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
         color: {color};
         margin-top: 0.5rem;
     ">
@@ -367,24 +363,24 @@ def apply_custom_css():
         padding-top: 2rem;
         padding-bottom: 2rem;
     }
-    
+
     /* 側邊欄樣式 */
     .sidebar .sidebar-content {
         background: #f8f9fa;
     }
-    
+
     /* 按鈕樣式 */
     .stButton > button {
         border-radius: 0.25rem;
         border: 1px solid #ddd;
         transition: all 0.2s ease;
     }
-    
+
     .stButton > button:hover {
         border-color: #1f77b4;
         color: #1f77b4;
     }
-    
+
     /* 指標樣式 */
     .metric-container {
         background: white;
@@ -392,17 +388,17 @@ def apply_custom_css():
         border-radius: 0.5rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    
+
     /* 表格樣式 */
     .dataframe {
         border: none !important;
     }
-    
+
     .dataframe th {
         background: #f8f9fa !important;
         border: none !important;
     }
-    
+
     /* 隱藏 Streamlit 預設元素 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}

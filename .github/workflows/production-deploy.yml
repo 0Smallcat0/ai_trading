@@ -164,23 +164,23 @@ jobs:
           cat > rollback.sh << 'EOL'
           #!/bin/bash
           # Rollback script for version ${{ needs.check-approval.outputs.version }}
-          
+
           echo "Rolling back from version ${{ needs.check-approval.outputs.version }}..."
-          
+
           # Get previous version
           PREV_VERSION=$(git describe --abbrev=0 --tags --exclude "v${{ needs.check-approval.outputs.version }}")
-          
+
           echo "Rolling back to version ${PREV_VERSION}..."
-          
+
           # In a real scenario, you would:
           # 1. Stop the current services
           # 2. Deploy the previous version
           # 3. Restart the services
           # 4. Run smoke tests
-          
+
           echo "Rollback completed successfully"
           EOL
-          
+
           chmod +x rollback.sh
       - name: Upload rollback script
         uses: actions/upload-artifact@v4
@@ -196,12 +196,12 @@ jobs:
       - name: Monitor for 5 minutes
         run: |
           echo "Starting deployment monitoring..."
-          
+
           # In a real scenario, you would:
           # 1. Monitor application metrics
           # 2. Check for error rates
           # 3. Verify system health
-          
+
           # Simulate monitoring for 5 minutes
           for i in {1..5}; do
             echo "Monitoring minute $i..."
@@ -210,5 +210,5 @@ jobs:
             echo "Error rate: Normal"
             echo "Response time: Acceptable"
           done
-          
+
           echo "Deployment monitoring completed successfully"

@@ -21,14 +21,14 @@ except ImportError:
 # 專案根目錄
 ROOT_DIR = Path(os.path.dirname(os.path.dirname(__file__)))
 
-# 取得目前環境（預設 dev）
-ENV = os.getenv("ENV", "dev")
+# 取得目前環境（預設 development）
+ENV = os.getenv("ENVIRONMENT", "development")
 
 # 載入環境變數檔案，優先順序：
 # 1. 根目錄 .env 檔案（如果存在）
-# 2. 環境特定 .envs/.env.{ENV} 檔案（如果存在）
+# 2. 環境特定 config/environments/.env.{ENV} 檔案（如果存在）
 root_env_file = os.path.join(ROOT_DIR, ".env")
-env_specific_file = os.path.join(ROOT_DIR, ".envs", f".env.{ENV}")
+env_specific_file = os.path.join(ROOT_DIR, "config", "environments", f".env.{ENV}")
 
 # 先載入環境特定檔案（如果存在）
 if os.path.exists(env_specific_file):
@@ -104,6 +104,7 @@ def load_config_file(file_path, default=None):
         dict: 配置字典
     """
     import json
+
     import yaml
 
     if default is None:

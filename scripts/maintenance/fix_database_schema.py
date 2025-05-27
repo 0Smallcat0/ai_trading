@@ -20,7 +20,6 @@ def check_schema_issues():
 
     try:
         from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
 
         # 嘗試創建記憶體資料庫
         engine = create_engine("sqlite:///:memory:")
@@ -43,7 +42,7 @@ def test_managers_with_fixed_schema():
     print("\n🔍 測試管理器創建...")
 
     try:
-        from sqlalchemy import create_engine, MetaData
+        from sqlalchemy import MetaData, create_engine
         from sqlalchemy.orm import sessionmaker
 
         # 創建新的記憶體資料庫
@@ -54,14 +53,14 @@ def test_managers_with_fixed_schema():
 
         # 簡化的表結構用於測試
         from sqlalchemy import (
-            Table,
+            Boolean,
             Column,
-            Integer,
-            String,
             Date,
             DateTime,
-            Boolean,
             Float,
+            Integer,
+            String,
+            Table,
         )
 
         # 創建 DataShard 表
@@ -104,8 +103,8 @@ def test_managers_with_fixed_schema():
         session = Session()
 
         # 測試管理器創建
-        from src.database.sharding_manager import ShardingManager
         from src.database.compression_manager import CompressionManager
+        from src.database.sharding_manager import ShardingManager
 
         sharding_manager = ShardingManager(session)
         compression_manager = CompressionManager(session)
@@ -113,8 +112,8 @@ def test_managers_with_fixed_schema():
         print("✅ 管理器創建成功")
 
         # 測試策略註冊
-        from src.database.sharding_manager import TimeBasedShardingStrategy
         from src.database.compression_manager import TimeBasedCompressionStrategy
+        from src.database.sharding_manager import TimeBasedShardingStrategy
 
         custom_shard_strategy = TimeBasedShardingStrategy(shard_interval_days=14)
         custom_compress_strategy = TimeBasedCompressionStrategy("gzip", min_age_days=60)
@@ -150,15 +149,15 @@ def test_error_handling():
     print("\n🔍 測試錯誤處理機制...")
 
     try:
-        from src.database.sharding_manager import (
-            ShardingManager,
-            TimeBasedShardingStrategy,
-            ShardingConfigError,
-        )
         from src.database.compression_manager import (
+            CompressionConfigError,
             CompressionManager,
             TimeBasedCompressionStrategy,
-            CompressionConfigError,
+        )
+        from src.database.sharding_manager import (
+            ShardingConfigError,
+            ShardingManager,
+            TimeBasedShardingStrategy,
         )
 
         # 測試無效參數

@@ -103,15 +103,15 @@ class RealtimeQuoteCollector(DataCollector):
         try:
             # 解析訊息
             data = json.loads(message)
-            
+
             # 檢查佇列是否已滿（回壓控制）
             if self.data_queue.qsize() >= self.max_queue_size:
                 logger.warning(f"資料佇列已滿 ({self.max_queue_size})，丟棄新資料")
                 return
-                
+
             # 將資料放入佇列
             self.data_queue.put(data)
-            
+
         except json.JSONDecodeError:
             logger.error(f"解析 WebSocket 訊息失敗: {message}")
         except Exception as e:
@@ -137,7 +137,7 @@ class RealtimeQuoteCollector(DataCollector):
             close_msg: 關閉訊息
         """
         logger.info(f"WebSocket 連接已關閉: {close_status_code} {close_msg}")
-        
+
         # 如果不是主動關閉，則嘗試重新連接
         if self.ws_running:
             logger.info("嘗試重新連接 WebSocket...")
@@ -152,7 +152,7 @@ class RealtimeQuoteCollector(DataCollector):
             ws: WebSocket 連接
         """
         logger.info("WebSocket 連接已開啟")
-        
+
         # 重新訂閱所有股票
         for symbol in self.subscribed_symbols:
             self._subscribe_symbol(symbol)
@@ -162,7 +162,7 @@ class RealtimeQuoteCollector(DataCollector):
         if self.source == "yahoo":
             # Yahoo Finance 的 WebSocket URL
             url = "wss://streamer.finance.yahoo.com"
-            
+
             # 創建 WebSocket 連接
             self.ws = websocket.WebSocketApp(
                 url,
@@ -171,12 +171,12 @@ class RealtimeQuoteCollector(DataCollector):
                 on_close=self._on_close,
                 on_open=self._on_open,
             )
-            
+
             # 在新執行緒中運行 WebSocket
             self.ws_thread = threading.Thread(target=self.ws.run_forever)
             self.ws_thread.daemon = True
             self.ws_thread.start()
-            
+
         else:
             raise ValueError(f"不支援的資料來源: {self.source}")
 
@@ -190,21 +190,21 @@ class RealtimeQuoteCollector(DataCollector):
         if not self.ws:
             logger.warning("WebSocket 未連接，無法訂閱")
             return
-            
+
         if self.source == "yahoo":
             # 格式化股票代碼
             if symbol.isdigit() and len(symbol) == 4:
                 symbol = f"{symbol}.TW"
-                
+
             # 建立訂閱訊息
             subscribe_msg = json.dumps({
                 "subscribe": [symbol]
             })
-            
+
             # 發送訂閱訊息
             self.ws.send(subscribe_msg)
             logger.info(f"已訂閱 {symbol} 的即時報價")
-            
+
             # 添加到已訂閱列表
             self.subscribed_symbols.add(symbol)
         else:
@@ -220,21 +220,21 @@ class RealtimeQuoteCollector(DataCollector):
         if not self.ws:
             logger.warning("WebSocket 未連接，無法取消訂閱")
             return
-            
+
         if self.source == "yahoo":
             # 格式化股票代碼
             if symbol.isdigit() and len(symbol) == 4:
                 symbol = f"{symbol}.TW"
-                
+
             # 建立取消訂閱訊息
             unsubscribe_msg = json.dumps({
                 "unsubscribe": [symbol]
             })
-            
+
             # 發送取消訂閱訊息
             self.ws.send(unsubscribe_msg)
             logger.info(f"已取消訂閱 {symbol} 的即時報價")
-            
+
             # 從已訂閱列表中移除
             self.subscribed_symbols.discard(symbol)
         else:
@@ -250,20 +250,20 @@ class RealtimeQuoteCollector(DataCollector):
                     if not self.data_queue.empty():
                         batch.append(self.data_queue.get())
                         self.data_queue.task_done()
-                
+
                 if batch:
                     # 處理批次資料
                     self._process_batch(batch)
-                
+
                 # 檢查是否需要儲存資料
                 current_time = time.time()
                 if current_time - self.last_save_time >= self.save_interval and self.data_buffer:
                     self._save_buffer_to_db()
                     self.last_save_time = current_time
-                
+
                 # 短暫休息，避免 CPU 使用率過高
                 time.sleep(0.1)
-                
+
             except Exception as e:
                 logger.error(f"處理資料時發生錯誤: {e}")
 
@@ -300,7 +300,7 @@ class RealtimeQuoteCollector(DataCollector):
         """將緩衝區中的資料儲存到資料庫"""
         if not self.data_buffer:
             return
-            
+
         session = self.Session()
         try:
             for data in self.data_buffer:
@@ -316,13 +316,13 @@ class RealtimeQuoteCollector(DataCollector):
                     data_source=data["data_source"],
                 )
                 session.add(tick)
-                
+
             session.commit()
             logger.info(f"已儲存 {len(self.data_buffer)} 筆即時報價資料到資料庫")
-            
+
             # 清空緩衝區
             self.data_buffer = []
-            
+
         except Exception as e:
             session.rollback()
             logger.error(f"儲存即時報價資料到資料庫時發生錯誤: {e}")
@@ -334,13 +334,13 @@ class RealtimeQuoteCollector(DataCollector):
         # 啟動 WebSocket 連接
         self.ws_running = True
         self._connect_websocket()
-        
+
         # 啟動資料處理執行緒
         self.processing_running = True
         self.processing_thread = threading.Thread(target=self._process_data)
         self.processing_thread.daemon = True
         self.processing_thread.start()
-        
+
         logger.info(f"{self.name} 已啟動")
 
     def stop(self):
@@ -349,16 +349,16 @@ class RealtimeQuoteCollector(DataCollector):
         self.ws_running = False
         if self.ws:
             self.ws.close()
-            
+
         # 停止資料處理執行緒
         self.processing_running = False
         if self.processing_thread and self.processing_thread.is_alive():
             self.processing_thread.join(timeout=5)
-            
+
         # 儲存剩餘的資料
         if self.data_buffer:
             self._save_buffer_to_db()
-            
+
         logger.info(f"{self.name} 已停止")
 
     def collect(self, symbols: List[str]) -> bool:
@@ -375,7 +375,7 @@ class RealtimeQuoteCollector(DataCollector):
             # 訂閱所有股票
             for symbol in symbols:
                 self._subscribe_symbol(symbol)
-                
+
             return True
         except Exception as e:
             logger.error(f"啟動即時報價收集時發生錯誤: {e}")

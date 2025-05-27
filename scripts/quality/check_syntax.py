@@ -6,8 +6,8 @@
 """
 
 import ast
-import sys
 import os
+import sys
 
 
 def check_syntax(file_path):

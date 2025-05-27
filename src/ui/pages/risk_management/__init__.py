@@ -2,7 +2,7 @@
 
 此模組提供風險管理頁面的主要入口點，整合所有子模組功能：
 - 風險參數設定 (parameters.py)
-- 風險指標監控 (indicators.py)  
+- 風險指標監控 (indicators.py)
 - 風控機制管理 (controls.py)
 - 風險警報記錄 (alerts.py)
 - 共用工具函數 (utils.py)
@@ -11,15 +11,17 @@ Author: AI Trading System
 Version: 1.0.0
 """
 
-import streamlit as st
 from typing import Optional
+
+import streamlit as st
+
+from .alerts import get_alert_summary, show_risk_alerts
+from .controls import show_risk_controls
+from .indicators import show_risk_indicators, show_risk_summary
 
 # 導入子模組
 from .parameters import show_risk_parameters
-from .indicators import show_risk_indicators, show_risk_summary
-from .controls import show_risk_controls
-from .alerts import show_risk_alerts, get_alert_summary
-from .utils import get_risk_management_service, get_default_risk_parameters
+from .utils import get_default_risk_parameters, get_risk_management_service
 
 
 def show() -> None:
@@ -81,7 +83,7 @@ def _check_system_status() -> None:
         st.warning(
             """
         ⚠️ **風險管理服務未啟用**
-        
+
         目前使用模擬數據進行演示。在生產環境中，請確保：
         1. 風險管理服務正常運行
         2. 數據庫連接正常
@@ -96,7 +98,7 @@ def _check_system_status() -> None:
         st.error(
             """
         🚨 **緊急停止模式啟用**
-        
+
         所有交易活動已暫停。請檢查風險狀況後在「風控機制」頁面重啟系統。
         """
         )
@@ -106,7 +108,7 @@ def _check_system_status() -> None:
         st.error(
             """
         🔴 **風控主開關已關閉**
-        
+
         所有風控機制已停用。請在「風控機制」頁面重新啟用。
         """
         )
@@ -150,9 +152,9 @@ def _show_footer_info() -> None:
     st.markdown(
         """
     ---
-    **風險管理系統 v1.0.0** | 
-    [📖 使用手冊](docs/risk_management_guide.md) | 
-    [🔧 系統設定](docs/system_config.md) | 
+    **風險管理系統 v1.0.0** |
+    [📖 使用手冊](docs/risk_management_guide.md) |
+    [🔧 系統設定](docs/system_config.md) |
     [❓ 常見問題](docs/faq.md)
     """
     )

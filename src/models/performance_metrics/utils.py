@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 from src.config import LOG_LEVEL
 
@@ -137,10 +136,10 @@ def create_performance_report(
                 body {{ font-family: Arial, sans-serif; margin: 40px; }}
                 h1, h2 {{ color: #333; }}
                 .metric-table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
-                .metric-table th, .metric-table td {{ 
-                    border: 1px solid #ddd; 
-                    padding: 12px; 
-                    text-align: left; 
+                .metric-table th, .metric-table td {{
+                    border: 1px solid #ddd;
+                    padding: 12px;
+                    text-align: left;
                 }}
                 .metric-table th {{ background-color: #f2f2f2; }}
                 .positive {{ color: green; }}
@@ -150,7 +149,7 @@ def create_performance_report(
         </head>
         <body>
             <h1>{strategy_name} Performance Report</h1>
-            
+
             <div class="section">
                 <h2>Risk-Adjusted Returns</h2>
                 <table class="metric-table">
@@ -175,7 +174,7 @@ def create_performance_report(
         html_content += """
                 </table>
             </div>
-            
+
             <div class="section">
                 <h2>Risk Metrics</h2>
                 <table class="metric-table">
@@ -202,7 +201,7 @@ def create_performance_report(
         html_content += """
                 </table>
             </div>
-            
+
             <div class="section">
                 <h2>Trading Statistics</h2>
                 <table class="metric-table">

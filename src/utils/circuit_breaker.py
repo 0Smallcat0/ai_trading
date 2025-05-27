@@ -398,12 +398,12 @@ def with_circuit_breaker(
         # 獲取函數的完整限定名稱
     """
     decorator
-    
+
     Args:
-        func: 
-    
+        func:
+
     Returns:
-        Callable[...]: 
+        Callable[...]:
     """
         module_name = func.__module__
         qualname = f"{module_name}.{func.__qualname__}"
@@ -423,10 +423,10 @@ def with_circuit_breaker(
             # 檢查是否允許請求
         """
         wrapper
-        
-        
+
+
         Returns:
-            T: 
+            T:
         """
             if not circuit_breaker.allow_request():
                 if raise_on_open:

@@ -12,25 +12,25 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    
+
     # 速率限制
     nginx.ingress.kubernetes.io/rate-limit: "100"
     nginx.ingress.kubernetes.io/rate-limit-window: "1m"
-    
+
     # 請求大小限制
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    
+
     # 超時設定
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
-    
+
     # CORS 設定
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://ai-trading.example.com"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
-    
+
     # 安全標頭
     nginx.ingress.kubernetes.io/configuration-snippet: |
       add_header X-Frame-Options "SAMEORIGIN" always;
@@ -38,10 +38,10 @@ metadata:
       add_header X-XSS-Protection "1; mode=block" always;
       add_header Referrer-Policy "strict-origin-when-cross-origin" always;
       add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:;" always;
-    
+
     # Let's Encrypt 憑證管理 (如果使用 cert-manager)
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    
+
 spec:
   tls:
   - hosts:
@@ -49,7 +49,7 @@ spec:
     - api.ai-trading.example.com
     - monitoring.ai-trading.example.com
     secretName: ai-trading-tls
-  
+
   rules:
   # 主應用程式 UI
   - host: ai-trading.example.com
@@ -62,7 +62,7 @@ spec:
             name: ai-trading-app-service
             port:
               number: 8501
-  
+
   # API 服務
   - host: api.ai-trading.example.com
     http:
@@ -98,7 +98,7 @@ spec:
             name: ai-trading-app-service
             port:
               number: 9091
-  
+
   # 監控服務 (僅限內部訪問，可以通過額外的認證保護)
   - host: monitoring.ai-trading.example.com
     http:

@@ -13,26 +13,23 @@ Classes:
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from sklearn.metrics import (
     accuracy_score,
-    precision_score,
-    recall_score,
     f1_score,
-    mean_squared_error,
     mean_absolute_error,
+    mean_squared_error,
+    precision_score,
     r2_score,
-    classification_report,
-    confusion_matrix,
+    recall_score,
 )
 
 from src.config import LOG_LEVEL
 from src.models.model_base import ModelBase
+
 from .config import TrainingConfig
 
 # 設定日誌
@@ -325,13 +322,13 @@ class ModelEvaluator:
             <h2>模型資訊</h2>
             <p><strong>模型名稱:</strong> {model_name}</p>
             <p><strong>評估時間:</strong> {timestamp}</p>
-            
+
             <h2>評估指標</h2>
             <table>
                 <tr><th>指標名稱</th><th>數值</th></tr>
                 {metrics_table}
             </table>
-            
+
             <h2>數據概要</h2>
             <p><strong>樣本數量:</strong> {sample_count}</p>
             <p><strong>特徵數量:</strong> {feature_count}</p>

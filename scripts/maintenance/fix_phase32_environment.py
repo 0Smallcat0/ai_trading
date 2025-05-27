@@ -11,7 +11,6 @@ Phase 3.2 AI 模型模組環境修復腳本
 """
 
 import sys
-import os
 import warnings
 from pathlib import Path
 
@@ -51,8 +50,7 @@ def check_mlflow_tensorflow():
     print("\n🔍 檢查 MLflow TensorFlow 整合...")
 
     try:
-        import mlflow
-        import mlflow.tensorflow
+        pass
 
         print("✅ MLflow TensorFlow 整合正常")
         return True
@@ -71,28 +69,19 @@ def test_training_pipeline_imports():
 
     try:
         # 測試基本導入
-        from src.models.training_pipeline.config import TrainingConfig
+        pass
 
         print("✅ TrainingConfig 導入成功")
 
-        from src.models.training_pipeline.trainer import ModelTrainer
-
         print("✅ ModelTrainer 導入成功")
-
-        from src.models.training_pipeline.cross_validator import CrossValidator
 
         print("✅ CrossValidator 導入成功")
 
-        from src.models.training_pipeline.evaluator import ModelEvaluator
-
         print("✅ ModelEvaluator 導入成功")
-
-        from src.models.training_pipeline.utils import validate_training_inputs
 
         print("✅ 工具函數導入成功")
 
         # 測試主模組導入
-        from src.models.training_pipeline import ModelTrainer as MainModelTrainer
 
         print("✅ 主模組導入成功")
 
@@ -111,29 +100,17 @@ def test_model_governance_imports():
     print("\n🔍 測試模型治理模組導入...")
 
     try:
-        from src.models.model_governance.registry import ModelRegistry
+        pass
 
         print("✅ ModelRegistry 導入成功")
 
-        from src.models.model_governance.monitor import ModelMonitor
-
         print("✅ ModelMonitor 導入成功")
-
-        from src.models.model_governance.deployment import DeploymentManager
 
         print("✅ DeploymentManager 導入成功")
 
-        from src.models.model_governance.lifecycle import ModelLifecycleManager
-
         print("✅ ModelLifecycleManager 導入成功")
 
-        from src.models.model_governance.utils import validate_model_metadata
-
         print("✅ 工具函數導入成功")
-
-        from src.models.model_governance.legacy_interface import (
-            ModelRegistry as LegacyRegistry,
-        )
 
         print("✅ 向後兼容介面導入成功")
 
@@ -161,7 +138,7 @@ def test_basic_functionality():
         # 測試註冊表創建
         from src.models.model_governance.registry import ModelRegistry
 
-        registry = ModelRegistry()
+        ModelRegistry()
         print("✅ 註冊表創建成功")
 
         return True

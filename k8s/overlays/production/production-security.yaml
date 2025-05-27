@@ -165,7 +165,7 @@ spec:
   policyTypes:
   - Ingress
   - Egress
-  
+
   ingress:
   # 只允許來自 Ingress Controller 的流量
   - from:
@@ -177,7 +177,7 @@ spec:
       port: 8501
     - protocol: TCP
       port: 8000
-  
+
   # 允許來自監控系統的流量
   - from:
     - namespaceSelector:
@@ -190,13 +190,13 @@ spec:
     ports:
     - protocol: TCP
       port: 9091
-  
+
   # 允許同一命名空間內的 Pod 間通信
   - from:
     - podSelector:
         matchLabels:
           app: ai-trading-system
-  
+
   egress:
   # 允許 DNS 查詢
   - to: []
@@ -205,19 +205,19 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  
+
   # 允許 HTTPS 出站流量 (用於外部 API 調用)
   - to: []
     ports:
     - protocol: TCP
       port: 443
-  
+
   # 允許訪問同一命名空間內的服務
   - to:
     - podSelector:
         matchLabels:
           app: ai-trading-system
-  
+
   # 允許訪問外部股票 API (特定端口)
   - to: []
     ports:

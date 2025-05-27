@@ -10,7 +10,7 @@ import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict, Any
+from typing import Any, Dict
 
 from .notification_base import NotificationChannel
 
@@ -107,45 +107,45 @@ class EmailChannel(NotificationChannel):
             <meta charset="utf-8">
             <title>系統告警通知</title>
             <style>
-                body {{ 
-                    font-family: Arial, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background-color: #f8f9fa; 
+                body {{
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #f8f9fa;
                 }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background-color: white; 
-                    border-radius: 8px; 
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+                .container {{
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                 }}
-                .header {{ 
-                    background-color: {severity_color}; 
-                    color: white; 
-                    padding: 20px; 
-                    border-radius: 8px 8px 0 0; 
+                .header {{
+                    background-color: {severity_color};
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px 8px 0 0;
                 }}
                 .content {{ padding: 20px; }}
-                .severity {{ 
-                    display: inline-block; 
-                    padding: 4px 12px; 
-                    border-radius: 4px; 
-                    color: white; 
-                    background-color: {severity_color}; 
-                    font-weight: bold; 
+                .severity {{
+                    display: inline-block;
+                    padding: 4px 12px;
+                    border-radius: 4px;
+                    color: white;
+                    background-color: {severity_color};
+                    font-weight: bold;
                 }}
-                .details {{ 
-                    background-color: #f8f9fa; 
-                    padding: 15px; 
-                    border-radius: 4px; 
-                    margin: 15px 0; 
+                .details {{
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin: 15px 0;
                 }}
-                .footer {{ 
-                    padding: 20px; 
-                    text-align: center; 
-                    color: #6c757d; 
-                    border-top: 1px solid #dee2e6; 
+                .footer {{
+                    padding: 20px;
+                    text-align: center;
+                    color: #6c757d;
+                    border-top: 1px solid #dee2e6;
                 }}
                 table {{ width: 100%; border-collapse: collapse; }}
                 td {{ padding: 8px; border-bottom: 1px solid #dee2e6; }}

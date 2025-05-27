@@ -7,40 +7,33 @@
 - HTML 報告（使用 Jinja2 模板）
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
 import io
-import base64
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
-import json
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Any, Dict
+
+import pandas as pd
 
 # 報告生成相關導入
 try:
-    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
     from reportlab.platypus import (
-        SimpleDocTemplate,
         Paragraph,
+        SimpleDocTemplate,
         Spacer,
         Table,
         TableStyle,
-        Image,
     )
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.lib import colors
-    from reportlab.graphics.shapes import Drawing
-    from reportlab.graphics.charts.linecharts import HorizontalLineChart
 
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
 
 try:
-    import xlsxwriter
+    pass
 
     XLSXWRITER_AVAILABLE = True
 except ImportError:
@@ -54,7 +47,6 @@ except ImportError:
     JINJA2_AVAILABLE = False
 
 # 導入響應式設計組件
-from ..responsive import ResponsiveComponents, responsive_manager
 
 
 class BacktestReports:
@@ -374,7 +366,7 @@ class BacktestReports:
                 <h1>回測分析報告</h1>
                 <p>策略：{{ strategy_name }} | 生成時間：{{ generation_time }}</p>
             </div>
-            
+
             <div class="section">
                 <h2>基本資訊</h2>
                 <div class="metrics-grid">
@@ -392,7 +384,7 @@ class BacktestReports:
                     </div>
                 </div>
             </div>
-            
+
             <div class="section">
                 <h2>績效指標</h2>
                 <div class="metrics-grid">
@@ -412,7 +404,7 @@ class BacktestReports:
                     {% endfor %}
                 </div>
             </div>
-            
+
             {% if transactions %}
             <div class="section">
                 <h2>交易記錄（前20筆）</h2>
@@ -442,7 +434,7 @@ class BacktestReports:
                 </table>
             </div>
             {% endif %}
-            
+
             <div class="section">
                 <p><small>報告生成時間：{{ generation_time }}</small></p>
             </div>

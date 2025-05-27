@@ -3,8 +3,10 @@
 此模組提供專門針對觸控裝置優化的導航組件，包括滑動式導航和手勢支援。
 """
 
+from typing import Any, Dict, List
+
 import streamlit as st
-from typing import Dict, List, Any
+
 from .utils import ResponsiveUtils
 
 
@@ -87,7 +89,7 @@ class TouchNavigationComponents:
             for page in pages:
                 active_class = "active" if page["key"] == current_page else ""
                 nav_html += f"""
-                <div class="swipe-nav-item {active_class}" 
+                <div class="swipe-nav-item {active_class}"
                      onclick="selectPage('{page["key"]}')"
                      data-page="{page["key"]}">
                     {page.get("icon", "")} {page["name"]}

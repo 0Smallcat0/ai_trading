@@ -12,44 +12,44 @@ data:
   ENVIRONMENT: "development"
   DEBUG: "true"
   LOG_LEVEL: "DEBUG"
-  
+
   # API 配置 (開發環境較少 worker)
   API_HOST: "0.0.0.0"
   API_PORT: "8000"
   API_WORKERS: "2"
   API_RELOAD: "true"
-  
+
   # 資料庫配置
   POSTGRES_DB: "ai_trading_dev"
   POSTGRES_USER: "postgres"
-  
+
   # Redis 配置
   REDIS_URL: "redis://redis-service:6379/0"
-  
+
   # 監控配置 (開發環境簡化)
   PROMETHEUS_HOST: "prometheus-service"
   PROMETHEUS_PORT: "9090"
   GRAFANA_HOST: "grafana-service"
   GRAFANA_PORT: "3000"
-  
+
   # 交易配置 (開發環境使用模擬)
   TRADING_HOURS_START: "09:00:00"
   TRADING_HOURS_END: "13:30:00"
   TRADING_TIMEZONE: "Asia/Taipei"
   BROKER_NAME: "simulator"
   BROKER_ENVIRONMENT: "sandbox"
-  
+
   # 風險管理配置 (開發環境較寬鬆)
   MAX_POSITION_SIZE: "0.5"
   STOP_LOSS_THRESHOLD: "0.1"
   MAX_DAILY_LOSS: "1000.0"
   RISK_FREE_RATE: "0.02"
-  
+
   # 快取配置 (開發環境較短 TTL)
   CACHE_ENABLED: "true"
   CACHE_TTL: "300"
   CACHE_MAX_SIZE: "100"
-  
+
   # 開發工具配置
   PERFORMANCE_MONITORING: "false"
   MEMORY_PROFILING: "true"
@@ -57,7 +57,7 @@ data:
   TEST_MODE: "false"
   VERBOSE_LOGGING: "true"
   SQL_ECHO: "true"
-  
+
   # 外部服務配置 (開發環境使用模擬)
   USE_MOCK_SERVICES: "true"
   MOCK_MARKET_DATA: "true"
@@ -77,25 +77,25 @@ type: Opaque
 data:
   # 開發環境使用簡單的密碼 (base64 編碼)
   # 注意：這些是開發環境的範例值，不應在生產環境使用
-  
+
   # 資料庫密碼 (範例: "dev_password")
   POSTGRES_PASSWORD: ZGV2X3Bhc3N3b3Jk
-  
+
   # Redis 密碼 (範例: "dev_redis")
   REDIS_PASSWORD: ZGV2X3JlZGlz
-  
+
   # JWT 密鑰 (範例: "dev_jwt_secret_key_not_for_production")
   JWT_SECRET_KEY: ZGV2X2p3dF9zZWNyZXRfa2V5X25vdF9mb3JfcHJvZHVjdGlvbg==
-  
+
   # Grafana 管理員密碼 (範例: "dev_admin")
   GRAFANA_PASSWORD: ZGV2X2FkbWlu
-  
+
   # 加密金鑰 (範例: "dev_encryption_key_12345678901234")
   ENCRYPTION_KEY: ZGV2X2VuY3J5cHRpb25fa2V5XzEyMzQ1Njc4OTAxMjM0
-  
+
   # Fernet 金鑰 (範例: "dev_fernet_key_1234567890123456789")
   FERNET_KEY: ZGV2X2Zlcm5ldF9rZXlfMTIzNDU2Nzg5MDEyMzQ1Njc4OQ==
-  
+
   # Session 密鑰 (範例: "dev_session_secret")
   SESSION_SECRET_KEY: ZGV2X3Nlc3Npb25fc2VjcmV0
 
@@ -112,26 +112,26 @@ metadata:
 type: Opaque
 data:
   # 開發環境 API 金鑰 (通常使用測試金鑰或空值)
-  
+
   # 股票資料 API 金鑰 (開發環境可以使用空值或測試金鑰)
   TWSE_API_KEY: ZGV2X3R3c2VfYXBpX2tleQ==
   TPEX_API_KEY: ZGV2X3RwZXhfYXBpX2tleQ==
   YAHOO_FINANCE_API_KEY: ZGV2X3lhaG9vX2FwaV9rZXk=
   ALPHA_VANTAGE_API_KEY: ZGV2X2FscGhhX3ZhbnRhZ2VfYXBpX2tleQ==
   FINNHUB_API_KEY: ZGV2X2Zpbm5odWJfYXBpX2tleQ==
-  
+
   # AI 服務 API 金鑰 (開發環境使用測試金鑰)
   OPENAI_API_KEY: ZGV2X29wZW5haV9hcGlfa2V5
   HUGGINGFACE_API_KEY: ZGV2X2h1Z2dpbmdmYWNlX2FwaV9rZXk=
-  
+
   # 券商 API 金鑰 (開發環境使用沙盒金鑰)
   BROKER_API_KEY: ZGV2X2Jyb2tlcl9hcGlfa2V5
   BROKER_SECRET_KEY: ZGV2X2Jyb2tlcl9zZWNyZXRfa2V5
-  
+
   # 通知服務金鑰 (開發環境可以使用測試金鑰)
   LINE_NOTIFY_TOKEN: ZGV2X2xpbmVfbm90aWZ5X3Rva2Vu
   TELEGRAM_BOT_TOKEN: ZGV2X3RlbGVncmFtX2JvdF90b2tlbg==
-  
+
   # 電子郵件設定 (開發環境使用測試帳號)
   SMTP_USERNAME: ZGV2X3NtdHBfdXNlcm5hbWU=
   SMTP_PASSWORD: ZGV2X3NtdHBfcGFzc3dvcmQ=
@@ -167,7 +167,7 @@ spec:
             name: ai-trading-app-service
             port:
               number: 8501
-  
+
   # 開發環境 API
   - host: api-dev.ai-trading.local
     http:
@@ -179,7 +179,7 @@ spec:
             name: ai-trading-app-service
             port:
               number: 8000
-  
+
   # 開發環境監控
   - host: monitoring-dev.ai-trading.local
     http:

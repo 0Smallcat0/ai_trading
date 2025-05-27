@@ -77,7 +77,20 @@ AI 股票自動交易系統是一個整合人工智能技術的自動化交易�
 - **儲存空間**：至少 10GB 可用空間
 - **網路**：穩定的網路連接
 
-### 安裝步驟
+#
+## 分支策略
+
+本專案採用 Git Flow 分支策略：
+
+- **main**: 生產環境分支，包含穩定的發布版本
+- **develop**: 開發主分支，包含最新的開發功能
+- **feature/***: 功能開發分支
+- **release/***: 發布準備分支
+- **hotfix/***: 緊急修復分支
+
+詳細使用指南請參考：[Git Flow 使用指南](docs/Git_Flow_使用指南.md)
+
+## 安裝步驟
 
 1. **克隆此倉庫**：
    ```bash
@@ -102,17 +115,21 @@ AI 股票自動交易系統是一個整合人工智能技術的自動化交易�
 3. **設置環境變數**：
    ```bash
    # 複製環境變數範例
-   cp .env.example .env
+   cp config/environments/.env.example .env
 
    # 編輯 .env 文件，設置必要的環境變數
    ```
 
    或者使用環境特定配置：
    ```bash
-   # 複製環境變數模板到特定環境
-   cp .envs/.env.template .envs/.env.dev
+   # 開發環境
+   cp config/environments/.env.development .env
 
-   # 編輯 .env.dev 文件，設置必要的環境變數
+   # 生產環境
+   cp config/environments/.env.production .env
+
+   # 測試環境
+   cp config/environments/.env.testing .env
    ```
 
 4. **初始化系統**：

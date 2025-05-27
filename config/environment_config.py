@@ -5,9 +5,10 @@
 """
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-from dataclasses import dataclass
+
 from dotenv import load_dotenv
 
 
@@ -347,7 +348,7 @@ def load_environment_config(env: Optional[str] = None) -> Config:
     project_root = Path(__file__).parent.parent
 
     # 載入對應的 .env 檔案
-    env_file = project_root / f".env.{env}"
+    env_file = project_root / "config" / "environments" / f".env.{env}"
     if env_file.exists():
         load_dotenv(env_file)
         print(f"Loaded configuration from {env_file}")

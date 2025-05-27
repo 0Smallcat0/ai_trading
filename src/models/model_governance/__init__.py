@@ -25,7 +25,7 @@ Example:
     >>> registry = ModelRegistry()
     >>> version = registry.register_model(trained_model, description="Production model v1")
     >>> deployment = registry.deploy_model("my_model", version, "production")
-    >>> 
+    >>>
     >>> monitor = ModelMonitor("my_model", version, registry)
     >>> monitor.log_prediction(features, prediction, actual_value)
 
@@ -35,21 +35,19 @@ Note:
     整合 MLflow 進行實驗追蹤
 """
 
-from .registry import ModelRegistry
-from .monitor import ModelMonitor
 from .deployment import DeploymentManager
-from .lifecycle import ModelLifecycleManager
-from .utils import (
-    validate_model_metadata,
-    create_model_signature,
-    calculate_model_drift,
-    generate_governance_report,
-)
 
 # 向後兼容的導入
-from .legacy_interface import (
-    ModelRegistry as LegacyModelRegistry,
-    ModelMonitor as LegacyModelMonitor,
+from .legacy_interface import ModelMonitor as LegacyModelMonitor
+from .legacy_interface import ModelRegistry as LegacyModelRegistry
+from .lifecycle import ModelLifecycleManager
+from .monitor import ModelMonitor
+from .registry import ModelRegistry
+from .utils import (
+    calculate_model_drift,
+    create_model_signature,
+    generate_governance_report,
+    validate_model_metadata,
 )
 
 __all__ = [

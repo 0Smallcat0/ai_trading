@@ -29,7 +29,7 @@ Example:
 Note:
     此模組依賴於 DataManagementService 來執行實際的資料管理邏輯。
     所有資料操作都會記錄在更新日誌中以便追蹤。
-    
+
     重構後的模組化設計確保每個檔案不超過300行，
     提高程式碼可維護性和可讀性。
 """
@@ -47,11 +47,11 @@ except ImportError as e:
 
 # 導入子模組功能
 try:
+    from .data_management.data_export import show_data_export_tools
+    from .data_management.data_quality import show_data_quality_monitoring
+    from .data_management.data_query import show_data_query_interface
     from .data_management.data_sources import show_data_sources_management
     from .data_management.data_update import show_data_update_management
-    from .data_management.data_query import show_data_query_interface
-    from .data_management.data_quality import show_data_quality_monitoring
-    from .data_management.data_export import show_data_export_tools
 except ImportError as e:
     st.error(f"資料管理子模組導入失敗: {e}")
 

@@ -183,7 +183,7 @@ class EventStore:
             cursor.execute(
                 """
             INSERT OR REPLACE INTO events (
-                id, event_type, source, timestamp, severity, subject, message, 
+                id, event_type, source, timestamp, severity, subject, message,
                 data, tags, related_events, processed
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -232,10 +232,10 @@ class EventStore:
                 delete_count = count - self.max_events
                 cursor.execute(
                     """
-                DELETE FROM events 
+                DELETE FROM events
                 WHERE id IN (
-                    SELECT id FROM events 
-                    ORDER BY timestamp ASC 
+                    SELECT id FROM events
+                    ORDER BY timestamp ASC
                     LIMIT ?
                 )
                 """,
