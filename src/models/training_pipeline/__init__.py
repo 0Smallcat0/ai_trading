@@ -40,7 +40,7 @@ from .utils import (
     validate_training_inputs,
     setup_mlflow_tracking,
     save_training_artifacts,
-    check_acceptance_criteria
+    check_acceptance_criteria,
 )
 
 # 向後兼容的導入
@@ -52,15 +52,13 @@ __all__ = [
     "CrossValidator",
     "ModelEvaluator",
     "TrainingConfig",
-
     # Utility functions
     "validate_training_inputs",
     "setup_mlflow_tracking",
     "save_training_artifacts",
     "check_acceptance_criteria",
-
     # Legacy compatibility
-    "LegacyModelTrainer"
+    "LegacyModelTrainer",
 ]
 
 # 版本資訊
@@ -73,7 +71,7 @@ def create_trainer(
     experiment_name: str = "default",
     tracking_uri: str = None,
     metrics_threshold: dict = None,
-    config: TrainingConfig = None
+    config: TrainingConfig = None,
 ) -> ModelTrainer:
     """
     創建模型訓練器
@@ -99,7 +97,7 @@ def create_trainer(
         config = TrainingConfig(
             experiment_name=experiment_name,
             tracking_uri=tracking_uri,
-            metrics_threshold=metrics_threshold
+            metrics_threshold=metrics_threshold,
         )
 
     return ModelTrainer(model, config)
@@ -198,11 +196,7 @@ def cross_validate_model(
 
 
 def evaluate_model(
-    model,
-    X_test,
-    y_test,
-    experiment_name: str = "default",
-    log_to_mlflow: bool = True
+    model, X_test, y_test, experiment_name: str = "default", log_to_mlflow: bool = True
 ) -> dict:
     """
     評估模型（便利函數）
@@ -226,7 +220,5 @@ def evaluate_model(
     """
     trainer = create_trainer(model, experiment_name)
     return trainer.evaluate_on_test(
-        X_test=X_test,
-        y_test=y_test,
-        log_to_mlflow=log_to_mlflow
+        X_test=X_test, y_test=y_test, log_to_mlflow=log_to_mlflow
     )

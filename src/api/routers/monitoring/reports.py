@@ -26,9 +26,9 @@ monitoring_service = SystemMonitoringService()
 
 class TradingPerformanceMetrics(BaseModel):
     """交易效能指標響應模型
-    
+
     此模型定義了交易系統效能指標的詳細資訊。
-    
+
     Attributes:
         timestamp: 時間戳
         api_latency_avg: API 平均延遲 (ms)
@@ -43,6 +43,7 @@ class TradingPerformanceMetrics(BaseModel):
         queue_length: 佇列長度
         cache_hit_rate: 快取命中率 (%)
     """
+
     timestamp: datetime = Field(..., description="時間戳")
     api_latency_avg: float = Field(..., description="API 平均延遲 (ms)")
     api_latency_p95: float = Field(..., description="API P95 延遲 (ms)")
@@ -59,9 +60,9 @@ class TradingPerformanceMetrics(BaseModel):
 
 class SystemStatusReport(BaseModel):
     """系統狀態報告響應模型
-    
+
     此模型定義了系統狀態報告的詳細資訊。
-    
+
     Attributes:
         report_id: 報告 ID
         generated_at: 生成時間
@@ -73,6 +74,7 @@ class SystemStatusReport(BaseModel):
         alert_statistics: 警報統計字典
         recommendations: 建議列表
     """
+
     report_id: str = Field(..., description="報告 ID")
     generated_at: datetime = Field(..., description="生成時間")
     period_start: datetime = Field(..., description="統計期間開始")
@@ -86,9 +88,9 @@ class SystemStatusReport(BaseModel):
 
 class ReportGenerationTask(BaseModel):
     """報表生成任務響應模型
-    
+
     此模型定義了報表生成任務的資訊。
-    
+
     Attributes:
         task_id: 任務 ID
         report_type: 報表類型
@@ -100,6 +102,7 @@ class ReportGenerationTask(BaseModel):
         report_format: 報表格式
         progress: 進度百分比
     """
+
     task_id: str = Field(..., description="任務 ID")
     report_type: str = Field(..., description="報表類型")
     status: str = Field(..., description="任務狀態")
@@ -126,59 +129,52 @@ async def get_trading_performance(
     interval: str = Query(default="5m", description="數據間隔 (1m/5m/15m/1h)"),
 ):
     """獲取交易效能指標
-    
+
     此端點用於獲取交易系統的效能指標，包括延遲、吞吐量等。
-    
+
     Args:
         time_range: 時間範圍，支援 1h、24h、7d
         interval: 數據間隔，支援 1m、5m、15m、1h
-        
+
     Returns:
         APIResponse[List[TradingPerformanceMetrics]]: 包含交易效能指標列表的 API 回應
-        
+
     Raises:
         HTTPException: 當參數無效或獲取數據失敗時
-        
+
     Example:
         GET /api/monitoring/reports/performance?time_range=24h&interval=15m
     """
     try:
         # 解析時間範圍
-        time_ranges = {
-            "1h": 3600,
-            "24h": 86400,
-            "7d": 604800
-        }
+        time_ranges = {"1h": 3600, "24h": 86400, "7d": 604800}
 
         if time_range not in time_ranges:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"無效的時間範圍，支援: {', '.join(time_ranges.keys())}"
+                detail=f"無效的時間範圍，支援: {', '.join(time_ranges.keys())}",
             )
 
         # 解析數據間隔
-        intervals = {
-            "1m": 60,
-            "5m": 300,
-            "15m": 900,
-            "1h": 3600
-        }
+        intervals = {"1m": 60, "5m": 300, "15m": 900, "1h": 3600}
 
         if interval not in intervals:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"無效的數據間隔，支援: {', '.join(intervals.keys())}"
+                detail=f"無效的數據間隔，支援: {', '.join(intervals.keys())}",
             )
 
         # 計算查詢時間範圍
         end_time = datetime.now()
-        start_time = datetime.fromtimestamp(end_time.timestamp() - time_ranges[time_range])
+        start_time = datetime.fromtimestamp(
+            end_time.timestamp() - time_ranges[time_range]
+        )
 
         # 獲取交易效能數據
         performance_data = monitoring_service.get_trading_performance_metrics(
             start_time=start_time,
             end_time=end_time,
-            interval_seconds=intervals[interval]
+            interval_seconds=intervals[interval],
         )
 
         # 轉換為響應模型
@@ -196,14 +192,14 @@ async def get_trading_performance(
                 timeout_rate=data["timeout_rate"],
                 active_connections=data["active_connections"],
                 queue_length=data["queue_length"],
-                cache_hit_rate=data["cache_hit_rate"]
+                cache_hit_rate=data["cache_hit_rate"],
             )
             metrics_list.append(metrics)
 
         return APIResponse(
             success=True,
             message=f"獲取到 {len(metrics_list)} 個交易效能數據點",
-            data=metrics_list
+            data=metrics_list,
         )
 
     except HTTPException:
@@ -212,7 +208,7 @@ async def get_trading_performance(
         logger.error("獲取交易效能指標失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"獲取交易效能指標失敗: {str(e)}"
+            detail=f"獲取交易效能指標失敗: {str(e)}",
         ) from e
 
 
@@ -224,23 +220,22 @@ async def get_trading_performance(
     description="生成系統狀態報表",
 )
 async def generate_system_report(
-    background_tasks: BackgroundTasks,
-    request: SystemReportRequest
+    background_tasks: BackgroundTasks, request: SystemReportRequest
 ):
     """生成系統報表
-    
+
     此端點用於生成系統狀態報表，支援多種報表類型和格式。
-    
+
     Args:
         background_tasks: 背景任務
         request: 系統報表請求資料
-        
+
     Returns:
         APIResponse[ReportGenerationTask]: 包含報表生成任務資訊的 API 回應
-        
+
     Raises:
         HTTPException: 當報表生成失敗時
-        
+
     Example:
         POST /api/monitoring/reports/generate
         {
@@ -257,7 +252,7 @@ async def generate_system_report(
             "period_start": request.period_start,
             "period_end": request.period_end,
             "include_details": request.include_details,
-            "report_format": request.report_format
+            "report_format": request.report_format,
         }
 
         # 創建報表生成任務
@@ -265,8 +260,7 @@ async def generate_system_report(
 
         # 添加背景任務
         background_tasks.add_task(
-            monitoring_service.execute_report_generation_task,
-            task_id
+            monitoring_service.execute_report_generation_task, task_id
         )
 
         # 獲取任務詳情
@@ -282,13 +276,11 @@ async def generate_system_report(
             file_path=task_details.get("file_path"),
             file_size=task_details.get("file_size"),
             report_format=task_details["report_format"],
-            progress=task_details.get("progress", 0.0)
+            progress=task_details.get("progress", 0.0),
         )
 
         return APIResponse(
-            success=True,
-            message="報表生成任務已創建",
-            data=generation_task
+            success=True, message="報表生成任務已創建", data=generation_task
         )
 
     except HTTPException:
@@ -297,7 +289,7 @@ async def generate_system_report(
         logger.error("創建報表生成任務失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"創建報表生成任務失敗: {str(e)}"
+            detail=f"創建報表生成任務失敗: {str(e)}",
         ) from e
 
 
@@ -313,16 +305,16 @@ async def get_system_status_report(
     include_details: bool = Query(default=True, description="是否包含詳細資訊"),
 ):
     """獲取系統狀態報告
-    
+
     此端點用於獲取系統狀態的綜合報告，包括資源使用、效能指標等。
-    
+
     Args:
         period_hours: 統計期間（小時）
         include_details: 是否包含詳細資訊
-        
+
     Returns:
         APIResponse[SystemStatusReport]: 包含系統狀態報告的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取報告失敗時
     """
@@ -335,7 +327,7 @@ async def get_system_status_report(
         report_data = monitoring_service.generate_system_status_report(
             period_start=start_time,
             period_end=end_time,
-            include_details=include_details
+            include_details=include_details,
         )
 
         # 轉換為響應模型
@@ -348,20 +340,18 @@ async def get_system_status_report(
             resource_usage=report_data["resource_usage"],
             performance_metrics=report_data["performance_metrics"],
             alert_statistics=report_data["alert_statistics"],
-            recommendations=report_data["recommendations"]
+            recommendations=report_data["recommendations"],
         )
 
         return APIResponse(
-            success=True,
-            message="系統狀態報告獲取成功",
-            data=status_report
+            success=True, message="系統狀態報告獲取成功", data=status_report
         )
 
     except Exception as e:
         logger.error("獲取系統狀態報告失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"獲取系統狀態報告失敗: {str(e)}"
+            detail=f"獲取系統狀態報告失敗: {str(e)}",
         ) from e
 
 
@@ -374,15 +364,15 @@ async def get_system_status_report(
 )
 async def get_report_generation_task_status(task_id: str):
     """查詢報表生成任務狀態
-    
+
     此端點用於查詢報表生成任務的狀態和進度。
-    
+
     Args:
         task_id: 任務 ID
-        
+
     Returns:
         APIResponse[ReportGenerationTask]: 包含報表生成任務狀態的 API 回應
-        
+
     Raises:
         HTTPException: 當任務不存在或查詢失敗時
     """
@@ -393,7 +383,7 @@ async def get_report_generation_task_status(task_id: str):
         if not task_details:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"報表生成任務 {task_id} 不存在"
+                detail=f"報表生成任務 {task_id} 不存在",
             )
 
         # 轉換為響應模型
@@ -406,13 +396,11 @@ async def get_report_generation_task_status(task_id: str):
             file_path=task_details.get("file_path"),
             file_size=task_details.get("file_size"),
             report_format=task_details["report_format"],
-            progress=task_details.get("progress", 0.0)
+            progress=task_details.get("progress", 0.0),
         )
 
         return APIResponse(
-            success=True,
-            message="報表生成任務狀態獲取成功",
-            data=generation_task
+            success=True, message="報表生成任務狀態獲取成功", data=generation_task
         )
 
     except HTTPException:
@@ -421,7 +409,7 @@ async def get_report_generation_task_status(task_id: str):
         logger.error("查詢報表生成任務狀態失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"查詢報表生成任務狀態失敗: {str(e)}"
+            detail=f"查詢報表生成任務狀態失敗: {str(e)}",
         ) from e
 
 
@@ -439,18 +427,18 @@ async def get_report_history(
     status: Optional[str] = Query(default=None, description="狀態篩選"),
 ):
     """查詢報表歷史
-    
+
     此端點用於查詢歷史報表生成記錄。
-    
+
     Args:
         page: 頁碼
         page_size: 每頁數量
         report_type: 報表類型篩選
         status: 狀態篩選
-        
+
     Returns:
         APIResponse[List[ReportGenerationTask]]: 包含報表歷史記錄的 API 回應
-        
+
     Raises:
         HTTPException: 當查詢失敗時
     """
@@ -479,19 +467,19 @@ async def get_report_history(
                 file_path=task_data.get("file_path"),
                 file_size=task_data.get("file_size"),
                 report_format=task_data["report_format"],
-                progress=task_data.get("progress", 0.0)
+                progress=task_data.get("progress", 0.0),
             )
             history_list.append(task)
 
         return APIResponse(
             success=True,
             message=f"獲取到 {len(history_list)} 個報表歷史記錄",
-            data=history_list
+            data=history_list,
         )
 
     except Exception as e:
         logger.error("查詢報表歷史失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"查詢報表歷史失敗: {str(e)}"
+            detail=f"查詢報表歷史失敗: {str(e)}",
         ) from e

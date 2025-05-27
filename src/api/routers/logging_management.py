@@ -14,11 +14,12 @@ from pydantic import BaseModel, Field
 
 from src.logging.analyzer import LogAnalyzer
 from src.logging.compliance import (
-    ComplianceLogger, ComplianceEventType, ComplianceLevel
+    ComplianceLogger,
+    ComplianceEventType,
+    ComplianceLevel,
 )
-from src.logging.data_masking import (
-    DataMasker, SensitiveDataType, MaskingStrategy
-)
+from src.logging.data_masking import DataMasker, SensitiveDataType, MaskingStrategy
+
 
 # 模擬依賴項（實際使用時需要實現）
 def get_current_user():
@@ -28,9 +29,11 @@ def get_current_user():
 
 class BaseResponse(BaseModel):
     """基礎響應模型"""
+
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None
+
 
 # 創建路由器
 router = APIRouter(prefix="/api/v1/logging", tags=["日誌管理"])
@@ -44,6 +47,7 @@ data_masker = DataMasker()
 # 請求模型
 class LogQueryRequest(BaseModel):
     """日誌查詢請求"""
+
     category: Optional[str] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
@@ -54,6 +58,7 @@ class LogQueryRequest(BaseModel):
 
 class ComplianceEventRequest(BaseModel):
     """合規事件記錄請求"""
+
     event_type: ComplianceEventType
     level: ComplianceLevel
     description: str
@@ -64,6 +69,7 @@ class ComplianceEventRequest(BaseModel):
 
 class MaskingRuleRequest(BaseModel):
     """遮罩規則請求"""
+
     name: str
     data_type: SensitiveDataType
     pattern: str
@@ -74,6 +80,7 @@ class MaskingRuleRequest(BaseModel):
 
 class MaskingTestRequest(BaseModel):
     """遮罩測試請求"""
+
     test_data: str
     rule_name: Optional[str] = None
 
@@ -81,26 +88,31 @@ class MaskingTestRequest(BaseModel):
 # 響應模型
 class LogQueryResponse(BaseResponse):
     """日誌查詢響應"""
+
     data: Dict[str, Any]
 
 
 class AnalysisReportResponse(BaseResponse):
     """分析報告響應"""
+
     data: Dict[str, Any]
 
 
 class ComplianceReportResponse(BaseResponse):
     """合規報告響應"""
+
     data: Dict[str, Any]
 
 
 class MaskingRulesResponse(BaseResponse):
     """遮罩規則響應"""
+
     data: List[Dict[str, Any]]
 
 
 class MaskingTestResponse(BaseResponse):
     """遮罩測試響應"""
+
     data: Dict[str, Any]
 
 
@@ -112,7 +124,7 @@ async def query_logs(
     end_time: Optional[datetime] = Query(None, description="結束時間"),
     level: Optional[str] = Query(None, description="日誌級別"),
     limit: int = Query(100, ge=1, le=1000, description="限制數量"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """查詢日誌
 
@@ -126,38 +138,35 @@ async def query_logs(
             start_time=start_time,
             end_time=end_time,
             level=level,
-            limit=limit
+            limit=limit,
         )
 
         # 轉換為字典列表
-        logs = logs_df.to_dict('records') if not logs_df.empty else []
+        logs = logs_df.to_dict("records") if not logs_df.empty else []
 
         # 統計信息
         stats = {
             "total_count": len(logs),
-            "by_level": log_analyzer.count_logs_by_level(category, start_time, end_time),
+            "by_level": log_analyzer.count_logs_by_level(
+                category, start_time, end_time
+            ),
             "query_params": {
                 "category": category,
                 "start_time": start_time.isoformat() if start_time else None,
                 "end_time": end_time.isoformat() if end_time else None,
                 "level": level,
-                "limit": limit
-            }
+                "limit": limit,
+            },
         }
 
         return LogQueryResponse(
             success=True,
             message="日誌查詢成功",
-            data={
-                "logs": logs,
-                "statistics": stats
-            }
+            data={"logs": logs, "statistics": stats},
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"日誌查詢失敗: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"日誌查詢失敗: {str(e)}") from e
 
 
 @router.get("/analysis", response_model=AnalysisReportResponse)
@@ -165,7 +174,7 @@ async def generate_analysis_report(
     category: Optional[str] = Query(None, description="日誌類別"),
     start_time: Optional[datetime] = Query(None, description="開始時間"),
     end_time: Optional[datetime] = Query(None, description="結束時間"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """生成日誌分析報告
 
@@ -181,15 +190,11 @@ async def generate_analysis_report(
 
         # 生成分析報告
         report = log_analyzer.generate_analysis_report(
-            category=category,
-            start_time=start_time,
-            end_time=end_time
+            category=category, start_time=start_time, end_time=end_time
         )
 
         return AnalysisReportResponse(
-            success=True,
-            message="分析報告生成成功",
-            data=report
+            success=True, message="分析報告生成成功", data=report
         )
 
     except Exception as e:
@@ -200,8 +205,7 @@ async def generate_analysis_report(
 
 @router.post("/compliance/events")
 async def log_compliance_event(
-    request: ComplianceEventRequest,
-    current_user: dict = Depends(get_current_user)
+    request: ComplianceEventRequest, current_user: dict = Depends(get_current_user)
 ):
     """記錄合規事件。
 
@@ -216,13 +220,11 @@ async def log_compliance_event(
             description=request.description,
             details=request.details,
             business_context=request.business_context,
-            regulatory_context=request.regulatory_context
+            regulatory_context=request.regulatory_context,
         )
 
         return BaseResponse(
-            success=True,
-            message="合規事件記錄成功",
-            data={"event_id": event.event_id}
+            success=True, message="合規事件記錄成功", data={"event_id": event.event_id}
         )
 
     except Exception as e:
@@ -236,7 +238,7 @@ async def generate_compliance_report(
     start_date: datetime = Query(..., description="開始日期"),
     end_date: datetime = Query(..., description="結束日期"),
     report_type: str = Query("summary", description="報告類型"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """生成合規報告。
 
@@ -246,15 +248,11 @@ async def generate_compliance_report(
     try:
         # 生成合規報告
         report = compliance_logger.generate_compliance_report(
-            start_date=start_date,
-            end_date=end_date,
-            report_type=report_type
+            start_date=start_date, end_date=end_date, report_type=report_type
         )
 
         return ComplianceReportResponse(
-            success=True,
-            message="合規報告生成成功",
-            data=report
+            success=True, message="合規報告生成成功", data=report
         )
 
     except Exception as e:
@@ -264,9 +262,7 @@ async def generate_compliance_report(
 
 
 @router.get("/masking/rules", response_model=MaskingRulesResponse)
-async def get_masking_rules(
-    current_user: dict = Depends(get_current_user)
-):
+async def get_masking_rules(current_user: dict = Depends(get_current_user)):
     """獲取遮罩規則
 
     獲取當前配置的所有敏感資料遮罩規則。
@@ -279,10 +275,7 @@ async def get_masking_rules(
         return MaskingRulesResponse(
             success=True,
             message="遮罩規則獲取成功",
-            data={
-                "rules": rules,
-                "statistics": statistics
-            }
+            data={"rules": rules, "statistics": statistics},
         )
 
     except Exception as e:
@@ -293,8 +286,7 @@ async def get_masking_rules(
 
 @router.post("/masking/rules")
 async def add_masking_rule(
-    request: MaskingRuleRequest,
-    current_user: dict = Depends(get_current_user)
+    request: MaskingRuleRequest, current_user: dict = Depends(get_current_user)
 ):
     """添加遮罩規則。
 
@@ -308,13 +300,10 @@ async def add_masking_rule(
             pattern=request.pattern,
             strategy=request.strategy,
             field_names=request.field_names,
-            description=request.description
+            description=request.description,
         )
 
-        return BaseResponse(
-            success=True,
-            message="遮罩規則添加成功"
-        )
+        return BaseResponse(success=True, message="遮罩規則添加成功")
 
     except Exception as e:
         raise HTTPException(
@@ -324,8 +313,7 @@ async def add_masking_rule(
 
 @router.post("/masking/test", response_model=MaskingTestResponse)
 async def test_masking(
-    request: MaskingTestRequest,
-    current_user: dict = Depends(get_current_user)
+    request: MaskingTestRequest, current_user: dict = Depends(get_current_user)
 ):
     """測試遮罩效果
 
@@ -334,26 +322,18 @@ async def test_masking(
     _ = current_user  # 用於權限驗證
     try:
         result = data_masker.test_masking(
-            test_data=request.test_data,
-            rule_name=request.rule_name
+            test_data=request.test_data, rule_name=request.rule_name
         )
 
-        return MaskingTestResponse(
-            success=True,
-            message="遮罩測試完成",
-            data=result
-        )
+        return MaskingTestResponse(success=True, message="遮罩測試完成", data=result)
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"遮罩測試失敗: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"遮罩測試失敗: {str(e)}") from e
 
 
 @router.delete("/masking/rules/{rule_name}")
 async def remove_masking_rule(
-    rule_name: str,
-    current_user: dict = Depends(get_current_user)
+    rule_name: str, current_user: dict = Depends(get_current_user)
 ):
     """移除遮罩規則。
 
@@ -363,10 +343,7 @@ async def remove_masking_rule(
     try:
         data_masker.remove_rule(rule_name)
 
-        return BaseResponse(
-            success=True,
-            message="遮罩規則移除成功"
-        )
+        return BaseResponse(success=True, message="遮罩規則移除成功")
 
     except Exception as e:
         raise HTTPException(
@@ -378,7 +355,7 @@ async def remove_masking_rule(
 async def toggle_masking_rule(
     rule_name: str,
     enable: bool = Query(..., description="是否啟用"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """切換遮罩規則狀態。
 
@@ -393,10 +370,7 @@ async def toggle_masking_rule(
             data_masker.disable_rule(rule_name)
             message = "遮罩規則已停用"
 
-        return BaseResponse(
-            success=True,
-            message=message
-        )
+        return BaseResponse(success=True, message=message)
 
     except Exception as e:
         raise HTTPException(

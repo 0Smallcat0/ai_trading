@@ -98,15 +98,17 @@ class BacktestDataFeed:
             # 生成成交量
             volume = np.random.randint(100000, 10000000)
 
-            data.append({
-                "symbol": symbol,
-                "date": date,
-                "open": round(open_price, 2),
-                "high": round(high, 2),
-                "low": round(low, 2),
-                "close": round(close, 2),
-                "volume": volume,
-            })
+            data.append(
+                {
+                    "symbol": symbol,
+                    "date": date,
+                    "open": round(open_price, 2),
+                    "high": round(high, 2),
+                    "low": round(low, 2),
+                    "close": round(close, 2),
+                    "volume": volume,
+                }
+            )
 
         return data
 
@@ -242,7 +244,9 @@ class PandasDataFeed(BacktestDataFeed):
         # 移除缺失值
         bt_data = bt_data.dropna()
 
-        logger.info("已轉換股票 %s 的數據為backtrader格式，共 %d 筆記錄", symbol, len(bt_data))
+        logger.info(
+            "已轉換股票 %s 的數據為backtrader格式，共 %d 筆記錄", symbol, len(bt_data)
+        )
         return bt_data
 
     def create_data_feeds(self, data: pd.DataFrame) -> dict:

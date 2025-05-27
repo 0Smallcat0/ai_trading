@@ -47,11 +47,13 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 
 class StrategyResearchError(Exception):
     """策略研究相關錯誤"""
+
     pass
 
 
 class ParameterValidationError(StrategyResearchError):
     """參數驗證錯誤"""
+
     pass
 
 
@@ -98,10 +100,7 @@ class StrategyResearcher:
         self.results: Dict[str, pd.DataFrame] = {}
 
     def _validate_input_data(
-        self,
-        price_data: pd.DataFrame,
-        date_column: str,
-        symbol_column: str
+        self, price_data: pd.DataFrame, date_column: str, symbol_column: str
     ) -> None:
         """
         驗證輸入資料
@@ -118,11 +117,11 @@ class StrategyResearcher:
             raise ParameterValidationError("價格資料不能為空")
 
         required_columns = [date_column, symbol_column, "close"]
-        missing_columns = [col for col in required_columns if col not in price_data.columns]
+        missing_columns = [
+            col for col in required_columns if col not in price_data.columns
+        ]
         if missing_columns:
-            raise ParameterValidationError(
-                f"價格資料缺少必要欄位: {missing_columns}"
-            )
+            raise ParameterValidationError(f"價格資料缺少必要欄位: {missing_columns}")
 
     def evaluate_trend_following_strategies(
         self, param_grid: Optional[Dict[str, List[Any]]] = None
@@ -152,7 +151,7 @@ class StrategyResearcher:
                 param_combinations,
                 "trend_following",
                 "moving_average_crossover",
-                moving_average_crossover
+                moving_average_crossover,
             )
 
             results_df = pd.DataFrame(results)
@@ -195,7 +194,7 @@ class StrategyResearcher:
         param_combinations: List[Dict[str, Any]],
         strategy_type: str,
         model_name: str,
-        rule_func: callable
+        rule_func: callable,
     ) -> List[Dict[str, Any]]:
         """
         評估策略參數組合
@@ -227,7 +226,7 @@ class StrategyResearcher:
         params: Dict[str, Any],
         strategy_type: str,
         model_name: str,
-        rule_func: callable
+        rule_func: callable,
     ) -> Dict[str, Any]:
         """
         評估單個策略
@@ -305,7 +304,7 @@ class StrategyResearcher:
                 param_combinations,
                 "mean_reversion",
                 "bollinger_bands",
-                bollinger_bands_strategy
+                bollinger_bands_strategy,
             )
 
             results_df = pd.DataFrame(results)
@@ -347,10 +346,7 @@ class StrategyResearcher:
 
             param_combinations = list(ParameterGrid(param_grid))
             results = self._evaluate_strategy_combinations(
-                param_combinations,
-                "oscillator",
-                "rsi",
-                rsi_strategy
+                param_combinations, "oscillator", "rsi", rsi_strategy
             )
 
             results_df = pd.DataFrame(results)
@@ -420,8 +416,11 @@ class StrategyResearcher:
 
             # 檢查指標是否存在
             if metric not in all_results.columns:
-                available_metrics = [col for col in all_results.columns
-                                   if col not in ["strategy", "model"]]
+                available_metrics = [
+                    col
+                    for col in all_results.columns
+                    if col not in ["strategy", "model"]
+                ]
                 raise ParameterValidationError(
                     f"指標 '{metric}' 不存在，可用指標: {available_metrics}"
                 )
@@ -435,7 +434,9 @@ class StrategyResearcher:
             # 繪製比較圖
             self._plot_comparison_chart(top_results, metric, top_n)
 
-            logger.info(f"策略比較圖已保存: {RESULTS_DIR}/strategy_comparison_{metric}.png")
+            logger.info(
+                f"策略比較圖已保存: {RESULTS_DIR}/strategy_comparison_{metric}.png"
+            )
 
         except Exception as e:
             logger.error(f"繪製策略比較圖失敗: {e}")
@@ -485,13 +486,13 @@ class StrategyResearcher:
         plt.figure(figsize=(12, 8))
         sns.barplot(x=metric, y="strategy_name", data=data)
         plt.title(f"Top {top_n} Strategies by {metric.replace('_', ' ').title()}")
-        plt.xlabel(metric.replace('_', ' ').title())
+        plt.xlabel(metric.replace("_", " ").title())
         plt.ylabel("Strategy")
         plt.tight_layout()
 
         # 儲存圖表
         output_path = f"{RESULTS_DIR}/strategy_comparison_{metric}.png"
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
 
     def get_best_strategy(self, metric: str = "sharpe_ratio") -> Dict[str, Any]:
@@ -520,8 +521,11 @@ class StrategyResearcher:
 
             # 檢查指標是否存在
             if metric not in all_results.columns:
-                available_metrics = [col for col in all_results.columns
-                                   if col not in ["strategy", "model"]]
+                available_metrics = [
+                    col
+                    for col in all_results.columns
+                    if col not in ["strategy", "model"]
+                ]
                 raise ParameterValidationError(
                     f"指標 '{metric}' 不存在，可用指標: {available_metrics}"
                 )
@@ -532,7 +536,9 @@ class StrategyResearcher:
             # 獲取最佳策略
             best_strategy = all_results.iloc[0].to_dict()
 
-            logger.info(f"最佳策略 (按 {metric}): {best_strategy['strategy']}_{best_strategy['model']}")
+            logger.info(
+                f"最佳策略 (按 {metric}): {best_strategy['strategy']}_{best_strategy['model']}"
+            )
             return best_strategy
 
         except Exception as e:

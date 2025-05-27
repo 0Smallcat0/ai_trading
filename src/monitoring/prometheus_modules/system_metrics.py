@@ -60,28 +60,28 @@ class SystemMetricsCollector(PrometheusCollectorBase):
             self.metrics["cpu_usage"] = Gauge(
                 "system_cpu_usage_percent",
                 "系統 CPU 使用率百分比",
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 記憶體使用率
             self.metrics["memory_usage"] = Gauge(
                 "system_memory_usage_percent",
                 "系統記憶體使用率百分比",
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 記憶體使用量（位元組）
             self.metrics["memory_used_bytes"] = Gauge(
                 "system_memory_used_bytes",
                 "系統記憶體使用量（位元組）",
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 記憶體總量（位元組）
             self.metrics["memory_total_bytes"] = Gauge(
                 "system_memory_total_bytes",
                 "系統記憶體總量（位元組）",
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 磁碟使用率
@@ -89,7 +89,7 @@ class SystemMetricsCollector(PrometheusCollectorBase):
                 "system_disk_usage_percent",
                 "系統磁碟使用率百分比",
                 ["device"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 磁碟讀取位元組數
@@ -97,7 +97,7 @@ class SystemMetricsCollector(PrometheusCollectorBase):
                 "system_disk_read_bytes_total",
                 "系統磁碟讀取位元組總數",
                 ["device"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 磁碟寫入位元組數
@@ -105,7 +105,7 @@ class SystemMetricsCollector(PrometheusCollectorBase):
                 "system_disk_write_bytes_total",
                 "系統磁碟寫入位元組總數",
                 ["device"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 網路接收位元組數
@@ -113,7 +113,7 @@ class SystemMetricsCollector(PrometheusCollectorBase):
                 "system_network_recv_bytes_total",
                 "系統網路接收位元組總數",
                 ["interface"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 網路發送位元組數
@@ -121,14 +121,12 @@ class SystemMetricsCollector(PrometheusCollectorBase):
                 "system_network_sent_bytes_total",
                 "系統網路發送位元組總數",
                 ["interface"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 進程數量
             self.metrics["process_count"] = Gauge(
-                "system_process_count",
-                "系統進程數量",
-                registry=self.registry
+                "system_process_count", "系統進程數量", registry=self.registry
             )
 
             # 系統負載
@@ -137,7 +135,7 @@ class SystemMetricsCollector(PrometheusCollectorBase):
                     "system_load_average",
                     "系統負載平均值",
                     ["period"],
-                    registry=self.registry
+                    registry=self.registry,
                 )
 
             module_logger.info("系統資源指標初始化完成")

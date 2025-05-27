@@ -436,7 +436,9 @@ def handle_external_service_error(service_name: str):
                 return func(*args, **kwargs)
             except Exception as e:
                 logger.error("%s 服務錯誤: %s", service_name, e)
-                raise ExternalServiceError(f"{service_name} 服務不可用: {str(e)}") from e
+                raise ExternalServiceError(
+                    f"{service_name} 服務不可用: {str(e)}"
+                ) from e
 
         return wrapper
 

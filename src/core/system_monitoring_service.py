@@ -32,6 +32,7 @@ except ImportError as e:
         """簡單的資料庫初始化函數"""
         logger.info("使用備用資料庫初始化函數")
 
+
 # 導入子模組
 from .system_monitoring import (
     MonitoringCore,
@@ -306,23 +307,27 @@ class SystemMonitoringService:
         return 99.5  # 模擬 99.5% 的運行時間
 
     # API 路由需要的方法
-    def get_system_resource_metrics(self, start_time=None, end_time=None, interval=None):
+    def get_system_resource_metrics(
+        self, start_time=None, end_time=None, interval=None
+    ):
         """獲取系統資源指標"""
         # 模擬系統資源數據
-        return [{
-            "timestamp": datetime.now(),
-            "cpu_usage": 45.2,
-            "memory_usage": 8589934592,  # 8GB
-            "memory_total": 17179869184,  # 16GB
-            "memory_available": 8589934592,  # 8GB
-            "disk_usage": 107374182400,  # 100GB
-            "disk_total": 536870912000,  # 500GB
-            "disk_free": 429496729600,  # 400GB
-            "network_io_sent": 1048576000,  # 1GB
-            "network_io_recv": 2097152000,  # 2GB
-            "load_average": [1.2, 1.1, 1.0],
-            "process_count": 156
-        }]
+        return [
+            {
+                "timestamp": datetime.now(),
+                "cpu_usage": 45.2,
+                "memory_usage": 8589934592,  # 8GB
+                "memory_total": 17179869184,  # 16GB
+                "memory_available": 8589934592,  # 8GB
+                "disk_usage": 107374182400,  # 100GB
+                "disk_total": 536870912000,  # 500GB
+                "disk_free": 429496729600,  # 400GB
+                "network_io_sent": 1048576000,  # 1GB
+                "network_io_recv": 2097152000,  # 2GB
+                "load_average": [1.2, 1.1, 1.0],
+                "process_count": 156,
+            }
+        ]
 
     def get_system_health_status(self):
         """獲取系統健康狀態"""
@@ -333,7 +338,7 @@ class SystemMonitoringService:
                 "database": "healthy",
                 "api": "healthy",
                 "trading": "healthy",
-                "monitoring": "healthy"
+                "monitoring": "healthy",
             },
             "last_check": datetime.now(),
             "uptime_seconds": 86400,
@@ -341,10 +346,10 @@ class SystemMonitoringService:
                 "platform": "Linux",
                 "python_version": "3.10.0",
                 "memory_total": "16GB",
-                "cpu_cores": 8
+                "cpu_cores": 8,
             },
             "active_alerts": 0,
-            "critical_issues": []
+            "critical_issues": [],
         }
 
     def get_current_system_metrics(self):
@@ -361,22 +366,26 @@ class SystemMonitoringService:
             "network_io_sent": 1048576000,
             "network_io_recv": 2097152000,
             "load_average": [1.2, 1.1, 1.0],
-            "process_count": 156
+            "process_count": 156,
         }
 
-    def get_trading_performance_metrics(self, start_time=None, end_time=None, interval=None):
+    def get_trading_performance_metrics(
+        self, start_time=None, end_time=None, interval=None
+    ):
         """獲取交易效能指標"""
-        return [{
-            "timestamp": datetime.now(),
-            "api_latency_avg": 25.5,
-            "api_latency_p95": 45.2,
-            "api_latency_p99": 78.9,
-            "trading_tps": 150.0,
-            "order_success_rate": 0.985,
-            "execution_success_rate": 0.978,
-            "error_rate": 0.015,
-            "timeout_rate": 0.007,
-            "active_connections": 25,
-            "queue_length": 3,
-            "cache_hit_rate": 0.92
-        }]
+        return [
+            {
+                "timestamp": datetime.now(),
+                "api_latency_avg": 25.5,
+                "api_latency_p95": 45.2,
+                "api_latency_p99": 78.9,
+                "trading_tps": 150.0,
+                "order_success_rate": 0.985,
+                "execution_success_rate": 0.978,
+                "error_rate": 0.015,
+                "timeout_rate": 0.007,
+                "active_connections": 25,
+                "queue_length": 3,
+                "cache_hit_rate": 0.92,
+            }
+        ]

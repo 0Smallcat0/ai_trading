@@ -21,7 +21,7 @@ from .metrics import (
     calculate_sharpe_ratio,
     calculate_max_drawdown,
     calculate_win_rate,
-    calculate_volatility
+    calculate_volatility,
 )
 
 # 設定日誌
@@ -95,7 +95,7 @@ class Strategy(ABC):
         data: pd.DataFrame,
         target: Optional[pd.Series] = None,
         param_grid: Optional[Dict[str, List[Any]]] = None,
-        metric: str = "sharpe_ratio"
+        metric: str = "sharpe_ratio",
     ) -> Dict[str, Any]:
         """優化策略參數。
 
@@ -121,15 +121,13 @@ class Strategy(ABC):
             "使用預設參數優化實現，建議子類覆寫此方法。參數: data=%s, target=%s, metric=%s",
             type(data).__name__,
             type(target).__name__ if target is not None else "None",
-            metric
+            metric,
         )
 
         return {}
 
     def evaluate(
-        self,
-        data: pd.DataFrame,
-        signals: Optional[pd.DataFrame] = None
+        self, data: pd.DataFrame, signals: Optional[pd.DataFrame] = None
     ) -> Dict[str, float]:
         """評估策略表現。
 
@@ -164,7 +162,7 @@ class Strategy(ABC):
             "sharpe_ratio": calculate_sharpe_ratio(returns),
             "max_drawdown": calculate_max_drawdown(returns),
             "win_rate": calculate_win_rate(returns),
-            "volatility": calculate_volatility(returns)
+            "volatility": calculate_volatility(returns),
         }
 
         return metrics
@@ -201,9 +199,7 @@ class Strategy(ABC):
         missing_columns = [col for col in required_columns if col not in data.columns]
 
         if missing_columns:
-            raise DataValidationError(
-                f"價格資料缺少必要欄位: {missing_columns}"
-            )
+            raise DataValidationError(f"價格資料缺少必要欄位: {missing_columns}")
 
         if data.empty:
             raise DataValidationError("價格資料不能為空")
@@ -223,9 +219,7 @@ class Strategy(ABC):
         ]
 
         if missing_columns:
-            raise DataValidationError(
-                f"訊號資料缺少必要欄位: {missing_columns}"
-            )
+            raise DataValidationError(f"訊號資料缺少必要欄位: {missing_columns}")
 
     def __str__(self) -> str:
         """字串表示"""

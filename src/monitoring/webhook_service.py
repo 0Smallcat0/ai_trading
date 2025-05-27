@@ -67,7 +67,9 @@ class WebhookChannel(NotificationChannel):
                     module_logger.info("Webhook 通知發送成功: %s", url)
                 else:
                     module_logger.warning(
-                        "Webhook 通知發送失敗: %s, 狀態碼: %s", url, response.status_code
+                        "Webhook 通知發送失敗: %s, 狀態碼: %s",
+                        url,
+                        response.status_code,
                     )
 
             except Exception as e:

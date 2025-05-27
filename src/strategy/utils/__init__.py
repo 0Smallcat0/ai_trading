@@ -14,7 +14,7 @@ from .signals import (
     triple_barrier,
     fixed_time_horizon,
     generate_signals,
-    numba_moving_average
+    numba_moving_average,
 )
 
 __all__ = [
@@ -23,5 +23,5 @@ __all__ = [
     "triple_barrier",
     "fixed_time_horizon",
     "generate_signals",
-    "numba_moving_average"
+    "numba_moving_average",
 ]

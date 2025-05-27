@@ -29,7 +29,7 @@ from tests.performance.benchmark_config import (
     API_BENCHMARKS,
     BENCHMARK_CONFIG,
     get_benchmark_for_endpoint,
-    is_performance_acceptable
+    is_performance_acceptable,
 )
 
 
@@ -115,7 +115,9 @@ def benchmark_config() -> Dict[str, Any]:
 def benchmark_validator():
     """提供基準驗證器"""
 
-    def validate_performance(endpoint: str, method: str, actual_time_ms: float) -> Dict[str, Any]:
+    def validate_performance(
+        endpoint: str, method: str, actual_time_ms: float
+    ) -> Dict[str, Any]:
         """
         驗證效能是否符合基準
 
@@ -137,11 +139,11 @@ def benchmark_validator():
             "benchmark": {
                 "max_response_time_ms": benchmark.max_response_time_ms,
                 "warning_threshold_ms": benchmark.warning_threshold_ms,
-                "critical_threshold_ms": benchmark.critical_threshold_ms
+                "critical_threshold_ms": benchmark.critical_threshold_ms,
             },
             "is_acceptable": is_acceptable,
             "status": status,
-            "performance_ratio": actual_time_ms / benchmark.max_response_time_ms
+            "performance_ratio": actual_time_ms / benchmark.max_response_time_ms,
         }
 
     return validate_performance

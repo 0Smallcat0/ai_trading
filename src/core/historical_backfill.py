@@ -34,9 +34,7 @@ try:
     )
     from src.core.data_ingest import DataIngestionManager
 except ImportError as exc:
-    raise ImportError(
-        f"無法匯入必要模組，請確認模組結構正確。錯誤：{exc}"
-    ) from exc
+    raise ImportError(f"無法匯入必要模組，請確認模組結構正確。錯誤：{exc}") from exc
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -309,9 +307,7 @@ def backfill_historical_data(
         Dict[str, Any]: 綜合回填結果
     """
     backfiller = HistoricalBackfill(
-        max_workers=max_workers,
-        chunk_size=chunk_size,
-        enable_progress_tracking=True
+        max_workers=max_workers, chunk_size=chunk_size, enable_progress_tracking=True
     )
 
     return backfiller.comprehensive_backfill_with_validation(
@@ -322,5 +318,5 @@ def backfill_historical_data(
         enable_validation=validate,
         enable_outlier_detection=enable_outlier_detection,
         save_result=save_result,
-        generate_report=True
+        generate_report=True,
     )

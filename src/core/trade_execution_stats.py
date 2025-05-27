@@ -24,7 +24,7 @@ class TradeExecutionStatsManager:
 
     def __init__(self, session_factory: sessionmaker):
         """初始化統計管理器
-        
+
         Args:
             session_factory: SQLAlchemy session factory
         """
@@ -39,20 +39,20 @@ class TradeExecutionStatsManager:
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """獲取成交記錄
-        
+
         Args:
             order_id: 訂單ID篩選
             symbol: 股票代碼篩選
             start_date: 開始日期
             end_date: 結束日期
             limit: 返回記錄數量限制
-            
+
         Returns:
             List[Dict]: 成交記錄列表
         """
         try:
             from src.database.schema import TradeExecution
-            
+
             with self.session_factory() as session:
                 query = session.query(TradeExecution)
 
@@ -101,18 +101,18 @@ class TradeExecutionStatsManager:
         self, page: int = 1, page_size: int = 20, filters: Dict = None
     ) -> Dict[str, Any]:
         """獲取執行歷史
-        
+
         Args:
             page: 頁碼
             page_size: 每頁大小
             filters: 篩選條件字典
-            
+
         Returns:
             Dict: 包含執行歷史列表和總數的字典
         """
         try:
             from src.database.schema import TradeExecution
-            
+
             with self.session_factory() as session:
                 query = session.query(TradeExecution)
 
@@ -173,16 +173,16 @@ class TradeExecutionStatsManager:
 
     def get_execution_details(self, execution_id: str) -> Optional[Dict[str, Any]]:
         """獲取執行詳情
-        
+
         Args:
             execution_id: 執行ID
-            
+
         Returns:
             Optional[Dict]: 執行詳情字典，如果不存在則返回None
         """
         try:
             from src.database.schema import TradeExecution
-            
+
             with self.session_factory() as session:
                 execution = (
                     session.query(TradeExecution)
@@ -213,16 +213,16 @@ class TradeExecutionStatsManager:
 
     def get_order_statistics(self, filters: Dict = None) -> Dict[str, Any]:
         """獲取訂單統計
-        
+
         Args:
             filters: 篩選條件字典
-            
+
         Returns:
             Dict: 訂單統計結果
         """
         try:
             from src.database.schema import TradingOrder
-            
+
             with self.session_factory() as session:
                 query = session.query(TradingOrder)
 
@@ -292,7 +292,7 @@ class TradeExecutionStatsManager:
 
     def get_trading_performance(self) -> Dict[str, Any]:
         """獲取交易績效
-        
+
         Returns:
             Dict: 交易績效指標
         """
@@ -316,11 +316,11 @@ class TradeExecutionStatsManager:
         self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> Dict[str, Any]:
         """獲取交易統計
-        
+
         Args:
             start_date: 開始日期
             end_date: 結束日期
-            
+
         Returns:
             Dict: 交易統計結果
         """

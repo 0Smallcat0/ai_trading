@@ -167,9 +167,7 @@ class ConfigManagementService:
             logger.error("獲取圖表配置失敗: %s", e)
             return []
 
-    def delete_chart_config(
-        self, config_id: str, user_id: str
-    ) -> Tuple[bool, str]:
+    def delete_chart_config(self, config_id: str, user_id: str) -> Tuple[bool, str]:
         """刪除圖表配置
 
         Args:

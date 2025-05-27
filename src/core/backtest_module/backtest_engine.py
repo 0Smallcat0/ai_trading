@@ -46,7 +46,9 @@ class BacktestExecutionEngine:
         self.backtest_threads = {}
         self._lock = threading.Lock()
 
-    def start_backtest(self, config: BacktestConfig, progress_callback: Callable = None) -> str:
+    def start_backtest(
+        self, config: BacktestConfig, progress_callback: Callable = None
+    ) -> str:
         """啟動回測任務
 
         Args:
@@ -67,7 +69,7 @@ class BacktestExecutionEngine:
         thread = threading.Thread(
             target=self._run_backtest_thread,
             args=(backtest_id, config, progress_callback),
-            daemon=True
+            daemon=True,
         )
 
         with self._lock:
@@ -127,7 +129,7 @@ class BacktestExecutionEngine:
         self,
         backtest_id: str,
         config: BacktestConfig,
-        progress_callback: Callable = None
+        progress_callback: Callable = None,
     ):
         """回測執行線程
 
@@ -152,7 +154,9 @@ class BacktestExecutionEngine:
 
             # 初始化策略
             self._update_status(backtest_id, "running", 20, "正在初始化策略...")
-            strategy = self.strategy_manager.initialize_strategy(config.strategy_id, config)
+            strategy = self.strategy_manager.initialize_strategy(
+                config.strategy_id, config
+            )
 
             # 生成交易信號
             self._update_status(backtest_id, "running", 40, "正在生成交易信號...")
@@ -208,7 +212,9 @@ class BacktestExecutionEngine:
                 self.backtest_threads.pop(backtest_id, None)
                 # 保留狀態記錄一段時間，供查詢使用
 
-    def _update_status(self, backtest_id: str, status: str, progress: float, message: str):
+    def _update_status(
+        self, backtest_id: str, status: str, progress: float, message: str
+    ):
         """更新回測狀態"""
         # 更新內存狀態
         with self._lock:
@@ -219,7 +225,9 @@ class BacktestExecutionEngine:
             }
 
         # 更新資料庫
-        self.db_manager.update_backtest_status(backtest_id, status, progress, message if status == "failed" else None)
+        self.db_manager.update_backtest_status(
+            backtest_id, status, progress, message if status == "failed" else None
+        )
 
     def _is_cancelled(self, backtest_id: str) -> bool:
         """檢查是否被取消"""
@@ -227,7 +235,9 @@ class BacktestExecutionEngine:
             status = self.running_backtests.get(backtest_id, {}).get("status")
             return status == "cancelled"
 
-    def _save_results(self, backtest_id: str, results: Dict[str, Any], metrics: Dict[str, Any]):
+    def _save_results(
+        self, backtest_id: str, results: Dict[str, Any], metrics: Dict[str, Any]
+    ):
         """保存回測結果"""
         # 保存到資料庫
         self.db_manager.save_backtest_metrics(backtest_id, metrics)

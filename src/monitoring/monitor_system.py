@@ -22,9 +22,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 try:
     from src.core.logger import get_logger
 except ImportError:
+
     def get_logger(name: str) -> logging.Logger:
         """Fallback logger function"""
         return logging.getLogger(name)
+
 
 try:
     from .monitor_modules import (
@@ -67,7 +69,7 @@ except ImportError:
         "system": {"cpu_usage": 80, "memory_usage": 80, "disk_usage": 85},
         "api": {"latency": 1.0, "error_rate": 0.05},
         "model": {"accuracy": 0.8, "latency": 1.0, "drift": 0.1},
-        "trade": {"success_rate": 0.7, "capital_change": -10.0}
+        "trade": {"success_rate": 0.7, "capital_change": -10.0},
     }
 
 # 導入監控組件
@@ -142,8 +144,9 @@ class MonitorSystem:
         try:
             # 初始化 Prometheus 指標導出器
             self.prometheus_exporter = prometheus_exporter
-            if (self.prometheus_exporter and
-                    hasattr(self.prometheus_exporter, 'configure')):
+            if self.prometheus_exporter and hasattr(
+                self.prometheus_exporter, "configure"
+            ):
                 self.prometheus_exporter.configure(
                     port=self.config["prometheus_port"],
                     collection_interval=self.config["prometheus_collection_interval"],
@@ -154,7 +157,7 @@ class MonitorSystem:
             self.alert_handler = None
             if alert_manager and AlertHandler:
                 # 配置警報管理器
-                if hasattr(alert_manager, 'configure'):
+                if hasattr(alert_manager, "configure"):
                     alert_manager.configure(
                         alert_log_dir=self.config["alert_log_dir"],
                         check_interval=self.config["alert_check_interval"],
@@ -169,8 +172,7 @@ class MonitorSystem:
             self.threshold_checker = None
             if self.alert_handler and ThresholdChecker:
                 self.threshold_checker = ThresholdChecker(
-                    self.config["thresholds"],
-                    self.alert_handler
+                    self.config["thresholds"], self.alert_handler
                 )
 
             # 初始化系統監控器
@@ -179,7 +181,7 @@ class MonitorSystem:
                 self.system_monitor = SystemMonitor(
                     self.prometheus_exporter,
                     self.threshold_checker,
-                    self.config["alert_check_interval"]
+                    self.config["alert_check_interval"],
                 )
 
             logger.info("監控系統組件初始化完成")
@@ -200,7 +202,7 @@ class MonitorSystem:
                 return False
 
             # 啟動警報管理器
-            if alert_manager and hasattr(alert_manager, 'start'):
+            if alert_manager and hasattr(alert_manager, "start"):
                 alert_manager.start()
 
             # 啟動系統監控器
@@ -232,7 +234,7 @@ class MonitorSystem:
                     success = False
 
             # 停止警報管理器
-            if alert_manager and hasattr(alert_manager, 'stop'):
+            if alert_manager and hasattr(alert_manager, "stop"):
                 alert_manager.stop()
 
             if success:
@@ -259,10 +261,7 @@ class MonitorSystem:
                 "threshold_checker": self.threshold_checker is not None,
                 "system_monitor": self.system_monitor is not None,
             },
-            "health": {
-                "overall": False,
-                "details": {}
-            }
+            "health": {"overall": False, "details": {}},
         }
 
         try:
@@ -270,17 +269,17 @@ class MonitorSystem:
             if self.system_monitor:
                 monitor_status = self.system_monitor.get_status()
                 status["system_monitor"] = monitor_status
-                status["health"]["details"]["system_monitor"] = (
-                    self.system_monitor.is_healthy()
-                )
+                status["health"]["details"][
+                    "system_monitor"
+                ] = self.system_monitor.is_healthy()
 
             # 獲取警報處理器狀態
             if self.alert_handler:
                 alert_stats = self.alert_handler.get_alert_stats()
                 status["alert_handler"] = alert_stats
-                status["health"]["details"]["alert_handler"] = (
-                    self.alert_handler.is_healthy()
-                )
+                status["health"]["details"][
+                    "alert_handler"
+                ] = self.alert_handler.is_healthy()
 
             # 計算整體健康狀態
             health_checks = list(status["health"]["details"].values())
@@ -333,16 +332,10 @@ def main() -> None:
     # 解析命令行參數
     parser = argparse.ArgumentParser(description="AI 交易系統監控")
     parser.add_argument(
-        "--prometheus-port",
-        type=int,
-        default=PROMETHEUS_PORT,
-        help="Prometheus 端口"
+        "--prometheus-port", type=int, default=PROMETHEUS_PORT, help="Prometheus 端口"
     )
     parser.add_argument(
-        "--grafana-port",
-        type=int,
-        default=GRAFANA_PORT,
-        help="Grafana 端口"
+        "--grafana-port", type=int, default=GRAFANA_PORT, help="Grafana 端口"
     )
     parser.add_argument(
         "--check-interval",
@@ -375,7 +368,7 @@ def main() -> None:
 
     except KeyboardInterrupt:
         logger.info("收到中斷信號，正在停止監控系統...")
-        if 'monitor_system' in locals():
+        if "monitor_system" in locals():
             monitor_system.stop()
     except Exception as e:
         logger.error("監控系統運行失敗: %s", e)

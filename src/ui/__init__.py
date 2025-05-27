@@ -22,6 +22,7 @@ def run_web_ui(*args, **kwargs):
         web_ui.run_web_ui 的返回值
     """
     from .web_ui import run_web_ui as _run_web_ui
+
     return _run_web_ui(*args, **kwargs)
 
 

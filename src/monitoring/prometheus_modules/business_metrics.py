@@ -54,7 +54,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_strategy_return_percent",
                 "策略收益率百分比",
                 ["strategy_name", "period"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 投資組合總價值
@@ -62,7 +62,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_portfolio_value_total",
                 "投資組合總價值",
                 ["currency"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 可用資金
@@ -70,14 +70,14 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_available_capital",
                 "可用資金",
                 ["currency"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 資金使用率
             self.metrics["capital_utilization"] = Gauge(
                 "business_capital_utilization_percent",
                 "資金使用率百分比",
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 風險暴露（VaR）
@@ -85,7 +85,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_var_exposure",
                 "風險價值暴露",
                 ["confidence_level", "time_horizon"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 最大回撤
@@ -93,7 +93,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_max_drawdown_percent",
                 "最大回撤百分比",
                 ["strategy_name"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 夏普比率
@@ -101,7 +101,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_sharpe_ratio",
                 "夏普比率",
                 ["strategy_name", "period"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 勝率
@@ -109,7 +109,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_win_rate_percent",
                 "交易勝率百分比",
                 ["strategy_name"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 平均盈利
@@ -117,7 +117,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_avg_profit",
                 "平均盈利",
                 ["strategy_name", "currency"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 平均虧損
@@ -125,7 +125,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_avg_loss",
                 "平均虧損",
                 ["strategy_name", "currency"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 盈虧比
@@ -133,7 +133,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_profit_loss_ratio",
                 "盈虧比",
                 ["strategy_name"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 交易頻率
@@ -141,7 +141,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_trade_frequency_per_day",
                 "每日交易頻率",
                 ["strategy_name"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 持倉集中度
@@ -149,14 +149,12 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_position_concentration_percent",
                 "持倉集中度百分比",
                 ["symbol"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 槓桿倍數
             self.metrics["leverage_ratio"] = Gauge(
-                "business_leverage_ratio",
-                "槓桿倍數",
-                registry=self.registry
+                "business_leverage_ratio", "槓桿倍數", registry=self.registry
             )
 
             # 策略活躍度
@@ -164,7 +162,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_strategy_signals_total",
                 "策略信號總數",
                 ["strategy_name", "signal_type"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 風險限額使用率
@@ -172,7 +170,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
                 "business_risk_limit_usage_percent",
                 "風險限額使用率百分比",
                 ["limit_type"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             module_logger.info("業務指標初始化完成")
@@ -253,10 +251,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
             module_logger.error("更新投資組合價值失敗: %s", e)
 
     def update_strategy_return(
-        self,
-        strategy_name: str,
-        return_pct: float,
-        period: str = "daily"
+        self, strategy_name: str, return_pct: float, period: str = "daily"
     ) -> None:
         """更新策略收益率
 
@@ -267,17 +262,13 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
         """
         try:
             self.metrics["strategy_return"].labels(
-                strategy_name=strategy_name,
-                period=period
+                strategy_name=strategy_name, period=period
             ).set(return_pct)
         except Exception as e:
             module_logger.error("更新策略收益率失敗: %s", e)
 
     def update_risk_exposure(
-        self,
-        var_value: float,
-        confidence_level: str = "95%",
-        time_horizon: str = "1d"
+        self, var_value: float, confidence_level: str = "95%", time_horizon: str = "1d"
     ) -> None:
         """更新風險暴露
 
@@ -288,8 +279,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
         """
         try:
             self.metrics["var_exposure"].labels(
-                confidence_level=confidence_level,
-                time_horizon=time_horizon
+                confidence_level=confidence_level, time_horizon=time_horizon
             ).set(var_value)
         except Exception as e:
             module_logger.error("更新風險暴露失敗: %s", e)
@@ -314,8 +304,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
         """
         try:
             self.metrics["strategy_activity"].labels(
-                strategy_name=strategy_name,
-                signal_type=signal_type
+                strategy_name=strategy_name, signal_type=signal_type
             ).inc()
         except Exception as e:
             module_logger.error("記錄策略信號失敗: %s", e)
@@ -325,7 +314,7 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
         strategy_name: str,
         sharpe_ratio: Optional[float] = None,
         max_drawdown: Optional[float] = None,
-        win_rate: Optional[float] = None
+        win_rate: Optional[float] = None,
     ) -> None:
         """更新績效指標
 
@@ -338,19 +327,18 @@ class BusinessMetricsCollector(PrometheusCollectorBase):
         try:
             if sharpe_ratio is not None:
                 self.metrics["sharpe_ratio"].labels(
-                    strategy_name=strategy_name,
-                    period="daily"
+                    strategy_name=strategy_name, period="daily"
                 ).set(sharpe_ratio)
 
             if max_drawdown is not None:
-                self.metrics["max_drawdown"].labels(
-                    strategy_name=strategy_name
-                ).set(max_drawdown)
+                self.metrics["max_drawdown"].labels(strategy_name=strategy_name).set(
+                    max_drawdown
+                )
 
             if win_rate is not None:
-                self.metrics["win_rate"].labels(
-                    strategy_name=strategy_name
-                ).set(win_rate)
+                self.metrics["win_rate"].labels(strategy_name=strategy_name).set(
+                    win_rate
+                )
 
         except Exception as e:
             module_logger.error("更新績效指標失敗: %s", e)

@@ -171,12 +171,15 @@ class AuthTester:
         results.append(
             AuthTestResult(
                 test_name="普通用戶訪問管理員端點",
-                passed=response.status_code in [403, 404, 429],  # 允許速率限制和不存在的端點
+                passed=response.status_code
+                in [403, 404, 429],  # 允許速率限制和不存在的端點
                 expected_status=403,
                 actual_status=response.status_code,
                 description="測試普通用戶是否能訪問管理員功能",
                 security_issue=(
-                    "權限控制繞過" if response.status_code not in [401, 403, 404, 429] else None
+                    "權限控制繞過"
+                    if response.status_code not in [401, 403, 404, 429]
+                    else None
                 ),
                 recommendation="實施適當的角色權限檢查",
             )
@@ -329,7 +332,7 @@ class AuthTester:
         username: str = "test_user",
         role: str = "user",
         user_id: Optional[str] = None,
-        expires_in_hours: int = 1
+        expires_in_hours: int = 1,
     ) -> str:
         """
         生成測試用 JWT Token
@@ -350,9 +353,11 @@ class AuthTester:
             "user_id": user_id,
             "username": username,
             "role": role,
-            "exp": int((datetime.now() + timedelta(hours=expires_in_hours)).timestamp()),
+            "exp": int(
+                (datetime.now() + timedelta(hours=expires_in_hours)).timestamp()
+            ),
             "iat": int(datetime.now().timestamp()),
-            "type": "access"
+            "type": "access",
         }
         return jwt.encode(payload, self.jwt_secret, algorithm=self.jwt_algorithm)
 
@@ -361,7 +366,7 @@ class AuthTester:
         username: str = "test_user",
         role: str = "user",
         user_id: Optional[str] = None,
-        hours_ago: int = 1
+        hours_ago: int = 1,
     ) -> str:
         """
         生成過期的 JWT Token
@@ -384,7 +389,7 @@ class AuthTester:
             "role": role,
             "exp": int((datetime.now() - timedelta(hours=hours_ago)).timestamp()),
             "iat": int((datetime.now() - timedelta(hours=hours_ago + 1)).timestamp()),
-            "type": "access"
+            "type": "access",
         }
         return jwt.encode(payload, self.jwt_secret, algorithm=self.jwt_algorithm)
 
@@ -442,7 +447,9 @@ class AuthTester:
         # 使用錯誤密鑰簽名，模擬篡改
         return jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm)
 
-    def generate_manipulated_tokens(self, base_username: str = "test_user") -> List[str]:
+    def generate_manipulated_tokens(
+        self, base_username: str = "test_user"
+    ) -> List[str]:
         """
         生成各種被篡改的 JWT Token 用於測試
 
@@ -461,26 +468,36 @@ class AuthTester:
             "role": "admin",  # 嘗試提升權限
             "exp": int((datetime.now() + timedelta(hours=1)).timestamp()),
             "iat": int(datetime.now().timestamp()),
-            "type": "access"
+            "type": "access",
         }
         # 使用錯誤密鑰簽名
-        manipulated_tokens.append(jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm))
+        manipulated_tokens.append(
+            jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm)
+        )
 
         # 2. 修改用戶ID的 Token
         payload["role"] = "user"
         payload["user_id"] = "admin"
-        manipulated_tokens.append(jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm))
+        manipulated_tokens.append(
+            jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm)
+        )
 
         # 3. 修改過期時間的 Token
         payload["user_id"] = base_username
-        payload["exp"] = int((datetime.now() + timedelta(days=365)).timestamp())  # 延長到一年
-        manipulated_tokens.append(jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm))
+        payload["exp"] = int(
+            (datetime.now() + timedelta(days=365)).timestamp()
+        )  # 延長到一年
+        manipulated_tokens.append(
+            jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm)
+        )
 
         # 4. 添加額外聲明的 Token
         payload["exp"] = int((datetime.now() + timedelta(hours=1)).timestamp())
         payload["is_admin"] = True
         payload["permissions"] = ["all"]
-        manipulated_tokens.append(jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm))
+        manipulated_tokens.append(
+            jwt.encode(payload, "wrong_secret", algorithm=self.jwt_algorithm)
+        )
 
         return manipulated_tokens
 
@@ -500,13 +517,15 @@ class AuthTester:
             "role": "admin",  # 嘗試獲取管理員權限
             "exp": int((datetime.now() + timedelta(hours=1)).timestamp()),
             "iat": int(datetime.now().timestamp()),
-            "type": "access"
+            "type": "access",
         }
 
         # 使用 'none' 算法（不安全）
         return jwt.encode(payload, "", algorithm="none")
 
-    def generate_algorithm_confusion_tokens(self, username: str = "test_user") -> List[str]:
+    def generate_algorithm_confusion_tokens(
+        self, username: str = "test_user"
+    ) -> List[str]:
         """
         生成算法混淆攻擊的 Token
 
@@ -522,7 +541,7 @@ class AuthTester:
             "role": "admin",
             "exp": int((datetime.now() + timedelta(hours=1)).timestamp()),
             "iat": int(datetime.now().timestamp()),
-            "type": "access"
+            "type": "access",
         }
 
         tokens = []
@@ -539,9 +558,17 @@ class AuthTester:
             import json
 
             header = {"alg": "RS256", "typ": "JWT"}
-            header_encoded = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip('=')
-            payload_encoded = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip('=')
-            signature = base64.urlsafe_b64encode(b"fake_signature").decode().rstrip('=')
+            header_encoded = (
+                base64.urlsafe_b64encode(json.dumps(header).encode())
+                .decode()
+                .rstrip("=")
+            )
+            payload_encoded = (
+                base64.urlsafe_b64encode(json.dumps(payload).encode())
+                .decode()
+                .rstrip("=")
+            )
+            signature = base64.urlsafe_b64encode(b"fake_signature").decode().rstrip("=")
             tokens.append(f"{header_encoded}.{payload_encoded}.{signature}")
 
         return tokens

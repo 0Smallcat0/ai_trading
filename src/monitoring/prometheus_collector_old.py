@@ -99,9 +99,7 @@ class PrometheusCollector:
 
             # 初始化 API 指標收集器
             if APIMetricsCollector is not None:
-                self.collectors["api"] = APIMetricsCollector(
-                    self.collection_interval
-                )
+                self.collectors["api"] = APIMetricsCollector(self.collection_interval)
                 module_logger.info("API 指標收集器初始化成功")
 
             # 初始化業務指標收集器
@@ -144,7 +142,7 @@ class PrometheusCollector:
                 module_logger.info(
                     "指標收集已啟動，成功啟動 %d/%d 個子收集器",
                     success_count,
-                    total_count
+                    total_count,
                 )
                 return True
             else:
@@ -181,9 +179,7 @@ class PrometheusCollector:
 
             self.is_collecting = False
             module_logger.info(
-                "指標收集已停止，成功停止 %d/%d 個子收集器",
-                success_count,
-                total_count
+                "指標收集已停止，成功停止 %d/%d 個子收集器", success_count, total_count
             )
             return True
 
@@ -206,7 +202,7 @@ class PrometheusCollector:
 
             for name, collector in self.collectors.items():
                 try:
-                    if hasattr(collector, 'registry') and collector.registry:
+                    if hasattr(collector, "registry") and collector.registry:
                         metrics_data = generate_latest(collector.registry)
                         combined_metrics.append(metrics_data.decode("utf-8"))
                 except Exception as e:
@@ -241,7 +237,7 @@ class PrometheusCollector:
 
         for collector in self.collectors.values():
             try:
-                if hasattr(collector, 'is_healthy') and collector.is_healthy():
+                if hasattr(collector, "is_healthy") and collector.is_healthy():
                     healthy_count += 1
             except Exception:
                 continue
@@ -258,32 +254,25 @@ class PrometheusCollector:
         status = {
             "is_collecting": self.is_collecting,
             "collection_interval": self.collection_interval,
-            "collectors": {}
+            "collectors": {},
         }
 
         for name, collector in self.collectors.items():
             try:
                 collector_status = {
                     "is_healthy": (
-                        hasattr(collector, 'is_healthy')
-                        and collector.is_healthy()
+                        hasattr(collector, "is_healthy") and collector.is_healthy()
                     ),
                     "is_collecting": (
-                        hasattr(collector, 'is_collecting')
-                        and collector.is_collecting
+                        hasattr(collector, "is_collecting") and collector.is_collecting
                     ),
                     "metric_count": (
-                        len(collector.metrics)
-                        if hasattr(collector, 'metrics')
-                        else 0
-                    )
+                        len(collector.metrics) if hasattr(collector, "metrics") else 0
+                    ),
                 }
                 status["collectors"][name] = collector_status
             except Exception as e:
-                status["collectors"][name] = {
-                    "error": str(e),
-                    "is_healthy": False
-                }
+                status["collectors"][name] = {"error": str(e), "is_healthy": False}
 
         return status
 

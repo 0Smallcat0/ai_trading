@@ -72,7 +72,8 @@ class StrategyManagementService:
                 cursor = conn.cursor()
 
                 # 創建策略表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS strategies (
                         id TEXT PRIMARY KEY,
                         name TEXT NOT NULL UNIQUE,
@@ -90,10 +91,12 @@ class StrategyManagementService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # 創建策略版本表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS strategy_versions (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         strategy_id TEXT NOT NULL,
@@ -106,7 +109,8 @@ class StrategyManagementService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (strategy_id) REFERENCES strategies (id)
                     )
-                """)
+                """
+                )
 
                 conn.commit()
                 logger.info("策略資料庫初始化完成")

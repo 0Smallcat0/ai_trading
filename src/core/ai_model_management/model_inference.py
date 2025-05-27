@@ -24,7 +24,7 @@ class ModelInference:
 
     def __init__(self, db_path: Path, models_dir: Path):
         """初始化模型推論
-        
+
         Args:
             db_path: 資料庫路徑
             models_dir: 模型檔案目錄
@@ -35,14 +35,14 @@ class ModelInference:
 
     def predict(self, model_id: str, input_data: Dict) -> Dict:
         """執行模型推論
-        
+
         Args:
             model_id: 模型ID
             input_data: 輸入數據字典
-            
+
         Returns:
             Dict: 推論結果
-            
+
         Raises:
             ModelInferenceError: 推論失敗時拋出
         """
@@ -78,11 +78,11 @@ class ModelInference:
 
     def batch_predict(self, model_id: str, batch_data: List[Dict]) -> List[Dict]:
         """批量推論
-        
+
         Args:
             model_id: 模型ID
             batch_data: 批量輸入數據列表
-            
+
         Returns:
             List[Dict]: 批量推論結果
         """
@@ -101,11 +101,11 @@ class ModelInference:
 
     def get_inference_logs(self, model_id: str, limit: int = 100) -> List[Dict]:
         """獲取推論日誌
-        
+
         Args:
             model_id: 模型ID
             limit: 返回數量限制
-            
+
         Returns:
             List[Dict]: 推論日誌列表
         """
@@ -129,7 +129,9 @@ class ModelInference:
                 for log in logs:
                     log_dict = dict(log)
                     log_dict["input_data"] = json.loads(log_dict["input_data"] or "{}")
-                    log_dict["output_data"] = json.loads(log_dict["output_data"] or "{}")
+                    log_dict["output_data"] = json.loads(
+                        log_dict["output_data"] or "{}"
+                    )
                     result.append(log_dict)
 
                 return result
@@ -140,10 +142,10 @@ class ModelInference:
 
     def get_inference_statistics(self, model_id: str = None) -> Dict:
         """獲取推論統計信息
-        
+
         Args:
             model_id: 模型ID，如果為 None 則獲取所有模型的統計
-            
+
         Returns:
             Dict: 推論統計信息
         """

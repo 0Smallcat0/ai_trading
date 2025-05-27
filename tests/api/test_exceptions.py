@@ -10,11 +10,11 @@ import sys
 from datetime import datetime
 
 # 模擬相依性模組
-sys.modules['fastapi'] = MagicMock()
-sys.modules['fastapi.exceptions'] = MagicMock()
-sys.modules['fastapi.responses'] = MagicMock()
-sys.modules['pydantic'] = MagicMock()
-sys.modules['src.api.models.responses'] = MagicMock()
+sys.modules["fastapi"] = MagicMock()
+sys.modules["fastapi.exceptions"] = MagicMock()
+sys.modules["fastapi.responses"] = MagicMock()
+sys.modules["pydantic"] = MagicMock()
+sys.modules["src.api.models.responses"] = MagicMock()
 
 
 class TestAPIExceptions:
@@ -26,9 +26,12 @@ class TestAPIExceptions:
 
     def test_api_exception_base_class(self):
         """測試 API 異常基類"""
+
         # 模擬 APIException 基類
         class MockAPIException(Exception):
-            def __init__(self, message: str, error_code: int = 500, details: dict = None):
+            def __init__(
+                self, message: str, error_code: int = 500, details: dict = None
+            ):
                 self.message = message
                 self.error_code = error_code
                 self.details = details or {}
@@ -43,6 +46,7 @@ class TestAPIExceptions:
 
     def test_authentication_error(self):
         """測試認證錯誤"""
+
         # 模擬 AuthenticationError
         class MockAuthenticationError(Exception):
             def __init__(self, message: str = "認證失敗", details: dict = None):
@@ -61,6 +65,7 @@ class TestAPIExceptions:
 
     def test_authorization_error(self):
         """測試授權錯誤"""
+
         # 模擬 AuthorizationError
         class MockAuthorizationError(Exception):
             def __init__(self, message: str = "權限不足", details: dict = None):
@@ -74,6 +79,7 @@ class TestAPIExceptions:
 
     def test_validation_error(self):
         """測試驗證錯誤"""
+
         # 模擬 DataValidationError
         class MockDataValidationError(Exception):
             def __init__(self, message: str = "資料驗證失敗", details: dict = None):
@@ -87,6 +93,7 @@ class TestAPIExceptions:
 
     def test_not_found_error(self):
         """測試資源不存在錯誤"""
+
         # 模擬 NotFoundError
         class MockNotFoundError(Exception):
             def __init__(self, message: str = "資源不存在", details: dict = None):
@@ -100,6 +107,7 @@ class TestAPIExceptions:
 
     def test_conflict_error(self):
         """測試衝突錯誤"""
+
         # 模擬 ConflictError
         class MockConflictError(Exception):
             def __init__(self, message: str = "資源衝突", details: dict = None):
@@ -113,6 +121,7 @@ class TestAPIExceptions:
 
     def test_rate_limit_error(self):
         """測試速率限制錯誤"""
+
         # 模擬 RateLimitError
         class MockRateLimitError(Exception):
             def __init__(self, message: str = "請求過於頻繁", details: dict = None):
@@ -126,6 +135,7 @@ class TestAPIExceptions:
 
     def test_business_logic_error(self):
         """測試業務邏輯錯誤"""
+
         # 模擬 BusinessLogicError
         class MockBusinessLogicError(Exception):
             def __init__(self, message: str = "業務邏輯錯誤", details: dict = None):
@@ -139,6 +149,7 @@ class TestAPIExceptions:
 
     def test_external_service_error(self):
         """測試外部服務錯誤"""
+
         # 模擬 ExternalServiceError
         class MockExternalServiceError(Exception):
             def __init__(self, message: str = "外部服務錯誤", details: dict = None):
@@ -152,6 +163,7 @@ class TestAPIExceptions:
 
     def test_database_error(self):
         """測試資料庫錯誤"""
+
         # 模擬 DatabaseError
         class MockDatabaseError(Exception):
             def __init__(self, message: str = "資料庫操作失敗", details: dict = None):
@@ -165,9 +177,15 @@ class TestAPIExceptions:
 
     def test_retryable_error(self):
         """測試可重試錯誤"""
+
         # 模擬 RetryableError
         class MockRetryableError(Exception):
-            def __init__(self, message: str = "操作失敗，請重試", retry_after: int = 60, details: dict = None):
+            def __init__(
+                self,
+                message: str = "操作失敗，請重試",
+                retry_after: int = 60,
+                details: dict = None,
+            ):
                 self.message = message
                 self.error_code = 503
                 self.retry_after = retry_after
@@ -180,9 +198,12 @@ class TestAPIExceptions:
 
     def test_maintenance_error(self):
         """測試維護模式錯誤"""
+
         # 模擬 MaintenanceError
         class MockMaintenanceError(Exception):
-            def __init__(self, message: str = "系統維護中，請稍後再試", details: dict = None):
+            def __init__(
+                self, message: str = "系統維護中，請稍後再試", details: dict = None
+            ):
                 self.message = message
                 self.error_code = 503
                 self.details = details or {}
@@ -193,6 +214,7 @@ class TestAPIExceptions:
 
     def test_exception_logger(self):
         """測試異常日誌記錄器"""
+
         # 模擬 ExceptionLogger
         class MockExceptionLogger:
             @staticmethod
@@ -200,8 +222,8 @@ class TestAPIExceptions:
                 context = {
                     "exception_type": type(exc).__name__,
                     "exception_message": str(exc),
-                    "path": request.url.path if hasattr(request, 'url') else "/test",
-                    "method": request.method if hasattr(request, 'method') else "GET",
+                    "path": request.url.path if hasattr(request, "url") else "/test",
+                    "method": request.method if hasattr(request, "method") else "GET",
                     "user_id": user_id,
                     "timestamp": datetime.now().isoformat(),
                 }
@@ -227,6 +249,7 @@ class TestAPIExceptions:
 
     def test_error_tracker(self):
         """測試錯誤追蹤器"""
+
         # 模擬 ErrorTracker
         class MockErrorTracker:
             def __init__(self):
@@ -237,14 +260,16 @@ class TestAPIExceptions:
                 error_key = f"{error_type}:{endpoint}"
                 self.error_counts[error_key] = self.error_counts.get(error_key, 0) + 1
 
-                self.error_details.append({
-                    "error_type": error_type,
-                    "error_message": error_message,
-                    "endpoint": endpoint,
-                    "user_id": user_id,
-                    "timestamp": datetime.now(),
-                    "count": self.error_counts[error_key],
-                })
+                self.error_details.append(
+                    {
+                        "error_type": error_type,
+                        "error_message": error_message,
+                        "endpoint": endpoint,
+                        "user_id": user_id,
+                        "timestamp": datetime.now(),
+                        "count": self.error_counts[error_key],
+                    }
+                )
 
             def get_error_statistics(self):
                 total_errors = sum(self.error_counts.values())
@@ -256,9 +281,15 @@ class TestAPIExceptions:
 
         # 測試錯誤追蹤
         tracker = MockErrorTracker()
-        tracker.track_error("ValidationError", "欄位驗證失敗", "/api/v1/users", "user_123")
-        tracker.track_error("ValidationError", "欄位驗證失敗", "/api/v1/users", "user_456")
-        tracker.track_error("AuthenticationError", "認證失敗", "/api/v1/auth", "user_789")
+        tracker.track_error(
+            "ValidationError", "欄位驗證失敗", "/api/v1/users", "user_123"
+        )
+        tracker.track_error(
+            "ValidationError", "欄位驗證失敗", "/api/v1/users", "user_456"
+        )
+        tracker.track_error(
+            "AuthenticationError", "認證失敗", "/api/v1/auth", "user_789"
+        )
 
         stats = tracker.get_error_statistics()
         assert stats["total_errors"] == 3
@@ -268,6 +299,7 @@ class TestAPIExceptions:
 
     def test_database_error_decorator(self):
         """測試資料庫錯誤處理裝飾器"""
+
         # 模擬資料庫錯誤處理裝飾器
         def mock_handle_database_error(func):
             def wrapper(*args, **kwargs):
@@ -275,6 +307,7 @@ class TestAPIExceptions:
                     return func(*args, **kwargs)
                 except Exception as e:
                     raise Exception(f"資料庫操作失敗: {str(e)}") from e
+
             return wrapper
 
         @mock_handle_database_error
@@ -290,6 +323,7 @@ class TestAPIExceptions:
 
     def test_external_service_error_decorator(self):
         """測試外部服務錯誤處理裝飾器"""
+
         # 模擬外部服務錯誤處理裝飾器
         def mock_handle_external_service_error(service_name):
             def decorator(func):
@@ -298,7 +332,9 @@ class TestAPIExceptions:
                         return func(*args, **kwargs)
                     except Exception as e:
                         raise Exception(f"{service_name} 服務不可用: {str(e)}") from e
+
                 return wrapper
+
             return decorator
 
         @mock_handle_external_service_error("支付服務")
@@ -322,6 +358,7 @@ class TestAPIExceptions:
             def decorator(handler_func):
                 handlers.append((exception_type, handler_func))
                 return handler_func
+
             return decorator
 
         mock_app.exception_handler = mock_exception_handler

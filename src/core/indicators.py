@@ -29,9 +29,7 @@ except ImportError as e:
 
     # 創建空的 abstract 模組以避免錯誤
     class DummyAbstract:
-        """DummyAbstract
-
-        """
+        """DummyAbstract"""
 
         def __getattr__(self, name):
             """__getattr__
@@ -603,7 +601,7 @@ class FundamentalIndicators:
 
         # 確保EPS欄位為數值型態
         try:
-            eps_series = pd.to_numeric(income_df[eps_col], errors='coerce')
+            eps_series = pd.to_numeric(income_df[eps_col], errors="coerce")
         except Exception as e:
             raise ValueError(f"EPS欄位無法轉換為數值: {e}")
 
@@ -772,8 +770,10 @@ class FundamentalIndicators:
         Raises:
             ValueError: 當找不到必要的財務資料時
         """
-        if ("income_statement" not in self.financial_data or
-            "balance_sheet" not in self.financial_data):
+        if (
+            "income_statement" not in self.financial_data
+            or "balance_sheet" not in self.financial_data
+        ):
             raise ValueError("找不到損益表或資產負債表資料")
 
         if periods is None:
@@ -790,7 +790,9 @@ class FundamentalIndicators:
                 break
 
         if net_income_col is None:
-            raise ValueError("找不到淨利潤欄位，可用欄位: " + str(list(income_df.columns)))
+            raise ValueError(
+                "找不到淨利潤欄位，可用欄位: " + str(list(income_df.columns))
+            )
 
         # 檢查股東權益欄位
         equity_col = None
@@ -800,14 +802,16 @@ class FundamentalIndicators:
                 break
 
         if equity_col is None:
-            raise ValueError("找不到股東權益欄位，可用欄位: " + str(list(balance_df.columns)))
+            raise ValueError(
+                "找不到股東權益欄位，可用欄位: " + str(list(balance_df.columns))
+            )
 
         # 計算不同週期的ROE
         results = {}
 
         try:
-            net_income = pd.to_numeric(income_df[net_income_col], errors='coerce')
-            equity = pd.to_numeric(balance_df[equity_col], errors='coerce')
+            net_income = pd.to_numeric(income_df[net_income_col], errors="coerce")
+            equity = pd.to_numeric(balance_df[equity_col], errors="coerce")
 
             for period in periods:
                 try:
@@ -849,8 +853,10 @@ class FundamentalIndicators:
         Raises:
             ValueError: 當找不到必要的財務資料時
         """
-        if ("income_statement" not in self.financial_data or
-            "balance_sheet" not in self.financial_data):
+        if (
+            "income_statement" not in self.financial_data
+            or "balance_sheet" not in self.financial_data
+        ):
             raise ValueError("找不到損益表或資產負債表資料")
 
         if periods is None:
@@ -883,8 +889,8 @@ class FundamentalIndicators:
         results = {}
 
         try:
-            net_income = pd.to_numeric(income_df[net_income_col], errors='coerce')
-            assets = pd.to_numeric(balance_df[assets_col], errors='coerce')
+            net_income = pd.to_numeric(income_df[net_income_col], errors="coerce")
+            assets = pd.to_numeric(balance_df[assets_col], errors="coerce")
 
             for period in periods:
                 try:
@@ -949,8 +955,8 @@ class FundamentalIndicators:
             raise ValueError("找不到總資產欄位")
 
         try:
-            debt = pd.to_numeric(balance_df[debt_col], errors='coerce')
-            assets = pd.to_numeric(balance_df[assets_col], errors='coerce')
+            debt = pd.to_numeric(balance_df[debt_col], errors="coerce")
+            assets = pd.to_numeric(balance_df[assets_col], errors="coerce")
 
             debt_ratio = debt / assets
             debt_ratio = debt_ratio.replace([np.inf, -np.inf], np.nan)
@@ -1031,7 +1037,7 @@ class SentimentIndicators:
 
         try:
             # 確保情緒分數為數值型態
-            sentiment_series = pd.to_numeric(news_df[sentiment_col], errors='coerce')
+            sentiment_series = pd.to_numeric(news_df[sentiment_col], errors="coerce")
 
             # 計算移動平均情緒指標
             sentiment_ma = sentiment_series.rolling(window=window, min_periods=1).mean()
@@ -1058,13 +1064,46 @@ class SentimentIndicators:
         """
         # 簡單的關鍵字情緒分析
         positive_keywords = [
-            "上漲", "增長", "成長", "獲利", "盈利", "突破", "創新高", "樂觀", "正面", "好消息",
-            "利多", "買進", "推薦", "強勢", "回升", "反彈", "看好", "投資", "機會"
+            "上漲",
+            "增長",
+            "成長",
+            "獲利",
+            "盈利",
+            "突破",
+            "創新高",
+            "樂觀",
+            "正面",
+            "好消息",
+            "利多",
+            "買進",
+            "推薦",
+            "強勢",
+            "回升",
+            "反彈",
+            "看好",
+            "投資",
+            "機會",
         ]
 
         negative_keywords = [
-            "下跌", "下滑", "虧損", "衰退", "跌破", "創新低", "悲觀", "負面", "壞消息",
-            "利空", "賣出", "不推薦", "弱勢", "下探", "重挫", "看壞", "風險", "危機"
+            "下跌",
+            "下滑",
+            "虧損",
+            "衰退",
+            "跌破",
+            "創新低",
+            "悲觀",
+            "負面",
+            "壞消息",
+            "利空",
+            "賣出",
+            "不推薦",
+            "弱勢",
+            "下探",
+            "重挫",
+            "看壞",
+            "風險",
+            "危機",
         ]
 
         sentiment_scores = []
@@ -1203,7 +1242,7 @@ class SentimentIndicators:
                 topic_news = news_df[news_df[topic_col] == topic]
                 if not topic_news.empty:
                     sentiment_series = pd.to_numeric(
-                        topic_news[sentiment_col], errors='coerce'
+                        topic_news[sentiment_col], errors="coerce"
                     )
                     sentiment_ma = sentiment_series.rolling(
                         window=window, min_periods=1
@@ -1238,7 +1277,7 @@ class SentimentIndicators:
             "技術": ["技術", "研發", "專利", "創新", "AI", "5G"],
             "市場": ["市場", "競爭", "份額", "需求", "供應"],
             "政策": ["政策", "法規", "監管", "政府", "法律"],
-            "人事": ["人事", "CEO", "董事", "管理層", "離職", "任命"]
+            "人事": ["人事", "CEO", "董事", "管理層", "離職", "任命"],
         }
 
         topics = []

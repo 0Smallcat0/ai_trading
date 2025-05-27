@@ -26,10 +26,7 @@ class SystemMonitor:
     """
 
     def __init__(
-        self,
-        prometheus_exporter: Any,
-        threshold_checker: Any,
-        check_interval: int = 60
+        self, prometheus_exporter: Any, threshold_checker: Any, check_interval: int = 60
     ):
         """初始化系統監控器
 
@@ -68,14 +65,13 @@ class SystemMonitor:
                 return True
 
             # 啟動 Prometheus 指標導出器
-            if hasattr(self.prometheus_exporter, 'start'):
+            if hasattr(self.prometheus_exporter, "start"):
                 self.prometheus_exporter.start()
 
             # 啟動監控線程
             self.running = True
             self.monitoring_thread = threading.Thread(
-                target=self._monitoring_loop,
-                daemon=True
+                target=self._monitoring_loop, daemon=True
             )
             self.monitoring_thread.start()
 
@@ -104,7 +100,7 @@ class SystemMonitor:
                 self.monitoring_thread.join(timeout=10)
 
             # 停止 Prometheus 指標導出器
-            if hasattr(self.prometheus_exporter, 'stop'):
+            if hasattr(self.prometheus_exporter, "stop"):
                 self.prometheus_exporter.stop()
 
             module_logger.info("系統監控已停止")
@@ -144,7 +140,7 @@ class SystemMonitor:
             Optional[Dict[str, Any]]: 指標數據，失敗返回 None
         """
         try:
-            if hasattr(self.prometheus_exporter, 'get_metrics'):
+            if hasattr(self.prometheus_exporter, "get_metrics"):
                 metrics = self.prometheus_exporter.get_metrics()
                 if metrics:
                     module_logger.debug("指標收集成功")
@@ -170,9 +166,7 @@ class SystemMonitor:
             "running": self.running,
             "check_interval": self.check_interval,
             "thread_alive": (
-                self.monitoring_thread.is_alive()
-                if self.monitoring_thread
-                else False
+                self.monitoring_thread.is_alive() if self.monitoring_thread else False
             ),
             "prometheus_exporter_available": self.prometheus_exporter is not None,
             "threshold_checker_available": self.threshold_checker is not None,
@@ -196,9 +190,7 @@ class SystemMonitor:
             self.check_interval = new_interval
 
             module_logger.info(
-                "檢查間隔已更新: %d -> %d 秒",
-                old_interval,
-                new_interval
+                "檢查間隔已更新: %d -> %d 秒", old_interval, new_interval
             )
             return True
 
@@ -249,7 +241,7 @@ class SystemMonitor:
                     return False
 
             # 檢查閾值檢查器健康狀態
-            if hasattr(self.threshold_checker, 'is_healthy'):
+            if hasattr(self.threshold_checker, "is_healthy"):
                 if not self.threshold_checker.is_healthy():
                     return False
 

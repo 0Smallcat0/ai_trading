@@ -34,21 +34,23 @@ import numpy as np
 import pandas as pd
 
 # 導入新的模組化實現
-from .performance_metrics.legacy_interface import calculate_all_metrics as _calculate_all_metrics
+from .performance_metrics.legacy_interface import (
+    calculate_all_metrics as _calculate_all_metrics,
+)
 from .performance_metrics.trading_metrics import (
     calculate_sharpe_ratio as _calculate_sharpe_ratio,
     calculate_sortino_ratio as _calculate_sortino_ratio,
-    calculate_calmar_ratio as _calculate_calmar_ratio
+    calculate_calmar_ratio as _calculate_calmar_ratio,
 )
 from .performance_metrics.risk_metrics import (
     calculate_max_drawdown as _calculate_max_drawdown,
     calculate_volatility as _calculate_volatility,
-    calculate_var as _calculate_var
+    calculate_var as _calculate_var,
 )
 from .performance_metrics.statistical_metrics import (
     calculate_win_rate as _calculate_win_rate,
     calculate_pnl_ratio as _calculate_pnl_ratio,
-    calculate_expectancy as _calculate_expectancy
+    calculate_expectancy as _calculate_expectancy,
 )
 
 # 向後兼容的函數介面
@@ -103,7 +105,9 @@ def calculate_sortino_ratio(
         >>> returns = pd.Series([0.01, -0.02, 0.015])
         >>> sortino = calculate_sortino_ratio(returns, target_return=0.005)
     """
-    return _calculate_sortino_ratio(returns, risk_free_rate, periods_per_year, target_return)
+    return _calculate_sortino_ratio(
+        returns, risk_free_rate, periods_per_year, target_return
+    )
 
 
 def calculate_calmar_ratio(
@@ -155,8 +159,7 @@ def calculate_max_drawdown(
 
 
 def calculate_volatility(
-    returns: Union[pd.Series, np.ndarray],
-    periods_per_year: int = 252
+    returns: Union[pd.Series, np.ndarray], periods_per_year: int = 252
 ) -> float:
     """
     計算波動率 (向後兼容函數)
@@ -178,8 +181,7 @@ def calculate_volatility(
 
 
 def calculate_var(
-    returns: Union[pd.Series, np.ndarray],
-    confidence_level: float = 0.95
+    returns: Union[pd.Series, np.ndarray], confidence_level: float = 0.95
 ) -> float:
     """
     計算風險值 (向後兼容函數)

@@ -276,6 +276,3 @@ def _show_fund_management_settings() -> None:
         st.session_state.risk_params["correlation_limit"],
         0.05,
     )
-
-
-

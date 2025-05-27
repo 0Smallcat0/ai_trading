@@ -22,7 +22,7 @@ class StrategyVersion:
 
     def __init__(self, db_path: Path, strategies_dir: Path):
         """初始化策略版本控制
-        
+
         Args:
             db_path: 資料庫路徑
             strategies_dir: 策略檔案目錄
@@ -40,7 +40,7 @@ class StrategyVersion:
         author: str = "系統",
     ) -> str:
         """創建新版本
-        
+
         Args:
             strategy_id: 策略ID
             code: 策略代碼
@@ -48,10 +48,10 @@ class StrategyVersion:
             risk_parameters: 風險參數
             change_log: 變更日誌
             author: 作者
-            
+
         Returns:
             str: 新版本號
-            
+
         Raises:
             StrategyVersionError: 創建失敗時拋出
         """
@@ -107,7 +107,11 @@ class StrategyVersion:
                         new_version,
                         code or current_strategy[8],  # code 欄位
                         json.dumps(parameters) if parameters else current_strategy[9],
-                        json.dumps(risk_parameters) if risk_parameters else current_strategy[10],
+                        (
+                            json.dumps(risk_parameters)
+                            if risk_parameters
+                            else current_strategy[10]
+                        ),
                         change_log,
                         author,
                     ),
@@ -128,10 +132,10 @@ class StrategyVersion:
 
     def get_versions(self, strategy_id: str) -> List[Dict]:
         """獲取策略所有版本
-        
+
         Args:
             strategy_id: 策略ID
-            
+
         Returns:
             List[Dict]: 版本列表
         """
@@ -168,14 +172,14 @@ class StrategyVersion:
 
     def get_version(self, strategy_id: str, version: str) -> Dict:
         """獲取特定版本信息
-        
+
         Args:
             strategy_id: 策略ID
             version: 版本號
-            
+
         Returns:
             Dict: 版本信息
-            
+
         Raises:
             StrategyVersionError: 獲取失敗時拋出
         """
@@ -211,11 +215,11 @@ class StrategyVersion:
 
     def rollback_version(self, strategy_id: str, target_version: str) -> bool:
         """回滾到指定版本
-        
+
         Args:
             strategy_id: 策略ID
             target_version: 目標版本號
-            
+
         Returns:
             bool: 是否成功回滾
         """
@@ -233,8 +237,12 @@ class StrategyVersion:
                 author="系統",
             )
 
-            logger.info("策略回滾成功: %s 回滾到 %s (新版本: %s)", 
-                       strategy_id, target_version, new_version)
+            logger.info(
+                "策略回滾成功: %s 回滾到 %s (新版本: %s)",
+                strategy_id,
+                target_version,
+                new_version,
+            )
             return True
 
         except Exception as e:
@@ -243,12 +251,12 @@ class StrategyVersion:
 
     def compare_versions(self, strategy_id: str, version1: str, version2: str) -> Dict:
         """比較兩個版本的差異
-        
+
         Args:
             strategy_id: 策略ID
             version1: 版本1
             version2: 版本2
-            
+
         Returns:
             Dict: 比較結果
         """
@@ -262,8 +270,10 @@ class StrategyVersion:
                 "version2": version2,
                 "differences": {
                     "code_changed": v1_data["code"] != v2_data["code"],
-                    "parameters_changed": v1_data["parameters"] != v2_data["parameters"],
-                    "risk_parameters_changed": v1_data["risk_parameters"] != v2_data["risk_parameters"],
+                    "parameters_changed": v1_data["parameters"]
+                    != v2_data["parameters"],
+                    "risk_parameters_changed": v1_data["risk_parameters"]
+                    != v2_data["risk_parameters"],
                 },
                 "version1_data": v1_data,
                 "version2_data": v2_data,
@@ -277,10 +287,10 @@ class StrategyVersion:
 
     def _increment_version(self, current_version: str) -> str:
         """遞增版本號
-        
+
         Args:
             current_version: 當前版本號
-            
+
         Returns:
             str: 新版本號
         """

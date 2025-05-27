@@ -9,11 +9,12 @@ import numpy as np
 from unittest.mock import patch, MagicMock, Mock
 from datetime import datetime, timedelta
 
+
 # 模擬 streamlit 模組
 @pytest.fixture(autouse=True)
 def mock_streamlit():
     """自動模擬 streamlit 模組"""
-    with patch('src.ui.pages.reports.st') as mock_st:
+    with patch("src.ui.pages.reports.st") as mock_st:
         # 設置常用的 streamlit 方法
         mock_st.title = Mock()
         mock_st.header = Mock()
@@ -42,15 +43,17 @@ def mock_streamlit():
 @pytest.fixture
 def sample_report_data():
     """提供測試用的報表數據"""
-    dates = pd.date_range('2023-01-01', periods=30, freq='D')
-    return pd.DataFrame({
-        'date': dates,
-        'symbol': ['AAPL'] * 30,
-        'price': np.random.uniform(100, 200, 30),
-        'volume': np.random.randint(1000, 10000, 30),
-        'returns': np.random.normal(0.001, 0.02, 30),
-        'pnl': np.random.normal(100, 500, 30)
-    })
+    dates = pd.date_range("2023-01-01", periods=30, freq="D")
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "symbol": ["AAPL"] * 30,
+            "price": np.random.uniform(100, 200, 30),
+            "volume": np.random.randint(1000, 10000, 30),
+            "returns": np.random.normal(0.001, 0.02, 30),
+            "pnl": np.random.normal(100, 500, 30),
+        }
+    )
 
 
 class TestReportsPageImport:
@@ -60,15 +63,17 @@ class TestReportsPageImport:
         """測試報表頁面模組導入"""
         try:
             from src.ui.pages import reports
+
             assert reports is not None
         except ImportError as e:
             pytest.skip(f"無法導入報表頁面模組: {e}")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_main_function_exists(self, mock_st):
         """測試主函數存在"""
         try:
             from src.ui.pages.reports import main
+
             assert callable(main)
         except ImportError:
             pytest.skip("報表頁面模組不可用")
@@ -77,8 +82,8 @@ class TestReportsPageImport:
 class TestReportsPageFunctionality:
     """測試報表頁面功能"""
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_page_rendering(self, mock_generator, mock_st):
         """測試頁面渲染"""
         try:
@@ -97,8 +102,8 @@ class TestReportsPageFunctionality:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_report_type_selection(self, mock_generator, mock_st):
         """測試報表類型選擇"""
         try:
@@ -118,8 +123,8 @@ class TestReportsPageFunctionality:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_date_range_selection(self, mock_generator, mock_st):
         """測試日期範圍選擇"""
         try:
@@ -141,8 +146,8 @@ class TestReportsPageFunctionality:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_generate_report_button(self, mock_generator, mock_st):
         """測試生成報表按鈕"""
         try:
@@ -166,8 +171,8 @@ class TestReportsPageFunctionality:
 class TestReportsPageErrorHandling:
     """測試報表頁面錯誤處理"""
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_report_generation_error(self, mock_generator, mock_st):
         """測試報表生成錯誤處理"""
         try:
@@ -175,7 +180,9 @@ class TestReportsPageErrorHandling:
 
             # 模擬報表生成器拋出異常
             mock_generator_instance = Mock()
-            mock_generator_instance.generate_trading_summary.side_effect = Exception("生成錯誤")
+            mock_generator_instance.generate_trading_summary.side_effect = Exception(
+                "生成錯誤"
+            )
             mock_generator.return_value = mock_generator_instance
 
             # 模擬按鈕點擊觸發報表生成
@@ -191,12 +198,15 @@ class TestReportsPageErrorHandling:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_missing_dependencies_handling(self, mock_st):
         """測試缺少依賴的處理"""
         try:
             # 模擬導入錯誤
-            with patch('src.ui.pages.reports.ReportGenerator', side_effect=ImportError("缺少依賴")):
+            with patch(
+                "src.ui.pages.reports.ReportGenerator",
+                side_effect=ImportError("缺少依賴"),
+            ):
                 from src.ui.pages.reports import main
 
                 # 執行主函數（應該優雅地處理導入錯誤）
@@ -209,10 +219,12 @@ class TestReportsPageErrorHandling:
 class TestReportsPageDataHandling:
     """測試報表頁面數據處理"""
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
-    @patch('src.ui.pages.reports.get_trading_data')  # 假設有這個函數
-    def test_data_loading(self, mock_get_data, mock_generator, mock_st, sample_report_data):
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
+    @patch("src.ui.pages.reports.get_trading_data")  # 假設有這個函數
+    def test_data_loading(
+        self, mock_get_data, mock_generator, mock_st, sample_report_data
+    ):
         """測試數據載入"""
         try:
             from src.ui.pages.reports import main
@@ -234,8 +246,8 @@ class TestReportsPageDataHandling:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_empty_data_handling(self, mock_generator, mock_st):
         """測試空數據處理"""
         try:
@@ -243,7 +255,9 @@ class TestReportsPageDataHandling:
 
             # 模擬空數據
             mock_generator_instance = Mock()
-            mock_generator_instance.generate_trading_summary.side_effect = ValueError("數據不能為空")
+            mock_generator_instance.generate_trading_summary.side_effect = ValueError(
+                "數據不能為空"
+            )
             mock_generator.return_value = mock_generator_instance
 
             # 模擬按鈕點擊
@@ -262,7 +276,7 @@ class TestReportsPageDataHandling:
 class TestReportsPageUserInterface:
     """測試報表頁面用戶界面"""
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_page_layout(self, mock_st):
         """測試頁面佈局"""
         try:
@@ -280,7 +294,7 @@ class TestReportsPageUserInterface:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_interactive_elements(self, mock_st):
         """測試交互元素"""
         try:
@@ -291,9 +305,9 @@ class TestReportsPageUserInterface:
             # 驗證交互元素存在
             # 至少應該有選擇框或按鈕
             interactive_called = (
-                mock_st.selectbox.called or
-                mock_st.button.called or
-                mock_st.date_input.called
+                mock_st.selectbox.called
+                or mock_st.button.called
+                or mock_st.date_input.called
             )
             assert interactive_called, "頁面應該包含交互元素"
 
@@ -305,7 +319,7 @@ class TestReportsPageUserInterface:
 class TestReportsPageBoundaryConditions:
     """測試報表頁面邊界條件"""
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_invalid_date_range(self, mock_st):
         """測試無效日期範圍"""
         try:
@@ -324,7 +338,7 @@ class TestReportsPageBoundaryConditions:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_extreme_date_ranges(self, mock_st):
         """測試極端日期範圍"""
         try:
@@ -342,7 +356,7 @@ class TestReportsPageBoundaryConditions:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_responsive_design_elements(self, mock_st):
         """測試響應式設計元素"""
         try:
@@ -353,9 +367,7 @@ class TestReportsPageBoundaryConditions:
             # 驗證是否使用了響應式設計元素
             # 例如：columns, expander, tabs 等
             responsive_elements_used = (
-                mock_st.columns.called or
-                mock_st.expander.called or
-                mock_st.tabs.called
+                mock_st.columns.called or mock_st.expander.called or mock_st.tabs.called
             )
 
             # 注意：這個測試可能需要根據實際實現調整
@@ -367,10 +379,10 @@ class TestReportsPageBoundaryConditions:
 class TestReportsPageIntegration:
     """測試報表頁面整合"""
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
-    @patch('src.ui.pages.reports.PerformanceAnalyzer')
-    @patch('src.ui.pages.reports.RiskAnalyzer')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
+    @patch("src.ui.pages.reports.PerformanceAnalyzer")
+    @patch("src.ui.pages.reports.RiskAnalyzer")
     def test_full_page_workflow(self, mock_risk, mock_perf, mock_generator, mock_st):
         """測試完整頁面工作流程"""
         try:
@@ -397,14 +409,14 @@ class TestReportsPageIntegration:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_session_state_management(self, mock_st):
         """測試會話狀態管理"""
         try:
             from src.ui.pages.reports import main
 
             # 模擬 session_state
-            mock_st.session_state = {'report_data': None}
+            mock_st.session_state = {"report_data": None}
 
             main()
 
@@ -418,8 +430,8 @@ class TestReportsPageIntegration:
 class TestReportsPagePerformance:
     """測試報表頁面性能"""
 
-    @patch('src.ui.pages.reports.st')
-    @patch('src.ui.pages.reports.ReportGenerator')
+    @patch("src.ui.pages.reports.st")
+    @patch("src.ui.pages.reports.ReportGenerator")
     def test_caching_behavior(self, mock_generator, mock_st):
         """測試緩存行為"""
         try:
@@ -438,16 +450,14 @@ class TestReportsPagePerformance:
         except ImportError:
             pytest.skip("報表頁面模組不可用")
 
-    @patch('src.ui.pages.reports.st')
+    @patch("src.ui.pages.reports.st")
     def test_large_data_handling(self, mock_st):
         """測試大數據處理"""
         try:
             from src.ui.pages.reports import main
 
             # 模擬大數據集
-            large_data = pd.DataFrame({
-                'data': np.random.randn(10000)
-            })
+            large_data = pd.DataFrame({"data": np.random.randn(10000)})
 
             # 執行主函數
             main()

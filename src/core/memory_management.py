@@ -50,7 +50,7 @@ class MemoryMonitor:
             "system_total": system_memory.total / 1024 / 1024,  # MB
             "system_available": system_memory.available / 1024 / 1024,  # MB
             "system_used": system_memory.used / 1024 / 1024,  # MB
-            "system_percent": system_memory.percent
+            "system_percent": system_memory.percent,
         }
 
     def get_memory_growth(self) -> float:
@@ -91,7 +91,7 @@ class ChunkProcessor:
         max_memory_mb: float = 1024,
         min_chunk_size: int = 1000,
         max_chunk_size: int = 100000,
-        memory_safety_factor: float = 0.8
+        memory_safety_factor: float = 0.8,
     ):
         """初始化分塊處理器
 
@@ -122,7 +122,7 @@ class ChunkProcessor:
         self,
         total_rows: int,
         sample_df: Optional[pd.DataFrame] = None,
-        estimated_row_size_bytes: Optional[float] = None
+        estimated_row_size_bytes: Optional[float] = None,
     ) -> int:
         """計算最佳分塊大小
 
@@ -155,8 +155,7 @@ class ChunkProcessor:
 
         # 應用限制
         chunk_size = max(
-            self.min_chunk_size,
-            min(theoretical_chunk_size, self.max_chunk_size)
+            self.min_chunk_size, min(theoretical_chunk_size, self.max_chunk_size)
         )
 
         # 確保不超過總行數
@@ -164,15 +163,15 @@ class ChunkProcessor:
 
         logger.info(
             "計算最佳分塊大小: %s (總行數: %s, 行大小: %.4fMB)",
-            chunk_size, total_rows, row_size_mb
+            chunk_size,
+            total_rows,
+            row_size_mb,
         )
 
         return chunk_size
 
     def create_chunks(
-        self,
-        data: Union[pd.DataFrame, int],
-        chunk_size: Optional[int] = None
+        self, data: Union[pd.DataFrame, int], chunk_size: Optional[int] = None
     ) -> List[Tuple[int, int]]:
         """創建數據分塊索引
 
@@ -210,7 +209,7 @@ class ChunkProcessor:
         process_func: Callable[[pd.DataFrame], Any],
         chunk_size: Optional[int] = None,
         progress_callback: Optional[Callable[[int, int], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> List[Any]:
         """分塊處理 DataFrame
 
@@ -251,12 +250,17 @@ class ChunkProcessor:
 
                 # 記錄處理後的記憶體使用
                 memory_after = self.memory_monitor.get_memory_usage()
-                memory_growth = (memory_after["process_rss"] -
-                                 memory_before["process_rss"])
+                memory_growth = (
+                    memory_after["process_rss"] - memory_before["process_rss"]
+                )
 
                 logger.debug(
                     "分塊 %s/%s 處理完成 (行 %s-%s), 記憶體增長: %.2fMB",
-                    i + 1, len(chunks), start, end, memory_growth
+                    i + 1,
+                    len(chunks),
+                    start,
+                    end,
+                    memory_growth,
                 )
 
                 # 調用進度回調
@@ -283,7 +287,7 @@ class ChunkProcessor:
         total_rows: int,
         chunk_size: Optional[int] = None,
         progress_callback: Optional[Callable[[int, int], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> List[Any]:
         """分塊處理文件
 
@@ -323,12 +327,17 @@ class ChunkProcessor:
 
                 # 記錄處理後的記憶體使用
                 memory_after = self.memory_monitor.get_memory_usage()
-                memory_growth = (memory_after["process_rss"] -
-                                 memory_before["process_rss"])
+                memory_growth = (
+                    memory_after["process_rss"] - memory_before["process_rss"]
+                )
 
                 logger.debug(
                     "文件分塊 %s/%s 處理完成 (行 %s-%s), 記憶體增長: %.2fMB",
-                    i + 1, len(chunks), start, end, memory_growth
+                    i + 1,
+                    len(chunks),
+                    start,
+                    end,
+                    memory_growth,
                 )
 
                 # 調用進度回調
@@ -353,7 +362,7 @@ class MemoryEfficientProcessor:
         self,
         max_memory_mb: float = 1024,
         auto_gc: bool = True,
-        gc_threshold: float = 0.8
+        gc_threshold: float = 0.8,
     ):
         """初始化記憶體高效處理器
 
@@ -372,7 +381,7 @@ class MemoryEfficientProcessor:
         self,
         data: Union[pd.DataFrame, str, List[pd.DataFrame]],
         process_func: Callable,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """使用記憶體管理進行數據處理
 
@@ -386,8 +395,7 @@ class MemoryEfficientProcessor:
         """
         initial_memory = self.memory_monitor.get_memory_usage()
         logger.info(
-            "開始記憶體管理處理，初始記憶體: %.2fMB",
-            initial_memory['process_rss']
+            "開始記憶體管理處理，初始記憶體: %.2fMB", initial_memory["process_rss"]
         )
 
         try:
@@ -406,18 +414,15 @@ class MemoryEfficientProcessor:
                 gc.collect()
 
             final_memory = self.memory_monitor.get_memory_usage()
-            memory_growth = (final_memory["process_rss"] -
-                             initial_memory["process_rss"])
+            memory_growth = final_memory["process_rss"] - initial_memory["process_rss"]
             logger.info(
                 "記憶體管理處理完成，記憶體增長: %.2fMB, 最終記憶體: %.2fMB",
-                memory_growth, final_memory['process_rss']
+                memory_growth,
+                final_memory["process_rss"],
             )
 
     def _process_dataframe(
-        self,
-        data: pd.DataFrame,
-        process_func: Callable,
-        **kwargs
+        self, data: pd.DataFrame, process_func: Callable, **kwargs
     ) -> Any:
         """處理單個 DataFrame
 
@@ -441,12 +446,7 @@ class MemoryEfficientProcessor:
             logger.info("數據適中 (%.2fMB)，直接處理", estimated_memory)
             return process_func(data, **kwargs)
 
-    def _process_file(
-        self,
-        data: str,
-        process_func: Callable,
-        **kwargs
-    ) -> Any:
+    def _process_file(self, data: str, process_func: Callable, **kwargs) -> Any:
         """處理文件路徑
 
         Args:
@@ -465,10 +465,7 @@ class MemoryEfficientProcessor:
         raise NotImplementedError("文件處理功能需要具體實現")
 
     def _process_dataframe_list(
-        self,
-        data: List[pd.DataFrame],
-        process_func: Callable,
-        **kwargs
+        self, data: List[pd.DataFrame], process_func: Callable, **kwargs
     ) -> Any:
         """處理 DataFrame 列表
 

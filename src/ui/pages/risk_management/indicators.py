@@ -109,23 +109,25 @@ def _show_portfolio_overview(risk_metrics: Dict[str, Any]) -> None:
     with col1:
         st.metric(
             "投資組合價值",
-            format_currency(risk_metrics['portfolio_value']),
+            format_currency(risk_metrics["portfolio_value"]),
             f"{risk_metrics['daily_pnl']:+,.0f}",
         )
 
     with col2:
-        cash_ratio = risk_metrics['cash_amount'] / risk_metrics['portfolio_value'] * 100
+        cash_ratio = risk_metrics["cash_amount"] / risk_metrics["portfolio_value"] * 100
         st.metric(
             "現金部位",
-            format_currency(risk_metrics['cash_amount']),
+            format_currency(risk_metrics["cash_amount"]),
             f"{cash_ratio:.1f}%",
         )
 
     with col3:
-        invested_ratio = risk_metrics['invested_amount'] / risk_metrics['portfolio_value'] * 100
+        invested_ratio = (
+            risk_metrics["invested_amount"] / risk_metrics["portfolio_value"] * 100
+        )
         st.metric(
             "投資部位",
-            format_currency(risk_metrics['invested_amount']),
+            format_currency(risk_metrics["invested_amount"]),
             f"{invested_ratio:.1f}%",
         )
 
@@ -136,7 +138,7 @@ def _show_portfolio_overview(risk_metrics: Dict[str, Any]) -> None:
         st.metric(
             "今日損益",
             f"{risk_metrics['daily_pnl_percent']:+.2f}%",
-            format_currency(risk_metrics['daily_pnl']),
+            format_currency(risk_metrics["daily_pnl"]),
         )
 
 
@@ -155,8 +157,8 @@ def _show_risk_metrics_cards(risk_metrics: Dict[str, Any]) -> None:
         col_var1, col_var2 = st.columns(2)
 
         with col_var1:
-            st.metric("95% VaR (1日)", format_currency(risk_metrics['var_95_1day']))
-            st.metric("95% CVaR (1日)", format_currency(risk_metrics['cvar_95_1day']))
+            st.metric("95% VaR (1日)", format_currency(risk_metrics["var_95_1day"]))
+            st.metric("95% CVaR (1日)", format_currency(risk_metrics["cvar_95_1day"]))
 
         with col_var2:
             var_pct = (
@@ -281,14 +283,18 @@ def _show_risk_visualizations(risk_metrics: Dict[str, Any]) -> None:
             "信用風險": 25,
             "流動性風險": 15,
             "操作風險": 10,
-            "其他風險": 5
+            "其他風險": 5,
         }
 
-        fig_pie = go.Figure(data=[go.Pie(
-            labels=list(risk_components.keys()),
-            values=list(risk_components.values()),
-            hole=0.3
-        )])
+        fig_pie = go.Figure(
+            data=[
+                go.Pie(
+                    labels=list(risk_components.keys()),
+                    values=list(risk_components.values()),
+                    hole=0.3,
+                )
+            ]
+        )
 
         fig_pie.update_layout(
             title="風險分解",
@@ -342,7 +348,10 @@ def show_risk_summary() -> None:
     elif abs(risk_metrics.get("current_drawdown", 0)) > 5:
         risk_score -= 15
 
-    if risk_metrics.get("var_95_1day", 0) / risk_metrics.get("portfolio_value", 1) > 0.03:
+    if (
+        risk_metrics.get("var_95_1day", 0) / risk_metrics.get("portfolio_value", 1)
+        > 0.03
+    ):
         risk_score -= 20
 
     # 風險等級
@@ -356,8 +365,4 @@ def show_risk_summary() -> None:
         risk_level = "高風險"
         risk_color = "🔴"
 
-    st.metric(
-        "風險評分",
-        f"{risk_score}/100",
-        f"{risk_color} {risk_level}"
-    )
+    st.metric("風險評分", f"{risk_score}/100", f"{risk_color} {risk_level}")

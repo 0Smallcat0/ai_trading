@@ -222,7 +222,10 @@ class TestXSSProtection:
             ).lower()
             if "text/html" not in content_type and response.status_code == 200:
                 # 非 HTML 回應應該有 nosniff 標頭（僅檢查成功的回應）
-                if not x_content_type_options or "nosniff" not in x_content_type_options:
+                if (
+                    not x_content_type_options
+                    or "nosniff" not in x_content_type_options
+                ):
                     print(f"⚠️ {endpoint} 缺少 X-Content-Type-Options: nosniff 標頭")
                     # 不強制失敗，只是警告
                     # assert False, f"{endpoint} 缺少 X-Content-Type-Options: nosniff"

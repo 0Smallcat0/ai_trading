@@ -97,7 +97,7 @@ class SlackChannel(NotificationChannel):
             )
 
             if response.status_code == 200:
-                module_logger.info("Slack 通知發送成功: %s", data.get('alert_id'))
+                module_logger.info("Slack 通知發送成功: %s", data.get("alert_id"))
                 return True
 
             module_logger.warning("Slack 通知發送失敗: %s", response.status_code)

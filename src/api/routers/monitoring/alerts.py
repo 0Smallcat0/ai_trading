@@ -26,9 +26,9 @@ monitoring_service = SystemMonitoringService()
 
 class AlertRule(BaseModel):
     """警報規則響應模型
-    
+
     此模型定義了警報規則的詳細資訊。
-    
+
     Attributes:
         id: 規則 ID
         name: 規則名稱
@@ -46,6 +46,7 @@ class AlertRule(BaseModel):
         last_triggered: 最後觸發時間
         trigger_count: 觸發次數
     """
+
     id: str = Field(..., description="規則 ID")
     name: str = Field(..., description="規則名稱")
     description: Optional[str] = Field(default=None, description="規則描述")
@@ -65,9 +66,9 @@ class AlertRule(BaseModel):
 
 class AlertRecord(BaseModel):
     """警報記錄響應模型
-    
+
     此模型定義了警報記錄的詳細資訊。
-    
+
     Attributes:
         id: 警報 ID
         rule_id: 規則 ID
@@ -85,6 +86,7 @@ class AlertRecord(BaseModel):
         resolved_by: 解決人
         notification_sent: 是否已發送通知
     """
+
     id: str = Field(..., description="警報 ID")
     rule_id: str = Field(..., description="規則 ID")
     rule_name: str = Field(..., description="規則名稱")
@@ -114,18 +116,18 @@ class AlertRecord(BaseModel):
 )
 async def create_alert_rule(request: AlertRuleRequest):
     """創建警報規則
-    
+
     此端點用於創建新的警報規則，用於監控系統指標並觸發警報。
-    
+
     Args:
         request: 警報規則創建請求資料
-        
+
     Returns:
         APIResponse[AlertRule]: 包含創建的警報規則詳情的 API 回應
-        
+
     Raises:
         HTTPException: 當警報規則創建失敗時
-        
+
     Example:
         POST /api/monitoring/alerts/rules
         {
@@ -145,21 +147,17 @@ async def create_alert_rule(request: AlertRuleRequest):
 
         # 獲取創建的規則詳情
         rule_details = monitoring_service.get_alert_rule(rule_id)
-        
+
         if not rule_details:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="警報規則創建成功但無法獲取詳情"
+                detail="警報規則創建成功但無法獲取詳情",
             )
 
         # 轉換為響應模型
         response_data = _convert_to_alert_rule_response(rule_details)
 
-        return APIResponse(
-            success=True,
-            message="警報規則創建成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="警報規則創建成功", data=response_data)
 
     except HTTPException:
         raise
@@ -167,7 +165,7 @@ async def create_alert_rule(request: AlertRuleRequest):
         logger.error("創建警報規則失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"創建警報規則失敗: {str(e)}"
+            detail=f"創建警報規則失敗: {str(e)}",
         ) from e
 
 
@@ -186,19 +184,19 @@ async def get_alert_rules(
     metric_type: Optional[str] = Query(default=None, description="指標類型篩選"),
 ):
     """查詢警報規則列表
-    
+
     此端點用於查詢警報規則列表，支援多種篩選條件和分頁。
-    
+
     Args:
         page: 頁碼
         page_size: 每頁數量
         enabled: 是否啟用篩選
         severity: 嚴重程度篩選
         metric_type: 指標類型篩選
-        
+
     Returns:
         APIResponse[List[AlertRule]]: 包含警報規則列表的 API 回應
-        
+
     Raises:
         HTTPException: 當查詢失敗時
     """
@@ -220,14 +218,14 @@ async def get_alert_rules(
         return APIResponse(
             success=True,
             message=f"獲取到 {len(rules_list)} 個警報規則",
-            data=rules_list
+            data=rules_list,
         )
 
     except Exception as e:
         logger.error("查詢警報規則列表失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"查詢警報規則列表失敗: {str(e)}"
+            detail=f"查詢警報規則列表失敗: {str(e)}",
         ) from e
 
 
@@ -249,9 +247,9 @@ async def get_alerts(
     end_time: Optional[str] = Query(default=None, description="結束時間 (ISO 8601)"),
 ):
     """查詢警報記錄
-    
+
     此端點用於查詢警報記錄，支援多種篩選條件和分頁。
-    
+
     Args:
         page: 頁碼
         page_size: 每頁數量
@@ -261,10 +259,10 @@ async def get_alerts(
         resolved: 是否已解決篩選
         start_time: 開始時間
         end_time: 結束時間
-        
+
     Returns:
         APIResponse[List[AlertRecord]]: 包含警報記錄列表的 API 回應
-        
+
     Raises:
         HTTPException: 當查詢失敗時
     """
@@ -288,7 +286,7 @@ async def get_alerts(
         return APIResponse(
             success=True,
             message=f"獲取到 {len(alerts_list)} 個警報記錄",
-            data=alerts_list
+            data=alerts_list,
         )
 
     except HTTPException:
@@ -297,7 +295,7 @@ async def get_alerts(
         logger.error("查詢警報記錄失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"查詢警報記錄失敗: {str(e)}"
+            detail=f"查詢警報記錄失敗: {str(e)}",
         ) from e
 
 
@@ -309,20 +307,19 @@ async def get_alerts(
     description="更新警報的確認或解決狀態",
 )
 async def update_alert(
-    alert_id: str = Path(..., description="警報 ID"),
-    request: AlertUpdateRequest = None
+    alert_id: str = Path(..., description="警報 ID"), request: AlertUpdateRequest = None
 ):
     """更新警報狀態
-    
+
     此端點用於更新警報的確認或解決狀態。
-    
+
     Args:
         alert_id: 警報 ID
         request: 警報更新請求資料
-        
+
     Returns:
         APIResponse[AlertRecord]: 包含更新後警報詳情的 API 回應
-        
+
     Raises:
         HTTPException: 當警報不存在或更新失敗時
     """
@@ -331,8 +328,7 @@ async def update_alert(
         existing_alert = monitoring_service.get_alert_details(alert_id)
         if not existing_alert:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"警報 {alert_id} 不存在"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"警報 {alert_id} 不存在"
             )
 
         # 構建更新數據
@@ -340,8 +336,7 @@ async def update_alert(
 
         if not update_data:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="沒有提供任何更新數據"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="沒有提供任何更新數據"
             )
 
         # 執行警報更新
@@ -350,18 +345,14 @@ async def update_alert(
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"警報更新失敗: {message}"
+                detail=f"警報更新失敗: {message}",
             )
 
         # 獲取更新後的警報詳情
         updated_alert = monitoring_service.get_alert_details(alert_id)
         response_data = _convert_to_alert_record_response(updated_alert)
 
-        return APIResponse(
-            success=True,
-            message="警報更新成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="警報更新成功", data=response_data)
 
     except HTTPException:
         raise
@@ -369,7 +360,7 @@ async def update_alert(
         logger.error("更新警報失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"更新警報失敗: {str(e)}"
+            detail=f"更新警報失敗: {str(e)}",
         ) from e
 
 
@@ -393,9 +384,7 @@ def _build_alert_rule_data(request: AlertRuleRequest) -> dict:
 
 
 def _build_alert_rule_filters(
-    enabled: Optional[bool],
-    severity: Optional[str],
-    metric_type: Optional[str]
+    enabled: Optional[bool], severity: Optional[str], metric_type: Optional[str]
 ) -> dict:
     """構建警報規則篩選條件"""
     filters = {}
@@ -414,7 +403,7 @@ def _build_alert_filters(
     acknowledged: Optional[bool],
     resolved: Optional[bool],
     start_time: Optional[str],
-    end_time: Optional[str]
+    end_time: Optional[str],
 ) -> dict:
     """構建警報篩選條件"""
     filters = {}
@@ -428,19 +417,23 @@ def _build_alert_filters(
         filters["resolved"] = resolved
     if start_time:
         try:
-            filters["start_time"] = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+            filters["start_time"] = datetime.fromisoformat(
+                start_time.replace("Z", "+00:00")
+            )
         except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="開始時間格式錯誤，請使用 ISO 8601 格式"
+                detail="開始時間格式錯誤，請使用 ISO 8601 格式",
             ) from e
     if end_time:
         try:
-            filters["end_time"] = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+            filters["end_time"] = datetime.fromisoformat(
+                end_time.replace("Z", "+00:00")
+            )
         except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="結束時間格式錯誤，請使用 ISO 8601 格式"
+                detail="結束時間格式錯誤，請使用 ISO 8601 格式",
             ) from e
     return filters
 

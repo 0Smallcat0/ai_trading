@@ -46,30 +46,15 @@ class APIResponse(BaseModel, Generic[T]):
         ... )
     """
 
-    success: bool = Field(
-        description="請求是否成功",
-        example=True
-    )
+    success: bool = Field(description="請求是否成功", example=True)
 
-    message: str = Field(
-        description="響應訊息",
-        example="操作成功"
-    )
+    message: str = Field(description="響應訊息", example="操作成功")
 
-    data: Optional[T] = Field(
-        default=None,
-        description="響應資料"
-    )
+    data: Optional[T] = Field(default=None, description="響應資料")
 
-    timestamp: datetime = Field(
-        default_factory=datetime.now,
-        description="響應時間戳"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="響應時間戳")
 
-    request_id: Optional[str] = Field(
-        default=None,
-        description="請求 ID，用於追蹤"
-    )
+    request_id: Optional[str] = Field(default=None, description="請求 ID，用於追蹤")
 
     model_config = ConfigDict(
         json_encoders={datetime: lambda v: v.isoformat()},
@@ -80,9 +65,9 @@ class APIResponse(BaseModel, Generic[T]):
                 "message": "操作成功",
                 "data": {},
                 "timestamp": "2024-12-20T10:30:00Z",
-                "request_id": "req_123456789"
+                "request_id": "req_123456789",
             }
-        }
+        },
     )
 
 
@@ -106,34 +91,19 @@ class HealthCheckResponse(BaseModel):
         ... )
     """
 
-    status: str = Field(
-        description="服務狀態",
-        example="healthy"
-    )
+    status: str = Field(description="服務狀態", example="healthy")
 
-    version: str = Field(
-        description="服務版本",
-        example="1.0.0"
-    )
+    version: str = Field(description="服務版本", example="1.0.0")
 
-    timestamp: datetime = Field(
-        default_factory=datetime.now,
-        description="檢查時間"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="檢查時間")
 
     services: Dict[str, str] = Field(
         description="各服務狀態",
-        example={
-            "database": "healthy",
-            "cache": "healthy",
-            "trading_api": "healthy"
-        }
+        example={"database": "healthy", "cache": "healthy", "trading_api": "healthy"},
     )
 
     uptime: Optional[str] = Field(
-        default=None,
-        description="運行時間",
-        example="2 days, 3 hours, 45 minutes"
+        default=None, description="運行時間", example="2 days, 3 hours, 45 minutes"
     )
 
     model_config = ConfigDict(
@@ -146,11 +116,11 @@ class HealthCheckResponse(BaseModel):
                 "services": {
                     "database": "healthy",
                     "cache": "healthy",
-                    "trading_api": "healthy"
+                    "trading_api": "healthy",
                 },
-                "uptime": "2 days, 3 hours, 45 minutes"
+                "uptime": "2 days, 3 hours, 45 minutes",
             }
-        }
+        },
     )
 
 
@@ -175,31 +145,18 @@ class MetricsResponse(BaseModel):
         ... )
     """
 
-    metric_name: str = Field(
-        description="指標名稱",
-        example="api_requests_total"
-    )
+    metric_name: str = Field(description="指標名稱", example="api_requests_total")
 
-    value: float = Field(
-        description="指標值",
-        example=12345.0
-    )
+    value: float = Field(description="指標值", example=12345.0)
 
-    unit: Optional[str] = Field(
-        default=None,
-        description="單位",
-        example="requests"
-    )
+    unit: Optional[str] = Field(default=None, description="單位", example="requests")
 
-    timestamp: datetime = Field(
-        default_factory=datetime.now,
-        description="指標時間戳"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="指標時間戳")
 
     labels: Optional[Dict[str, str]] = Field(
         default=None,
         description="指標標籤",
-        example={"method": "GET", "endpoint": "/api/v1/users"}
+        example={"method": "GET", "endpoint": "/api/v1/users"},
     )
 
     model_config = ConfigDict(
@@ -210,12 +167,9 @@ class MetricsResponse(BaseModel):
                 "value": 12345.0,
                 "unit": "requests",
                 "timestamp": "2024-12-20T10:30:00Z",
-                "labels": {
-                    "method": "GET",
-                    "endpoint": "/api/v1/users"
-                }
+                "labels": {"method": "GET", "endpoint": "/api/v1/users"},
             }
-        }
+        },
     )
 
 
@@ -241,32 +195,19 @@ class OperationResult(BaseModel):
         ... )
     """
 
-    operation: str = Field(
-        description="操作類型",
-        example="create_user"
-    )
+    operation: str = Field(description="操作類型", example="create_user")
 
-    success: bool = Field(
-        description="操作是否成功",
-        example=True
-    )
+    success: bool = Field(description="操作是否成功", example=True)
 
     affected_count: Optional[int] = Field(
-        default=None,
-        description="影響的記錄數",
-        example=1
+        default=None, description="影響的記錄數", example=1
     )
 
     resource_id: Optional[str] = Field(
-        default=None,
-        description="資源 ID",
-        example="user_123"
+        default=None, description="資源 ID", example="user_123"
     )
 
-    message: str = Field(
-        description="操作結果訊息",
-        example="用戶創建成功"
-    )
+    message: str = Field(description="操作結果訊息", example="用戶創建成功")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -275,7 +216,7 @@ class OperationResult(BaseModel):
                 "success": True,
                 "affected_count": 1,
                 "resource_id": "user_123",
-                "message": "用戶創建成功"
+                "message": "用戶創建成功",
             }
         }
     )

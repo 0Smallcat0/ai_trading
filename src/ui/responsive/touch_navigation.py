@@ -86,13 +86,13 @@ class TouchNavigationComponents:
             nav_html = '<div class="swipe-nav">'
             for page in pages:
                 active_class = "active" if page["key"] == current_page else ""
-                nav_html += f'''
+                nav_html += f"""
                 <div class="swipe-nav-item {active_class}" 
                      onclick="selectPage('{page["key"]}')"
                      data-page="{page["key"]}">
                     {page.get("icon", "")} {page["name"]}
                 </div>
-                '''
+                """
             nav_html += "</div>"
 
             # 添加 JavaScript 處理點擊事件
@@ -113,7 +113,9 @@ class TouchNavigationComponents:
             # 使用選擇框作為備用方案
             page_names = [f"{p.get('icon', '')} {p['name']}" for p in pages]
             page_keys = [p["key"] for p in pages]
-            current_index = page_keys.index(current_page) if current_page in page_keys else 0
+            current_index = (
+                page_keys.index(current_page) if current_page in page_keys else 0
+            )
 
             selected_index = st.selectbox(
                 "選擇頁面",
@@ -144,8 +146,7 @@ class TouchNavigationComponents:
 
     @staticmethod
     def touch_tabs(
-        tab_configs: List[Dict[str, Any]], 
-        selected_key: str = "selected_tab"
+        tab_configs: List[Dict[str, Any]], selected_key: str = "selected_tab"
     ) -> str:
         """觸控優化標籤頁
 
@@ -162,10 +163,12 @@ class TouchNavigationComponents:
             # 手機版：使用下拉選單
             tab_names = [tab["name"] for tab in tab_configs]
             tab_keys = [tab["key"] for tab in tab_configs]
-            
+
             current_tab = st.session_state.get(selected_key, tab_keys[0])
-            current_index = tab_keys.index(current_tab) if current_tab in tab_keys else 0
-            
+            current_index = (
+                tab_keys.index(current_tab) if current_tab in tab_keys else 0
+            )
+
             selected_index = st.selectbox(
                 "選擇標籤",
                 range(len(tab_configs)),
@@ -173,30 +176,29 @@ class TouchNavigationComponents:
                 format_func=lambda i: tab_names[i],
                 key=f"{selected_key}_mobile",
             )
-            
+
             selected_tab = tab_keys[selected_index]
             st.session_state[selected_key] = selected_tab
-            
+
             return selected_tab
         else:
             # 桌面版：使用標準標籤頁
             tab_names = [tab["name"] for tab in tab_configs]
             tabs = st.tabs(tab_names)
-            
+
             current_tab = st.session_state.get(selected_key, tab_configs[0]["key"])
-            
+
             for i, (tab, config) in enumerate(zip(tabs, tab_configs)):
                 if config["key"] == current_tab:
                     with tab:
                         st.session_state[selected_key] = config["key"]
                         return config["key"]
-            
+
             return tab_configs[0]["key"]
 
     @staticmethod
     def touch_menu(
-        menu_items: List[Dict[str, Any]], 
-        menu_key: str = "touch_menu"
+        menu_items: List[Dict[str, Any]], menu_key: str = "touch_menu"
     ) -> str:
         """觸控優化選單
 
@@ -240,10 +242,12 @@ class TouchNavigationComponents:
         # 使用選擇框實作
         item_names = [f"{item.get('icon', '')} {item['name']}" for item in menu_items]
         item_keys = [item["key"] for item in menu_items]
-        
+
         current_item = st.session_state.get(menu_key, item_keys[0])
-        current_index = item_keys.index(current_item) if current_item in item_keys else 0
-        
+        current_index = (
+            item_keys.index(current_item) if current_item in item_keys else 0
+        )
+
         selected_index = st.selectbox(
             "選擇選單項目",
             range(len(menu_items)),
@@ -251,8 +255,8 @@ class TouchNavigationComponents:
             format_func=lambda i: item_names[i],
             key=f"{menu_key}_selector",
         )
-        
+
         selected_item = item_keys[selected_index]
         st.session_state[menu_key] = selected_item
-        
+
         return selected_item

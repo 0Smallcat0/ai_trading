@@ -18,11 +18,11 @@ from .telegram_service import TelegramChannel
 from .line_service import LineChannel
 
 __all__ = [
-    'NotificationServices',
-    'NotificationChannel',
-    'EmailChannel',
-    'WebhookChannel',
-    'SlackChannel',
-    'TelegramChannel',
-    'LineChannel',
+    "NotificationServices",
+    "NotificationChannel",
+    "EmailChannel",
+    "WebhookChannel",
+    "SlackChannel",
+    "TelegramChannel",
+    "LineChannel",
 ]

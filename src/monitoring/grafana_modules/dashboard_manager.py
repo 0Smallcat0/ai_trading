@@ -34,13 +34,13 @@ class DashboardManager:
         """
         self.grafana_api = grafana_api
         self.templates_dir = config_dir / "grafana_dashboards"
-        
+
         # 確保目錄存在
         self.templates_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 初始化預設儀表板模板
         self._init_default_templates()
-        
+
         module_logger.info("儀表板管理器初始化成功")
 
     def _init_default_templates(self) -> None:
@@ -303,19 +303,13 @@ class DashboardManager:
 
                 except Exception as e:
                     module_logger.error(
-                        "部署儀表板模板失敗 %s: %s",
-                        template_file.name,
-                        e
+                        "部署儀表板模板失敗 %s: %s", template_file.name, e
                     )
                     results[template_file.name] = None
 
             success_count = sum(1 for url in results.values() if url is not None)
             total_count = len(results)
-            module_logger.info(
-                "儀表板部署完成，成功 %d/%d",
-                success_count,
-                total_count
-            )
+            module_logger.info("儀表板部署完成，成功 %d/%d", success_count, total_count)
 
         except Exception as e:
             module_logger.error("部署所有儀表板失敗: %s", e)

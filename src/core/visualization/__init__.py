@@ -14,7 +14,7 @@ from .config_management import ConfigManagementService
 
 __all__ = [
     "DataRetrievalService",
-    "ChartGeneratorService", 
+    "ChartGeneratorService",
     "ReportExporterService",
     "ConfigManagementService",
 ]

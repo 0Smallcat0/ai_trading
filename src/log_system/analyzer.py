@@ -16,13 +16,16 @@ import pandas as pd
 try:
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
     plt = None
+
     # 為了類型提示，定義一個假的 Figure 類型
     class Figure:
         pass
+
 
 from src.log_system.config import LOG_DIRS
 
@@ -434,7 +437,7 @@ class LogAnalyzer:
         category: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-        threshold_multiplier: float = 2.0
+        threshold_multiplier: float = 2.0,
     ) -> Dict[str, Any]:
         """
         檢測異常行為
@@ -455,7 +458,7 @@ class LogAnalyzer:
             "error_spikes": [],
             "unusual_patterns": [],
             "performance_issues": [],
-            "security_concerns": []
+            "security_concerns": [],
         }
 
         if df.empty:
@@ -476,12 +479,16 @@ class LogAnalyzer:
 
                     for hour, count in hourly_errors.items():
                         if count > threshold:
-                            anomalies["error_spikes"].append({
-                                "time": hour.isoformat(),
-                                "error_count": int(count),
-                                "threshold": threshold,
-                                "severity": "high" if count > threshold * 1.5 else "medium"
-                            })
+                            anomalies["error_spikes"].append(
+                                {
+                                    "time": hour.isoformat(),
+                                    "error_count": int(count),
+                                    "threshold": threshold,
+                                    "severity": (
+                                        "high" if count > threshold * 1.5 else "medium"
+                                    ),
+                                }
+                            )
 
         # 檢測異常模式
         anomalies["unusual_patterns"] = self._detect_unusual_patterns(df)
@@ -503,12 +510,16 @@ class LogAnalyzer:
             message_counts = df["message"].value_counts()
             for message, count in message_counts.head(10).items():
                 if count > 50:  # 超過50次的重複訊息
-                    patterns.append({
-                        "type": "repeated_message",
-                        "message": message[:100] + "..." if len(message) > 100 else message,
-                        "count": int(count),
-                        "severity": "high" if count > 100 else "medium"
-                    })
+                    patterns.append(
+                        {
+                            "type": "repeated_message",
+                            "message": (
+                                message[:100] + "..." if len(message) > 100 else message
+                            ),
+                            "count": int(count),
+                            "severity": "high" if count > 100 else "medium",
+                        }
+                    )
 
         return patterns
 
@@ -522,13 +533,21 @@ class LogAnalyzer:
                 if isinstance(row["data"], dict):
                     execution_time = row["data"].get("execution_time")
                     if execution_time and execution_time > 5.0:  # 超過5秒
-                        issues.append({
-                            "type": "slow_operation",
-                            "timestamp": row.get("timestamp", "").isoformat() if hasattr(row.get("timestamp", ""), "isoformat") else str(row.get("timestamp", "")),
-                            "execution_time": execution_time,
-                            "operation": row["data"].get("operation", "unknown"),
-                            "severity": "critical" if execution_time > 10.0 else "high"
-                        })
+                        issues.append(
+                            {
+                                "type": "slow_operation",
+                                "timestamp": (
+                                    row.get("timestamp", "").isoformat()
+                                    if hasattr(row.get("timestamp", ""), "isoformat")
+                                    else str(row.get("timestamp", ""))
+                                ),
+                                "execution_time": execution_time,
+                                "operation": row["data"].get("operation", "unknown"),
+                                "severity": (
+                                    "critical" if execution_time > 10.0 else "high"
+                                ),
+                            }
+                        )
 
         return issues
 
@@ -538,22 +557,39 @@ class LogAnalyzer:
 
         if "message" in df.columns:
             security_keywords = [
-                "unauthorized", "forbidden", "access denied", "authentication failed",
-                "invalid token", "suspicious", "attack", "injection", "malicious"
+                "unauthorized",
+                "forbidden",
+                "access denied",
+                "authentication failed",
+                "invalid token",
+                "suspicious",
+                "attack",
+                "injection",
+                "malicious",
             ]
 
             for _, row in df.iterrows():
                 message = str(row["message"]).lower()
                 for keyword in security_keywords:
                     if keyword in message:
-                        concerns.append({
-                            "type": "security_alert",
-                            "timestamp": row.get("timestamp", "").isoformat() if hasattr(row.get("timestamp", ""), "isoformat") else str(row.get("timestamp", "")),
-                            "keyword": keyword,
-                            "message": str(row["message"])[:200] + "..." if len(str(row["message"])) > 200 else str(row["message"]),
-                            "level": row.get("level", "unknown"),
-                            "severity": "critical"
-                        })
+                        concerns.append(
+                            {
+                                "type": "security_alert",
+                                "timestamp": (
+                                    row.get("timestamp", "").isoformat()
+                                    if hasattr(row.get("timestamp", ""), "isoformat")
+                                    else str(row.get("timestamp", ""))
+                                ),
+                                "keyword": keyword,
+                                "message": (
+                                    str(row["message"])[:200] + "..."
+                                    if len(str(row["message"])) > 200
+                                    else str(row["message"])
+                                ),
+                                "level": row.get("level", "unknown"),
+                                "severity": "critical",
+                            }
+                        )
                         break
 
         return concerns
@@ -562,7 +598,7 @@ class LogAnalyzer:
         self,
         category: Optional[str] = None,
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         """
         生成分析報告
@@ -583,22 +619,32 @@ class LogAnalyzer:
             "generated_at": datetime.now().isoformat(),
             "period": {
                 "start_time": start_time.isoformat() if start_time else None,
-                "end_time": end_time.isoformat() if end_time else None
+                "end_time": end_time.isoformat() if end_time else None,
             },
             "category": category,
             "total_logs": len(df),
             "summary": {},
             "anomalies": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
         if not df.empty:
             # 基本統計
             report["summary"] = {
                 "by_level": self.count_logs_by_level(category, start_time, end_time),
-                "by_time": self.count_logs_by_time(category, None, start_time, end_time, "1H"),
-                "error_logs": len(df[df.get("level", "") == "ERROR"]) if "level" in df.columns else 0,
-                "warning_logs": len(df[df.get("level", "") == "WARNING"]) if "level" in df.columns else 0
+                "by_time": self.count_logs_by_time(
+                    category, None, start_time, end_time, "1H"
+                ),
+                "error_logs": (
+                    len(df[df.get("level", "") == "ERROR"])
+                    if "level" in df.columns
+                    else 0
+                ),
+                "warning_logs": (
+                    len(df[df.get("level", "") == "WARNING"])
+                    if "level" in df.columns
+                    else 0
+                ),
             }
 
             # 異常檢測
@@ -620,38 +666,46 @@ class LogAnalyzer:
         if total_logs > 0:
             error_rate = error_logs / total_logs
             if error_rate > 0.1:  # 錯誤率超過10%
-                recommendations.append({
-                    "type": "high_error_rate",
-                    "priority": "high",
-                    "description": f"錯誤率過高 ({error_rate:.1%})，建議檢查系統穩定性",
-                    "action": "檢查錯誤日誌並修復相關問題"
-                })
+                recommendations.append(
+                    {
+                        "type": "high_error_rate",
+                        "priority": "high",
+                        "description": f"錯誤率過高 ({error_rate:.1%})，建議檢查系統穩定性",
+                        "action": "檢查錯誤日誌並修復相關問題",
+                    }
+                )
 
         # 檢查異常
         anomalies = report["anomalies"]
 
         if anomalies.get("error_spikes"):
-            recommendations.append({
-                "type": "error_spikes",
-                "priority": "high",
-                "description": "檢測到錯誤激增，可能存在系統問題",
-                "action": "調查錯誤激增的原因並採取修復措施"
-            })
+            recommendations.append(
+                {
+                    "type": "error_spikes",
+                    "priority": "high",
+                    "description": "檢測到錯誤激增，可能存在系統問題",
+                    "action": "調查錯誤激增的原因並採取修復措施",
+                }
+            )
 
         if anomalies.get("performance_issues"):
-            recommendations.append({
-                "type": "performance_issues",
-                "priority": "medium",
-                "description": "檢測到效能問題，建議優化相關操作",
-                "action": "分析慢操作並進行效能優化"
-            })
+            recommendations.append(
+                {
+                    "type": "performance_issues",
+                    "priority": "medium",
+                    "description": "檢測到效能問題，建議優化相關操作",
+                    "action": "分析慢操作並進行效能優化",
+                }
+            )
 
         if anomalies.get("security_concerns"):
-            recommendations.append({
-                "type": "security_concerns",
-                "priority": "critical",
-                "description": "檢測到安全問題，需要立即處理",
-                "action": "檢查安全日誌並加強安全措施"
-            })
+            recommendations.append(
+                {
+                    "type": "security_concerns",
+                    "priority": "critical",
+                    "description": "檢測到安全問題，需要立即處理",
+                    "action": "檢查安全日誌並加強安全措施",
+                }
+            )
 
         return recommendations

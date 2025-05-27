@@ -33,23 +33,33 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from src.config import DATA_DIR
-from src.database.schema import Base, DataShard, MarketDaily, MarketMinute, MarketTick, create_data_shard
+from src.database.schema import (
+    Base,
+    DataShard,
+    MarketDaily,
+    MarketMinute,
+    MarketTick,
+    create_data_shard,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class ParquetError(Exception):
     """Parquet 操作相關的異常類別."""
+
     pass
 
 
 class ParquetConfigError(ParquetError):
     """Parquet 配置錯誤."""
+
     pass
 
 
 class ParquetOperationError(ParquetError):
     """Parquet 操作錯誤."""
+
     pass
 
 
@@ -200,10 +210,7 @@ def _ensure_directory_exists(file_path: str) -> None:
 
 
 def _save_partitioned_parquet(
-    table: pa.Table,
-    file_path: str,
-    partition_cols: List[str],
-    compression: str
+    table: pa.Table, file_path: str, partition_cols: List[str], compression: str
 ) -> None:
     """儲存分區 Parquet 檔案."""
     pq.write_to_dataset(
@@ -222,7 +229,7 @@ def _save_single_parquet(table: pa.Table, file_path: str, compression: str) -> N
 def read_from_parquet(
     file_path: str,
     columns: Optional[List[str]] = None,
-    filters: Optional[List[Any]] = None
+    filters: Optional[List[Any]] = None,
 ) -> pd.DataFrame:
     """從 Parquet 檔案讀取資料.
 
@@ -260,11 +267,7 @@ def read_from_parquet(
         raise ParquetOperationError(f"讀取 Parquet 檔案時發生錯誤: {e}") from e
 
 
-def save_to_arrow(
-    df: pd.DataFrame,
-    file_path: str,
-    compression: str = "lz4"
-) -> str:
+def save_to_arrow(df: pd.DataFrame, file_path: str, compression: str = "lz4") -> str:
     """將 DataFrame 儲存為 Arrow (Feather) 格式.
 
     Args:
@@ -306,8 +309,7 @@ def save_to_arrow(
 
 
 def read_from_arrow(
-    file_path: str,
-    columns: Optional[List[str]] = None
+    file_path: str, columns: Optional[List[str]] = None
 ) -> pd.DataFrame:
     """從 Arrow (Feather) 檔案讀取資料.
 
@@ -376,16 +378,29 @@ def create_market_data_shard(
         df = query_to_dataframe(session, query)
 
         if df.empty:
-            raise ParquetOperationError(f"沒有找到符合條件的資料: {start_date} - {end_date}")
+            raise ParquetOperationError(
+                f"沒有找到符合條件的資料: {start_date} - {end_date}"
+            )
 
         # 生成檔案路徑
-        file_path = _generate_shard_file_path(table_class, start_date, end_date, symbols)
+        file_path = _generate_shard_file_path(
+            table_class, start_date, end_date, symbols
+        )
 
         # 儲存為 Parquet 格式
         save_to_parquet(df, file_path, compression=compression)
 
         # 創建資料分片記錄
-        shard = _create_shard_record(session, table_class, start_date, end_date, file_path, compression, df, symbols)
+        shard = _create_shard_record(
+            session,
+            table_class,
+            start_date,
+            end_date,
+            file_path,
+            compression,
+            df,
+            symbols,
+        )
 
         logger.info(f"成功創建市場資料分片: {shard.shard_id}")
         return shard, file_path
@@ -400,7 +415,7 @@ def _build_market_data_query(
     table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
     start_date: date,
     end_date: date,
-    symbols: Optional[List[str]]
+    symbols: Optional[List[str]],
 ) -> Any:
     """構建市場資料查詢."""
     query = select(table_class)
@@ -425,7 +440,7 @@ def _generate_shard_file_path(
     table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
     start_date: date,
     end_date: date,
-    symbols: Optional[List[str]]
+    symbols: Optional[List[str]],
 ) -> str:
     """生成分片檔案路徑."""
     table_name = table_class.__tablename__
@@ -449,7 +464,7 @@ def _create_shard_record(
     file_path: str,
     compression: str,
     df: pd.DataFrame,
-    symbols: Optional[List[str]]
+    symbols: Optional[List[str]],
 ) -> DataShard:
     """創建分片記錄."""
     table_name = table_class.__tablename__
@@ -470,7 +485,9 @@ def _create_shard_record(
     # 如果有股票代碼條件，記錄在分片記錄中
     if symbols:
         date_format = "%Y%m%d"
-        date_range = f"{start_date.strftime(date_format)}_{end_date.strftime(date_format)}"
+        date_range = (
+            f"{start_date.strftime(date_format)}_{end_date.strftime(date_format)}"
+        )
         shard.shard_id = f"{table_name}_{date_range}_{'_'.join(symbols[:3])}"
 
     session.commit()
@@ -514,7 +531,7 @@ def load_from_shard(
             raise ParquetOperationError(f"找不到分片檔案: {shard.file_path}")
 
         # 根據檔案格式選擇讀取方法
-        if shard.file_format == "arrow" or shard.file_path.endswith('.feather'):
+        if shard.file_format == "arrow" or shard.file_path.endswith(".feather"):
             df = read_from_arrow(shard.file_path, columns=columns)
         else:
             # 預設使用 Parquet 格式

@@ -84,7 +84,9 @@ class DiversificationManager:
 
         return suggestions
 
-    def calculate_diversification_ratio(self, portfolio_weights: Dict[str, float]) -> float:
+    def calculate_diversification_ratio(
+        self, portfolio_weights: Dict[str, float]
+    ) -> float:
         """
         計算分散化比率
 
@@ -100,20 +102,22 @@ class DiversificationManager:
         # 計算有效股票數量（Effective Number of Stocks）
         weights = list(portfolio_weights.values())
         sum_squared_weights = sum(w * w for w in weights)
-        
+
         if sum_squared_weights == 0:
             return 0.0
-            
+
         effective_stocks = 1 / sum_squared_weights
         max_effective_stocks = len(weights)
-        
+
         # 標準化到 0-1 範圍
         if max_effective_stocks <= 1:
             return 1.0
-            
+
         return (effective_stocks - 1) / (max_effective_stocks - 1)
 
-    def get_concentration_metrics(self, portfolio_weights: Dict[str, float]) -> Dict[str, float]:
+    def get_concentration_metrics(
+        self, portfolio_weights: Dict[str, float]
+    ) -> Dict[str, float]:
         """
         獲取集中度指標
 
@@ -133,20 +137,20 @@ class DiversificationManager:
             }
 
         weights = list(portfolio_weights.values())
-        
+
         # 赫芬達爾指數
         herfindahl_index = sum(w * w for w in weights)
-        
+
         # 有效股票數量
         effective_stocks = 1 / herfindahl_index if herfindahl_index > 0 else 0
-        
+
         # 最大權重
         max_weight = max(weights) if weights else 0.0
-        
+
         # 前5大持股集中度
         sorted_weights = sorted(weights, reverse=True)
         top_5_concentration = sum(sorted_weights[:5])
-        
+
         # 分散化比率
         diversification_ratio = self.calculate_diversification_ratio(portfolio_weights)
 
@@ -258,7 +262,9 @@ class RiskParityStrategy:
 
         return weight_dict
 
-    def calculate_risk_contributions(self, weights: Dict[str, float]) -> Dict[str, float]:
+    def calculate_risk_contributions(
+        self, weights: Dict[str, float]
+    ) -> Dict[str, float]:
         """
         計算風險貢獻
 
@@ -293,7 +299,9 @@ class RiskParityStrategy:
         weight_array = np.array([weights[symbol] for symbol in symbols])
 
         # 計算投資組合方差
-        portfolio_variance = np.dot(weight_array, np.dot(cov_matrix.values, weight_array))
+        portfolio_variance = np.dot(
+            weight_array, np.dot(cov_matrix.values, weight_array)
+        )
 
         # 計算邊際風險貢獻
         marginal_contributions = np.dot(cov_matrix.values, weight_array)
@@ -333,7 +341,7 @@ class RiskParityStrategy:
             Dict[str, float]: 風險平價指標
         """
         risk_contributions = self.calculate_risk_contributions(weights)
-        
+
         if not risk_contributions:
             return {
                 "risk_concentration": 0.0,
@@ -343,18 +351,20 @@ class RiskParityStrategy:
             }
 
         contributions = list(risk_contributions.values())
-        
+
         # 風險集中度（使用赫芬達爾指數）
         risk_concentration = sum(c * c for c in contributions)
-        
+
         # 最大和最小風險貢獻
         max_risk_contribution = max(contributions) if contributions else 0.0
         min_risk_contribution = min(contributions) if contributions else 0.0
-        
+
         # 風險平價得分（越接近1越好）
         target_contribution = 1.0 / len(contributions) if contributions else 0.0
         deviations = [abs(c - target_contribution) for c in contributions]
-        risk_parity_score = 1.0 - (sum(deviations) / len(deviations)) if deviations else 0.0
+        risk_parity_score = (
+            1.0 - (sum(deviations) / len(deviations)) if deviations else 0.0
+        )
 
         return {
             "risk_concentration": risk_concentration,

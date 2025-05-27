@@ -328,7 +328,9 @@ class TestAPIResponseTimeThresholds:
             response_time = (time.time() - start_time) * 1000  # ms
             response_times.append(response_time)
 
-            assert response.status_code < 400, f"{endpoint} 返回錯誤狀態碼 {response.status_code}: {response.text}"
+            assert (
+                response.status_code < 400
+            ), f"{endpoint} 返回錯誤狀態碼 {response.status_code}: {response.text}"
 
         avg_response_time = sum(response_times) / len(response_times)
         max_response_time = max(response_times)

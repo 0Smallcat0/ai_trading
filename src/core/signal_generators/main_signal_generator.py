@@ -41,7 +41,9 @@ class SignalGenerator(BaseSignalGenerator):
             news_data (pd.DataFrame, optional): 新聞資料
             model_manager (ModelManager, optional): 模型管理器
         """
-        super().__init__(price_data, volume_data, financial_data, news_data, model_manager)
+        super().__init__(
+            price_data, volume_data, financial_data, news_data, model_manager
+        )
 
         # 初始化各種訊號產生器
         self.fundamental_generator = FundamentalSignalGenerator(
@@ -112,8 +114,8 @@ class SignalGenerator(BaseSignalGenerator):
 
         # 生成技術分析訊號
         try:
-            technical_signals = (
-                self.technical_generator.generate_all_technical_signals(**kwargs)
+            technical_signals = self.technical_generator.generate_all_technical_signals(
+                **kwargs
             )
             all_signals.update(technical_signals)
             logger.info("技術分析訊號生成完成")
@@ -122,8 +124,8 @@ class SignalGenerator(BaseSignalGenerator):
 
         # 生成情緒分析訊號
         try:
-            sentiment_signals = (
-                self.sentiment_generator.generate_all_sentiment_signals(**kwargs)
+            sentiment_signals = self.sentiment_generator.generate_all_sentiment_signals(
+                **kwargs
             )
             all_signals.update(sentiment_signals)
             logger.info("情緒分析訊號生成完成")
@@ -132,9 +134,7 @@ class SignalGenerator(BaseSignalGenerator):
 
         # 生成AI模型訊號
         try:
-            ai_signals = (
-                self.ai_model_generator.generate_all_ai_signals(**kwargs)
-            )
+            ai_signals = self.ai_model_generator.generate_all_ai_signals(**kwargs)
             all_signals.update(ai_signals)
             logger.info("AI模型訊號生成完成")
         except Exception as e:
@@ -171,9 +171,7 @@ class SignalGenerator(BaseSignalGenerator):
 
         # 合併訊號
         combined_signals = self.signal_combiner.combine_signals(
-            weights=strategy_weights,
-            method=combination_method,
-            threshold=threshold
+            weights=strategy_weights, method=combination_method, threshold=threshold
         )
 
         # 儲存合併後的訊號
@@ -243,16 +241,34 @@ class SignalGenerator(BaseSignalGenerator):
                     "buy_signals": signal_counts.get(1, 0),
                     "sell_signals": signal_counts.get(-1, 0),
                     "hold_signals": signal_counts.get(0, 0),
-                    "buy_ratio": signal_counts.get(1, 0) / len(signals) if len(signals) > 0 else 0,
-                    "sell_ratio": signal_counts.get(-1, 0) / len(signals) if len(signals) > 0 else 0,
-                    "hold_ratio": signal_counts.get(0, 0) / len(signals) if len(signals) > 0 else 0,
+                    "buy_ratio": (
+                        signal_counts.get(1, 0) / len(signals)
+                        if len(signals) > 0
+                        else 0
+                    ),
+                    "sell_ratio": (
+                        signal_counts.get(-1, 0) / len(signals)
+                        if len(signals) > 0
+                        else 0
+                    ),
+                    "hold_ratio": (
+                        signal_counts.get(0, 0) / len(signals)
+                        if len(signals) > 0
+                        else 0
+                    ),
                 }
 
                 # 如果有信心度資訊
                 if "confidence" in signals.columns:
-                    statistics[strategy_name]["avg_confidence"] = signals["confidence"].mean()
-                    statistics[strategy_name]["max_confidence"] = signals["confidence"].max()
-                    statistics[strategy_name]["min_confidence"] = signals["confidence"].min()
+                    statistics[strategy_name]["avg_confidence"] = signals[
+                        "confidence"
+                    ].mean()
+                    statistics[strategy_name]["max_confidence"] = signals[
+                        "confidence"
+                    ].max()
+                    statistics[strategy_name]["min_confidence"] = signals[
+                        "confidence"
+                    ].min()
 
         return statistics
 

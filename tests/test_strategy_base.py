@@ -20,7 +20,7 @@ from src.strategy.base import (
     StrategyError,
     ParameterError,
     ModelNotTrainedError,
-    DataValidationError
+    DataValidationError,
 )
 
 
@@ -48,14 +48,14 @@ class ConcreteTestStrategy(Strategy):
             pd.DataFrame: 包含訊號的資料框架
         """
         signals = pd.DataFrame(index=data.index)
-        signals['signal'] = 1  # 簡單的買入訊號
-        signals['buy_signal'] = 1
-        signals['sell_signal'] = 0
+        signals["signal"] = 1  # 簡單的買入訊號
+        signals["buy_signal"] = 1
+        signals["sell_signal"] = 0
         return signals
 
     def _validate_parameters(self):
         """驗證測試策略參數"""
-        if 'invalid_param' in self.parameters:
+        if "invalid_param" in self.parameters:
             raise ParameterError("不允許使用 invalid_param 參數")
 
 
@@ -98,12 +98,14 @@ class TestStrategyBase(unittest.TestCase):
     def setUp(self):
         """設置測試環境"""
         # 創建測試資料
-        self.test_data = pd.DataFrame({
-            '收盤價': [100, 101, 102, 101, 103, 104, 102, 105],
-            '開盤價': [99, 100, 101, 102, 102, 103, 104, 101],
-            '最高價': [101, 102, 103, 103, 104, 105, 105, 106],
-            '最低價': [98, 99, 100, 100, 101, 102, 101, 101]
-        })
+        self.test_data = pd.DataFrame(
+            {
+                "收盤價": [100, 101, 102, 101, 103, 104, 102, 105],
+                "開盤價": [99, 100, 101, 102, 102, 103, 104, 101],
+                "最高價": [101, 102, 103, 103, 104, 105, 105, 106],
+                "最低價": [98, 99, 100, 100, 101, 102, 101, 101],
+            }
+        )
 
         # 創建測試策略
         self.strategy = ConcreteTestStrategy(name="測試策略", param1=10, param2=0.5)
@@ -136,14 +138,14 @@ class TestStrategyBase(unittest.TestCase):
 
         # 檢查訊號資料框架結構
         self.assertIsInstance(signals, pd.DataFrame)
-        self.assertIn('signal', signals.columns)
-        self.assertIn('buy_signal', signals.columns)
-        self.assertIn('sell_signal', signals.columns)
+        self.assertIn("signal", signals.columns)
+        self.assertIn("buy_signal", signals.columns)
+        self.assertIn("sell_signal", signals.columns)
 
         # 檢查訊號值
-        self.assertTrue(all(signals['signal'] == 1))
-        self.assertTrue(all(signals['buy_signal'] == 1))
-        self.assertTrue(all(signals['sell_signal'] == 0))
+        self.assertTrue(all(signals["signal"] == 1))
+        self.assertTrue(all(signals["buy_signal"] == 1))
+        self.assertTrue(all(signals["sell_signal"] == 0))
 
     def test_price_data_validation(self):
         """測試價格資料驗證"""
@@ -151,7 +153,7 @@ class TestStrategyBase(unittest.TestCase):
         self.strategy._validate_price_data(self.test_data)
 
         # 測試缺少必要欄位
-        invalid_data = pd.DataFrame({'開盤價': [100, 101, 102]})
+        invalid_data = pd.DataFrame({"開盤價": [100, 101, 102]})
         with pytest.raises(DataValidationError, match="價格資料缺少必要欄位"):
             self.strategy._validate_price_data(invalid_data)
 
@@ -163,22 +165,29 @@ class TestStrategyBase(unittest.TestCase):
     def test_signals_data_validation(self):
         """測試訊號資料驗證"""
         # 測試正常訊號資料
-        valid_signals = pd.DataFrame({'signal': [1, -1, 0, 1]})
+        valid_signals = pd.DataFrame({"signal": [1, -1, 0, 1]})
         self.strategy._validate_signals_data(valid_signals)
 
         # 測試缺少必要欄位
-        invalid_signals = pd.DataFrame({'buy_signal': [1, 0, 1, 0]})
+        invalid_signals = pd.DataFrame({"buy_signal": [1, 0, 1, 0]})
         with pytest.raises(DataValidationError, match="訊號資料缺少必要欄位"):
             self.strategy._validate_signals_data(invalid_signals)
 
-    @patch('src.strategy.base.calculate_returns')
-    @patch('src.strategy.base.calculate_total_return')
-    @patch('src.strategy.base.calculate_sharpe_ratio')
-    @patch('src.strategy.base.calculate_max_drawdown')
-    @patch('src.strategy.base.calculate_win_rate')
-    @patch('src.strategy.base.calculate_volatility')
-    def test_evaluate(self, mock_volatility, mock_win_rate, mock_drawdown,
-                     mock_sharpe, mock_total_return, mock_returns):
+    @patch("src.strategy.base.calculate_returns")
+    @patch("src.strategy.base.calculate_total_return")
+    @patch("src.strategy.base.calculate_sharpe_ratio")
+    @patch("src.strategy.base.calculate_max_drawdown")
+    @patch("src.strategy.base.calculate_win_rate")
+    @patch("src.strategy.base.calculate_volatility")
+    def test_evaluate(
+        self,
+        mock_volatility,
+        mock_win_rate,
+        mock_drawdown,
+        mock_sharpe,
+        mock_total_return,
+        mock_returns,
+    ):
         """測試策略評估"""
         # 設置模擬返回值
         mock_returns.return_value = pd.Series([0.01, -0.005, 0.02, 0.01])
@@ -197,7 +206,7 @@ class TestStrategyBase(unittest.TestCase):
             "sharpe_ratio": 1.5,
             "max_drawdown": -0.02,
             "win_rate": 0.75,
-            "volatility": 0.15
+            "volatility": 0.15,
         }
 
         self.assertEqual(metrics, expected_metrics)
@@ -212,17 +221,19 @@ class TestStrategyBase(unittest.TestCase):
 
     def test_evaluate_with_custom_signals(self):
         """測試使用自定義訊號的評估"""
-        custom_signals = pd.DataFrame({
-            'signal': [1, -1, 0, 1],
-            'buy_signal': [1, 0, 0, 1],
-            'sell_signal': [0, 1, 0, 0]
-        })
+        custom_signals = pd.DataFrame(
+            {
+                "signal": [1, -1, 0, 1],
+                "buy_signal": [1, 0, 0, 1],
+                "sell_signal": [0, 1, 0, 0],
+            }
+        )
 
-        with patch('src.strategy.base.calculate_returns') as mock_returns:
+        with patch("src.strategy.base.calculate_returns") as mock_returns:
             mock_returns.return_value = pd.Series([0.01, -0.005, 0.02, 0.01])
 
             # 應該不會調用 generate_signals
-            with patch.object(self.strategy, 'generate_signals') as mock_generate:
+            with patch.object(self.strategy, "generate_signals") as mock_generate:
                 self.strategy.evaluate(self.test_data, custom_signals)
                 mock_generate.assert_not_called()
 
@@ -233,8 +244,10 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(result, {})
 
         # 測試帶參數網格
-        param_grid = {'param1': [5, 10, 15], 'param2': [0.1, 0.5, 1.0]}
-        result = self.strategy.optimize_parameters(self.test_data, param_grid=param_grid)
+        param_grid = {"param1": [5, 10, 15], "param2": [0.1, 0.5, 1.0]}
+        result = self.strategy.optimize_parameters(
+            self.test_data, param_grid=param_grid
+        )
         self.assertEqual(result, {})
 
     def test_get_default_param_grid(self):
@@ -257,5 +270,5 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(repr_str, expected_repr)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

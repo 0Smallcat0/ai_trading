@@ -121,8 +121,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
             # 記錄日誌
             logger.info(
-                "API請求: %s",
-                json.dumps(request_data, ensure_ascii=False, default=str)
+                "API請求: %s", json.dumps(request_data, ensure_ascii=False, default=str)
             )
 
         except Exception as e:
@@ -151,17 +150,17 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             if response.status_code >= 500:
                 logger.error(
                     "API響應: %s",
-                    json.dumps(response_data, ensure_ascii=False, default=str)
+                    json.dumps(response_data, ensure_ascii=False, default=str),
                 )
             elif response.status_code >= 400:
                 logger.warning(
                     "API響應: %s",
-                    json.dumps(response_data, ensure_ascii=False, default=str)
+                    json.dumps(response_data, ensure_ascii=False, default=str),
                 )
             else:
                 logger.info(
                     "API響應: %s",
-                    json.dumps(response_data, ensure_ascii=False, default=str)
+                    json.dumps(response_data, ensure_ascii=False, default=str),
                 )
 
             # 記錄效能指標
@@ -193,8 +192,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 error_data["username"] = getattr(request.state, "username", "")
 
             logger.error(
-                "API錯誤: %s",
-                json.dumps(error_data, ensure_ascii=False, default=str)
+                "API錯誤: %s", json.dumps(error_data, ensure_ascii=False, default=str)
             )
 
         except Exception as e:
@@ -303,7 +301,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
             # 慢請求警告
             if process_time > 5.0:  # 超過 5 秒
-                logger.warning("慢請求警告: %s", json.dumps(metrics, ensure_ascii=False))
+                logger.warning(
+                    "慢請求警告: %s", json.dumps(metrics, ensure_ascii=False)
+                )
             elif process_time > 1.0:  # 超過 1 秒
                 logger.info("效能監控: %s", json.dumps(metrics, ensure_ascii=False))
 

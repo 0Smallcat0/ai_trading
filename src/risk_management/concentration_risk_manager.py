@@ -100,7 +100,9 @@ class ConcentrationRiskManager:
 
         return adjustments
 
-    def get_concentration_metrics(self, portfolio: Dict[str, float]) -> Dict[str, float]:
+    def get_concentration_metrics(
+        self, portfolio: Dict[str, float]
+    ) -> Dict[str, float]:
         """
         獲取集中度指標
 
@@ -175,7 +177,9 @@ class ConcentrationRiskManager:
 
         return rebalanced_portfolio
 
-    def update_limits(self, max_position_percent: float = None, max_positions: int = None) -> None:
+    def update_limits(
+        self, max_position_percent: float = None, max_positions: int = None
+    ) -> None:
         """
         更新限制
 
@@ -185,7 +189,9 @@ class ConcentrationRiskManager:
         """
         if max_position_percent is not None:
             self.max_position_percent = min(abs(max_position_percent), 1.0)
-            logger.info("更新單一倉位最大百分比: %s", f"{self.max_position_percent:.2%}")
+            logger.info(
+                "更新單一倉位最大百分比: %s", f"{self.max_position_percent:.2%}"
+            )
 
         if max_positions is not None:
             self.max_positions = max(int(max_positions), 1)

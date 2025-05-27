@@ -43,31 +43,29 @@ from .utils import (
     validate_model_metadata,
     create_model_signature,
     calculate_model_drift,
-    generate_governance_report
+    generate_governance_report,
 )
 
 # 向後兼容的導入
 from .legacy_interface import (
     ModelRegistry as LegacyModelRegistry,
-    ModelMonitor as LegacyModelMonitor
+    ModelMonitor as LegacyModelMonitor,
 )
 
 __all__ = [
     # Core classes
     "ModelRegistry",
-    "ModelMonitor", 
+    "ModelMonitor",
     "DeploymentManager",
     "ModelLifecycleManager",
-    
     # Utility functions
     "validate_model_metadata",
     "create_model_signature",
     "calculate_model_drift",
     "generate_governance_report",
-    
     # Legacy compatibility
     "LegacyModelRegistry",
-    "LegacyModelMonitor"
+    "LegacyModelMonitor",
 ]
 
 # 版本資訊
@@ -78,13 +76,13 @@ __author__ = "AI Trading System Team"
 def create_model_registry(registry_path: str = None) -> ModelRegistry:
     """
     創建模型註冊表
-    
+
     Args:
         registry_path: 註冊表檔案路徑
-        
+
     Returns:
         ModelRegistry 實例
-        
+
     Example:
         >>> registry = create_model_registry("./models/registry.json")
     """
@@ -92,21 +90,19 @@ def create_model_registry(registry_path: str = None) -> ModelRegistry:
 
 
 def create_model_monitor(
-    model_name: str,
-    version: str = None,
-    registry: ModelRegistry = None
+    model_name: str, version: str = None, registry: ModelRegistry = None
 ) -> ModelMonitor:
     """
     創建模型監控器
-    
+
     Args:
         model_name: 模型名稱
         version: 模型版本
         registry: 模型註冊表
-        
+
     Returns:
         ModelMonitor 實例
-        
+
     Example:
         >>> monitor = create_model_monitor("my_model", "v1.0")
     """
@@ -123,7 +119,7 @@ def register_model(
 ) -> str:
     """
     註冊模型（便利函數）
-    
+
     Args:
         model: 要註冊的模型
         name: 模型名稱
@@ -131,24 +127,21 @@ def register_model(
         description: 描述
         registry: 註冊表實例
         **kwargs: 其他參數
-        
+
     Returns:
         模型版本號
-        
+
     Example:
         >>> version = register_model(trained_model, "my_model", description="Production model")
     """
     if registry is None:
         registry = ModelRegistry()
-    
+
     if name is not None:
         model.name = name
-        
+
     return registry.register_model(
-        model=model,
-        version=version,
-        description=description,
-        **kwargs
+        model=model, version=version, description=description, **kwargs
     )
 
 
@@ -157,30 +150,30 @@ def deploy_model(
     version: str = None,
     environment: str = "production",
     description: str = None,
-    registry: ModelRegistry = None
+    registry: ModelRegistry = None,
 ) -> dict:
     """
     部署模型（便利函數）
-    
+
     Args:
         model_name: 模型名稱
         version: 版本號
         environment: 部署環境
         description: 部署描述
         registry: 註冊表實例
-        
+
     Returns:
         部署資訊字典
-        
+
     Example:
         >>> deployment = deploy_model("my_model", "v1.0", "production")
     """
     if registry is None:
         registry = ModelRegistry()
-        
+
     return registry.deploy_model(
         model_name=model_name,
         version=version,
         environment=environment,
-        description=description
+        description=description,
     )

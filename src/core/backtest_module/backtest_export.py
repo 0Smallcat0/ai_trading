@@ -23,7 +23,9 @@ class BacktestExportManager:
         """初始化匯出管理器"""
         self.supported_formats = ["json", "csv", "excel", "html"]
 
-    def export_results(self, results: Dict[str, Any], export_format: str = "json") -> Optional[bytes]:
+    def export_results(
+        self, results: Dict[str, Any], export_format: str = "json"
+    ) -> Optional[bytes]:
         """匯出回測結果
 
         Args:
@@ -133,7 +135,7 @@ class BacktestExportManager:
         """
         output = BytesIO()
 
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
             # 匯出績效指標
             metrics = results.get("metrics", {})
             if metrics:
@@ -192,14 +194,20 @@ class BacktestExportManager:
             dates = results.get("dates", [])
 
             if equity_curve and dates and len(equity_curve) == len(dates):
-                equity_df = pd.DataFrame({
-                    "日期": dates,
-                    "權益": equity_curve,
-                })
+                equity_df = pd.DataFrame(
+                    {
+                        "日期": dates,
+                        "權益": equity_curve,
+                    }
+                )
 
                 # 計算累積報酬率
-                initial_capital = results.get("metrics", {}).get("initial_capital", equity_curve[0] if equity_curve else 1)
-                equity_df["累積報酬率(%)"] = (equity_df["權益"] / initial_capital - 1) * 100
+                initial_capital = results.get("metrics", {}).get(
+                    "initial_capital", equity_curve[0] if equity_curve else 1
+                )
+                equity_df["累積報酬率(%)"] = (
+                    equity_df["權益"] / initial_capital - 1
+                ) * 100
 
                 equity_df.to_excel(writer, sheet_name="權益曲線", index=False)
 
@@ -337,7 +345,12 @@ class BacktestExportManager:
             if isinstance(value, (int, float)):
                 if key in ["initial_capital", "final_capital"]:
                     formatted_value = f"{prefix}{value:,.0f}"
-                elif key in ["total_return", "annual_return", "max_drawdown", "win_rate"]:
+                elif key in [
+                    "total_return",
+                    "annual_return",
+                    "max_drawdown",
+                    "win_rate",
+                ]:
                     formatted_value = f"{value:.2f}{suffix}"
                 elif key == "sharpe_ratio":
                     formatted_value = f"{value:.3f}"
@@ -348,7 +361,9 @@ class BacktestExportManager:
 
             # 確定顏色類別
             color_class = ""
-            if key in ["total_return", "annual_return", "sharpe_ratio"] and isinstance(value, (int, float)):
+            if key in ["total_return", "annual_return", "sharpe_ratio"] and isinstance(
+                value, (int, float)
+            ):
                 color_class = "positive" if value > 0 else "negative"
             elif key == "max_drawdown" and isinstance(value, (int, float)):
                 color_class = "negative" if value > 0 else ""
@@ -428,7 +443,7 @@ class BacktestExportManager:
         results: Dict[str, Any],
         export_format: str = "html",
         include_charts: bool = False,
-        include_transactions: bool = True
+        include_transactions: bool = True,
     ) -> Optional[bytes]:
         """生成回測報表
 

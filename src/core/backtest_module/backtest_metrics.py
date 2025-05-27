@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def calculate_performance_metrics(
     equity_curve: pd.Series,
     trades: List[Dict[str, Any]],
-    benchmark_returns: Optional[pd.Series] = None
+    benchmark_returns: Optional[pd.Series] = None,
 ) -> Dict[str, float]:
     """
     計算回測績效指標
@@ -69,11 +69,13 @@ def calculate_performance_metrics(
             information_ratio = _calculate_information_ratio(
                 equity_curve, benchmark_returns
             )
-            metrics.update({
-                "alpha": alpha,
-                "beta": beta,
-                "information_ratio": information_ratio,
-            })
+            metrics.update(
+                {
+                    "alpha": alpha,
+                    "beta": beta,
+                    "information_ratio": information_ratio,
+                }
+            )
 
         return metrics
 
@@ -116,7 +118,9 @@ def _calculate_volatility(equity_curve: pd.Series) -> float:
     return returns.std() * np.sqrt(252) * 100
 
 
-def _calculate_sharpe_ratio(equity_curve: pd.Series, risk_free_rate: float = 0.02) -> float:
+def _calculate_sharpe_ratio(
+    equity_curve: pd.Series, risk_free_rate: float = 0.02
+) -> float:
     """計算夏普比率"""
     if len(equity_curve) < 2:
         return 0.0
@@ -133,7 +137,9 @@ def _calculate_sharpe_ratio(equity_curve: pd.Series, risk_free_rate: float = 0.0
     return excess_returns.mean() / excess_returns.std() * np.sqrt(252)
 
 
-def _calculate_sortino_ratio(equity_curve: pd.Series, risk_free_rate: float = 0.02) -> float:
+def _calculate_sortino_ratio(
+    equity_curve: pd.Series, risk_free_rate: float = 0.02
+) -> float:
     """計算索提諾比率"""
     if len(equity_curve) < 2:
         return 0.0
@@ -188,11 +194,15 @@ def _calculate_profit_factor(trades: List[Dict[str, Any]]) -> float:
     if not trades:
         return 0.0
 
-    gross_profit = sum(trade.get("pnl", 0) for trade in trades if trade.get("pnl", 0) > 0)
-    gross_loss = abs(sum(trade.get("pnl", 0) for trade in trades if trade.get("pnl", 0) < 0))
+    gross_profit = sum(
+        trade.get("pnl", 0) for trade in trades if trade.get("pnl", 0) > 0
+    )
+    gross_loss = abs(
+        sum(trade.get("pnl", 0) for trade in trades if trade.get("pnl", 0) < 0)
+    )
 
     if gross_loss == 0:
-        return float('inf') if gross_profit > 0 else 0.0
+        return float("inf") if gross_profit > 0 else 0.0
 
     return gross_profit / gross_loss
 
@@ -207,13 +217,14 @@ def _calculate_avg_trade_return(trades: List[Dict[str, Any]]) -> float:
 
 
 def _calculate_alpha_beta(
-    portfolio_returns: pd.Series,
-    benchmark_returns: pd.Series
+    portfolio_returns: pd.Series, benchmark_returns: pd.Series
 ) -> tuple[float, float]:
     """計算阿爾法和貝塔值"""
     try:
         # 對齊時間序列
-        aligned_data = pd.concat([portfolio_returns, benchmark_returns], axis=1).dropna()
+        aligned_data = pd.concat(
+            [portfolio_returns, benchmark_returns], axis=1
+        ).dropna()
         if len(aligned_data) < 2:
             return 0.0, 1.0
 
@@ -243,13 +254,14 @@ def _calculate_alpha_beta(
 
 
 def _calculate_information_ratio(
-    portfolio_returns: pd.Series,
-    benchmark_returns: pd.Series
+    portfolio_returns: pd.Series, benchmark_returns: pd.Series
 ) -> float:
     """計算信息比率"""
     try:
         # 對齊時間序列
-        aligned_data = pd.concat([portfolio_returns, benchmark_returns], axis=1).dropna()
+        aligned_data = pd.concat(
+            [portfolio_returns, benchmark_returns], axis=1
+        ).dropna()
         if len(aligned_data) < 2:
             return 0.0
 

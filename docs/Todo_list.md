@@ -164,39 +164,51 @@
 　　　　[ ] 自動保存管理器 (auto_save_manager.py)
 　　　　[ ] WebSocket 連接管理器 (websocket_manager.py)
 
-[ ] 4.5 多語言和國際化支持
-　　[ ] 多語言界面支持
-　　　　[ ] 中文繁體界面
-　　　　[ ] 中文簡體界面
-　　　　[ ] 英文界面
-　　　　[ ] 語言切換功能
-　　[ ] 本地化功能
-　　　　[ ] 時區設置
-　　　　[ ] 貨幣格式顯示
-　　　　[ ] 日期格式本地化
-　　　　[ ] 數字格式本地化
+[ ] 4.5 多語言和國際化支持 - 前端實作
+　　[ ] 多語言界面組件
+　　　　[ ] 語言資源管理器 (language_manager.py)
+　　　　[ ] 多語言文本組件 (multilingual_text.py)
+　　　　[ ] 語言切換器組件 (language_switcher.py)
+　　　　[ ] 翻譯服務整合 (translation_service.py)
+　　　　[ ] 語言檢測組件 (language_detector.py)
+　　[ ] 本地化顯示組件
+　　　　[ ] 時區選擇器 (timezone_selector.py)
+　　　　[ ] 貨幣格式化器 (currency_formatter.py)
+　　　　[ ] 日期時間格式化器 (datetime_formatter.py)
+　　　　[ ] 數字格式化器 (number_formatter.py)
+　　　　[ ] 本地化配置管理器 (localization_config.py)
+　　[ ] 語言資源文件
+　　　　[ ] 中文繁體資源 (zh_TW.json)
+　　　　[ ] 中文簡體資源 (zh_CN.json)
+　　　　[ ] 英文資源 (en_US.json)
+　　　　[ ] 語言包驗證器 (language_validator.py)
+　　　　[ ] 動態語言載入器 (dynamic_loader.py)
 
-[ ] 4.6 手動操作增強功能
-　　[ ] 交易操作增強
-　　　　[ ] 一鍵平倉功能
-　　　　[ ] 快速下單面板
-　　　　[ ] 訂單模板保存
-　　　　[ ] 批量訂單操作
-　　[ ] 策略操作增強
-　　　　[ ] 策略一鍵啟停
-　　　　[ ] 策略參數快速調整
-　　　　[ ] 策略複製和分享
-　　　　[ ] 策略效果即時預覽
-　　[ ] 數據操作增強
-　　　　[ ] 數據篩選器
-　　　　[ ] 自定義數據視圖
-　　　　[ ] 數據對比工具
-　　　　[ ] 數據標註功能
-　　[ ] 風險控制操作
-　　　　[ ] 緊急停損按鈕
-　　　　[ ] 風險參數快速調整
-　　　　[ ] 風險警報設置
-　　　　[ ] 資金使用率監控
+[ ] 4.6 手動操作增強功能 - 前端實作
+　　[ ] 交易操作增強組件
+　　　　[ ] 一鍵平倉組件 (one_click_close.py)
+　　　　[ ] 快速下單面板 (quick_order_panel.py)
+　　　　[ ] 訂單模板管理器 (order_template_manager.py)
+　　　　[ ] 批量訂單操作器 (batch_order_processor.py)
+　　　　[ ] 交易快捷鍵處理器 (trading_shortcuts.py)
+　　[ ] 策略操作增強組件
+　　　　[ ] 策略控制面板 (strategy_control_panel.py)
+　　　　[ ] 參數快速調整器 (parameter_adjuster.py)
+　　　　[ ] 策略複製分享器 (strategy_cloner.py)
+　　　　[ ] 即時預覽組件 (live_preview.py)
+　　　　[ ] 策略比較器 (strategy_comparator.py)
+　　[ ] 數據操作增強組件
+　　　　[ ] 高級篩選器 (advanced_filter.py)
+　　　　[ ] 自定義視圖編輯器 (custom_view_editor.py)
+　　　　[ ] 數據對比工具 (data_comparison_tool.py)
+　　　　[ ] 數據標註器 (data_annotator.py)
+　　　　[ ] 數據探索器 (data_explorer.py)
+　　[ ] 風險控制操作組件
+　　　　[ ] 緊急停損按鈕 (emergency_stop.py)
+　　　　[ ] 風險參數調整器 (risk_parameter_adjuster.py)
+　　　　[ ] 風險警報配置器 (risk_alert_configurator.py)
+　　　　[ ] 資金監控儀表板 (fund_monitor_dashboard.py)
+　　　　[ ] 風險限制管理器 (risk_limit_manager.py)
 
 [X] 4.7 API 系統開發
 　　[X] FastAPI 主應用
@@ -206,7 +218,7 @@
 　　[X] 速率限制中間件
 　　[X] 日誌中間件
 
-[X] 4.8 API 路由實作
+[X] 4.8 API 路由實作 (基礎)
 　　[X] 認證路由
 　　[X] 資料管理路由
 　　[X] 策略管理路由
@@ -214,7 +226,71 @@
 　　[X] 報表查詢與視覺化 API
 　　[X] API 版本控制系統
 
-[X] 4.9 效能與安全測試
+[ ] 4.9 用戶體驗 API 擴展
+　　[ ] 用戶偏好管理 API
+　　　　[ ] 偏好設置 CRUD API (preferences_api.py)
+　　　　[ ] 儀表板配置 API (dashboard_config_api.py)
+　　　　[ ] 主題設置 API (theme_api.py)
+　　　　[ ] 通知偏好 API (notification_preferences_api.py)
+　　　　[ ] 快捷鍵配置 API (shortcuts_api.py)
+　　[ ] 多語言資源管理 API
+　　　　[ ] 語言資源 API (language_resources_api.py)
+　　　　[ ] 翻譯管理 API (translation_api.py)
+　　　　[ ] 本地化設置 API (localization_api.py)
+　　　　[ ] 語言包管理 API (language_pack_api.py)
+　　[ ] 批量操作處理 API
+　　　　[ ] 批量數據導入 API (batch_import_api.py)
+　　　　[ ] 批量訂單處理 API (batch_orders_api.py)
+　　　　[ ] 批量策略操作 API (batch_strategies_api.py)
+　　　　[ ] 批量導出 API (batch_export_api.py)
+　　[ ] 實時通知推送 API
+　　　　[ ] WebSocket 通知 API (websocket_notifications_api.py)
+　　　　[ ] 推送通知管理 API (push_notifications_api.py)
+　　　　[ ] 通知歷史 API (notification_history_api.py)
+　　　　[ ] 通知設置 API (notification_settings_api.py)
+　　[ ] 操作歷史記錄 API
+　　　　[ ] 用戶操作記錄 API (user_actions_api.py)
+　　　　[ ] 操作審計 API (audit_trail_api.py)
+　　　　[ ] 操作統計 API (operation_stats_api.py)
+　　[ ] 幫助文檔管理 API
+　　　　[ ] 幫助內容 API (help_content_api.py)
+　　　　[ ] FAQ 管理 API (faq_api.py)
+　　　　[ ] 教程管理 API (tutorial_api.py)
+　　　　[ ] 幫助搜索 API (help_search_api.py)
+
+[ ] 4.10 服務層擴展 (後端實作)
+　　[ ] 用戶偏好管理服務
+　　　　[ ] 偏好設置服務 (preferences_service.py)
+　　　　[ ] 儀表板配置服務 (dashboard_config_service.py)
+　　　　[ ] 主題管理服務 (theme_service.py)
+　　　　[ ] 用戶設置同步服務 (settings_sync_service.py)
+　　[ ] 多語言資源服務
+　　　　[ ] 翻譯服務 (translation_service.py)
+　　　　[ ] 語言包管理服務 (language_pack_service.py)
+　　　　[ ] 本地化服務 (localization_service.py)
+　　　　[ ] 動態翻譯服務 (dynamic_translation_service.py)
+　　[ ] 操作歷史記錄服務
+　　　　[ ] 用戶操作記錄服務 (user_action_service.py)
+　　　　[ ] 操作審計服務 (audit_service.py)
+　　　　[ ] 操作統計服務 (operation_stats_service.py)
+　　　　[ ] 操作回放服務 (operation_replay_service.py)
+　　[ ] 幫助文檔管理服務
+　　　　[ ] 幫助內容管理服務 (help_content_service.py)
+　　　　[ ] FAQ 管理服務 (faq_service.py)
+　　　　[ ] 教程管理服務 (tutorial_service.py)
+　　　　[ ] 幫助搜索服務 (help_search_service.py)
+　　[ ] 實時通知服務
+　　　　[ ] 通知推送服務 (notification_push_service.py)
+　　　　[ ] WebSocket 管理服務 (websocket_service.py)
+　　　　[ ] 通知模板服務 (notification_template_service.py)
+　　　　[ ] 通知調度服務 (notification_scheduler_service.py)
+　　[ ] 批量操作服務
+　　　　[ ] 批量處理引擎 (batch_processing_engine.py)
+　　　　[ ] 批量任務管理服務 (batch_task_service.py)
+　　　　[ ] 批量驗證服務 (batch_validation_service.py)
+　　　　[ ] 批量結果處理服務 (batch_result_service.py)
+
+[X] 4.11 效能與安全測試
 　　[X] API 效能測試框架
 　　[X] 負載測試工具
 　　[X] 安全測試框架
@@ -261,6 +337,23 @@
 　　[X] 負載測試工具
 　　[X] 漏洞掃描工具
 　　[ ] 測試覆蓋率提升至80%
+　　[ ] Web UI 測試完善
+　　　　[ ] Streamlit 組件單元測試
+　　　　[ ] 頁面導航測試
+　　　　[ ] 用戶認證流程測試
+　　　　[ ] 響應式設計測試
+　　　　[ ] 跨瀏覽器兼容性測試
+　　[ ] API 測試完善
+　　　　[ ] API 端點完整性測試
+　　　　[ ] 中間件功能測試
+　　　　[ ] 認證授權測試
+　　　　[ ] 錯誤處理測試
+　　　　[ ] API 文檔同步驗證
+　　[ ] 端到端測試
+　　　　[ ] 完整用戶流程測試
+　　　　[ ] 數據流測試
+　　　　[ ] 交易流程測試
+　　　　[ ] 系統整合測試
 
 [X] 5.5 系統優化與維運準備
 　　[X] 全系統效能測試
@@ -358,6 +451,24 @@
 　　　　[ ] 常見操作流程說明
 　　　　[ ] 視頻教程製作
 　　　　[ ] 操作最佳實踐指南
+　　[ ] 系統穩定性增強
+　　　　[ ] Web UI 錯誤恢復機制
+　　　　[ ] API 服務健康檢查
+　　　　[ ] 自動重連機制
+　　　　[ ] 會話管理優化
+　　　　[ ] 內存洩漏檢測
+　　[ ] 用戶體驗監控
+　　　　[ ] 頁面載入時間監控
+　　　　[ ] 用戶操作行為分析
+　　　　[ ] 錯誤率統計
+　　　　[ ] 用戶滿意度調查
+　　　　[ ] A/B 測試框架
+　　[ ] 效能基準測試
+　　　　[ ] Web UI 響應時間基準
+　　　　[ ] API 吞吐量基準
+　　　　[ ] 數據庫查詢效能基準
+　　　　[ ] 記憶體使用基準
+　　　　[ ] 並發用戶負載基準
 　　[ ] 運維自動化
 　　　　[ ] 自動化部署腳本
 　　　　[ ] 監控自動化
@@ -369,7 +480,7 @@
 
 ## Phase 6: 代碼品質與技術債務
 
-[X] 6.1 API 認證系統代碼品質改進
+[X] 6.1 API 認證系統代碼品質改進 (已完成)
 　　[X] 認證路由模組重構 (auth.py 520行 → 276行)
 　　　　[X] 拆分為認證服務層和路由層
 　　　　[X] 修復 bcrypt 依賴問題
@@ -393,6 +504,32 @@
 　　[ ] 採用 Google Style Docstring 規範
 　　[ ] 設定 pylint 靜態程式碼分析
 　　[ ] 提升測試覆蓋率至 80% 以上
+
+[ ] 6.3 已完成功能維護與優化
+　　[ ] Web UI 系統維護
+　　　　[ ] 頁面載入效能優化
+　　　　[ ] 組件重用性提升
+　　　　[ ] 狀態管理優化
+　　　　[ ] 記憶體使用優化
+　　　　[ ] 錯誤邊界處理
+　　[ ] API 系統維護
+　　　　[ ] 端點響應時間優化
+　　　　[ ] 中間件效能調優
+　　　　[ ] 請求處理優化
+　　　　[ ] 錯誤響應標準化
+　　　　[ ] API 版本管理完善
+　　[ ] 核心交易功能維護
+　　　　[ ] 交易執行效能優化
+　　　　[ ] 策略執行穩定性提升
+　　　　[ ] 風險計算準確性驗證
+　　　　[ ] 回測結果一致性檢查
+　　　　[ ] 數據同步機制優化
+　　[ ] 監控系統維護
+　　　　[ ] 監控指標準確性驗證
+　　　　[ ] 告警規則優化
+　　　　[ ] 儀表板效能提升
+　　　　[ ] 歷史數據清理機制
+　　　　[ ] 監控數據備份策略
 
 ## Phase 7: 進階功能與優化
 
@@ -433,39 +570,4 @@
 　　　　[ ] 配置緩衝區監控
 　　　　[ ] 實施自適應處理速度
 　　　　[ ] 優化資源分配策略
-
-## 📊 專案狀態總結
-
-**整體進度**: 85% 完成
-**當前階段**: Phase 4 - Web UI 與 API 系統開發 (用戶體驗優化中)
-
-**已完成的主要功能**:
-- ✅ 完整的 Web UI 基礎系統 (Streamlit)
-- ✅ 完整的 API 系統 (FastAPI)
-- ✅ 核心交易功能 (策略、回測、風險管理)
-- ✅ AI 模型管理系統
-- ✅ 監控與告警系統
-- ✅ 測試框架
-- ✅ 基礎用戶文檔
-- ✅ 完整維運文檔體系
-
-**當前重點任務** (基於用戶手動操作需求):
-- 🎯 **Phase 4.4-4.6**: 用戶體驗優化 (新增) - 提升網頁操作的易用性
-  - 用戶幫助系統和新手引導
-  - 操作便利性功能 (快捷鍵、批量操作等)
-  - 多語言支持和國際化
-  - 手動操作增強功能
-- 🔧 完善 Phase 5 剩餘的安全模組和部署配置
-- 🐛 Phase 6 技術債務清理和代碼品質提升
-- ⚡ Phase 7 進階功能開發 (可選，根據需求決定優先級)
-
-**用戶操作功能補充說明**:
-基於「使用者需要能夠使用網頁去手動使用本專案的功能」需求，新增了以下重點功能：
-- 📚 完整的用戶幫助和操作指南系統
-- 🎮 新手引導和互動式教程
-- ⚡ 快捷操作和批量處理工具
-- 🌐 多語言界面支持
-- 🎛️ 個性化設置和用戶偏好
-- 📊 增強的數據操作和可視化功能
-
 ---

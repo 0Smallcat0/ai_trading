@@ -26,7 +26,7 @@ class MetricsCollector:
 
     def collect_trading_metrics(self) -> Dict[str, Any]:
         """收集交易指標
-        
+
         Returns:
             Dict[str, Any]: 交易指標字典
         """
@@ -54,7 +54,7 @@ class MetricsCollector:
 
     def collect_performance_metrics(self) -> Dict[str, Any]:
         """收集效能指標
-        
+
         Returns:
             Dict[str, Any]: 效能指標字典
         """
@@ -80,17 +80,18 @@ class MetricsCollector:
 
     def get_metrics_summary(self, hours: int = 24) -> Dict[str, Any]:
         """獲取指標摘要
-        
+
         Args:
             hours: 統計小時數
-            
+
         Returns:
             Dict[str, Any]: 指標摘要字典
         """
         try:
             cutoff_time = datetime.now() - timedelta(hours=hours)
             recent_metrics = [
-                m for m in self.metrics_history
+                m
+                for m in self.metrics_history
                 if m.get("timestamp", datetime.min) >= cutoff_time
             ]
 
@@ -102,7 +103,9 @@ class MetricsCollector:
                 "period": "%d 小時" % hours,
                 "total_records": len(recent_metrics),
                 "trading_summary": self._calculate_trading_summary(recent_metrics),
-                "performance_summary": self._calculate_performance_summary(recent_metrics),
+                "performance_summary": self._calculate_performance_summary(
+                    recent_metrics
+                ),
                 "trends": self._calculate_trends(recent_metrics),
             }
 
@@ -115,7 +118,7 @@ class MetricsCollector:
 
     def store_metrics(self, metrics: Dict[str, Any]):
         """儲存指標數據
-        
+
         Args:
             metrics: 指標數據字典
         """
@@ -134,17 +137,18 @@ class MetricsCollector:
 
     def export_metrics(self, start_time: datetime, end_time: datetime) -> pd.DataFrame:
         """匯出指標數據
-        
+
         Args:
             start_time: 開始時間
             end_time: 結束時間
-            
+
         Returns:
             pd.DataFrame: 指標數據 DataFrame
         """
         try:
             filtered_metrics = [
-                m for m in self.metrics_history
+                m
+                for m in self.metrics_history
                 if start_time <= m.get("timestamp", datetime.min) <= end_time
             ]
 
@@ -163,86 +167,103 @@ class MetricsCollector:
     def _get_total_trades(self) -> int:
         """獲取總交易數（模擬）"""
         import random
+
         return random.randint(100, 1000)
 
     def _get_successful_trades(self) -> int:
         """獲取成功交易數（模擬）"""
         import random
+
         return random.randint(60, 800)
 
     def _get_failed_trades(self) -> int:
         """獲取失敗交易數（模擬）"""
         import random
+
         return random.randint(10, 200)
 
     def _get_total_volume(self) -> float:
         """獲取總交易量（模擬）"""
         import random
+
         return random.uniform(1000000, 10000000)
 
     def _get_total_commission(self) -> float:
         """獲取總手續費（模擬）"""
         import random
+
         return random.uniform(1000, 10000)
 
     def _get_active_positions(self) -> int:
         """獲取活躍部位數（模擬）"""
         import random
+
         return random.randint(5, 50)
 
     def _get_portfolio_value(self) -> float:
         """獲取投資組合價值（模擬）"""
         import random
+
         return random.uniform(500000, 2000000)
 
     def _get_daily_pnl(self) -> float:
         """獲取日損益（模擬）"""
         import random
+
         return random.uniform(-10000, 20000)
 
     def _calculate_win_rate(self) -> float:
         """計算勝率（模擬）"""
         import random
+
         return random.uniform(0.5, 0.8)
 
     def _get_api_response_time(self) -> float:
         """獲取 API 響應時間（模擬）"""
         import random
+
         return random.uniform(0.1, 2.0)
 
     def _get_database_query_time(self) -> float:
         """獲取資料庫查詢時間（模擬）"""
         import random
+
         return random.uniform(0.05, 1.0)
 
     def _get_strategy_execution_time(self) -> float:
         """獲取策略執行時間（模擬）"""
         import random
+
         return random.uniform(0.5, 5.0)
 
     def _get_data_processing_time(self) -> float:
         """獲取數據處理時間（模擬）"""
         import random
+
         return random.uniform(0.2, 3.0)
 
     def _get_memory_usage(self) -> float:
         """獲取記憶體使用率（模擬）"""
         import random
+
         return random.uniform(30, 80)
 
     def _get_cpu_usage(self) -> float:
         """獲取 CPU 使用率（模擬）"""
         import random
+
         return random.uniform(10, 70)
 
     def _get_active_connections(self) -> int:
         """獲取活躍連接數（模擬）"""
         import random
+
         return random.randint(10, 100)
 
     def _get_error_rate(self) -> float:
         """獲取錯誤率（模擬）"""
         import random
+
         return random.uniform(0.001, 0.05)
 
     def _calculate_trading_summary(self, metrics_list: List[Dict]) -> Dict:
@@ -259,7 +280,9 @@ class MetricsCollector:
             "successful_trades": successful_trades,
             "success_rate": successful_trades / total_trades if total_trades > 0 else 0,
             "total_volume": total_volume,
-            "avg_volume_per_trade": total_volume / total_trades if total_trades > 0 else 0,
+            "avg_volume_per_trade": (
+                total_volume / total_trades if total_trades > 0 else 0
+            ),
         }
 
     def _calculate_performance_summary(self, metrics_list: List[Dict]) -> Dict:
@@ -267,11 +290,21 @@ class MetricsCollector:
         if not metrics_list:
             return {}
 
-        api_times = [m.get("api_response_time", 0) for m in metrics_list if "api_response_time" in m]
-        db_times = [m.get("database_query_time", 0) for m in metrics_list if "database_query_time" in m]
+        api_times = [
+            m.get("api_response_time", 0)
+            for m in metrics_list
+            if "api_response_time" in m
+        ]
+        db_times = [
+            m.get("database_query_time", 0)
+            for m in metrics_list
+            if "database_query_time" in m
+        ]
 
         return {
-            "avg_api_response_time": sum(api_times) / len(api_times) if api_times else 0,
+            "avg_api_response_time": (
+                sum(api_times) / len(api_times) if api_times else 0
+            ),
             "avg_database_query_time": sum(db_times) / len(db_times) if db_times else 0,
             "max_api_response_time": max(api_times) if api_times else 0,
             "max_database_query_time": max(db_times) if db_times else 0,
@@ -283,15 +316,25 @@ class MetricsCollector:
             return {}
 
         # 簡單的趨勢計算
-        first_half = metrics_list[:len(metrics_list)//2]
-        second_half = metrics_list[len(metrics_list)//2:]
+        first_half = metrics_list[: len(metrics_list) // 2]
+        second_half = metrics_list[len(metrics_list) // 2 :]
 
-        first_avg_trades = sum(m.get("total_trades", 0) for m in first_half) / len(first_half)
-        second_avg_trades = sum(m.get("total_trades", 0) for m in second_half) / len(second_half)
+        first_avg_trades = sum(m.get("total_trades", 0) for m in first_half) / len(
+            first_half
+        )
+        second_avg_trades = sum(m.get("total_trades", 0) for m in second_half) / len(
+            second_half
+        )
 
-        trade_trend = "increasing" if second_avg_trades > first_avg_trades else "decreasing"
+        trade_trend = (
+            "increasing" if second_avg_trades > first_avg_trades else "decreasing"
+        )
 
         return {
             "trade_volume_trend": trade_trend,
-            "trend_strength": abs(second_avg_trades - first_avg_trades) / first_avg_trades if first_avg_trades > 0 else 0,
+            "trend_strength": (
+                abs(second_avg_trades - first_avg_trades) / first_avg_trades
+                if first_avg_trades > 0
+                else 0
+            ),
         }

@@ -16,11 +16,7 @@
 為了保持向後相容性，原始的 PortfolioService 類別仍然可用。
 """
 
-from .core import (
-    PortfolioServiceCore,
-    Portfolio,
-    PortfolioHolding
-)
+from .core import PortfolioServiceCore, Portfolio, PortfolioHolding
 
 from .optimization import PortfolioOptimizationService
 from .risk_analysis import PortfolioRiskAnalysisService
@@ -82,7 +78,7 @@ class PortfolioService:
             description=description,
             holdings=holdings,
             benchmark=benchmark,
-            risk_free_rate=risk_free_rate
+            risk_free_rate=risk_free_rate,
         )
 
     def get_portfolio(self, portfolio_id: str) -> Optional[Portfolio]:
@@ -132,7 +128,7 @@ class PortfolioService:
             name=name,
             description=description,
             benchmark=benchmark,
-            risk_free_rate=risk_free_rate
+            risk_free_rate=risk_free_rate,
         )
 
     def delete_portfolio(self, portfolio_id: str) -> bool:
@@ -153,7 +149,7 @@ class PortfolioService:
         portfolio_id: str,
         optimization_method: str = "equal_weight",
         constraints: Dict[str, Any] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """重新平衡投資組合（重構後的版本）
 
@@ -178,16 +174,14 @@ class PortfolioService:
 
             # 2. 計算目標權重
             target_weights = self.optimization._calculate_target_weights(
-                symbols=symbols,
-                optimization_method=optimization_method,
-                **kwargs
+                symbols=symbols, optimization_method=optimization_method, **kwargs
             )
 
             # 3. 驗證目標權重
             is_valid, error_msg = self.optimization._validate_rebalance_config(
                 portfolio_id=portfolio_id,
                 target_weights=target_weights,
-                constraints=constraints
+                constraints=constraints,
             )
 
             if not is_valid:
@@ -198,7 +192,7 @@ class PortfolioService:
                 portfolio_id=portfolio_id,
                 current_weights=current_weights,
                 target_weights=target_weights,
-                total_value=portfolio.total_value
+                total_value=portfolio.total_value,
             )
 
             if not success:
@@ -218,7 +212,7 @@ class PortfolioService:
                     quantity=quantity,
                     price=price,
                     market_value=market_value,
-                    weight=weight
+                    weight=weight,
                 )
                 new_holdings.append(holding)
 
@@ -232,7 +226,7 @@ class PortfolioService:
                     adjustment_type="rebalance",
                     old_weights=current_weights,
                     new_weights=target_weights,
-                    reason=f"使用 {optimization_method} 方法進行再平衡"
+                    reason=f"使用 {optimization_method} 方法進行再平衡",
                 )
 
                 return {
@@ -242,7 +236,7 @@ class PortfolioService:
                     "old_weights": current_weights,
                     "new_weights": target_weights,
                     "trade_details": trade_details,
-                    "rebalance_date": datetime.now().isoformat()
+                    "rebalance_date": datetime.now().isoformat(),
                 }
             else:
                 return {"success": False, "error": "更新持倉失敗"}
@@ -258,7 +252,7 @@ class PortfolioService:
         portfolio_id: str,
         confidence_level: float = 0.05,
         time_horizon: int = 1,
-        method: str = "historical"
+        method: str = "historical",
     ) -> Dict[str, Any]:
         """計算投資組合 VaR
 
@@ -275,13 +269,11 @@ class PortfolioService:
             portfolio_id=portfolio_id,
             confidence_level=confidence_level,
             time_horizon=time_horizon,
-            method=method
+            method=method,
         )
 
     def calculate_risk_metrics(
-        self,
-        portfolio_id: str,
-        benchmark_returns=None
+        self, portfolio_id: str, benchmark_returns=None
     ) -> Dict[str, Any]:
         """計算綜合風險指標
 
@@ -293,14 +285,11 @@ class PortfolioService:
             風險指標字典
         """
         return self.risk_analysis.calculate_risk_metrics(
-            portfolio_id=portfolio_id,
-            benchmark_returns=benchmark_returns
+            portfolio_id=portfolio_id, benchmark_returns=benchmark_returns
         )
 
     def stress_test(
-        self,
-        portfolio_id: str,
-        scenarios: List[Dict[str, Any]] = None
+        self, portfolio_id: str, scenarios: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """投資組合壓力測試
 
@@ -312,17 +301,12 @@ class PortfolioService:
             壓力測試結果
         """
         return self.risk_analysis.stress_test(
-            portfolio_id=portfolio_id,
-            scenarios=scenarios
+            portfolio_id=portfolio_id, scenarios=scenarios
         )
 
     # ==================== 資料管理功能 ====================
 
-    def get_adjustment_history(
-        self,
-        portfolio_id: str,
-        limit: int = 50
-    ) -> List[Dict]:
+    def get_adjustment_history(self, portfolio_id: str, limit: int = 50) -> List[Dict]:
         """獲取調整歷史
 
         Args:
@@ -335,9 +319,7 @@ class PortfolioService:
         return self.database.get_adjustment_history(portfolio_id, limit)
 
     def export_portfolio_data(
-        self,
-        portfolio_id: str,
-        include_history: bool = True
+        self, portfolio_id: str, include_history: bool = True
     ) -> Dict[str, Any]:
         """匯出投資組合資料
 
@@ -351,9 +333,7 @@ class PortfolioService:
         return self.database.export_portfolio_data(portfolio_id, include_history)
 
     def import_portfolio_data(
-        self,
-        import_data: Dict[str, Any],
-        overwrite: bool = False
+        self, import_data: Dict[str, Any], overwrite: bool = False
     ) -> Optional[str]:
         """匯入投資組合資料
 
@@ -401,5 +381,5 @@ __all__ = [
     "PortfolioDatabaseService",
     "Portfolio",
     "PortfolioHolding",
-    "create_portfolio_service"
+    "create_portfolio_service",
 ]

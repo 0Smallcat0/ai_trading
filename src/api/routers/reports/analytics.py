@@ -121,7 +121,14 @@ async def get_factor_analysis(
         if factors:
             factor_list = [factor.strip() for factor in factors.split(",")]
         else:
-            factor_list = ["market", "size", "value", "momentum", "quality", "volatility"]
+            factor_list = [
+                "market",
+                "size",
+                "value",
+                "momentum",
+                "quality",
+                "volatility",
+            ]
 
         # 執行因子分析
         factor_analysis = report_service.get_factor_analysis(
@@ -178,9 +185,7 @@ async def get_factor_analysis(
             },
         }
 
-        return APIResponse(
-            success=True, message="因子分析完成", data=analysis_result
-        )
+        return APIResponse(success=True, message="因子分析完成", data=analysis_result)
 
     except Exception as e:
         logger.error("因子分析失敗: %s", e)
@@ -408,9 +413,7 @@ async def get_correlation_analysis(
             },
         }
 
-        return APIResponse(
-            success=True, message="相關性分析完成", data=analysis_result
-        )
+        return APIResponse(success=True, message="相關性分析完成", data=analysis_result)
 
     except Exception as e:
         logger.error("相關性分析失敗: %s", e)

@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_market_data(
-    symbols: List[str],
-    start_date: datetime,
-    end_date: datetime
+    symbols: List[str], start_date: datetime, end_date: datetime
 ) -> pd.DataFrame:
     """
     載入市場數據
@@ -59,15 +57,17 @@ def load_market_data(
                 open_price = price * (1 + np.random.normal(0, 0.005))
                 volume = np.random.randint(1000, 100000)
 
-                data.append({
-                    "symbol": symbol,
-                    "date": date,
-                    "open": open_price,
-                    "high": max(high, open_price, price),
-                    "low": min(low, open_price, price),
-                    "close": price,
-                    "volume": volume,
-                })
+                data.append(
+                    {
+                        "symbol": symbol,
+                        "date": date,
+                        "open": open_price,
+                        "high": max(high, open_price, price),
+                        "low": min(low, open_price, price),
+                        "close": price,
+                        "volume": volume,
+                    }
+                )
 
         df = pd.DataFrame(data)
         df.set_index("date", inplace=True)
@@ -114,13 +114,16 @@ def initialize_strategy(strategy_id: str, config: Any) -> Dict[str, Any]:
             },
         }
 
-        strategy = strategy_configs.get(strategy_id, {
-            "name": "默認策略",
-            "type": "simple",
-        })
+        strategy = strategy_configs.get(
+            strategy_id,
+            {
+                "name": "默認策略",
+                "type": "simple",
+            },
+        )
 
         # 合併用戶自定義參數
-        if hasattr(config, 'strategy_params') and config.strategy_params:
+        if hasattr(config, "strategy_params") and config.strategy_params:
             strategy.update(config.strategy_params)
 
         logger.info("策略初始化完成: %s", strategy.get("name", strategy_id))
@@ -131,7 +134,9 @@ def initialize_strategy(strategy_id: str, config: Any) -> Dict[str, Any]:
         raise
 
 
-def generate_signals(strategy: Dict[str, Any], market_data: pd.DataFrame) -> pd.DataFrame:
+def generate_signals(
+    strategy: Dict[str, Any], market_data: pd.DataFrame
+) -> pd.DataFrame:
     """
     生成交易信號
 
@@ -158,11 +163,13 @@ def generate_signals(strategy: Dict[str, Any], market_data: pd.DataFrame) -> pd.
         for date in dates:
             # 生成 -1 (賣出), 0 (持有), 1 (買入) 信號
             signal = np.random.choice([-1, 0, 1], p=[0.1, 0.8, 0.1])
-            signals.append({
-                "date": date,
-                "signal": signal,
-                "strength": np.random.uniform(0.5, 1.0),
-            })
+            signals.append(
+                {
+                    "date": date,
+                    "signal": signal,
+                    "strength": np.random.uniform(0.5, 1.0),
+                }
+            )
 
         signals_df = pd.DataFrame(signals)
         signals_df.set_index("date", inplace=True)
@@ -176,8 +183,7 @@ def generate_signals(strategy: Dict[str, Any], market_data: pd.DataFrame) -> pd.
 
 
 def process_backtest_results(
-    raw_results: Dict[str, Any],
-    config: Any
+    raw_results: Dict[str, Any], config: Any
 ) -> Dict[str, Any]:
     """
     處理回測結果
@@ -194,7 +200,7 @@ def process_backtest_results(
 
         # 提取基本信息
         processed_results = {
-            "backtest_id": getattr(config, 'backtest_id', 'unknown'),
+            "backtest_id": getattr(config, "backtest_id", "unknown"),
             "strategy_id": config.strategy_id,
             "strategy_name": config.strategy_name,
             "symbols": config.symbols,
@@ -229,21 +235,31 @@ def process_backtest_results(
             winning_trades = [t for t in trades if t.get("profit", 0) > 0]
             losing_trades = [t for t in trades if t.get("profit", 0) < 0]
 
-            processed_results.update({
-                "winning_trades": len(winning_trades),
-                "losing_trades": len(losing_trades),
-                "win_rate": len(winning_trades) / len(trades) * 100 if trades else 0,
-                "total_profit": sum(t.get("profit", 0) for t in trades),
-                "avg_profit_per_trade": sum(t.get("profit", 0) for t in trades) / len(trades) if trades else 0,
-            })
+            processed_results.update(
+                {
+                    "winning_trades": len(winning_trades),
+                    "losing_trades": len(losing_trades),
+                    "win_rate": (
+                        len(winning_trades) / len(trades) * 100 if trades else 0
+                    ),
+                    "total_profit": sum(t.get("profit", 0) for t in trades),
+                    "avg_profit_per_trade": (
+                        sum(t.get("profit", 0) for t in trades) / len(trades)
+                        if trades
+                        else 0
+                    ),
+                }
+            )
         else:
-            processed_results.update({
-                "winning_trades": 0,
-                "losing_trades": 0,
-                "win_rate": 0,
-                "total_profit": 0,
-                "avg_profit_per_trade": 0,
-            })
+            processed_results.update(
+                {
+                    "winning_trades": 0,
+                    "losing_trades": 0,
+                    "win_rate": 0,
+                    "total_profit": 0,
+                    "avg_profit_per_trade": 0,
+                }
+            )
 
         logger.info("回測結果處理完成")
         return processed_results
@@ -289,11 +305,11 @@ def validate_data_integrity(data: pd.DataFrame) -> bool:
 
         # 檢查價格邏輯
         invalid_prices = (
-            (data["high"] < data["low"]) |
-            (data["high"] < data["open"]) |
-            (data["high"] < data["close"]) |
-            (data["low"] > data["open"]) |
-            (data["low"] > data["close"])
+            (data["high"] < data["low"])
+            | (data["high"] < data["open"])
+            | (data["high"] < data["close"])
+            | (data["low"] > data["open"])
+            | (data["low"] > data["close"])
         )
 
         if invalid_prices.any():

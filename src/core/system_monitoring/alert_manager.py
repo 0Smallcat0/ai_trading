@@ -25,16 +25,16 @@ class AlertManager:
 
     def create_alert_rule(self, rule_data: Dict) -> str:
         """創建警報規則
-        
+
         Args:
             rule_data: 規則數據字典，包含 name, condition, threshold, action
-            
+
         Returns:
             str: 規則ID
         """
         try:
             rule_id = "rule_%d" % (len(self.alert_rules) + 1)
-            
+
             rule = {
                 "id": rule_id,
                 "name": rule_data.get("name"),
@@ -57,11 +57,11 @@ class AlertManager:
 
     def update_alert_rule(self, rule_id: str, updates: Dict) -> bool:
         """更新警報規則
-        
+
         Args:
             rule_id: 規則ID
             updates: 更新數據字典
-            
+
         Returns:
             bool: 是否成功更新
         """
@@ -85,10 +85,10 @@ class AlertManager:
 
     def delete_alert_rule(self, rule_id: str) -> bool:
         """刪除警報規則
-        
+
         Args:
             rule_id: 規則ID
-            
+
         Returns:
             bool: 是否成功刪除
         """
@@ -107,10 +107,10 @@ class AlertManager:
 
     def check_alerts(self, metrics: Dict[str, Any]) -> List[Dict]:
         """檢查警報條件
-        
+
         Args:
             metrics: 指標數據字典
-            
+
         Returns:
             List[Dict]: 觸發的警報列表
         """
@@ -134,7 +134,7 @@ class AlertManager:
 
     def get_active_alerts(self) -> List[Dict]:
         """獲取活躍警報
-        
+
         Returns:
             List[Dict]: 活躍警報列表
         """
@@ -159,17 +159,18 @@ class AlertManager:
 
     def get_alert_history(self, hours: int = 24) -> List[Dict]:
         """獲取警報歷史
-        
+
         Args:
             hours: 查詢小時數
-            
+
         Returns:
             List[Dict]: 警報歷史列表
         """
         try:
             cutoff_time = datetime.now() - timedelta(hours=hours)
             filtered_history = [
-                alert for alert in self.alert_history
+                alert
+                for alert in self.alert_history
                 if alert.get("triggered_at", datetime.min) >= cutoff_time
             ]
 
@@ -182,11 +183,11 @@ class AlertManager:
 
     def resolve_alert(self, alert_id: str, resolution: str = "") -> bool:
         """解決警報
-        
+
         Args:
             alert_id: 警報ID
             resolution: 解決方案描述
-            
+
         Returns:
             bool: 是否成功解決
         """
@@ -293,13 +294,22 @@ class AlertManager:
 
         if "cpu_percent" in condition:
             current_value = metrics.get("cpu", {}).get("percent", 0)
-            return "CPU 使用率警報: 當前 %.1f%%, 閾值 %.1f%%" % (current_value, threshold)
+            return "CPU 使用率警報: 當前 %.1f%%, 閾值 %.1f%%" % (
+                current_value,
+                threshold,
+            )
         elif "memory_percent" in condition:
             current_value = metrics.get("memory", {}).get("percent", 0)
-            return "記憶體使用率警報: 當前 %.1f%%, 閾值 %.1f%%" % (current_value, threshold)
+            return "記憶體使用率警報: 當前 %.1f%%, 閾值 %.1f%%" % (
+                current_value,
+                threshold,
+            )
         elif "disk_percent" in condition:
             current_value = metrics.get("disk", {}).get("percent", 0)
-            return "磁碟使用率警報: 當前 %.1f%%, 閾值 %.1f%%" % (current_value, threshold)
+            return "磁碟使用率警報: 當前 %.1f%%, 閾值 %.1f%%" % (
+                current_value,
+                threshold,
+            )
         elif "health_score" in condition:
             current_value = metrics.get("score", 100)
             return "系統健康評分警報: 當前 %.1f, 閾值 %.1f" % (current_value, threshold)

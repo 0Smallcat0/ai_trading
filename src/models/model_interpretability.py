@@ -35,6 +35,7 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 # 檢查依賴套件
 try:
     import shap
+
     SHAP_AVAILABLE = True
 except ImportError:
     SHAP_AVAILABLE = False
@@ -42,6 +43,7 @@ except ImportError:
 
 try:
     import lime
+
     LIME_AVAILABLE = True
 except ImportError:
     LIME_AVAILABLE = False
@@ -97,7 +99,7 @@ class ModelInterpreter:
             model=model,
             feature_names=feature_names,
             class_names=class_names,
-            output_dir=output_dir
+            output_dir=output_dir,
         )
 
         # 向後兼容的屬性
@@ -147,8 +149,8 @@ class ModelInterpreter:
         )
 
         # 更新舊版屬性以保持兼容性
-        if 'shap_values' in results:
-            self.shap_values = results['shap_values']
+        if "shap_values" in results:
+            self.shap_values = results["shap_values"]
 
         return results
 
@@ -232,8 +234,8 @@ class ModelInterpreter:
 
         # 返回重要性資料框以保持向後兼容
         if isinstance(results, dict) and method in results:
-            return results[method].get('importance', results[method])
-        elif isinstance(results, dict) and 'importance' in results:
-            return results['importance']
+            return results[method].get("importance", results[method])
+        elif isinstance(results, dict) and "importance" in results:
+            return results["importance"]
         else:
             return results

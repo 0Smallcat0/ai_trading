@@ -39,11 +39,11 @@ class CacheManager:
 
         # 快取統計
         self.stats = {
-            'hits': 0,
-            'misses': 0,
-            'evictions': 0,
-            'disk_reads': 0,
-            'disk_writes': 0
+            "hits": 0,
+            "misses": 0,
+            "evictions": 0,
+            "disk_reads": 0,
+            "disk_writes": 0,
         }
 
     def _generate_cache_key(self, func_name: str, *args, **kwargs) -> str:
@@ -59,9 +59,9 @@ class CacheManager:
         """
         # 創建參數的雜湊值
         key_data = {
-            'func': func_name,
-            'args': str(args),
-            'kwargs': sorted(kwargs.items())
+            "func": func_name,
+            "args": str(args),
+            "kwargs": sorted(kwargs.items()),
         }
 
         key_str = str(key_data)
@@ -78,7 +78,7 @@ class CacheManager:
         # 移除項目
         del self.memory_cache[lru_key]
         del self.access_times[lru_key]
-        self.stats['evictions'] += 1
+        self.stats["evictions"] += 1
 
         logger.debug("移除 LRU 快取項目: %s", lru_key)
 
@@ -97,7 +97,7 @@ class CacheManager:
         if key in self.memory_cache:
             value, timestamp = self.memory_cache[key]
             self.access_times[key] = current_time
-            self.stats['hits'] += 1
+            self.stats["hits"] += 1
             logger.debug("記憶體快取命中: %s", key)
             return value
 
@@ -105,14 +105,14 @@ class CacheManager:
         cache_file = self.cache_dir / f"{key}.pkl"
         if cache_file.exists():
             try:
-                with open(cache_file, 'rb') as f:
+                with open(cache_file, "rb") as f:
                     cached_data = pickle.load(f)
-                    value, timestamp = cached_data['value'], cached_data['timestamp']
+                    value, timestamp = cached_data["value"], cached_data["timestamp"]
 
                 # 將項目載入記憶體快取
                 self._put_memory_cache(key, value, timestamp)
-                self.stats['hits'] += 1
-                self.stats['disk_reads'] += 1
+                self.stats["hits"] += 1
+                self.stats["disk_reads"] += 1
                 logger.debug("磁碟快取命中: %s", key)
                 return value
 
@@ -121,7 +121,7 @@ class CacheManager:
                 # 刪除損壞的快取檔案
                 cache_file.unlink(missing_ok=True)
 
-        self.stats['misses'] += 1
+        self.stats["misses"] += 1
         return None
 
     def put(self, key: str, value: Any, persist: bool = True):
@@ -141,15 +141,12 @@ class CacheManager:
         if persist:
             try:
                 cache_file = self.cache_dir / f"{key}.pkl"
-                cached_data = {
-                    'value': value,
-                    'timestamp': current_time
-                }
+                cached_data = {"value": value, "timestamp": current_time}
 
-                with open(cache_file, 'wb') as f:
+                with open(cache_file, "wb") as f:
                     pickle.dump(cached_data, f)
 
-                self.stats['disk_writes'] += 1
+                self.stats["disk_writes"] += 1
                 logger.debug("快取已持久化: %s", key)
 
             except Exception as e:
@@ -192,7 +189,9 @@ class CacheManager:
                 cache_file = self.cache_dir / f"{key}.pkl"
                 cache_file.unlink(missing_ok=True)
 
-            logger.info("已清除匹配模式 '%s' 的快取，共 %d 項", pattern, len(keys_to_remove))
+            logger.info(
+                "已清除匹配模式 '%s' 的快取，共 %d 項", pattern, len(keys_to_remove)
+            )
 
     def get_stats(self) -> Dict[str, Any]:
         """獲取快取統計資訊
@@ -200,14 +199,14 @@ class CacheManager:
         Returns:
             Dict[str, Any]: 快取統計資訊
         """
-        total_requests = self.stats['hits'] + self.stats['misses']
-        hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0
+        total_requests = self.stats["hits"] + self.stats["misses"]
+        hit_rate = self.stats["hits"] / total_requests if total_requests > 0 else 0
 
         return {
             **self.stats,
-            'hit_rate': hit_rate,
-            'memory_items': len(self.memory_cache),
-            'disk_items': len(list(self.cache_dir.glob("*.pkl")))
+            "hit_rate": hit_rate,
+            "memory_items": len(self.memory_cache),
+            "disk_items": len(list(self.cache_dir.glob("*.pkl"))),
         }
 
     def cleanup_expired(self, max_age_hours: float = 24):
@@ -239,8 +238,11 @@ class CacheManager:
             except Exception as e:
                 logger.warning("清理過期快取檔案失敗: %s", e)
 
-        logger.info("清理過期快取完成，記憶體: %d 項，磁碟: %d 項",
-                   len(expired_keys), disk_expired)
+        logger.info(
+            "清理過期快取完成，記憶體: %d 項，磁碟: %d 項",
+            len(expired_keys),
+            disk_expired,
+        )
 
 
 # 全域快取管理器實例
@@ -257,11 +259,14 @@ def cached(expire_hours: float = 24, persist: bool = True):
     Returns:
         function: 裝飾後的函數
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # 生成快取鍵值
-            cache_key = _cache_manager._generate_cache_key(func.__name__, *args, **kwargs)
+            cache_key = _cache_manager._generate_cache_key(
+                func.__name__, *args, **kwargs
+            )
 
             # 嘗試從快取獲取
             cached_result = _cache_manager.get(cache_key)
@@ -275,10 +280,13 @@ def cached(expire_hours: float = 24, persist: bool = True):
             return result
 
         # 添加快取管理方法
-        wrapper.invalidate_cache = lambda pattern=None: _cache_manager.invalidate(pattern)
+        wrapper.invalidate_cache = lambda pattern=None: _cache_manager.invalidate(
+            pattern
+        )
         wrapper.get_cache_stats = lambda: _cache_manager.get_stats()
 
         return wrapper
+
     return decorator
 
 

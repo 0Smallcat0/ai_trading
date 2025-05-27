@@ -111,7 +111,7 @@ class TestAPIIntegration:
         assert "detail" in data
         assert data["detail"] == "Method Not Allowed"
 
-    @patch('src.api.core.lifespan.health_check')
+    @patch("src.api.core.lifespan.health_check")
     def test_health_check_production_mode(self, mock_health_check, client):
         """測試生產模式健康檢查
 
@@ -123,7 +123,7 @@ class TestAPIIntegration:
         mock_health_check.return_value = {
             "database": "healthy",
             "cache": "healthy",
-            "api": "healthy"
+            "api": "healthy",
         }
 
         # 暫時移除測試環境變數
@@ -142,7 +142,7 @@ class TestAPIIntegration:
             assert "status" in data
             assert data["status"] == "healthy"
 
-    @patch('src.api.core.lifespan.health_check')
+    @patch("src.api.core.lifespan.health_check")
     def test_health_check_failure(self, mock_health_check, client):
         """測試健康檢查失敗情況
 
@@ -174,10 +174,13 @@ class TestAPIIntegration:
         Args:
             client: FastAPI 測試客戶端
         """
-        response = client.options("/", headers={
-            "Origin": "http://localhost:3000",
-            "Access-Control-Request-Method": "GET"
-        })
+        response = client.options(
+            "/",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
 
         # 檢查 CORS 相關標頭
         assert "access-control-allow-origin" in response.headers
@@ -291,8 +294,10 @@ class TestAPIIntegration:
         headers = response.headers
 
         # 基本檢查：確保沒有敏感資訊洩露
-        assert "server" not in headers.get("server", "").lower() or \
-               "fastapi" not in headers.get("server", "").lower()
+        assert (
+            "server" not in headers.get("server", "").lower()
+            or "fastapi" not in headers.get("server", "").lower()
+        )
 
     def test_error_response_format(self, client):
         """測試錯誤響應格式

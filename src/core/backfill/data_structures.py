@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 class OutlierDetectionMethod(Enum):
     """異常值檢測方法枚舉。"""
+
     Z_SCORE = "z_score"
     IQR = "iqr"
     ISOLATION_FOREST = "isolation_forest"
@@ -20,6 +21,7 @@ class OutlierDetectionMethod(Enum):
 
 class OutlierTreatmentStrategy(Enum):
     """異常值處理策略枚舉。"""
+
     MARK_ONLY = "mark_only"  # 僅標記，不處理
     CLIP = "clip"  # 截斷到閾值
     REMOVE = "remove"  # 移除異常值
@@ -28,6 +30,7 @@ class OutlierTreatmentStrategy(Enum):
 
 class DataQualityStatus(Enum):
     """數據品質狀態枚舉。"""
+
     EXCELLENT = "excellent"  # 優秀：無缺失，無異常
     GOOD = "good"  # 良好：少量缺失或異常
     FAIR = "fair"  # 一般：中等缺失或異常
@@ -37,6 +40,7 @@ class DataQualityStatus(Enum):
 @dataclass
 class DownloadProgress:
     """下載進度追蹤數據類別。"""
+
     total_symbols: int = 0
     completed_symbols: int = 0
     total_chunks: int = 0
@@ -46,33 +50,34 @@ class DownloadProgress:
     estimated_completion: Optional[datetime.datetime] = None
     current_symbol: str = ""
     current_chunk: str = ""
-    
+
     @property
     def symbol_progress(self) -> float:
         """計算股票進度百分比。
-        
+
         Returns:
             float: 股票進度百分比 (0-100)
         """
         if self.total_symbols <= 0:
             return 0.0
-        return (self.completed_symbols / self.total_symbols * 100)
-    
+        return self.completed_symbols / self.total_symbols * 100
+
     @property
     def chunk_progress(self) -> float:
         """計算分塊進度百分比。
-        
+
         Returns:
             float: 分塊進度百分比 (0-100)
         """
         if self.total_chunks <= 0:
             return 0.0
-        return (self.completed_chunks / self.total_chunks * 100)
+        return self.completed_chunks / self.total_chunks * 100
 
 
 @dataclass
 class DataQualityReport:
     """數據品質報告數據類別。"""
+
     symbol: str
     start_date: datetime.date
     end_date: datetime.date
@@ -84,10 +89,10 @@ class DataQualityReport:
     quality_status: DataQualityStatus = DataQualityStatus.POOR
     issues: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典格式。
-        
+
         Returns:
             Dict[str, Any]: 字典格式的報告數據
         """
@@ -102,13 +107,14 @@ class DataQualityReport:
             "outlier_percentage": self.outlier_percentage,
             "quality_status": self.quality_status.value,
             "issues": self.issues,
-            "recommendations": self.recommendations
+            "recommendations": self.recommendations,
         }
 
 
 @dataclass
 class IncrementalUpdateInfo:
     """增量更新資訊數據類別。"""
+
     symbol: str
     last_update: Optional[datetime.datetime] = None
     local_checksum: Optional[str] = None
@@ -123,6 +129,7 @@ class IncrementalUpdateInfo:
 @dataclass
 class BackfillConfig:
     """回填配置數據類別。"""
+
     max_workers: int = 5
     chunk_size: int = 30
     retry_attempts: int = 3
@@ -133,10 +140,10 @@ class BackfillConfig:
     outlier_treatment: OutlierTreatmentStrategy = OutlierTreatmentStrategy.MARK_ONLY
     enable_progress_tracking: bool = True
     cache_dir: Optional[str] = None
-    
+
     def validate(self) -> None:
         """驗證配置參數的有效性。
-        
+
         Raises:
             ValueError: 當配置參數無效時
         """
@@ -157,16 +164,17 @@ class BackfillConfig:
 @dataclass
 class OutlierDetectionResult:
     """異常值檢測結果數據類別。"""
+
     method: str
     threshold: Optional[float] = None
     indices: List[Any] = field(default_factory=list)
     column_details: Dict[str, List[Any]] = field(default_factory=dict)
     error: Optional[str] = None
-    
+
     @property
     def has_outliers(self) -> bool:
         """檢查是否檢測到異常值。
-        
+
         Returns:
             bool: 如果檢測到異常值則返回True
         """
@@ -176,23 +184,22 @@ class OutlierDetectionResult:
 @dataclass
 class ComprehensiveBackfillResult:
     """綜合回填結果數據類別。"""
+
     symbols: List[str]
     start_date: datetime.date
     end_date: datetime.date
     data: Dict[str, Any] = field(default_factory=dict)
-    incremental_info: Dict[str, IncrementalUpdateInfo] = field(
-        default_factory=dict
-    )
+    incremental_info: Dict[str, IncrementalUpdateInfo] = field(default_factory=dict)
     quality_reports: Dict[str, DataQualityReport] = field(default_factory=dict)
     outlier_results: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     statistics: Dict[str, Any] = field(default_factory=dict)
     execution_time: float = 0.0
     success: bool = False
     error: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典格式。
-        
+
         Returns:
             Dict[str, Any]: 字典格式的結果數據
         """
@@ -205,7 +212,7 @@ class ComprehensiveBackfillResult:
             "success": self.success,
             "error": self.error,
             "quality_reports": {
-                symbol: report.to_dict() 
+                symbol: report.to_dict()
                 for symbol, report in self.quality_reports.items()
             },
             "outlier_results": self.outlier_results,
@@ -214,14 +221,12 @@ class ComprehensiveBackfillResult:
                     "symbol": info.symbol,
                     "needs_update": info.needs_update,
                     "update_ranges": [
-                        (r[0].isoformat(), r[1].isoformat()) 
-                        for r in info.update_ranges
+                        (r[0].isoformat(), r[1].isoformat()) for r in info.update_ranges
                     ],
                     "last_update": (
-                        info.last_update.isoformat() 
-                        if info.last_update else None
-                    )
+                        info.last_update.isoformat() if info.last_update else None
+                    ),
                 }
                 for symbol, info in self.incremental_info.items()
-            }
+            },
         }

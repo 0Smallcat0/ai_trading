@@ -32,7 +32,7 @@ class TestTechnicalIndicators:
     @pytest.fixture
     def sample_price_data(self):
         """生成示例價格資料"""
-        dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
+        dates = pd.date_range(start="2023-01-01", periods=100, freq="D")
         np.random.seed(42)
 
         # 生成模擬股價數據
@@ -43,13 +43,16 @@ class TestTechnicalIndicators:
         for ret in returns[1:]:
             prices.append(prices[-1] * (1 + ret))
 
-        data = pd.DataFrame({
-            'open': [p * (1 + np.random.normal(0, 0.005)) for p in prices],
-            'high': [p * (1 + abs(np.random.normal(0, 0.01))) for p in prices],
-            'low': [p * (1 - abs(np.random.normal(0, 0.01))) for p in prices],
-            'close': prices,
-            'volume': np.random.randint(1000000, 10000000, 100)
-        }, index=dates)
+        data = pd.DataFrame(
+            {
+                "open": [p * (1 + np.random.normal(0, 0.005)) for p in prices],
+                "high": [p * (1 + abs(np.random.normal(0, 0.01))) for p in prices],
+                "low": [p * (1 - abs(np.random.normal(0, 0.01))) for p in prices],
+                "close": prices,
+                "volume": np.random.randint(1000000, 10000000, 100),
+            },
+            index=dates,
+        )
 
         return data
 
@@ -151,7 +154,7 @@ class TestTechnicalIndicators:
         tech_indicators.calculate_sma(20)
         tech_indicators.calculate_rsi(14)
 
-        comparison = tech_indicators.compare_indicators(sample_price_data['close'])
+        comparison = tech_indicators.compare_indicators(sample_price_data["close"])
         assert isinstance(comparison, pd.DataFrame)
 
     def test_invalid_data_handling(self):
@@ -166,9 +169,7 @@ class TestTechnicalIndicators:
     def test_missing_columns(self):
         """測試缺少必要欄位的情況"""
         # 創建缺少必要欄位的數據
-        incomplete_data = pd.DataFrame({
-            'price': [100, 101, 102, 103, 104]
-        })
+        incomplete_data = pd.DataFrame({"price": [100, 101, 102, 103, 104]})
 
         tech_indicators = TechnicalIndicators(incomplete_data)
 
@@ -182,22 +183,31 @@ class TestFundamentalIndicators:
     @pytest.fixture
     def sample_financial_data(self):
         """生成示例財務資料"""
-        dates = pd.date_range(start='2023-01-01', periods=12, freq='QE')
+        dates = pd.date_range(start="2023-01-01", periods=12, freq="QE")
 
         financial_data = {
-            'income_statement': pd.DataFrame({
-                'EPS': np.random.uniform(1, 5, 12),
-                'net_income': np.random.uniform(1000000, 5000000, 12),
-            }, index=dates),
-            'balance_sheet': pd.DataFrame({
-                'BPS': np.random.uniform(10, 50, 12),
-                'shareholders_equity': np.random.uniform(10000000, 50000000, 12),
-                'total_assets': np.random.uniform(20000000, 100000000, 12),
-                'total_liabilities': np.random.uniform(5000000, 30000000, 12),
-            }, index=dates),
-            'price': pd.DataFrame({
-                'close': np.random.uniform(50, 200, 12),
-            }, index=dates)
+            "income_statement": pd.DataFrame(
+                {
+                    "EPS": np.random.uniform(1, 5, 12),
+                    "net_income": np.random.uniform(1000000, 5000000, 12),
+                },
+                index=dates,
+            ),
+            "balance_sheet": pd.DataFrame(
+                {
+                    "BPS": np.random.uniform(10, 50, 12),
+                    "shareholders_equity": np.random.uniform(10000000, 50000000, 12),
+                    "total_assets": np.random.uniform(20000000, 100000000, 12),
+                    "total_liabilities": np.random.uniform(5000000, 30000000, 12),
+                },
+                index=dates,
+            ),
+            "price": pd.DataFrame(
+                {
+                    "close": np.random.uniform(50, 200, 12),
+                },
+                index=dates,
+            ),
         }
 
         return financial_data
@@ -215,13 +225,13 @@ class TestFundamentalIndicators:
         assert len(eps_growth.columns) >= 1
 
         # 檢查是否包含預期的欄位
-        expected_cols = ['EPS_growth_1', 'EPS_growth_4', 'EPS_growth_12']
+        expected_cols = ["EPS_growth_1", "EPS_growth_4", "EPS_growth_12"]
         for col in expected_cols:
             assert col in eps_growth.columns
 
     def test_calculate_pe_ratio(self, fund_indicators, sample_financial_data):
         """測試P/E比率計算"""
-        pe_ratio = fund_indicators.calculate_pe_ratio(sample_financial_data['price'])
+        pe_ratio = fund_indicators.calculate_pe_ratio(sample_financial_data["price"])
 
         assert isinstance(pe_ratio, pd.Series)
         assert len(pe_ratio) > 0
@@ -229,7 +239,7 @@ class TestFundamentalIndicators:
 
     def test_calculate_pb_ratio(self, fund_indicators, sample_financial_data):
         """測試P/B比率計算"""
-        pb_ratio = fund_indicators.calculate_pb_ratio(sample_financial_data['price'])
+        pb_ratio = fund_indicators.calculate_pb_ratio(sample_financial_data["price"])
 
         assert isinstance(pb_ratio, pd.Series)
         assert len(pb_ratio) > 0
@@ -274,7 +284,7 @@ class TestFundamentalIndicators:
     def test_missing_financial_data(self):
         """測試缺少財務資料的情況"""
         incomplete_data = {
-            'income_statement': pd.DataFrame({'revenue': [1000, 2000, 3000]})
+            "income_statement": pd.DataFrame({"revenue": [1000, 2000, 3000]})
         }
 
         fund_indicators = FundamentalIndicators(incomplete_data)
@@ -285,8 +295,8 @@ class TestFundamentalIndicators:
     def test_empty_financial_data(self):
         """測試空財務資料"""
         empty_data = {
-            'income_statement': pd.DataFrame(),
-            'balance_sheet': pd.DataFrame()
+            "income_statement": pd.DataFrame(),
+            "balance_sheet": pd.DataFrame(),
         }
 
         fund_indicators = FundamentalIndicators(empty_data)
@@ -302,18 +312,24 @@ class TestSentimentIndicators:
     @pytest.fixture
     def sample_sentiment_data(self):
         """生成示例情緒資料"""
-        dates = pd.date_range(start='2023-01-01', periods=30, freq='D')
+        dates = pd.date_range(start="2023-01-01", periods=30, freq="D")
 
         sentiment_data = {
-            'news': pd.DataFrame({
-                'title': [f'新聞標題 {i}' for i in range(30)],
-                'content': [f'新聞內容 {i}' for i in range(30)],
-                'sentiment_score': np.random.uniform(-1, 1, 30),
-                'topic': np.random.choice(['財報', '產品', '市場', '技術'], 30),
-            }, index=dates),
-            'social': pd.DataFrame({
-                'sentiment_score': np.random.uniform(-1, 1, 30),
-            }, index=dates)
+            "news": pd.DataFrame(
+                {
+                    "title": [f"新聞標題 {i}" for i in range(30)],
+                    "content": [f"新聞內容 {i}" for i in range(30)],
+                    "sentiment_score": np.random.uniform(-1, 1, 30),
+                    "topic": np.random.choice(["財報", "產品", "市場", "技術"], 30),
+                },
+                index=dates,
+            ),
+            "social": pd.DataFrame(
+                {
+                    "sentiment_score": np.random.uniform(-1, 1, 30),
+                },
+                index=dates,
+            ),
         }
 
         return sentiment_data
@@ -350,10 +366,12 @@ class TestSentimentIndicators:
         """測試從文本計算情緒分數"""
         # 創建沒有情緒分數但有文本的數據
         text_data = {
-            'news': pd.DataFrame({
-                'title': ['好消息！股價上漲', '壞消息，公司虧損'],
-                'content': ['公司獲利創新高', '面臨嚴重財務危機'],
-            })
+            "news": pd.DataFrame(
+                {
+                    "title": ["好消息！股價上漲", "壞消息，公司虧損"],
+                    "content": ["公司獲利創新高", "面臨嚴重財務危機"],
+                }
+            )
         }
 
         text_indicators = SentimentIndicators(text_data)
@@ -366,10 +384,12 @@ class TestSentimentIndicators:
         """測試主題提取功能"""
         # 創建包含特定主題關鍵字的文本數據
         topic_data = {
-            'news': pd.DataFrame({
-                'title': ['公司發布財報', '推出新產品', '技術創新突破'],
-                'content': ['季報顯示營收成長', '新品上市銷售', '研發專利技術'],
-            })
+            "news": pd.DataFrame(
+                {
+                    "title": ["公司發布財報", "推出新產品", "技術創新突破"],
+                    "content": ["季報顯示營收成長", "新品上市銷售", "研發專利技術"],
+                }
+            )
         }
 
         topic_indicators = SentimentIndicators(topic_data)
@@ -387,9 +407,7 @@ class TestSentimentIndicators:
 
     def test_empty_sentiment_data(self):
         """測試空情緒資料"""
-        empty_data = {
-            'news': pd.DataFrame()
-        }
+        empty_data = {"news": pd.DataFrame()}
 
         sent_indicators = SentimentIndicators(empty_data)
         result = sent_indicators.calculate_news_sentiment()
@@ -404,16 +422,19 @@ class TestIndicatorUtilities:
     @pytest.fixture
     def sample_data_for_evaluation(self):
         """生成評估用的示例數據"""
-        dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
+        dates = pd.date_range(start="2023-01-01", periods=100, freq="D")
 
-        price_data = pd.DataFrame({
-            'close': np.random.uniform(90, 110, 100)
-        }, index=dates)
+        price_data = pd.DataFrame(
+            {"close": np.random.uniform(90, 110, 100)}, index=dates
+        )
 
-        indicator_data = pd.DataFrame({
-            'RSI': np.random.uniform(20, 80, 100),
-            'MACD': np.random.uniform(-2, 2, 100),
-        }, index=dates)
+        indicator_data = pd.DataFrame(
+            {
+                "RSI": np.random.uniform(20, 80, 100),
+                "MACD": np.random.uniform(-2, 2, 100),
+            },
+            index=dates,
+        )
 
         return price_data, indicator_data
 
@@ -432,18 +453,14 @@ class TestIndicatorUtilities:
         price_data, indicator_data = sample_data_for_evaluation
 
         signal_rules = {
-            'RSI': {
-                'type': 'threshold',
-                'buy_threshold': 30,
-                'sell_threshold': 70
-            }
+            "RSI": {"type": "threshold", "buy_threshold": 30, "sell_threshold": 70}
         }
 
         signals = generate_trading_signals(price_data, indicator_data, signal_rules)
 
         assert isinstance(signals, pd.DataFrame)
-        assert 'signal' in signals.columns
-        assert signals['signal'].isin([-1, 0, 1]).all()
+        assert "signal" in signals.columns
+        assert signals["signal"].isin([-1, 0, 1]).all()
 
 
 if __name__ == "__main__":

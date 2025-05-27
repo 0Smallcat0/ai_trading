@@ -35,7 +35,7 @@ from .training_pipeline import (
     create_trainer,
     train_model,
     cross_validate_model,
-    evaluate_model
+    evaluate_model,
 )
 from .training_pipeline.trainer import ModelTrainer as NewModelTrainer
 from .training_pipeline.cross_validator import CrossValidator
@@ -45,18 +45,13 @@ from .training_pipeline.config import TrainingConfig
 __all__ = [
     # Legacy classes
     "ModelTrainer",
-
     # New modular classes
     "NewModelTrainer",
     "CrossValidator",
     "TrainingConfig",
-
     # Convenience functions
     "create_trainer",
     "train_model",
     "cross_validate_model",
-    "evaluate_model"
+    "evaluate_model",
 ]
-
-
-

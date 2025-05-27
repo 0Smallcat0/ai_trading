@@ -21,13 +21,14 @@ warnings.warn(
     "使用 risk_management_legacy.py 已棄用。"
     "請使用 src/ui/pages/risk_management/ 模組。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 
 def show_legacy_migration_notice():
     """顯示遷移通知"""
-    st.warning("""
+    st.warning(
+        """
     ⚠️ **模組已重構通知**
     
     風險管理模組已重構為模組化架構，提供更好的維護性和擴展性。
@@ -51,7 +52,8 @@ def show_legacy_migration_notice():
     - ✅ 更容易維護和測試
     - ✅ 更好的性能
     - ✅ 支援響應式設計
-    """)
+    """
+    )
 
 
 # 導入新的模組化實現
@@ -59,40 +61,40 @@ try:
     from .risk_management import show as new_show
     from .risk_management import (
         show_risk_parameters,
-        show_risk_indicators, 
+        show_risk_indicators,
         show_risk_controls,
         show_risk_alerts,
         get_risk_management_service,
         get_default_risk_parameters,
     )
-    
+
     def show():
         """向後兼容的主函數"""
         show_legacy_migration_notice()
         st.divider()
         new_show()
-    
+
 except ImportError as e:
     # 如果新模組不可用，提供基本實現
     def show():
         st.error(f"新的風險管理模組不可用: {e}")
         st.info("請檢查模組結構和依賴關係")
-    
+
     def show_risk_parameters():
         st.error("風險參數模組不可用")
-    
+
     def show_risk_indicators():
         st.error("風險指標模組不可用")
-    
+
     def show_risk_controls():
         st.error("風控機制模組不可用")
-    
+
     def show_risk_alerts():
         st.error("風險警報模組不可用")
-    
+
     def get_risk_management_service():
         return None
-    
+
     def get_default_risk_parameters():
         return {}
 
@@ -104,11 +106,11 @@ risk_management_page = show
 # 導出向後兼容的 API
 __all__ = [
     "show",
-    "show_risk_management", 
+    "show_risk_management",
     "risk_management_page",
     "show_risk_parameters",
     "show_risk_indicators",
-    "show_risk_controls", 
+    "show_risk_controls",
     "show_risk_alerts",
     "get_risk_management_service",
     "get_default_risk_parameters",

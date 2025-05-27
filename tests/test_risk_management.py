@@ -37,6 +37,7 @@ def service():
     """風險管理服務 fixture"""
     try:
         from src.core.risk_management_service import RiskManagementService
+
         return RiskManagementService()
     except ImportError:
         pytest.skip("無法導入風險管理服務")

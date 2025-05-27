@@ -43,8 +43,11 @@ class AlertRuleRequest(BaseModel):
         ...     notification_channels=["email", "webhook"]
         ... )
     """
+
     name: str = Field(..., min_length=1, max_length=100, description="警報規則名稱")
-    description: Optional[str] = Field(default=None, max_length=500, description="警報規則描述")
+    description: Optional[str] = Field(
+        default=None, max_length=500, description="警報規則描述"
+    )
     metric_type: str = Field(..., description="監控指標類型")
     threshold_type: str = Field(..., description="閾值類型")
     threshold_value: float = Field(..., description="閾值")
@@ -52,9 +55,11 @@ class AlertRuleRequest(BaseModel):
     severity: str = Field(..., description="警報嚴重程度")
     notification_channels: List[str] = Field(..., min_items=1, description="通知渠道")
     enabled: bool = Field(default=True, description="是否啟用")
-    suppression_duration: int = Field(default=300, ge=60, le=3600, description="抑制時間（秒）")
+    suppression_duration: int = Field(
+        default=300, ge=60, le=3600, description="抑制時間（秒）"
+    )
 
-    @validator('metric_type')
+    @validator("metric_type")
     def validate_metric_type(cls, v):  # pylint: disable=no-self-argument
         """驗證監控指標類型
 
@@ -68,15 +73,23 @@ class AlertRuleRequest(BaseModel):
             ValueError: 當監控指標類型不在允許列表中時
         """
         allowed_types = [
-            'cpu_usage', 'memory_usage', 'disk_usage', 'network_io',
-            'api_latency', 'api_error_rate', 'trading_volume', 'order_success_rate',
-            'active_connections', 'queue_length', 'cache_hit_rate'
+            "cpu_usage",
+            "memory_usage",
+            "disk_usage",
+            "network_io",
+            "api_latency",
+            "api_error_rate",
+            "trading_volume",
+            "order_success_rate",
+            "active_connections",
+            "queue_length",
+            "cache_hit_rate",
         ]
         if v not in allowed_types:
             raise ValueError(f'監控指標類型必須是: {", ".join(allowed_types)}')
         return v
 
-    @validator('threshold_type')
+    @validator("threshold_type")
     def validate_threshold_type(cls, v):  # pylint: disable=no-self-argument
         """驗證閾值類型
 
@@ -89,12 +102,12 @@ class AlertRuleRequest(BaseModel):
         Raises:
             ValueError: 當閾值類型不在允許列表中時
         """
-        allowed_types = ['absolute', 'percentage', 'rate_of_change']
+        allowed_types = ["absolute", "percentage", "rate_of_change"]
         if v not in allowed_types:
             raise ValueError(f'閾值類型必須是: {", ".join(allowed_types)}')
         return v
 
-    @validator('comparison_operator')
+    @validator("comparison_operator")
     def validate_comparison_operator(cls, v):  # pylint: disable=no-self-argument
         """驗證比較運算符
 
@@ -107,12 +120,12 @@ class AlertRuleRequest(BaseModel):
         Raises:
             ValueError: 當比較運算符不在允許列表中時
         """
-        allowed_operators = ['>', '>=', '<', '<=', '==', '!=']
+        allowed_operators = [">", ">=", "<", "<=", "==", "!="]
         if v not in allowed_operators:
             raise ValueError(f'比較運算符必須是: {", ".join(allowed_operators)}')
         return v
 
-    @validator('severity')
+    @validator("severity")
     def validate_severity(cls, v):  # pylint: disable=no-self-argument
         """驗證警報嚴重程度
 
@@ -125,12 +138,12 @@ class AlertRuleRequest(BaseModel):
         Raises:
             ValueError: 當警報嚴重程度不在允許列表中時
         """
-        allowed_severities = ['INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        allowed_severities = ["INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in allowed_severities:
             raise ValueError(f'警報嚴重程度必須是: {", ".join(allowed_severities)}')
         return v.upper()
 
-    @validator('notification_channels')
+    @validator("notification_channels")
     def validate_notification_channels(cls, v):  # pylint: disable=no-self-argument
         """驗證通知渠道
 
@@ -143,7 +156,7 @@ class AlertRuleRequest(BaseModel):
         Raises:
             ValueError: 當通知渠道不在允許列表中時
         """
-        allowed_channels = ['email', 'webhook', 'system', 'sms']
+        allowed_channels = ["email", "webhook", "system", "sms"]
         for channel in v:
             if channel not in allowed_channels:
                 raise ValueError(f'通知渠道必須是: {", ".join(allowed_channels)}')
@@ -173,6 +186,7 @@ class LogQueryRequest(BaseModel):
         ...     page_size=50
         ... )
     """
+
     start_time: Optional[datetime] = Field(default=None, description="開始時間")
     end_time: Optional[datetime] = Field(default=None, description="結束時間")
     log_level: Optional[str] = Field(default=None, description="日誌級別")
@@ -181,7 +195,7 @@ class LogQueryRequest(BaseModel):
     page: int = Field(default=1, ge=1, description="頁碼")
     page_size: int = Field(default=50, ge=1, le=1000, description="每頁數量")
 
-    @validator('log_level')
+    @validator("log_level")
     def validate_log_level(cls, v):  # pylint: disable=no-self-argument
         """驗證日誌級別
 
@@ -195,13 +209,13 @@ class LogQueryRequest(BaseModel):
             ValueError: 當日誌級別不在允許列表中時
         """
         if v is not None:
-            allowed_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+            allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
             if v.upper() not in allowed_levels:
                 raise ValueError(f'日誌級別必須是: {", ".join(allowed_levels)}')
             return v.upper()
         return v
 
-    @validator('end_time')
+    @validator("end_time")
     def validate_time_range(cls, v, values):  # pylint: disable=no-self-argument
         """驗證時間範圍
 
@@ -215,9 +229,9 @@ class LogQueryRequest(BaseModel):
         Raises:
             ValueError: 當結束時間不晚於開始時間時
         """
-        if v is not None and values.get('start_time') is not None:
-            if v <= values['start_time']:
-                raise ValueError('結束時間必須大於開始時間')
+        if v is not None and values.get("start_time") is not None:
+            if v <= values["start_time"]:
+                raise ValueError("結束時間必須大於開始時間")
         return v
 
 
@@ -236,6 +250,7 @@ class AlertUpdateRequest(BaseModel):
     Note:
         所有欄位都是可選的，只有提供的欄位會被更新
     """
+
     acknowledged: Optional[bool] = Field(default=None, description="是否已確認")
     acknowledged_by: Optional[str] = Field(default=None, description="確認人")
     resolved: Optional[bool] = Field(default=None, description="是否已解決")
@@ -263,13 +278,14 @@ class SystemReportRequest(BaseModel):
         ...     format="pdf"
         ... )
     """
+
     report_type: str = Field(..., description="報表類型")
     period_start: datetime = Field(..., description="統計期間開始")
     period_end: datetime = Field(..., description="統計期間結束")
     include_details: bool = Field(default=True, description="是否包含詳細資訊")
     report_format: str = Field(default="json", description="報表格式")
 
-    @validator('report_type')
+    @validator("report_type")
     def validate_report_type(cls, v):  # pylint: disable=no-self-argument
         """驗證報表類型
 
@@ -282,12 +298,12 @@ class SystemReportRequest(BaseModel):
         Raises:
             ValueError: 當報表類型不在允許列表中時
         """
-        allowed_types = ['system', 'performance', 'alerts', 'comprehensive']
+        allowed_types = ["system", "performance", "alerts", "comprehensive"]
         if v not in allowed_types:
             raise ValueError(f'報表類型必須是: {", ".join(allowed_types)}')
         return v
 
-    @validator('report_format')
+    @validator("report_format")
     def validate_report_format(cls, v):  # pylint: disable=no-self-argument
         """驗證報表格式
 
@@ -300,12 +316,12 @@ class SystemReportRequest(BaseModel):
         Raises:
             ValueError: 當報表格式不在允許列表中時
         """
-        allowed_formats = ['json', 'pdf', 'excel', 'csv']
+        allowed_formats = ["json", "pdf", "excel", "csv"]
         if v.lower() not in allowed_formats:
             raise ValueError(f'報表格式必須是: {", ".join(allowed_formats)}')
         return v.lower()
 
-    @validator('period_end')
+    @validator("period_end")
     def validate_period_range(cls, v, values):  # pylint: disable=no-self-argument
         """驗證統計期間範圍
 
@@ -319,6 +335,6 @@ class SystemReportRequest(BaseModel):
         Raises:
             ValueError: 當結束時間不晚於開始時間時
         """
-        if 'period_start' in values and v <= values['period_start']:
-            raise ValueError('統計期間結束時間必須大於開始時間')
+        if "period_start" in values and v <= values["period_start"]:
+            raise ValueError("統計期間結束時間必須大於開始時間")
         return v

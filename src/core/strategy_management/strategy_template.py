@@ -24,7 +24,7 @@ class StrategyTemplate:
 
     def get_strategy_types(self) -> Dict[str, List[str]]:
         """獲取策略類型定義
-        
+
         Returns:
             Dict[str, List[str]]: 策略類型字典
         """
@@ -32,7 +32,7 @@ class StrategyTemplate:
 
     def get_strategy_templates(self) -> Dict[str, Dict]:
         """獲取策略模板
-        
+
         Returns:
             Dict[str, Dict]: 策略模板字典
         """
@@ -40,56 +40,56 @@ class StrategyTemplate:
 
     def get_template(self, template_name: str) -> Dict:
         """獲取特定模板
-        
+
         Args:
             template_name: 模板名稱
-            
+
         Returns:
             Dict: 模板信息
-            
+
         Raises:
             StrategyTemplateError: 模板不存在時拋出
         """
         if template_name not in self._strategy_templates:
             raise StrategyTemplateError(f"模板不存在: {template_name}")
-        
+
         return self._strategy_templates[template_name]
 
     def validate_strategy_data(self, strategy_dict: Dict) -> bool:
         """驗證策略數據格式
-        
+
         Args:
             strategy_dict: 策略數據字典
-            
+
         Returns:
             bool: 是否有效
-            
+
         Raises:
             StrategyTemplateError: 驗證失敗時拋出
         """
         required_fields = ["name", "type", "description"]
-        
+
         for field in required_fields:
             if field not in strategy_dict:
                 raise StrategyTemplateError(f"缺少必要欄位: {field}")
-        
+
         # 驗證策略類型
         strategy_type = strategy_dict["type"]
         all_types = []
         for category_types in self._strategy_types.values():
             all_types.extend(category_types)
-        
+
         if strategy_type not in all_types:
             raise StrategyTemplateError(f"無效的策略類型: {strategy_type}")
-        
+
         return True
 
     def export_strategy_template(self, strategy_data: Dict) -> str:
         """匯出策略為模板格式
-        
+
         Args:
             strategy_data: 策略數據
-            
+
         Returns:
             str: JSON 格式的模板字符串
         """
@@ -106,9 +106,9 @@ class StrategyTemplate:
                 "template_version": "1.0",
                 "created_at": strategy_data.get("created_at"),
             }
-            
+
             return json.dumps(template, ensure_ascii=False, indent=2)
-            
+
         except Exception as e:
             logger.error("匯出策略模板時發生錯誤: %s", e)
             raise StrategyTemplateError("匯出模板失敗") from e
@@ -209,11 +209,26 @@ def calculate_returns(data):
 ''',
                 "parameters": {
                     "short_window": {"type": "int", "default": 20, "min": 5, "max": 50},
-                    "long_window": {"type": "int", "default": 50, "min": 20, "max": 200},
+                    "long_window": {
+                        "type": "int",
+                        "default": 50,
+                        "min": 20,
+                        "max": 200,
+                    },
                 },
                 "risk_parameters": {
-                    "stop_loss": {"type": "float", "default": 0.05, "min": 0.01, "max": 0.2},
-                    "take_profit": {"type": "float", "default": 0.15, "min": 0.05, "max": 0.5},
+                    "stop_loss": {
+                        "type": "float",
+                        "default": 0.05,
+                        "min": 0.01,
+                        "max": 0.2,
+                    },
+                    "take_profit": {
+                        "type": "float",
+                        "default": 0.15,
+                        "min": 0.05,
+                        "max": 0.5,
+                    },
                 },
                 "description": "基於移動平均線交叉的趨勢跟蹤策略",
                 "category": "技術分析策略",
@@ -254,8 +269,18 @@ def generate_signals(data, rsi_window=14, oversold=30, overbought=70):
                     "overbought": {"type": "int", "default": 70, "min": 60, "max": 90},
                 },
                 "risk_parameters": {
-                    "stop_loss": {"type": "float", "default": 0.03, "min": 0.01, "max": 0.1},
-                    "position_size": {"type": "float", "default": 0.1, "min": 0.05, "max": 0.3},
+                    "stop_loss": {
+                        "type": "float",
+                        "default": 0.03,
+                        "min": 0.01,
+                        "max": 0.1,
+                    },
+                    "position_size": {
+                        "type": "float",
+                        "default": 0.1,
+                        "min": 0.05,
+                        "max": 0.3,
+                    },
                 },
                 "description": "基於 RSI 指標的超買超賣策略",
                 "category": "技術分析策略",
@@ -264,19 +289,21 @@ def generate_signals(data, rsi_window=14, oversold=30, overbought=70):
 
     def search_templates(self, query: str) -> List[str]:
         """搜尋策略模板
-        
+
         Args:
             query: 搜尋關鍵字
-            
+
         Returns:
             List[str]: 匹配的模板名稱列表
         """
         results = []
         query_lower = query.lower()
-        
+
         for template_name, template_data in self._strategy_templates.items():
-            if (query_lower in template_name.lower() or 
-                query_lower in template_data.get("description", "").lower()):
+            if (
+                query_lower in template_name.lower()
+                or query_lower in template_data.get("description", "").lower()
+            ):
                 results.append(template_name)
-        
+
         return results

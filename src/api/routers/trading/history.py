@@ -34,13 +34,15 @@ async def get_trade_history(
     symbol: Optional[str] = Query(default=None, description="股票代碼篩選"),
     action: Optional[str] = Query(default=None, description="交易動作篩選"),
     portfolio_id: Optional[str] = Query(default=None, description="投資組合 ID 篩選"),
-    start_date: Optional[str] = Query(default=None, description="開始日期 (YYYY-MM-DD)"),
+    start_date: Optional[str] = Query(
+        default=None, description="開始日期 (YYYY-MM-DD)"
+    ),
     end_date: Optional[str] = Query(default=None, description="結束日期 (YYYY-MM-DD)"),
 ):
     """查詢交易歷史記錄
-    
+
     此端點用於查詢交易執行的歷史記錄，支援多種篩選條件和分頁。
-    
+
     Args:
         page: 頁碼
         page_size: 每頁數量
@@ -49,13 +51,13 @@ async def get_trade_history(
         portfolio_id: 投資組合 ID 篩選
         start_date: 開始日期
         end_date: 結束日期
-        
+
     Returns:
         APIResponse[List[TradeExecutionResponse]]: 包含交易歷史記錄的 API 回應
-        
+
     Raises:
         HTTPException: 當查詢失敗時
-        
+
     Example:
         GET /api/trading/history?symbol=2330.TW&start_date=2024-01-01&end_date=2024-12-31
     """
@@ -79,7 +81,7 @@ async def get_trade_history(
         return APIResponse(
             success=True,
             message=f"獲取到 {len(executions_list)} 筆交易記錄",
-            data=executions_list
+            data=executions_list,
         )
 
     except HTTPException:
@@ -101,15 +103,15 @@ async def get_trade_history(
 )
 async def get_order_executions(order_id: str = Path(..., description="訂單 ID")):
     """查詢訂單執行記錄
-    
+
     此端點用於查詢特定訂單的所有執行記錄。
-    
+
     Args:
         order_id: 訂單 ID
-        
+
     Returns:
         APIResponse[List[TradeExecutionResponse]]: 包含訂單執行記錄的 API 回應
-        
+
     Raises:
         HTTPException: 當訂單不存在或查詢失敗時
     """
@@ -118,8 +120,7 @@ async def get_order_executions(order_id: str = Path(..., description="訂單 ID"
         order_details = trade_service.get_order_details(order_id)
         if not order_details:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"訂單 {order_id} 不存在"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"訂單 {order_id} 不存在"
             )
 
         # 獲取訂單執行記錄
@@ -136,7 +137,7 @@ async def get_order_executions(order_id: str = Path(..., description="訂單 ID"
         return APIResponse(
             success=True,
             message=f"訂單 {order_id} 有 {len(executions_list)} 筆執行記錄",
-            data=executions_list
+            data=executions_list,
         )
 
     except HTTPException:
@@ -158,15 +159,15 @@ async def get_order_executions(order_id: str = Path(..., description="訂單 ID"
 )
 async def get_execution_details(execution_id: str = Path(..., description="執行 ID")):
     """查詢執行詳情
-    
+
     此端點用於查詢特定執行記錄的詳細信息。
-    
+
     Args:
         execution_id: 執行 ID
-        
+
     Returns:
         APIResponse[TradeExecutionResponse]: 包含執行詳情的 API 回應
-        
+
     Raises:
         HTTPException: 當執行記錄不存在或查詢失敗時
     """
@@ -177,17 +178,13 @@ async def get_execution_details(execution_id: str = Path(..., description="執�
         if not execution_details:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"執行記錄 {execution_id} 不存在"
+                detail=f"執行記錄 {execution_id} 不存在",
             )
 
         # 轉換為響應模型
         response_data = _convert_to_execution_response(execution_details)
 
-        return APIResponse(
-            success=True,
-            message="執行詳情獲取成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="執行詳情獲取成功", data=response_data)
 
     except HTTPException:
         raise
@@ -212,13 +209,15 @@ async def get_portfolio_trade_history(
     page_size: int = Query(default=20, ge=1, le=100, description="每頁數量"),
     symbol: Optional[str] = Query(default=None, description="股票代碼篩選"),
     action: Optional[str] = Query(default=None, description="交易動作篩選"),
-    start_date: Optional[str] = Query(default=None, description="開始日期 (YYYY-MM-DD)"),
+    start_date: Optional[str] = Query(
+        default=None, description="開始日期 (YYYY-MM-DD)"
+    ),
     end_date: Optional[str] = Query(default=None, description="結束日期 (YYYY-MM-DD)"),
 ):
     """查詢投資組合交易歷史
-    
+
     此端點用於查詢特定投資組合的交易歷史記錄。
-    
+
     Args:
         portfolio_id: 投資組合 ID
         page: 頁碼
@@ -227,10 +226,10 @@ async def get_portfolio_trade_history(
         action: 交易動作篩選
         start_date: 開始日期
         end_date: 結束日期
-        
+
     Returns:
         APIResponse[List[TradeExecutionResponse]]: 包含投資組合交易歷史的 API 回應
-        
+
     Raises:
         HTTPException: 當查詢失敗時
     """
@@ -254,7 +253,7 @@ async def get_portfolio_trade_history(
         return APIResponse(
             success=True,
             message=f"投資組合 {portfolio_id} 有 {len(executions_list)} 筆交易記錄",
-            data=executions_list
+            data=executions_list,
         )
 
     except HTTPException:
@@ -275,32 +274,32 @@ def _build_history_filters(
     action: Optional[str],
     portfolio_id: Optional[str],
     start_date: Optional[str],
-    end_date: Optional[str]
+    end_date: Optional[str],
 ) -> dict:
     """構建交易歷史篩選條件
-    
+
     Args:
         symbol: 股票代碼
         action: 交易動作
         portfolio_id: 投資組合 ID
         start_date: 開始日期
         end_date: 結束日期
-        
+
     Returns:
         dict: 篩選條件字典
-        
+
     Raises:
         HTTPException: 當日期格式錯誤時
     """
     filters = {}
-    
+
     if symbol:
         filters["symbol"] = symbol
     if action:
         filters["action"] = action
     if portfolio_id:
         filters["portfolio_id"] = portfolio_id
-        
+
     if start_date:
         try:
             filters["start_date"] = datetime.strptime(start_date, "%Y-%m-%d")
@@ -309,7 +308,7 @@ def _build_history_filters(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="開始日期格式錯誤，請使用 YYYY-MM-DD 格式",
             ) from e
-            
+
     if end_date:
         try:
             filters["end_date"] = datetime.strptime(end_date, "%Y-%m-%d")
@@ -318,16 +317,16 @@ def _build_history_filters(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="結束日期格式錯誤，請使用 YYYY-MM-DD 格式",
             ) from e
-            
+
     return filters
 
 
 def _convert_to_execution_response(execution_details: dict) -> TradeExecutionResponse:
     """將執行詳情轉換為響應模型
-    
+
     Args:
         execution_details: 執行詳情字典
-        
+
     Returns:
         TradeExecutionResponse: 交易執行響應模型
     """

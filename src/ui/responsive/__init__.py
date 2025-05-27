@@ -36,6 +36,7 @@ def apply_responsive_design():
     """
     # pylint: disable=import-outside-toplevel
     from .layout_manager import responsive_manager
+
     responsive_manager.apply_responsive_styles()
 
 
@@ -52,6 +53,7 @@ def get_responsive_columns(desktop: int = 4, tablet: int = 2, mobile: int = 1) -
     """
     # pylint: disable=import-outside-toplevel
     from .layout_manager import responsive_manager
+
     return responsive_manager.get_columns_config(desktop, tablet, mobile)
 
 
@@ -63,6 +65,7 @@ def is_mobile_device() -> bool:
     """
     # pylint: disable=import-outside-toplevel
     from .layout_manager import responsive_manager
+
     return responsive_manager.is_mobile
 
 
@@ -71,6 +74,7 @@ def get_responsive_manager():
     """獲取響應式管理器實例"""
     # pylint: disable=import-outside-toplevel
     from .layout_manager import responsive_manager
+
     return responsive_manager
 
 
@@ -78,6 +82,7 @@ def get_responsive_components():
     """獲取響應式組件類"""
     # pylint: disable=import-outside-toplevel
     from .components import ResponsiveComponents
+
     return ResponsiveComponents
 
 
@@ -85,6 +90,7 @@ def get_responsive_css():
     """獲取響應式 CSS 管理器"""
     # pylint: disable=import-outside-toplevel
     from .css_manager import ResponsiveCSS
+
     return ResponsiveCSS
 
 
@@ -92,6 +98,7 @@ def get_responsive_utils():
     """獲取響應式工具類"""
     # pylint: disable=import-outside-toplevel
     from .utils import ResponsiveUtils
+
     return ResponsiveUtils
 
 
@@ -104,25 +111,25 @@ ResponsiveUtils = None
 
 def __getattr__(name):
     """動態屬性存取，實現延遲導入"""
-    if name == 'responsive_manager':
+    if name == "responsive_manager":
         return get_responsive_manager()
-    elif name == 'ResponsiveComponents':
+    elif name == "ResponsiveComponents":
         return get_responsive_components()
-    elif name == 'ResponsiveCSS':
+    elif name == "ResponsiveCSS":
         return get_responsive_css()
-    elif name == 'ResponsiveUtils':
+    elif name == "ResponsiveUtils":
         return get_responsive_utils()
     else:
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 __all__ = [
-    'ResponsiveBreakpoints',
-    'ResponsiveUtils',
-    'apply_responsive_design',
-    'get_responsive_columns',
-    'is_mobile_device',
-    'responsive_manager',
-    'ResponsiveComponents',
-    'ResponsiveCSS'
+    "ResponsiveBreakpoints",
+    "ResponsiveUtils",
+    "apply_responsive_design",
+    "get_responsive_columns",
+    "is_mobile_device",
+    "responsive_manager",
+    "ResponsiveComponents",
+    "ResponsiveCSS",
 ]

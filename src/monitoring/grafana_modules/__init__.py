@@ -9,6 +9,6 @@ from .template_generator import TemplateGenerator
 
 __all__ = [
     "DashboardManager",
-    "DatasourceManager", 
+    "DatasourceManager",
     "TemplateGenerator",
 ]

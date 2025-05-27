@@ -69,9 +69,7 @@ async def generate_performance_report(request: PerformanceReportRequest):
             status="completed",
         )
 
-        return APIResponse(
-            success=True, message="績效報表生成成功", data=response_data
-        )
+        return APIResponse(success=True, message="績效報表生成成功", data=response_data)
 
     except Exception as e:
         logger.error("生成績效報表失敗: %s", e)
@@ -162,7 +160,11 @@ async def get_performance_data(
         period_returns = [
             {"period": "2024-01", "portfolio_return": 0.025, "benchmark_return": 0.018},
             {"period": "2024-02", "portfolio_return": 0.032, "benchmark_return": 0.021},
-            {"period": "2024-03", "portfolio_return": -0.015, "benchmark_return": -0.008},
+            {
+                "period": "2024-03",
+                "portfolio_return": -0.015,
+                "benchmark_return": -0.008,
+            },
         ]
 
         risk_metrics = {
@@ -183,9 +185,7 @@ async def get_performance_data(
             risk_metrics=risk_metrics,
         )
 
-        return APIResponse(
-            success=True, message="績效數據獲取成功", data=response_data
-        )
+        return APIResponse(success=True, message="績效數據獲取成功", data=response_data)
 
     except Exception as e:
         logger.error("獲取績效數據失敗: %s", e)

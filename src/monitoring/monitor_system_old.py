@@ -17,8 +17,10 @@ try:
     from src.core.logger import get_logger
 except ImportError:
     import logging
+
     def get_logger(name):
         return logging.getLogger(name)
+
 
 try:
     from src.monitoring.alert_manager import AlertSeverity, AlertType, alert_manager

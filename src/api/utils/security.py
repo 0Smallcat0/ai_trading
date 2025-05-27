@@ -392,7 +392,12 @@ class AuditLogger:
         # For now, we'll use the standard logger
         logger.info(
             "認證事件: %s, 用戶: %s, IP: %s, 代理: %s, 成功: %s, 詳情: %s",
-            event_type, user_id, ip_address, user_agent, success, details
+            event_type,
+            user_id,
+            ip_address,
+            user_agent,
+            success,
+            details,
         )
 
     @staticmethod
@@ -412,5 +417,9 @@ class AuditLogger:
         # For now, we'll use the standard logger
         logger.info(
             "授權事件: 用戶 %s 對資源 %s 執行 %s, 授權: %s, IP: %s",
-            user_id, resource, action, granted, ip_address
+            user_id,
+            resource,
+            action,
+            granted,
+            ip_address,
         )

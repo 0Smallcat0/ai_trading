@@ -115,7 +115,9 @@ class TestMonitoringSystemIntegration:
         app.include_router(router)
         return TestClient(app)
 
-    def test_prometheus_collector_integration(self, prometheus_collector: PrometheusCollector) -> None:
+    def test_prometheus_collector_integration(
+        self, prometheus_collector: PrometheusCollector
+    ) -> None:
         """測試 Prometheus 收集器整合功能。
 
         Args:
@@ -134,7 +136,9 @@ class TestMonitoringSystemIntegration:
             # 記錄一些指標
             prometheus_collector.record_api_request("GET", "/api/test", 200, 0.123)
             prometheus_collector.record_trading_order("market", "filled", 0.05)
-            prometheus_collector.update_strategy_metrics("test_strategy", 1500.0, 1.8, 5.2)
+            prometheus_collector.update_strategy_metrics(
+                "test_strategy", 1500.0, 1.8, 5.2
+            )
 
             # 獲取指標
             metrics = prometheus_collector.get_metrics()
@@ -155,7 +159,7 @@ class TestMonitoringSystemIntegration:
     def test_alert_manager_integration(
         self,
         alert_manager: IntelligentAlertManager,
-        notification_service: NotificationServices
+        notification_service: NotificationServices,
     ) -> None:
         """測試智能告警管理器整合功能。
 
@@ -171,12 +175,16 @@ class TestMonitoringSystemIntegration:
         """
         try:
             # 模擬通知服務
-            with patch.object(alert_manager, "notification_service", notification_service):
+            with patch.object(
+                alert_manager, "notification_service", notification_service
+            ):
                 # 啟動告警管理器
                 assert alert_manager.start(), "告警管理器啟動失敗"
 
                 # 模擬高 CPU 使用率觸發告警
-                with patch.object(alert_manager, "_get_metric_value", return_value=95.0):
+                with patch.object(
+                    alert_manager, "_get_metric_value", return_value=95.0
+                ):
                     # 添加一個測試規則
                     from src.monitoring.intelligent_alert_manager import AlertRule
 
@@ -252,8 +260,7 @@ class TestMonitoringSystemIntegration:
             raise AssertionError(f"健康檢查器整合測試失敗: {e}") from e
 
     def test_notification_service_integration(
-        self,
-        notification_service: NotificationServices
+        self, notification_service: NotificationServices
     ) -> None:
         """測試通知服務整合功能。
 
@@ -287,7 +294,9 @@ class TestMonitoringSystemIntegration:
                     mock_response.status_code = 200
                     mock_post.return_value = mock_response
 
-                    result = notification_service.send_notification("webhook", test_data)
+                    result = notification_service.send_notification(
+                        "webhook", test_data
+                    )
                     assert result, "Webhook 通知發送失敗"
                     mock_post.assert_called_once()
 

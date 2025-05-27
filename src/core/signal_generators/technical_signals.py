@@ -41,7 +41,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
-        if not self.validate_data('price'):
+        if not self.validate_data("price"):
             logger.warning(LOG_MSGS["no_price"].format(strategy="動量"))
             return pd.DataFrame()
 
@@ -60,7 +60,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         # 使用向量化運算優化計算效能
         try:
             # 計算所有股票的移動平均線（向量化）
-            close_prices = price_data['close'].unstack(level=0, fill_value=np.nan)
+            close_prices = price_data["close"].unstack(level=0, fill_value=np.nan)
 
             # 批量計算移動平均線
             short_ma = close_prices.rolling(window=short_window).mean()
@@ -71,11 +71,17 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
             rsi_data = close_prices.apply(lambda x: self._calculate_rsi(x))
 
             # 向量化訊號計算
-            signal_matrix = pd.DataFrame(0, index=close_prices.index, columns=close_prices.columns)
+            signal_matrix = pd.DataFrame(
+                0, index=close_prices.index, columns=close_prices.columns
+            )
 
             # 移動平均線訊號
-            ma_signal_1 = (short_ma > medium_ma).astype(int) - (short_ma < medium_ma).astype(int)
-            ma_signal_2 = (medium_ma > long_ma).astype(int) - (medium_ma < long_ma).astype(int)
+            ma_signal_1 = (short_ma > medium_ma).astype(int) - (
+                short_ma < medium_ma
+            ).astype(int)
+            ma_signal_2 = (medium_ma > long_ma).astype(int) - (
+                medium_ma < long_ma
+            ).astype(int)
 
             # RSI 訊號
             rsi_signal = (rsi_data < 30).astype(int) - (rsi_data > 70).astype(int)
@@ -102,7 +108,9 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         except Exception as e:
             logger.warning("向量化計算失敗，回退到逐股票計算: %s", e)
             # 回退到原始的逐股票計算方法
-            self._calculate_momentum_signals_fallback(price_data, signals, short_window, medium_window, long_window)
+            self._calculate_momentum_signals_fallback(
+                price_data, signals, short_window, medium_window, long_window
+            )
 
         # 儲存訊號
         self.signals["momentum"] = signals
@@ -115,7 +123,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         signals: pd.DataFrame,
         short_window: int,
         medium_window: int,
-        long_window: int
+        long_window: int,
     ):
         """回退方法：逐股票計算動量訊號"""
         for stock_id in price_data.index.get_level_values(0).unique():
@@ -155,10 +163,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
                 logger.warning("計算股票 %s 的動量訊號時發生錯誤: %s", stock_id, e)
 
     def generate_mean_reversion_signals(
-        self,
-        window: int = 20,
-        std_dev: float = 2.0,
-        **kwargs
+        self, window: int = 20, std_dev: float = 2.0, **kwargs
     ) -> pd.DataFrame:
         """生成均值回歸策略訊號
 
@@ -172,7 +177,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
-        if not self.validate_data('price'):
+        if not self.validate_data("price"):
             logger.warning(LOG_MSGS["no_price"].format(strategy="均值回歸"))
             return pd.DataFrame()
 
@@ -223,10 +228,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         return signals
 
     def generate_breakout_signals(
-        self,
-        window: int = 20,
-        volume_threshold: float = 1.5,
-        **kwargs
+        self, window: int = 20, volume_threshold: float = 1.5, **kwargs
     ) -> pd.DataFrame:
         """生成突破策略訊號
 
@@ -240,7 +242,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 突破訊號
         """
-        if not self.validate_data('price'):
+        if not self.validate_data("price"):
             logger.warning(LOG_MSGS["no_price"].format(strategy="突破"))
             return pd.DataFrame()
 
@@ -259,30 +261,30 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
 
             # 計算平均成交量
             if self.volume_data is not None and stock_id in self.volume_data.index:
-                avg_volume = self.volume_data.loc[stock_id].rolling(window=window).mean()
+                avg_volume = (
+                    self.volume_data.loc[stock_id].rolling(window=window).mean()
+                )
                 current_volume = self.volume_data.loc[stock_id]
                 volume_condition = current_volume > avg_volume * volume_threshold
             else:
                 volume_condition = pd.Series(True, index=stock_price.index)
 
             # 突破阻力位，買入訊號
-            valid_resistance = (
-                (~high_resistance.isna()) & (~stock_price["close"].isna())
+            valid_resistance = (~high_resistance.isna()) & (
+                ~stock_price["close"].isna()
             )
             breakout_up = (
-                valid_resistance &
-                (stock_price["close"] > high_resistance.shift(1)) &
-                volume_condition
+                valid_resistance
+                & (stock_price["close"] > high_resistance.shift(1))
+                & volume_condition
             )
 
             # 跌破支撐位，賣出訊號
-            valid_support = (
-                (~low_support.isna()) & (~stock_price["close"].isna())
-            )
+            valid_support = (~low_support.isna()) & (~stock_price["close"].isna())
             breakout_down = (
-                valid_support &
-                (stock_price["close"] < low_support.shift(1)) &
-                volume_condition
+                valid_support
+                & (stock_price["close"] < low_support.shift(1))
+                & volume_condition
             )
 
             stock_signals = pd.Series(0, index=stock_price.index, dtype=int)
@@ -300,10 +302,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         return signals
 
     def generate_crossover_signals(
-        self,
-        fast_period: int = 12,
-        slow_period: int = 26,
-        **kwargs
+        self, fast_period: int = 12, slow_period: int = 26, **kwargs
     ) -> pd.DataFrame:
         """生成交叉策略訊號
 
@@ -317,7 +316,7 @@ class TechnicalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 交叉訊號
         """
-        if not self.validate_data('price'):
+        if not self.validate_data("price"):
             logger.warning(LOG_MSGS["no_price"].format(strategy="交叉"))
             return pd.DataFrame()
 

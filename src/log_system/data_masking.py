@@ -21,39 +21,38 @@ logger = logging.getLogger(__name__)
 
 # 正則表達式常量
 PATTERNS = {
-    'API_KEY': (
+    "API_KEY": (
         r"(?i)(api[_-]?key|apikey|access[_-]?key)\s*[:=]\s*"
         r"['\"]?([a-zA-Z0-9_-]{20,})['\"]?"
     ),
-    'PASSWORD': (
-        r"(?i)(password|passwd|pwd)\s*[:=]\s*"
-        r"['\"]?([^'\"\s]+)['\"]?"
-    ),
-    'JWT_TOKEN': (
+    "PASSWORD": (r"(?i)(password|passwd|pwd)\s*[:=]\s*" r"['\"]?([^'\"\s]+)['\"]?"),
+    "JWT_TOKEN": (
         r"(?i)(token|jwt|bearer)\s*[:=]?\s*['\"]?"
         r"([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)['\"]?"
     ),
-    'CREDIT_CARD': r"\b(?:\d{4}[-\s]?){3}\d{4}\b",
-    'PHONE_TW': (
+    "CREDIT_CARD": r"\b(?:\d{4}[-\s]?){3}\d{4}\b",
+    "PHONE_TW": (
         r"(?:\+?886[-\s]?)?"
         r"(?:0?9\d{8}|\(0\d{1,2}\)[-\s]?\d{7,8}|0\d{1,2}[-\s]?\d{7,8})"
     ),
-    'EMAIL': r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-    'ID_NUMBER_TW': r"\b[A-Z][12]\d{8}\b"
+    "EMAIL": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+    "ID_NUMBER_TW": r"\b[A-Z][12]\d{8}\b",
 }
 
 
 class MaskingStrategy(Enum):
     """遮罩策略"""
-    FULL = "full"              # 完全遮罩
-    PARTIAL = "partial"        # 部分遮罩
-    HASH = "hash"              # 雜湊遮罩
-    TOKENIZE = "tokenize"      # 標記化
-    REDACT = "redact"          # 編輯遮罩
+
+    FULL = "full"  # 完全遮罩
+    PARTIAL = "partial"  # 部分遮罩
+    HASH = "hash"  # 雜湊遮罩
+    TOKENIZE = "tokenize"  # 標記化
+    REDACT = "redact"  # 編輯遮罩
 
 
 class SensitiveDataType(Enum):
     """敏感資料類型"""
+
     API_KEY = "api_key"
     PASSWORD = "password"
     TOKEN = "token"
@@ -71,6 +70,7 @@ class SensitiveDataType(Enum):
 @dataclass
 class MaskingRuleConfig:
     """遮罩規則配置"""
+
     name: str
     data_type: SensitiveDataType
     pattern: str
@@ -86,6 +86,7 @@ class MaskingRuleConfig:
 @dataclass
 class MaskingRule:
     """遮罩規則"""
+
     name: str
     data_type: SensitiveDataType
     pattern: Union[str, Pattern]
@@ -130,61 +131,61 @@ class DataMasker:
             MaskingRule(
                 name="API金鑰",
                 data_type=SensitiveDataType.API_KEY,
-                pattern=PATTERNS['API_KEY'],
+                pattern=PATTERNS["API_KEY"],
                 strategy=MaskingStrategy.PARTIAL,
                 field_names=["api_key", "apikey", "access_key", "key"],
-                description="API金鑰遮罩"
+                description="API金鑰遮罩",
             ),
             MaskingRule(
                 name="密碼",
                 data_type=SensitiveDataType.PASSWORD,
-                pattern=PATTERNS['PASSWORD'],
+                pattern=PATTERNS["PASSWORD"],
                 strategy=MaskingStrategy.FULL,
                 field_names=["password", "passwd", "pwd"],
-                description="密碼完全遮罩"
+                description="密碼完全遮罩",
             ),
             MaskingRule(
                 name="JWT Token",
                 data_type=SensitiveDataType.TOKEN,
-                pattern=PATTERNS['JWT_TOKEN'],
+                pattern=PATTERNS["JWT_TOKEN"],
                 strategy=MaskingStrategy.PARTIAL,
                 field_names=["token", "jwt", "authorization", "bearer"],
-                description="JWT Token遮罩"
+                description="JWT Token遮罩",
             ),
             MaskingRule(
                 name="信用卡號",
                 data_type=SensitiveDataType.CREDIT_CARD,
-                pattern=PATTERNS['CREDIT_CARD'],
+                pattern=PATTERNS["CREDIT_CARD"],
                 strategy=MaskingStrategy.PARTIAL,
                 field_names=["credit_card", "card_number", "cc_number"],
                 description="信用卡號遮罩",
-                preserve_format=True
+                preserve_format=True,
             ),
             MaskingRule(
                 name="電話號碼",
                 data_type=SensitiveDataType.PHONE,
-                pattern=PATTERNS['PHONE_TW'],
+                pattern=PATTERNS["PHONE_TW"],
                 strategy=MaskingStrategy.PARTIAL,
                 field_names=["phone", "mobile", "telephone"],
                 description="電話號碼遮罩",
-                preserve_format=True
+                preserve_format=True,
             ),
             MaskingRule(
                 name="電子郵件",
                 data_type=SensitiveDataType.EMAIL,
-                pattern=PATTERNS['EMAIL'],
+                pattern=PATTERNS["EMAIL"],
                 strategy=MaskingStrategy.PARTIAL,
                 field_names=["email", "mail", "e_mail"],
-                description="電子郵件遮罩"
+                description="電子郵件遮罩",
             ),
             MaskingRule(
                 name="身分證字號",
                 data_type=SensitiveDataType.ID_NUMBER,
-                pattern=PATTERNS['ID_NUMBER_TW'],
+                pattern=PATTERNS["ID_NUMBER_TW"],
                 strategy=MaskingStrategy.PARTIAL,
                 field_names=["id_number", "national_id", "citizen_id"],
-                description="身分證字號遮罩"
-            )
+                description="身分證字號遮罩",
+            ),
         ]
 
         self.rules.extend(default_rules)
@@ -192,18 +193,18 @@ class DataMasker:
     def _load_config(self, config_file: str):
         """載入配置文件"""
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 config = json.load(f)
 
             # 載入自定義規則
-            if 'custom_rules' in config:
-                for rule_config in config['custom_rules']:
+            if "custom_rules" in config:
+                for rule_config in config["custom_rules"]:
                     rule = MaskingRule(**rule_config)
                     self.rules.append(rule)
 
             # 更新現有規則
-            if 'rule_updates' in config:
-                for update in config['rule_updates']:
+            if "rule_updates" in config:
+                for update in config["rule_updates"]:
                     self._update_rule(update)
 
         except Exception as e:
@@ -211,7 +212,7 @@ class DataMasker:
 
     def _update_rule(self, update: Dict[str, Any]):
         """更新規則"""
-        rule_name = update.get('name')
+        rule_name = update.get("name")
         for rule in self.rules:
             if rule.name == rule_name:
                 for key, value in update.items():
@@ -237,7 +238,9 @@ class DataMasker:
             return self._mask_string(data, context)
         return data
 
-    def _mask_dict(self, data: Dict[str, Any], context: Optional[str] = None) -> Dict[str, Any]:
+    def _mask_dict(
+        self, data: Dict[str, Any], context: Optional[str] = None
+    ) -> Dict[str, Any]:
         """遮罩字典資料"""
         masked_data = {}
 
@@ -290,7 +293,9 @@ class DataMasker:
         found_rule = None
 
         for rule in self.rules:
-            if rule.enabled and field_name_lower in [name.lower() for name in rule.field_names]:
+            if rule.enabled and field_name_lower in [
+                name.lower() for name in rule.field_names
+            ]:
                 found_rule = rule
                 break
 
@@ -317,6 +322,7 @@ class DataMasker:
 
     def _apply_pattern_masking(self, text: str, rule: MaskingRule) -> str:
         """應用模式遮罩（使用快取的編譯模式）。"""
+
         def replace_match(match):
             # 如果有捕獲組，遮罩捕獲組的內容
             if match.groups():
@@ -341,7 +347,7 @@ class DataMasker:
             MaskingStrategy.PARTIAL: self._apply_partial_masking,
             MaskingStrategy.HASH: self._apply_hash_masking,
             MaskingStrategy.TOKENIZE: self._apply_tokenize_masking,
-            MaskingStrategy.REDACT: self._apply_redact_masking
+            MaskingStrategy.REDACT: self._apply_redact_masking,
         }
 
         handler = strategy_handlers.get(rule.strategy)
@@ -365,9 +371,11 @@ class DataMasker:
         if rule.preserve_format:
             return self._apply_format_preserving_mask(text, rule, visible_chars)
 
-        return (text[:visible_chars] +
-               rule.replacement_char * masked_length +
-               text[-visible_chars:])
+        return (
+            text[:visible_chars]
+            + rule.replacement_char * masked_length
+            + text[-visible_chars:]
+        )
 
     def _apply_format_preserving_mask(
         self, text: str, rule: MaskingRule, visible_chars: int
@@ -410,7 +418,7 @@ class DataMasker:
         strategy: MaskingStrategy,
         field_names: List[str],
         description: str = "",
-        **kwargs
+        **kwargs,
     ):
         """添加自定義遮罩規則。
 
@@ -430,7 +438,7 @@ class DataMasker:
             strategy=strategy,
             field_names=field_names,
             description=description,
-            **kwargs
+            **kwargs,
         )
         self.rules.append(rule)
 
@@ -450,10 +458,12 @@ class DataMasker:
             enabled=config.enabled,
             preserve_length=config.preserve_length,
             preserve_format=config.preserve_format,
-            replacement_char=config.replacement_char
+            replacement_char=config.replacement_char,
         )
 
-    def mask_data_batch(self, data_list: List[Any], context: Optional[str] = None) -> List[Any]:
+    def mask_data_batch(
+        self, data_list: List[Any], context: Optional[str] = None
+    ) -> List[Any]:
         """批量遮罩資料。
 
         Args:
@@ -465,7 +475,9 @@ class DataMasker:
         """
         return [self.mask_data(data, context) for data in data_list]
 
-    def mask_dict_batch(self, dict_list: List[Dict[str, Any]], context: Optional[str] = None) -> List[Dict[str, Any]]:
+    def mask_dict_batch(
+        self, dict_list: List[Dict[str, Any]], context: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """批量遮罩字典資料。
 
         Args:
@@ -494,7 +506,9 @@ class DataMasker:
                 else:
                     # 遞歸處理嵌套資料
                     if isinstance(value, str):
-                        masked_dict[key] = self._mask_string_with_rules(value, active_rules)
+                        masked_dict[key] = self._mask_string_with_rules(
+                            value, active_rules
+                        )
                     else:
                         masked_dict[key] = self.mask_data(value, context)
 
@@ -502,7 +516,9 @@ class DataMasker:
 
         return masked_results
 
-    def _find_field_rule_cached(self, field_name: str, active_rules: List[MaskingRule]) -> Optional[MaskingRule]:
+    def _find_field_rule_cached(
+        self, field_name: str, active_rules: List[MaskingRule]
+    ) -> Optional[MaskingRule]:
         """使用快取查找欄位對應的規則。"""
         field_name_lower = field_name.lower()
 
@@ -512,7 +528,9 @@ class DataMasker:
 
         return None
 
-    def _mask_string_with_rules(self, data: str, active_rules: List[MaskingRule]) -> str:
+    def _mask_string_with_rules(
+        self, data: str, active_rules: List[MaskingRule]
+    ) -> str:
         """使用預編譯規則遮罩字串。"""
         masked_data = data
 
@@ -548,12 +566,14 @@ class DataMasker:
                 "strategy": rule.strategy.value,
                 "field_names": rule.field_names,
                 "description": rule.description,
-                "enabled": rule.enabled
+                "enabled": rule.enabled,
             }
             for rule in self.rules
         ]
 
-    def test_masking(self, test_data: str, rule_name: Optional[str] = None) -> Dict[str, Any]:
+    def test_masking(
+        self, test_data: str, rule_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """測試遮罩效果。
 
         Args:
@@ -563,11 +583,7 @@ class DataMasker:
         Returns:
             Dict[str, Any]: 測試結果
         """
-        result = {
-            "original": test_data,
-            "masked": test_data,
-            "applied_rules": []
-        }
+        result = {"original": test_data, "masked": test_data, "applied_rules": []}
 
         if rule_name:
             # 測試特定規則
@@ -602,14 +618,14 @@ class DataMasker:
                     "enabled": rule.enabled,
                     "preserve_length": rule.preserve_length,
                     "preserve_format": rule.preserve_format,
-                    "replacement_char": rule.replacement_char
+                    "replacement_char": rule.replacement_char,
                 }
                 for rule in self.rules
             ]
         }
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error("匯出遮罩配置時發生錯誤: %s", e)
@@ -637,7 +653,7 @@ class DataMasker:
             "disabled_rules": total_rules - enabled_rules,
             "by_type": by_type,
             "by_strategy": by_strategy,
-            "token_count": len(self.token_map)
+            "token_count": len(self.token_map),
         }
 
 

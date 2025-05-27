@@ -69,8 +69,8 @@ class DataSourceHealth:
     def _update_average_response_time(self):
         """更新平均響應時間"""
         if self.response_times:
-            self.average_response_time = (
-                sum(self.response_times) / len(self.response_times)
+            self.average_response_time = sum(self.response_times) / len(
+                self.response_times
             )
 
     def get_success_rate(self) -> float:
@@ -91,8 +91,7 @@ class DataSourceHealth:
             "last_check_time": self.last_check_time.isoformat(),
             "last_success_time": self.last_success_time.isoformat(),
             "last_failure_time": (
-                self.last_failure_time.isoformat()
-                if self.last_failure_time else None
+                self.last_failure_time.isoformat() if self.last_failure_time else None
             ),
             "consecutive_failures": self.consecutive_failures,
             "total_requests": self.total_requests,
@@ -255,7 +254,7 @@ class DataSourceFailoverManager:
         source_name: str,
         success: bool,
         response_time: float = 0.0,
-        error_message: str = ""
+        error_message: str = "",
     ):
         """記錄請求結果
 
@@ -308,8 +307,7 @@ class DataSourceFailoverManager:
 
         self.is_running = True
         self.health_check_thread = threading.Thread(
-            target=self._health_check_loop,
-            daemon=True
+            target=self._health_check_loop, daemon=True
         )
         self.health_check_thread.start()
         logger.info("健康監控已啟動")
@@ -348,7 +346,7 @@ class DataSourceFailoverManager:
                             source_name,
                             is_healthy,
                             response_time,
-                            "" if is_healthy else "健康檢查失敗"
+                            "" if is_healthy else "健康檢查失敗",
                         )
                     else:
                         # 使用適配器的默認健康檢查
@@ -362,7 +360,7 @@ class DataSourceFailoverManager:
                                 source_name,
                                 is_healthy,
                                 response_time,
-                                "" if is_healthy else "連接測試失敗"
+                                "" if is_healthy else "連接測試失敗",
                             )
 
                     # 更新最後檢查時間

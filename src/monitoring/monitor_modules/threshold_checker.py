@@ -85,9 +85,7 @@ class ThresholdChecker:
             module_logger.error("檢查系統指標失敗: %s", e)
 
     def _check_cpu_usage(
-        self,
-        system_metrics: Dict[str, Any],
-        system_thresholds: Dict[str, Any]
+        self, system_metrics: Dict[str, Any], system_thresholds: Dict[str, Any]
     ) -> None:
         """檢查 CPU 使用率
 
@@ -105,13 +103,11 @@ class ThresholdChecker:
                 {
                     "cpu_usage": cpu_usage,
                     "threshold": cpu_threshold,
-                }
+                },
             )
 
     def _check_memory_usage(
-        self,
-        system_metrics: Dict[str, Any],
-        system_thresholds: Dict[str, Any]
+        self, system_metrics: Dict[str, Any], system_thresholds: Dict[str, Any]
     ) -> None:
         """檢查記憶體使用率
 
@@ -129,13 +125,11 @@ class ThresholdChecker:
                 {
                     "memory_usage": memory_usage,
                     "threshold": memory_threshold,
-                }
+                },
             )
 
     def _check_disk_usage(
-        self,
-        system_metrics: Dict[str, Any],
-        system_thresholds: Dict[str, Any]
+        self, system_metrics: Dict[str, Any], system_thresholds: Dict[str, Any]
     ) -> None:
         """檢查磁碟使用率
 
@@ -153,7 +147,7 @@ class ThresholdChecker:
                 {
                     "disk_usage": disk_usage,
                     "threshold": disk_threshold,
-                }
+                },
             )
 
     def check_api_metrics(self, metrics: Dict[str, Any]) -> None:
@@ -176,9 +170,7 @@ class ThresholdChecker:
             module_logger.error("檢查 API 指標失敗: %s", e)
 
     def _check_api_latency(
-        self,
-        api_metrics: Dict[str, Any],
-        api_thresholds: Dict[str, Any]
+        self, api_metrics: Dict[str, Any], api_thresholds: Dict[str, Any]
     ) -> None:
         """檢查 API 延遲
 
@@ -198,13 +190,11 @@ class ThresholdChecker:
                         "endpoint": endpoint,
                         "latency": latency,
                         "threshold": latency_threshold,
-                    }
+                    },
                 )
 
     def _check_api_error_rate(
-        self,
-        api_metrics: Dict[str, Any],
-        api_thresholds: Dict[str, Any]
+        self, api_metrics: Dict[str, Any], api_thresholds: Dict[str, Any]
     ) -> None:
         """檢查 API 錯誤率
 
@@ -229,7 +219,7 @@ class ThresholdChecker:
                             "threshold": error_rate_threshold,
                             "requests": api_requests[endpoint],
                             "errors": api_errors[endpoint],
-                        }
+                        },
                     )
 
     def check_model_metrics(self, metrics: Dict[str, Any]) -> None:
@@ -255,9 +245,7 @@ class ThresholdChecker:
             module_logger.error("檢查模型指標失敗: %s", e)
 
     def _check_model_accuracy(
-        self,
-        model_metrics: Dict[str, Any],
-        model_thresholds: Dict[str, Any]
+        self, model_metrics: Dict[str, Any], model_thresholds: Dict[str, Any]
     ) -> None:
         """檢查模型準確率
 
@@ -277,13 +265,11 @@ class ThresholdChecker:
                         "model_name": model_name,
                         "accuracy": accuracy,
                         "threshold": accuracy_threshold,
-                    }
+                    },
                 )
 
     def _check_model_latency(
-        self,
-        model_metrics: Dict[str, Any],
-        model_thresholds: Dict[str, Any]
+        self, model_metrics: Dict[str, Any], model_thresholds: Dict[str, Any]
     ) -> None:
         """檢查模型延遲
 
@@ -303,13 +289,11 @@ class ThresholdChecker:
                         "model_name": model_name,
                         "latency": latency,
                         "threshold": latency_threshold,
-                    }
+                    },
                 )
 
     def _check_model_drift(
-        self,
-        model_metrics: Dict[str, Any],
-        model_thresholds: Dict[str, Any]
+        self, model_metrics: Dict[str, Any], model_thresholds: Dict[str, Any]
     ) -> None:
         """檢查模型漂移
 
@@ -329,7 +313,7 @@ class ThresholdChecker:
                         "model_name": model_name,
                         "drift": drift,
                         "threshold": drift_threshold,
-                    }
+                    },
                 )
 
     def check_trade_metrics(self, metrics: Dict[str, Any]) -> None:
@@ -352,9 +336,7 @@ class ThresholdChecker:
             module_logger.error("檢查交易指標失敗: %s", e)
 
     def _check_trade_success_rate(
-        self,
-        trade_metrics: Dict[str, Any],
-        trade_thresholds: Dict[str, Any]
+        self, trade_metrics: Dict[str, Any], trade_thresholds: Dict[str, Any]
     ) -> None:
         """檢查交易成功率
 
@@ -372,13 +354,11 @@ class ThresholdChecker:
                 {
                     "success_rate": success_rate,
                     "threshold": success_rate_threshold,
-                }
+                },
             )
 
     def _check_capital_change(
-        self,
-        trade_metrics: Dict[str, Any],
-        trade_thresholds: Dict[str, Any]
+        self, trade_metrics: Dict[str, Any], trade_thresholds: Dict[str, Any]
     ) -> None:
         """檢查資本變化
 
@@ -397,5 +377,5 @@ class ThresholdChecker:
                     "capital_change": capital_change,
                     "threshold": capital_change_threshold,
                 },
-                severity="critical"
+                severity="critical",
             )

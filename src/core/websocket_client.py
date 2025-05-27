@@ -91,37 +91,37 @@ class BackpressureController:
                 # 臨界狀態：大幅增加處理間隔
                 adjustment = self.adjustment_factor * 2
                 self.current_interval = min(
-                    self.current_interval * (1 + adjustment),
-                    self.max_interval
+                    self.current_interval * (1 + adjustment), self.max_interval
                 )
                 self.stats["backpressure_events"] += 1
                 logger.warning(
                     "背壓控制：隊列使用率 %.2f%%，調整處理間隔至 %.3fs",
-                    usage_ratio * 100, self.current_interval
+                    usage_ratio * 100,
+                    self.current_interval,
                 )
 
             elif usage_ratio >= self.warning_threshold:
                 # 警告狀態：適度增加處理間隔
                 adjustment = self.adjustment_factor
                 self.current_interval = min(
-                    self.current_interval * (1 + adjustment),
-                    self.max_interval
+                    self.current_interval * (1 + adjustment), self.max_interval
                 )
                 logger.debug(
                     "背壓控制：隊列使用率 %.2f%%，調整處理間隔至 %.3fs",
-                    usage_ratio * 100, self.current_interval
+                    usage_ratio * 100,
+                    self.current_interval,
                 )
 
             elif usage_ratio < self.warning_threshold * 0.5:
                 # 低使用率：減少處理間隔
                 adjustment = self.adjustment_factor * 0.5
                 self.current_interval = max(
-                    self.current_interval * (1 - adjustment),
-                    self.min_interval
+                    self.current_interval * (1 - adjustment), self.min_interval
                 )
                 logger.debug(
                     "背壓控制：隊列使用率 %.2f%%，調整處理間隔至 %.3fs",
-                    usage_ratio * 100, self.current_interval
+                    usage_ratio * 100,
+                    self.current_interval,
                 )
 
             self.stats["total_adjustments"] += 1
@@ -131,15 +131,17 @@ class BackpressureController:
         """獲取統計信息"""
         with self.lock:
             avg_queue_size = (
-                sum(self.stats["queue_size_history"]) /
-                len(self.stats["queue_size_history"])
-                if self.stats["queue_size_history"] else 0
+                sum(self.stats["queue_size_history"])
+                / len(self.stats["queue_size_history"])
+                if self.stats["queue_size_history"]
+                else 0
             )
 
             avg_interval = (
-                sum(self.stats["interval_history"]) /
-                len(self.stats["interval_history"])
-                if self.stats["interval_history"] else 0
+                sum(self.stats["interval_history"])
+                / len(self.stats["interval_history"])
+                if self.stats["interval_history"]
+                else 0
             )
 
             return {
@@ -317,7 +319,7 @@ class WebSocketClient:
                     self.stats["backpressure_activations"] += 1
                     logger.warning(
                         "背壓控制啟動：隊列使用率 %.2f%%",
-                        current_queue_size / self.max_queue_size * 100
+                        current_queue_size / self.max_queue_size * 100,
                     )
 
             # 將消息放入隊列
@@ -438,8 +440,10 @@ class WebSocketClient:
                     self.message_queue.task_done()
 
                     # 如果啟用背壓控制，在處理完消息後稍作等待
-                    if (self.enable_backpressure and
-                        current_interval > self.process_interval):
+                    if (
+                        self.enable_backpressure
+                        and current_interval > self.process_interval
+                    ):
                         time.sleep(current_interval - self.process_interval)
 
                 except queue.Empty:

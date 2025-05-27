@@ -176,9 +176,7 @@ class ChartGeneratorService:
 
             else:  # matplotlib
                 plt.style.use(self.default_matplotlib_config["style"])
-                fig, (ax1, ax2) = plt.subplots(
-                    2, 1, figsize=(12, 10), sharex=True
-                )
+                fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 
                 # 上圖：累積報酬和最高水位
                 ax1.plot(
@@ -260,8 +258,16 @@ class ChartGeneratorService:
                     "總交易次數",
                 ],
                 specs=[
-                    [{"type": "indicator"}, {"type": "indicator"}, {"type": "indicator"}],
-                    [{"type": "indicator"}, {"type": "indicator"}, {"type": "indicator"}],
+                    [
+                        {"type": "indicator"},
+                        {"type": "indicator"},
+                        {"type": "indicator"},
+                    ],
+                    [
+                        {"type": "indicator"},
+                        {"type": "indicator"},
+                        {"type": "indicator"},
+                    ],
                 ],
             )
 
@@ -403,8 +409,12 @@ class ChartGeneratorService:
                 for i in range(len(pivot_table.index)):
                     for j in range(len(pivot_table.columns)):
                         ax.text(
-                            j, i, f"{pivot_table.iloc[i, j]:.0f}",
-                            ha="center", va="center", color="black"
+                            j,
+                            i,
+                            f"{pivot_table.iloc[i, j]:.0f}",
+                            ha="center",
+                            va="center",
+                            color="black",
                         )
 
                 # 添加顏色條
@@ -439,9 +449,7 @@ class ChartGeneratorService:
         """
         try:
             # 從 param_results 中提取參數值，如果沒有則使用預設值
-            param1_values = param_results.get(
-                "param1_values", [10, 20, 30, 40, 50]
-            )
+            param1_values = param_results.get("param1_values", [10, 20, 30, 40, 50])
             param2_values = param_results.get(
                 "param2_values", [0.1, 0.2, 0.3, 0.4, 0.5]
             )
@@ -452,9 +460,7 @@ class ChartGeneratorService:
             else:
                 # 模擬數據
                 matrix_shape = (len(param1_values), len(param2_values))
-                performance_matrix = (
-                    np.random.randn(*matrix_shape) * 1000 + 5000
-                )
+                performance_matrix = np.random.randn(*matrix_shape) * 1000 + 5000
 
             if chart_type == "plotly":
                 fig = go.Figure(
@@ -497,8 +503,12 @@ class ChartGeneratorService:
                 for i in range(len(param1_values)):
                     for j in range(len(param2_values)):
                         ax.text(
-                            j, i, f"{performance_matrix[i, j]:.0f}",
-                            ha="center", va="center", color="black"
+                            j,
+                            i,
+                            f"{performance_matrix[i, j]:.0f}",
+                            ha="center",
+                            va="center",
+                            color="black",
                         )
 
                 # 添加顏色條

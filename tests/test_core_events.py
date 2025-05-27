@@ -29,7 +29,7 @@ class TestEvent:
             event_type=EventType.TRADE_EXECUTED,
             source=EventSource.TRADING_ENGINE,
             data={"symbol": "AAPL", "price": 150.0},
-            severity=EventSeverity.INFO
+            severity=EventSeverity.INFO,
         )
 
         assert event.event_type == EventType.TRADE_EXECUTED
@@ -44,7 +44,7 @@ class TestEvent:
         event = Event(
             event_type=EventType.PRICE_UPDATE,
             source=EventSource.MARKET_DATA,
-            data={"symbol": "GOOGL", "price": 2500.0}
+            data={"symbol": "GOOGL", "price": 2500.0},
         )
 
         event_dict = event.to_dict()
@@ -63,7 +63,7 @@ class TestEvent:
             "data": {"symbol": "MSFT", "quantity": 100},
             "severity": EventSeverity.INFO.value,
             "timestamp": datetime.now().isoformat(),
-            "id": "test-123"
+            "id": "test-123",
         }
 
         event = Event.from_dict(event_data)
@@ -85,6 +85,7 @@ class TestEventBus:
 
     def test_subscribe_and_publish(self):
         """Test basic subscribe and publish functionality"""
+
         def handler(event):
             self.received_events.append(event)
 
@@ -93,8 +94,7 @@ class TestEventBus:
 
         # Publish an event
         event = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
         self.event_bus.publish(event)
 
@@ -119,8 +119,7 @@ class TestEventBus:
 
         # Publish event
         event = Event(
-            event_type=EventType.PRICE_UPDATE,
-            data={"symbol": "GOOGL", "price": 2500.0}
+            event_type=EventType.PRICE_UPDATE, data={"symbol": "GOOGL", "price": 2500.0}
         )
         self.event_bus.publish(event)
 
@@ -130,6 +129,7 @@ class TestEventBus:
 
     def test_unsubscribe(self):
         """Test unsubscribing from events"""
+
         def handler(event):
             self.received_events.append(event)
 
@@ -139,8 +139,7 @@ class TestEventBus:
 
         # Publish event
         event = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
         self.event_bus.publish(event)
 
@@ -149,6 +148,7 @@ class TestEventBus:
 
     def test_wildcard_subscription(self):
         """Test wildcard subscription"""
+
         def handler(event):
             self.received_events.append(event)
 
@@ -159,7 +159,7 @@ class TestEventBus:
         events = [
             Event(EventType.TRADE_EXECUTED, {"symbol": "AAPL"}),
             Event(EventType.PRICE_UPDATE, {"symbol": "GOOGL"}),
-            Event(EventType.ORDER_PLACED, {"symbol": "MSFT"})
+            Event(EventType.ORDER_PLACED, {"symbol": "MSFT"}),
         ]
 
         for event in events:
@@ -179,6 +179,7 @@ class TestEventProcessor:
 
     def test_add_processor(self):
         """Test adding event processor"""
+
         def processor_func(event):
             self.processed_events.append(event)
             return event
@@ -187,8 +188,7 @@ class TestEventProcessor:
 
         # Process an event
         event = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
 
         result = self.processor.process(event)
@@ -198,6 +198,7 @@ class TestEventProcessor:
 
     def test_event_transformation(self):
         """Test event transformation during processing"""
+
         def transform_processor(event):
             # Add processed timestamp
             event.data["processed_at"] = datetime.now().isoformat()
@@ -206,8 +207,7 @@ class TestEventProcessor:
         self.processor.add_processor(EventType.PRICE_UPDATE, transform_processor)
 
         event = Event(
-            event_type=EventType.PRICE_UPDATE,
-            data={"symbol": "GOOGL", "price": 2500.0}
+            event_type=EventType.PRICE_UPDATE, data={"symbol": "GOOGL", "price": 2500.0}
         )
 
         result = self.processor.process(event)
@@ -216,6 +216,7 @@ class TestEventProcessor:
 
     def test_multiple_processors(self):
         """Test multiple processors for same event type"""
+
         def processor1(event):
             event.data["step1"] = "completed"
             return event
@@ -228,8 +229,7 @@ class TestEventProcessor:
         self.processor.add_processor(EventType.TRADE_EXECUTED, processor2)
 
         event = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
 
         result = self.processor.process(event)
@@ -251,15 +251,13 @@ class TestEventFilter:
 
         # Should pass
         event1 = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
         assert self.filter.should_process(event1) == True
 
         # Should be filtered out
         event2 = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "MSFT", "price": 300.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "MSFT", "price": 300.0}
         )
         assert self.filter.should_process(event2) == False
 
@@ -269,15 +267,13 @@ class TestEventFilter:
 
         # Should pass
         event1 = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
         assert self.filter.should_process(event1) == True
 
         # Should be filtered out
         event2 = Event(
-            event_type=EventType.PRICE_UPDATE,
-            data={"symbol": "AAPL", "price": 151.0}
+            event_type=EventType.PRICE_UPDATE, data={"symbol": "AAPL", "price": 151.0}
         )
         assert self.filter.should_process(event2) == False
 
@@ -291,15 +287,13 @@ class TestEventFilter:
 
         # Should pass (current time)
         event1 = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
         assert self.filter.should_process(event1) == True
 
         # Should be filtered out (old event)
         old_event = Event(
-            event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "price": 150.0}
+            event_type=EventType.TRADE_EXECUTED, data={"symbol": "AAPL", "price": 150.0}
         )
         old_event.timestamp = now - timedelta(hours=2)
         assert self.filter.should_process(old_event) == False
@@ -318,7 +312,7 @@ class TestEventAggregator:
         events = [
             Event(EventType.TRADE_EXECUTED, {"symbol": "AAPL", "quantity": 100}),
             Event(EventType.TRADE_EXECUTED, {"symbol": "AAPL", "quantity": 200}),
-            Event(EventType.TRADE_EXECUTED, {"symbol": "GOOGL", "quantity": 50})
+            Event(EventType.TRADE_EXECUTED, {"symbol": "GOOGL", "quantity": 50}),
         ]
 
         for event in events:
@@ -326,9 +320,7 @@ class TestEventAggregator:
 
         # Get count by symbol
         aapl_count = self.aggregator.get_count(
-            event_type=EventType.TRADE_EXECUTED,
-            group_by="symbol",
-            value="AAPL"
+            event_type=EventType.TRADE_EXECUTED, group_by="symbol", value="AAPL"
         )
 
         assert aapl_count == 2
@@ -348,7 +340,7 @@ class TestEventAggregator:
             event_type=EventType.TRADE_EXECUTED,
             field="quantity",
             group_by="symbol",
-            value="AAPL"
+            value="AAPL",
         )
 
         assert total_quantity == 300
@@ -375,7 +367,7 @@ class TestEventAggregator:
             event_type=EventType.TRADE_EXECUTED,
             window_minutes=60,
             group_by="symbol",
-            value="AAPL"
+            value="AAPL",
         )
 
         assert count == 2
@@ -385,7 +377,7 @@ class TestEventAggregator:
             event_type=EventType.TRADE_EXECUTED,
             window_minutes=20,
             group_by="symbol",
-            value="AAPL"
+            value="AAPL",
         )
 
         assert recent_count == 1
@@ -405,14 +397,14 @@ class TestAnomalyDetector:
         for price in normal_prices:
             event = Event(
                 event_type=EventType.PRICE_UPDATE,
-                data={"symbol": "AAPL", "price": price}
+                data={"symbol": "AAPL", "price": price},
             )
             self.detector.add_event(event)
 
         # Add anomalous price
         anomaly_event = Event(
             event_type=EventType.PRICE_UPDATE,
-            data={"symbol": "AAPL", "price": 150}  # 50% jump
+            data={"symbol": "AAPL", "price": 150},  # 50% jump
         )
 
         is_anomaly = self.detector.detect_price_anomaly(anomaly_event)
@@ -425,14 +417,14 @@ class TestAnomalyDetector:
         for volume in normal_volumes:
             event = Event(
                 event_type=EventType.TRADE_EXECUTED,
-                data={"symbol": "AAPL", "volume": volume}
+                data={"symbol": "AAPL", "volume": volume},
             )
             self.detector.add_event(event)
 
         # Add anomalous volume
         anomaly_event = Event(
             event_type=EventType.TRADE_EXECUTED,
-            data={"symbol": "AAPL", "volume": 10000}  # 10x normal
+            data={"symbol": "AAPL", "volume": 10000},  # 10x normal
         )
 
         is_anomaly = self.detector.detect_volume_anomaly(anomaly_event)
@@ -445,7 +437,7 @@ class TestAnomalyDetector:
         for i in range(10):
             event = Event(
                 event_type=EventType.TRADE_EXECUTED,
-                data={"symbol": "AAPL", "quantity": 100}
+                data={"symbol": "AAPL", "quantity": 100},
             )
             event.timestamp = now - timedelta(minutes=i)
             self.detector.add_event(event)
@@ -455,7 +447,7 @@ class TestAnomalyDetector:
             event_type=EventType.TRADE_EXECUTED,
             symbol="AAPL",
             window_minutes=5,
-            threshold=10
+            threshold=10,
         )
 
         assert is_anomaly == True

@@ -73,7 +73,7 @@ def generate_mock_returns(
     end_date: datetime,
     annual_return: float = 0.08,
     annual_volatility: float = 0.2,
-    correlation: float = 0.3
+    correlation: float = 0.3,
 ) -> pd.DataFrame:
     """生成模擬收益率資料
 
@@ -93,7 +93,7 @@ def generate_mock_returns(
 
     try:
         # 生成日期範圍
-        dates = pd.date_range(start=start_date, end=end_date, freq='D')
+        dates = pd.date_range(start=start_date, end=end_date, freq="D")
         n_days = len(dates)
         n_stocks = len(stocks)
 
@@ -108,8 +108,8 @@ def generate_mock_returns(
         # 使用多變量正態分佈生成相關的收益率
         returns = np.random.multivariate_normal(
             mean=[daily_return] * n_stocks,
-            cov=corr_matrix * (daily_volatility ** 2),
-            size=n_days
+            cov=corr_matrix * (daily_volatility**2),
+            size=n_days,
         )
 
         # 創建 DataFrame
@@ -129,7 +129,7 @@ def generate_mock_prices(
     initial_price: float = 100.0,
     annual_return: float = 0.08,
     annual_volatility: float = 0.2,
-    correlation: float = 0.3
+    correlation: float = 0.3,
 ) -> pd.DataFrame:
     """生成模擬價格資料
 
@@ -171,16 +171,13 @@ def generate_mock_prices(
             stock_prices = stock_prices[1:]
 
             for i, (date, price) in enumerate(zip(returns_df.index, stock_prices)):
-                prices_data.append({
-                    'stock': stock,
-                    'date': date,
-                    'close': price,
-                    '收盤價': price
-                })
+                prices_data.append(
+                    {"stock": stock, "date": date, "close": price, "收盤價": price}
+                )
 
         # 創建 MultiIndex DataFrame
         prices_df = pd.DataFrame(prices_data)
-        prices_df = prices_df.set_index(['stock', 'date'])
+        prices_df = prices_df.set_index(["stock", "date"])
 
         return prices_df
 
@@ -192,7 +189,7 @@ def generate_mock_prices(
 def rebalance_weights(
     current_weights: Dict[str, float],
     target_weights: Dict[str, float],
-    rebalance_threshold: float = 0.05
+    rebalance_threshold: float = 0.05,
 ) -> Tuple[Dict[str, float], bool]:
     """檢查是否需要再平衡並計算新權重
 
@@ -254,24 +251,24 @@ def calculate_portfolio_metrics_summary(
                 continue
 
             summary = {
-                '投資組合': portfolio_name,
-                '年化收益率': performance.get('annual_return', 0),
-                '年化波動率': performance.get('annual_volatility', 0),
-                '夏普比率': performance.get('sharpe_ratio', 0),
-                '最大回撤': performance.get('max_drawdown', 0),
-                'Sortino比率': performance.get('sortino_ratio', 0),
-                'Calmar比率': performance.get('calmar_ratio', 0),
-                'VaR(5%)': performance.get('var_5', 0),
-                'CVaR(5%)': performance.get('cvar_5', 0),
+                "投資組合": portfolio_name,
+                "年化收益率": performance.get("annual_return", 0),
+                "年化波動率": performance.get("annual_volatility", 0),
+                "夏普比率": performance.get("sharpe_ratio", 0),
+                "最大回撤": performance.get("max_drawdown", 0),
+                "Sortino比率": performance.get("sortino_ratio", 0),
+                "Calmar比率": performance.get("calmar_ratio", 0),
+                "VaR(5%)": performance.get("var_5", 0),
+                "CVaR(5%)": performance.get("cvar_5", 0),
             }
 
             # 如果有基準比較指標
-            if 'beta' in performance:
-                summary['Beta'] = performance['beta']
-            if 'alpha' in performance:
-                summary['Alpha'] = performance['alpha']
-            if 'information_ratio' in performance:
-                summary['資訊比率'] = performance['information_ratio']
+            if "beta" in performance:
+                summary["Beta"] = performance["beta"]
+            if "alpha" in performance:
+                summary["Alpha"] = performance["alpha"]
+            if "information_ratio" in performance:
+                summary["資訊比率"] = performance["information_ratio"]
 
             summary_data.append(summary)
 
@@ -284,8 +281,8 @@ def calculate_portfolio_metrics_summary(
 
 def rank_portfolios(
     portfolios_performance: Dict[str, Dict[str, Any]],
-    ranking_metric: str = 'sharpe_ratio',
-    ascending: bool = False
+    ranking_metric: str = "sharpe_ratio",
+    ascending: bool = False,
 ) -> pd.DataFrame:
     """對投資組合進行排名
 
@@ -308,21 +305,21 @@ def rank_portfolios(
 
         # 根據指標排名
         metric_mapping = {
-            'sharpe_ratio': '夏普比率',
-            'annual_return': '年化收益率',
-            'sortino_ratio': 'Sortino比率',
-            'calmar_ratio': 'Calmar比率',
-            'information_ratio': '資訊比率'
+            "sharpe_ratio": "夏普比率",
+            "annual_return": "年化收益率",
+            "sortino_ratio": "Sortino比率",
+            "calmar_ratio": "Calmar比率",
+            "information_ratio": "資訊比率",
         }
 
         sort_column = metric_mapping.get(ranking_metric, ranking_metric)
 
         if sort_column in summary_df.columns:
             ranked_df = summary_df.sort_values(sort_column, ascending=ascending)
-            ranked_df['排名'] = range(1, len(ranked_df) + 1)
+            ranked_df["排名"] = range(1, len(ranked_df) + 1)
 
             # 重新排列欄位，將排名放在前面
-            cols = ['排名'] + [col for col in ranked_df.columns if col != '排名']
+            cols = ["排名"] + [col for col in ranked_df.columns if col != "排名"]
             ranked_df = ranked_df[cols]
 
             return ranked_df
@@ -336,8 +333,7 @@ def rank_portfolios(
 
 
 def convert_weights_to_dataframe(
-    weights_dict: Dict[str, Dict[str, float]],
-    fill_missing: bool = True
+    weights_dict: Dict[str, Dict[str, float]], fill_missing: bool = True
 ) -> pd.DataFrame:
     """將權重字典轉換為 DataFrame
 
@@ -371,7 +367,7 @@ def simulate_portfolios_comparison(
     initial_capital: float = 1000000,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    rebalance_freq: str = "M"
+    rebalance_freq: str = "M",
 ) -> Dict[str, Any]:
     """模擬並比較不同投資組合策略的表現
 
@@ -393,7 +389,7 @@ def simulate_portfolios_comparison(
             "mean_variance",
             "risk_parity",
             "max_sharpe",
-            "min_variance"
+            "min_variance",
         ]
 
     try:
@@ -404,7 +400,7 @@ def simulate_portfolios_comparison(
             "portfolios": {},
             "summary": pd.DataFrame(),
             "ranking": pd.DataFrame(),
-            "comparison_chart": None
+            "comparison_chart": None,
         }
 
         logger.info(f"模擬 {len(portfolio_types)} 個投資組合策略")

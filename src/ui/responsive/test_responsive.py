@@ -7,7 +7,8 @@ import sys
 import os
 
 # 添加 src 目錄到 Python 路徑
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
 
 def test_breakpoints():
     """測試斷點定義"""
@@ -70,8 +71,8 @@ def test_imports():
         from breakpoints import ResponsiveBreakpoints
 
         # 測試類別存在
-        assert hasattr(ResponsiveBreakpoints, 'MOBILE')
-        assert hasattr(ResponsiveBreakpoints, 'get_device_type')
+        assert hasattr(ResponsiveBreakpoints, "MOBILE")
+        assert hasattr(ResponsiveBreakpoints, "get_device_type")
 
         print("✅ 模組導入測試通過")
         return True

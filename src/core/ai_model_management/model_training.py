@@ -110,9 +110,7 @@ class ModelTraining:
             logger.error("獲取訓練日誌時發生錯誤: %s", e)
             return []
 
-    def update_training_progress(
-        self, training_id: str, progress_data: Dict
-    ) -> bool:
+    def update_training_progress(self, training_id: str, progress_data: Dict) -> bool:
         """更新訓練進度
 
         Args:
@@ -227,7 +225,9 @@ class ModelTraining:
             logger.error("完成模型訓練時發生錯誤: %s", e)
             return False
 
-    def fail_training(self, training_id: str, model_id: str, error_message: str) -> bool:
+    def fail_training(
+        self, training_id: str, model_id: str, error_message: str
+    ) -> bool:
         """標記訓練失敗
 
         Args:

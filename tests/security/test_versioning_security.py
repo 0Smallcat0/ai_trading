@@ -90,7 +90,9 @@ class TestVersioningJWTSecurity:
         assert response.status_code == 401
 
         # 測試 HMAC/RSA 混淆
-        confused_tokens = self.auth_tester.generate_algorithm_confusion_tokens("test_user")
+        confused_tokens = self.auth_tester.generate_algorithm_confusion_tokens(
+            "test_user"
+        )
         confused_token = confused_tokens[0] if confused_tokens else "invalid_token"
         headers = {"Authorization": f"Bearer {confused_token}"}
         response = client.get("/api/v1/versions/", headers=headers)

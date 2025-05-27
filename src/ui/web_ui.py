@@ -27,6 +27,7 @@ import streamlit as st
 # 嘗試導入 streamlit_option_menu，如果失敗則提供備用方案
 try:
     from streamlit_option_menu import option_menu
+
     OPTION_MENU_AVAILABLE = True
 except ImportError:
     OPTION_MENU_AVAILABLE = False
@@ -56,6 +57,7 @@ try:
         portfolio_management_advanced,
     )
     from .components import auth
+
     logging.info("成功導入所有頁面模組（相對導入）")
 except ImportError as e:
     logging.warning("相對導入失敗: %s，嘗試絕對導入", e)
@@ -79,6 +81,7 @@ except ImportError as e:
             portfolio_management_advanced,
         )
         from src.ui.components import auth
+
         logging.info("成功導入所有頁面模組（絕對導入）")
     except ImportError as import_error:
         logging.error("無法導入頁面模組: %s", import_error)
@@ -88,6 +91,7 @@ except ImportError as e:
         # 創建備用模組
         class MockModule:
             """備用模組類，當實際模組不可用時使用"""
+
             @staticmethod
             def show(*args, **kwargs):
                 """備用顯示方法
@@ -120,6 +124,7 @@ except ImportError as e:
         # 創建備用認證模組
         class MockAuth:
             """備用認證模組"""
+
             @staticmethod
             def login_form():
                 st.error("認證系統暫時不可用")
@@ -374,10 +379,10 @@ def _setup_page_config() -> None:
             layout="wide",
             initial_sidebar_state="expanded",
             menu_items={
-                'Get Help': 'https://github.com/your-repo/help',
-                'Report a bug': 'https://github.com/your-repo/issues',
-                'About': "AI 股票自動交易系統 v1.0"
-            }
+                "Get Help": "https://github.com/your-repo/help",
+                "Report a bug": "https://github.com/your-repo/issues",
+                "About": "AI 股票自動交易系統 v1.0",
+            },
         )
         logging.info("頁面配置設定成功")
     except Exception as e:
@@ -396,6 +401,7 @@ def _apply_responsive_design() -> None:
     """
     try:
         from .responsive import apply_responsive_design
+
         apply_responsive_design()
         logging.info("響應式設計樣式應用成功")
     except ImportError:
@@ -476,7 +482,7 @@ def _render_selected_page(selected_page_name: str, user_role: str) -> None:
         st.title(page["name"])
 
         # 檢查頁面功能是否可用
-        if PAGES_AVAILABLE or hasattr(page["function"], '__call__'):
+        if PAGES_AVAILABLE or hasattr(page["function"], "__call__"):
             page["function"]()
         else:
             st.error("此頁面功能暫時不可用")
@@ -518,12 +524,18 @@ def _show_default_dashboard() -> None:
         st.metric("系統狀態", "正常運行", "✅")
 
     with col2:
-        st.metric("頁面模組", "已載入" if PAGES_AVAILABLE else "部分不可用",
-                 "✅" if PAGES_AVAILABLE else "⚠️")
+        st.metric(
+            "頁面模組",
+            "已載入" if PAGES_AVAILABLE else "部分不可用",
+            "✅" if PAGES_AVAILABLE else "⚠️",
+        )
 
     with col3:
-        st.metric("認證系統", "已啟用" if AUTH_AVAILABLE else "不可用",
-                 "✅" if AUTH_AVAILABLE else "❌")
+        st.metric(
+            "認證系統",
+            "已啟用" if AUTH_AVAILABLE else "不可用",
+            "✅" if AUTH_AVAILABLE else "❌",
+        )
 
     # 快速導航
     st.subheader("快速導航")

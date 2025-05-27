@@ -36,42 +36,19 @@ class PaginationMeta(BaseModel):
         ... )
     """
 
-    page: int = Field(
-        description="當前頁碼",
-        example=1,
-        ge=1
-    )
+    page: int = Field(description="當前頁碼", example=1, ge=1)
 
-    page_size: int = Field(
-        description="每頁項目數",
-        example=20,
-        ge=1,
-        le=100
-    )
+    page_size: int = Field(description="每頁項目數", example=20, ge=1, le=100)
 
-    total_items: int = Field(
-        description="總項目數",
-        example=150,
-        ge=0
-    )
+    total_items: int = Field(description="總項目數", example=150, ge=0)
 
-    total_pages: int = Field(
-        description="總頁數",
-        example=8,
-        ge=0
-    )
+    total_pages: int = Field(description="總頁數", example=8, ge=0)
 
-    has_next: bool = Field(
-        description="是否有下一頁",
-        example=True
-    )
+    has_next: bool = Field(description="是否有下一頁", example=True)
 
-    has_prev: bool = Field(
-        description="是否有上一頁",
-        example=False
-    )
+    has_prev: bool = Field(description="是否有上一頁", example=False)
 
-    @field_validator('total_pages')
+    @field_validator("total_pages")
     @classmethod
     # pylint: disable=missing-type-doc
     def validate_total_pages(cls, v: int, info) -> int:
@@ -87,18 +64,17 @@ class PaginationMeta(BaseModel):
         Raises:
             ValueError: 當總頁數與其他欄位不一致時
         """
-        if 'page_size' in info.data and 'total_items' in info.data:
-            page_size = info.data['page_size']
-            total_items = info.data['total_items']
+        if "page_size" in info.data and "total_items" in info.data:
+            page_size = info.data["page_size"]
+            total_items = info.data["total_items"]
             expected_pages = (
-                (total_items + page_size - 1) // page_size
-                if page_size > 0 else 0
+                (total_items + page_size - 1) // page_size if page_size > 0 else 0
             )
             if v != expected_pages:
                 raise ValueError(f"總頁數應為 {expected_pages}，但得到 {v}")
         return v
 
-    @field_validator('has_next')
+    @field_validator("has_next")
     @classmethod
     # pylint: disable=missing-type-doc
     def validate_has_next(cls, v: bool, info) -> bool:
@@ -111,15 +87,15 @@ class PaginationMeta(BaseModel):
         Returns:
             bool: 驗證後的值
         """
-        if 'page' in info.data and 'total_pages' in info.data:
-            page = info.data['page']
-            total_pages = info.data['total_pages']
+        if "page" in info.data and "total_pages" in info.data:
+            page = info.data["page"]
+            total_pages = info.data["total_pages"]
             expected_has_next = page < total_pages
             if v != expected_has_next:
                 raise ValueError(f"has_next 應為 {expected_has_next}")
         return v
 
-    @field_validator('has_prev')
+    @field_validator("has_prev")
     @classmethod
     # pylint: disable=missing-type-doc
     def validate_has_prev(cls, v: bool, info) -> bool:
@@ -132,8 +108,8 @@ class PaginationMeta(BaseModel):
         Returns:
             bool: 驗證後的值
         """
-        if 'page' in info.data:
-            page = info.data['page']
+        if "page" in info.data:
+            page = info.data["page"]
             expected_has_prev = page > 1
             if v != expected_has_prev:
                 raise ValueError(f"has_prev 應為 {expected_has_prev}")
@@ -147,7 +123,7 @@ class PaginationMeta(BaseModel):
                 "total_items": 150,
                 "total_pages": 8,
                 "has_next": True,
-                "has_prev": False
+                "has_prev": False,
             }
         }
     )
@@ -177,28 +153,15 @@ class PaginatedResponse(BaseModel, Generic[T]):
         ... )
     """
 
-    success: bool = Field(
-        default=True,
-        description="請求是否成功"
-    )
+    success: bool = Field(default=True, description="請求是否成功")
 
-    message: str = Field(
-        description="響應訊息",
-        example="資料獲取成功"
-    )
+    message: str = Field(description="響應訊息", example="資料獲取成功")
 
-    data: List[T] = Field(
-        description="分頁資料列表"
-    )
+    data: List[T] = Field(description="分頁資料列表")
 
-    pagination: PaginationMeta = Field(
-        description="分頁資訊"
-    )
+    pagination: PaginationMeta = Field(description="分頁資訊")
 
-    timestamp: datetime = Field(
-        default_factory=datetime.now,
-        description="響應時間戳"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="響應時間戳")
 
     model_config = ConfigDict(
         json_encoders={datetime: lambda v: v.isoformat()},
@@ -206,28 +169,23 @@ class PaginatedResponse(BaseModel, Generic[T]):
             "example": {
                 "success": True,
                 "message": "資料獲取成功",
-                "data": [
-                    {"id": 1, "name": "item1"},
-                    {"id": 2, "name": "item2"}
-                ],
+                "data": [{"id": 1, "name": "item1"}, {"id": 2, "name": "item2"}],
                 "pagination": {
                     "page": 1,
                     "page_size": 20,
                     "total_items": 150,
                     "total_pages": 8,
                     "has_next": True,
-                    "has_prev": False
+                    "has_prev": False,
                 },
-                "timestamp": "2024-12-20T10:30:00Z"
+                "timestamp": "2024-12-20T10:30:00Z",
             }
-        }
+        },
     )
 
 
 def create_pagination_meta(
-    page: int,
-    page_size: int,
-    total_items: int
+    page: int, page_size: int, total_items: int
 ) -> PaginationMeta:
     """創建分頁元資訊
 
@@ -257,5 +215,5 @@ def create_pagination_meta(
         total_items=total_items,
         total_pages=total_pages,
         has_next=has_next,
-        has_prev=has_prev
+        has_prev=has_prev,
     )

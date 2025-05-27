@@ -42,16 +42,19 @@ logger = logging.getLogger(__name__)
 
 class CompressionError(Exception):
     """壓縮操作相關的異常類別."""
+
     pass
 
 
 class CompressionConfigError(CompressionError):
     """壓縮配置錯誤."""
+
     pass
 
 
 class CompressionOperationError(CompressionError):
     """壓縮操作錯誤."""
+
     pass
 
 
@@ -122,7 +125,9 @@ class TimeBasedCompressionStrategy(CompressionStrategy):
         min_age_days: 最小壓縮年齡（天）
     """
 
-    def __init__(self, compression_type: str = "snappy", min_age_days: int = 30) -> None:
+    def __init__(
+        self, compression_type: str = "snappy", min_age_days: int = 30
+    ) -> None:
         """初始化時間壓縮策略.
 
         Args:
@@ -160,7 +165,9 @@ class SizeBasedCompressionStrategy(CompressionStrategy):
         min_size_mb: 最小壓縮大小（MB）
     """
 
-    def __init__(self, compression_type: str = "snappy", min_size_mb: int = 100) -> None:
+    def __init__(
+        self, compression_type: str = "snappy", min_size_mb: int = 100
+    ) -> None:
         """初始化大小壓縮策略.
 
         Args:
@@ -227,10 +234,18 @@ class CompressionManager:
     def _register_default_strategies(self) -> None:
         """註冊預設壓縮策略."""
         try:
-            self.register_strategy("time_based_snappy", TimeBasedCompressionStrategy("snappy"))
-            self.register_strategy("time_based_gzip", TimeBasedCompressionStrategy("gzip"))
-            self.register_strategy("size_based_lz4", SizeBasedCompressionStrategy("lz4"))
-            self.register_strategy("size_based_zstd", SizeBasedCompressionStrategy("zstd"))
+            self.register_strategy(
+                "time_based_snappy", TimeBasedCompressionStrategy("snappy")
+            )
+            self.register_strategy(
+                "time_based_gzip", TimeBasedCompressionStrategy("gzip")
+            )
+            self.register_strategy(
+                "size_based_lz4", SizeBasedCompressionStrategy("lz4")
+            )
+            self.register_strategy(
+                "size_based_zstd", SizeBasedCompressionStrategy("zstd")
+            )
         except Exception as e:
             logger.error(f"註冊預設策略失敗: {e}")
             raise CompressionConfigError(f"註冊預設策略失敗: {e}") from e
@@ -260,7 +275,7 @@ class CompressionManager:
         start_date: date,
         end_date: date,
         compression_type: str = "snappy",
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> Tuple[str, Dict[str, Any]]:
         """壓縮表格資料.
 
@@ -295,7 +310,9 @@ class CompressionManager:
                 return "", {}
 
             # 生成檔案路徑
-            file_path = self._generate_file_path(table_class, start_date, end_date, symbols)
+            file_path = self._generate_file_path(
+                table_class, start_date, end_date, symbols
+            )
 
             # 確保目錄存在
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -309,7 +326,9 @@ class CompressionManager:
             # 計算壓縮統計
             compressed_size = os.path.getsize(file_path)
             compression_time = time.time() - start_time
-            compression_ratio = original_size / compressed_size if compressed_size > 0 else 0
+            compression_ratio = (
+                original_size / compressed_size if compressed_size > 0 else 0
+            )
 
             stats = {
                 "original_size_bytes": int(original_size),
@@ -318,7 +337,7 @@ class CompressionManager:
                 "compression_time_seconds": compression_time,
                 "compression_type": compression_type,
                 "row_count": len(df),
-                "file_path": file_path
+                "file_path": file_path,
             }
 
             logger.info(f"壓縮完成: {file_path}, 壓縮比: {compression_ratio:.2f}")
@@ -334,7 +353,7 @@ class CompressionManager:
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         start_date: date,
         end_date: date,
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """查詢表格資料."""
         query = select(table_class)
@@ -345,12 +364,7 @@ class CompressionManager:
         else:
             date_column = func.date(table_class.timestamp)
 
-        query = query.where(
-            and_(
-                date_column >= start_date,
-                date_column <= end_date
-            )
-        )
+        query = query.where(and_(date_column >= start_date, date_column <= end_date))
 
         # 如果指定了股票代碼，添加過濾條件
         if symbols:
@@ -365,7 +379,7 @@ class CompressionManager:
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         start_date: date,
         end_date: date,
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> str:
         """生成壓縮檔案路徑."""
         table_name = table_class.__tablename__
@@ -380,10 +394,7 @@ class CompressionManager:
         return os.path.join(DATA_DIR, "compressed", table_name, file_name)
 
     def _save_compressed_parquet(
-        self,
-        df: pd.DataFrame,
-        file_path: str,
-        compression_type: str
+        self, df: pd.DataFrame, file_path: str, compression_type: str
     ) -> None:
         """儲存壓縮的 Parquet 檔案.
 
@@ -404,10 +415,7 @@ class CompressionManager:
 
             # 儲存為 Parquet 格式
             pq.write_table(
-                table,
-                file_path,
-                compression=compression_type,
-                **compression_options
+                table, file_path, compression=compression_type, **compression_options
             )
         except Exception as e:
             raise CompressionOperationError(f"儲存壓縮檔案時發生錯誤: {e}") from e
@@ -433,10 +441,7 @@ class CompressionManager:
         return options
 
     def convert_compression_format(
-        self,
-        source_path: str,
-        target_path: str,
-        target_compression: str
+        self, source_path: str, target_path: str, target_compression: str
     ) -> Dict[str, Any]:
         """轉換壓縮格式.
 
@@ -484,7 +489,7 @@ class CompressionManager:
                 "size_ratio": size_ratio,
                 "conversion_time_seconds": conversion_time,
                 "target_compression": target_compression,
-                "row_count": len(df)
+                "row_count": len(df),
             }
 
             logger.info(f"格式轉換完成: {source_path} -> {target_path}")
@@ -496,9 +501,7 @@ class CompressionManager:
             raise CompressionOperationError(f"轉換壓縮格式時發生錯誤: {e}") from e
 
     def auto_compress_old_data(
-        self,
-        strategy_name: str = "time_based_snappy",
-        dry_run: bool = False
+        self, strategy_name: str = "time_based_snappy", dry_run: bool = False
     ) -> List[Dict[str, Any]]:
         """自動壓縮舊資料.
 
@@ -522,9 +525,7 @@ class CompressionManager:
 
             # 查詢所有未壓縮的分片
             uncompressed_shards = (
-                self.session.query(DataShard)
-                .filter_by(is_compressed=False)
-                .all()
+                self.session.query(DataShard).filter_by(is_compressed=False).all()
             )
 
             for shard in uncompressed_shards:
@@ -541,10 +542,7 @@ class CompressionManager:
             raise CompressionOperationError(f"自動壓縮時發生錯誤: {e}") from e
 
     def _process_shard_compression(
-        self,
-        shard: DataShard,
-        strategy: CompressionStrategy,
-        dry_run: bool
+        self, shard: DataShard, strategy: CompressionStrategy, dry_run: bool
     ) -> Optional[Dict[str, Any]]:
         """處理單個分片的壓縮."""
         # 計算資料年齡
@@ -565,17 +563,14 @@ class CompressionManager:
                 "shard_id": shard.shard_id,
                 "status": "would_compress",
                 "age_days": age_days,
-                "file_size_bytes": file_size
+                "file_size_bytes": file_size,
             }
 
         try:
             # 執行壓縮
             table_class = self._get_table_class(shard.table_name)
             file_path, stats = self.compress_table_data(
-                table_class,
-                shard.start_date,
-                shard.end_date,
-                strategy.compression_type
+                table_class, shard.start_date, shard.end_date, strategy.compression_type
             )
 
             # 更新分片記錄
@@ -586,21 +581,15 @@ class CompressionManager:
 
             self.session.commit()
 
-            return {
-                "shard_id": shard.shard_id,
-                "status": "compressed",
-                "stats": stats
-            }
+            return {"shard_id": shard.shard_id, "status": "compressed", "stats": stats}
 
         except Exception as e:
             logger.error(f"壓縮分片 {shard.shard_id} 時發生錯誤: {e}")
-            return {
-                "shard_id": shard.shard_id,
-                "status": "error",
-                "error": str(e)
-            }
+            return {"shard_id": shard.shard_id, "status": "error", "error": str(e)}
 
-    def _get_table_class(self, table_name: str) -> Type[Union[MarketDaily, MarketMinute, MarketTick]]:
+    def _get_table_class(
+        self, table_name: str
+    ) -> Type[Union[MarketDaily, MarketMinute, MarketTick]]:
         """根據表名獲取表類別.
 
         Args:
@@ -615,7 +604,7 @@ class CompressionManager:
         table_mapping = {
             "market_daily": MarketDaily,
             "market_minute": MarketMinute,
-            "market_tick": MarketTick
+            "market_tick": MarketTick,
         }
 
         if table_name not in table_mapping:
@@ -643,7 +632,7 @@ class CompressionManager:
                 "total_original_size": 0,
                 "total_compressed_size": 0,
                 "compression_by_type": {},
-                "compression_by_table": {}
+                "compression_by_table": {},
             }
 
             for shard in all_shards:
@@ -674,10 +663,12 @@ class CompressionManager:
         if compression_type not in stats["compression_by_type"]:
             stats["compression_by_type"][compression_type] = {
                 "count": 0,
-                "total_size": 0
+                "total_size": 0,
             }
         stats["compression_by_type"][compression_type]["count"] += 1
-        stats["compression_by_type"][compression_type]["total_size"] += shard.file_size_bytes or 0
+        stats["compression_by_type"][compression_type]["total_size"] += (
+            shard.file_size_bytes or 0
+        )
 
         # 按表統計
         table_name = shard.table_name
@@ -685,14 +676,18 @@ class CompressionManager:
             stats["compression_by_table"][table_name] = {
                 "compressed": 0,
                 "uncompressed": 0,
-                "total_size": 0
+                "total_size": 0,
             }
         stats["compression_by_table"][table_name]["compressed"] += 1
-        stats["compression_by_table"][table_name]["total_size"] += shard.file_size_bytes or 0
+        stats["compression_by_table"][table_name]["total_size"] += (
+            shard.file_size_bytes or 0
+        )
 
         stats["total_compressed_size"] += shard.file_size_bytes or 0
 
-    def _update_uncompressed_stats(self, stats: Dict[str, Any], shard: DataShard) -> None:
+    def _update_uncompressed_stats(
+        self, stats: Dict[str, Any], shard: DataShard
+    ) -> None:
         """更新未壓縮分片統計."""
         stats["uncompressed_shards"] += 1
 
@@ -702,6 +697,6 @@ class CompressionManager:
             stats["compression_by_table"][table_name] = {
                 "compressed": 0,
                 "uncompressed": 0,
-                "total_size": 0
+                "total_size": 0,
             }
         stats["compression_by_table"][table_name]["uncompressed"] += 1

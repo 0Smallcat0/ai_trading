@@ -128,9 +128,9 @@ def show_connection_status():
             "error": {"color": "red", "icon": "🔴", "text": "錯誤"},
         }
 
-        config = status_config.get(status, {
-            "color": "gray", "icon": "⚪", "text": "未知"
-        })
+        config = status_config.get(
+            status, {"color": "gray", "icon": "⚪", "text": "未知"}
+        )
 
         st.markdown(
             f"""
@@ -474,7 +474,9 @@ def create_alerts_center():
             if enable_sms:
                 notification_methods.append("簡訊")
 
-            notification_text = "、".join(notification_methods) if notification_methods else "無"
+            notification_text = (
+                "、".join(notification_methods) if notification_methods else "無"
+            )
             st.success(
                 f"已新增 {alert_symbol} {alert_type} 警報\n"
                 f"閾值：{threshold_value}\n"

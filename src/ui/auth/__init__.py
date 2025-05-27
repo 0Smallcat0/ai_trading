@@ -28,6 +28,7 @@ def login_form(*args, **kwargs):
     """延遲導入登入表單"""
     # pylint: disable=import-outside-toplevel
     from .login_form import login_form as _login_form
+
     return _login_form(*args, **kwargs)
 
 
@@ -35,6 +36,7 @@ def show_2fa_form(*args, **kwargs):
     """延遲導入兩步驗證表單"""
     # pylint: disable=import-outside-toplevel
     from .two_factor import show_2fa_form as _show_2fa_form
+
     return _show_2fa_form(*args, **kwargs)
 
 
@@ -42,6 +44,7 @@ def check_auth(*args, **kwargs):
     """延遲導入認證檢查"""
     # pylint: disable=import-outside-toplevel
     from .session_manager import check_auth as _check_auth
+
     return _check_auth(*args, **kwargs)
 
 
@@ -49,6 +52,7 @@ def get_user_role(*args, **kwargs):
     """延遲導入用戶角色獲取"""
     # pylint: disable=import-outside-toplevel
     from .session_manager import get_user_role as _get_user_role
+
     return _get_user_role(*args, **kwargs)
 
 
@@ -56,6 +60,7 @@ def logout(*args, **kwargs):
     """延遲導入登出功能"""
     # pylint: disable=import-outside-toplevel
     from .session_manager import logout as _logout
+
     return _logout(*args, **kwargs)
 
 
@@ -63,16 +68,17 @@ def require_auth(*args, **kwargs):
     """延遲導入認證裝飾器"""
     # pylint: disable=import-outside-toplevel
     from .session_manager import require_auth as _require_auth
+
     return _require_auth(*args, **kwargs)
 
 
 __all__ = [
-    'login_form',
-    'show_2fa_form',
-    'check_auth',
-    'get_user_role',
-    'logout',
-    'require_auth',
-    'USERS',
-    'SERVICES_AVAILABLE'
+    "login_form",
+    "show_2fa_form",
+    "check_auth",
+    "get_user_role",
+    "logout",
+    "require_auth",
+    "USERS",
+    "SERVICES_AVAILABLE",
 ]

@@ -39,7 +39,7 @@ class FundamentalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
-        if not self.validate_data('financial'):
+        if not self.validate_data("financial"):
             logger.warning(LOG_MSGS["no_financial"])
             return pd.DataFrame()
 
@@ -102,7 +102,7 @@ class FundamentalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 價值投資訊號
         """
-        if not self.validate_data('financial'):
+        if not self.validate_data("financial"):
             logger.warning(LOG_MSGS["no_financial"])
             return pd.DataFrame()
 
@@ -115,17 +115,15 @@ class FundamentalSignalGenerator(BaseSignalGenerator):
 
         # P/E 比率條件
         if "pe_ratio" in financial_data.columns:
-            pe_condition = (
-                (financial_data["pe_ratio"] >= pe_low) &
-                (financial_data["pe_ratio"] <= pe_high)
+            pe_condition = (financial_data["pe_ratio"] >= pe_low) & (
+                financial_data["pe_ratio"] <= pe_high
             )
             value_conditions.append(pe_condition)
 
         # P/B 比率條件
         if "pb_ratio" in financial_data.columns:
-            pb_condition = (
-                (financial_data["pb_ratio"] >= pb_low) &
-                (financial_data["pb_ratio"] <= pb_high)
+            pb_condition = (financial_data["pb_ratio"] >= pb_low) & (
+                financial_data["pb_ratio"] <= pb_high
             )
             value_conditions.append(pb_condition)
 
@@ -165,7 +163,7 @@ class FundamentalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 成長投資訊號
         """
-        if not self.validate_data('financial'):
+        if not self.validate_data("financial"):
             logger.warning(LOG_MSGS["no_financial"])
             return pd.DataFrame()
 
@@ -224,7 +222,7 @@ class FundamentalSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 股息投資訊號
         """
-        if not self.validate_data('financial'):
+        if not self.validate_data("financial"):
             logger.warning(LOG_MSGS["no_financial"])
             return pd.DataFrame()
 

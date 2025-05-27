@@ -60,12 +60,18 @@ def _show_system_status() -> None:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("認證服務", "可用" if SERVICES_AVAILABLE else "簡化模式",
-                     "✅" if SERVICES_AVAILABLE else "⚠️")
+            st.metric(
+                "認證服務",
+                "可用" if SERVICES_AVAILABLE else "簡化模式",
+                "✅" if SERVICES_AVAILABLE else "⚠️",
+            )
 
         with col2:
-            st.metric("登入方式", "完整認證" if SERVICES_AVAILABLE else "基本認證",
-                     "🔒" if SERVICES_AVAILABLE else "🔓")
+            st.metric(
+                "登入方式",
+                "完整認證" if SERVICES_AVAILABLE else "基本認證",
+                "🔒" if SERVICES_AVAILABLE else "🔓",
+            )
 
 
 def _show_development_login() -> bool:
@@ -83,7 +89,9 @@ def _show_development_login() -> bool:
             # 顯示選中用戶的信息
             if username in USERS:
                 user_info = USERS[username]
-                st.info(f"**角色**: {user_info['role']} | **名稱**: {user_info['name']}")
+                st.info(
+                    f"**角色**: {user_info['role']} | **名稱**: {user_info['name']}"
+                )
 
             if st.button("自動登入", key="dev_login"):
                 try:
@@ -116,19 +124,18 @@ def _show_main_login_form() -> bool:
             username = st.text_input(
                 "👤 使用者名稱或電子郵件",
                 placeholder="請輸入使用者名稱",
-                help="支援使用者名稱或電子郵件登入"
+                help="支援使用者名稱或電子郵件登入",
             )
             password = st.text_input(
                 "🔒 密碼",
                 type="password",
                 placeholder="請輸入密碼",
-                help="請輸入您的登入密碼"
+                help="請輸入您的登入密碼",
             )
 
             col_remember, col_submit = st.columns([1, 1])
             with col_remember:
-                remember_me = st.checkbox("記住登入狀態",
-                                        help="下次訪問時自動登入")
+                remember_me = st.checkbox("記住登入狀態", help="下次訪問時自動登入")
             with col_submit:
                 submit = st.form_submit_button("🚀 登入", use_container_width=True)
 
@@ -150,7 +157,7 @@ def _show_test_accounts() -> None:
         ("交易員", "trader", "trader123", "需2FA"),
         ("分析師", "analyst", "analyst123", "分析權限"),
         ("一般用戶", "user", "user123", "基本權限"),
-        ("訪客", "guest", "guest123", "只讀權限")
+        ("訪客", "guest", "guest123", "只讀權限"),
     ]
 
     for role, username, password, note in accounts_info:
@@ -194,8 +201,9 @@ def _process_login(username: str, password: str, remember_me: bool) -> bool:
         return False
 
 
-def _service_login(username: str, password: str, ip_address: str,
-                  user_agent: str, remember_me: bool) -> bool:
+def _service_login(
+    username: str, password: str, ip_address: str, user_agent: str, remember_me: bool
+) -> bool:
     """使用服務層進行認證
 
     Args:

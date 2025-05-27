@@ -34,6 +34,7 @@ except ImportError:
         def __init__(self, **kwargs):
             del kwargs  # 避免未使用參數警告
 
+
 try:
     from src.data_sources.mcp_crawler import McpCrawler
 except ImportError:
@@ -100,12 +101,38 @@ class NewsSentimentCollector(DataCollector):
         if self.sentiment_model == "simple":
             # 簡單的基於關鍵字的情緒分析
             self.positive_keywords = [
-                "漲", "上漲", "成長", "獲利", "盈餘", "增加", "看好", "利多",
-                "突破", "創新高", "強勢", "買進", "推薦", "看漲", "樂觀"
+                "漲",
+                "上漲",
+                "成長",
+                "獲利",
+                "盈餘",
+                "增加",
+                "看好",
+                "利多",
+                "突破",
+                "創新高",
+                "強勢",
+                "買進",
+                "推薦",
+                "看漲",
+                "樂觀",
             ]
             self.negative_keywords = [
-                "跌", "下跌", "衰退", "虧損", "虧損", "減少", "看壞", "利空",
-                "跌破", "創新低", "弱勢", "賣出", "不推薦", "看跌", "悲觀"
+                "跌",
+                "下跌",
+                "衰退",
+                "虧損",
+                "虧損",
+                "減少",
+                "看壞",
+                "利空",
+                "跌破",
+                "創新低",
+                "弱勢",
+                "賣出",
+                "不推薦",
+                "看跌",
+                "悲觀",
             ]
         elif self.sentiment_model == "nltk":
             # 使用 NLTK 進行情緒分析
@@ -134,7 +161,9 @@ class NewsSentimentCollector(DataCollector):
                 self.sentiment_model = "simple"
                 self._init_sentiment_model()
         else:
-            logger.warning("不支援的情緒分析模型: %s，使用簡單模型", self.sentiment_model)
+            logger.warning(
+                "不支援的情緒分析模型: %s，使用簡單模型", self.sentiment_model
+            )
             self.sentiment_model = "simple"
             self._init_sentiment_model()
 
@@ -159,12 +188,8 @@ class NewsSentimentCollector(DataCollector):
 
     def _analyze_simple_sentiment(self, text: str) -> Dict[str, Any]:
         """使用簡單關鍵字方法分析情緒"""
-        positive_count = sum(
-            1 for keyword in self.positive_keywords if keyword in text
-        )
-        negative_count = sum(
-            1 for keyword in self.negative_keywords if keyword in text
-        )
+        positive_count = sum(1 for keyword in self.positive_keywords if keyword in text)
+        negative_count = sum(1 for keyword in self.negative_keywords if keyword in text)
 
         total = positive_count + negative_count
         if not total:
@@ -283,7 +308,9 @@ class NewsSentimentCollector(DataCollector):
                     news_list = future.result()
                     if news_list:
                         results[symbol] = news_list
-                        logger.info("成功收集 %s 的新聞資料，共 %d 筆", symbol, len(news_list))
+                        logger.info(
+                            "成功收集 %s 的新聞資料，共 %d 筆", symbol, len(news_list)
+                        )
 
                         # 儲存到資料庫
                         if save_to_db:
@@ -366,19 +393,23 @@ class NewsSentimentCollector(DataCollector):
             for news_date, daily_news in news_by_date.items():
                 # 計算情緒統計
                 sentiment_scores = [
-                    news.get("sentiment_score", 0) for news in daily_news
+                    news.get("sentiment_score", 0)
+                    for news in daily_news
                     if "sentiment_score" in news
                 ]
                 positive_count = sum(
-                    news.get("positive_count", 0) for news in daily_news
+                    news.get("positive_count", 0)
+                    for news in daily_news
                     if "positive_count" in news
                 )
                 negative_count = sum(
-                    news.get("negative_count", 0) for news in daily_news
+                    news.get("negative_count", 0)
+                    for news in daily_news
                     if "negative_count" in news
                 )
                 neutral_count = sum(
-                    news.get("neutral_count", 0) for news in daily_news
+                    news.get("neutral_count", 0)
+                    for news in daily_news
                     if "neutral_count" in news
                 )
 
@@ -389,10 +420,12 @@ class NewsSentimentCollector(DataCollector):
                     avg_sentiment = 0
 
                 # 生成新聞摘要
-                news_summary = "\n".join([
-                    f"{i+1}. {news.get('title', 'No Title')}"
-                    for i, news in enumerate(daily_news[:5])
-                ])
+                news_summary = "\n".join(
+                    [
+                        f"{i+1}. {news.get('title', 'No Title')}"
+                        for i, news in enumerate(daily_news[:5])
+                    ]
+                )
 
                 # 生成新聞來源列表
                 news_sources = [
@@ -401,10 +434,14 @@ class NewsSentimentCollector(DataCollector):
                 ]
 
                 # 檢查是否已存在相同的記錄
-                existing = session.query(NewsSentiment).filter(
-                    NewsSentiment.symbol == symbol,
-                    NewsSentiment.date == news_date,
-                ).first()
+                existing = (
+                    session.query(NewsSentiment)
+                    .filter(
+                        NewsSentiment.symbol == symbol,
+                        NewsSentiment.date == news_date,
+                    )
+                    .first()
+                )
 
                 if existing:
                     # 更新現有記錄
@@ -437,10 +474,7 @@ class NewsSentimentCollector(DataCollector):
             session.close()
 
     def collect(
-        self,
-        symbols: List[str],
-        days: int = 1,
-        **kwargs
+        self, symbols: List[str], days: int = 1, **kwargs
     ) -> Dict[str, List[Dict[str, Any]]]:
         """收集資料的實現方法
 

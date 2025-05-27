@@ -18,9 +18,7 @@ class BacktestPerformanceCalculator:
         """初始化績效計算器"""
         pass
 
-    def calculate_performance_metrics(
-        self, results: Dict, config
-    ) -> Dict:
+    def calculate_performance_metrics(self, results: Dict, config) -> Dict:
         """計算績效指標
 
         Args:
@@ -201,9 +199,7 @@ class BacktestPerformanceCalculator:
             else:
                 consecutive_losses += 1
                 consecutive_wins = 0
-                max_consecutive_losses = max(
-                    max_consecutive_losses, consecutive_losses
-                )
+                max_consecutive_losses = max(max_consecutive_losses, consecutive_losses)
 
         return {
             "max_consecutive_wins": max_consecutive_wins,
@@ -236,7 +232,9 @@ class BacktestPerformanceCalculator:
         std_return = np.std(daily_returns)
 
         # 卡瑪比率 (Calmar Ratio)
-        max_drawdown = self._calculate_max_drawdown([1] + [1 + r for r in daily_returns])
+        max_drawdown = self._calculate_max_drawdown(
+            [1] + [1 + r for r in daily_returns]
+        )
         calmar_ratio = annual_return / max_drawdown if max_drawdown > 0 else 0
 
         # 索提諾比率 (Sortino Ratio)

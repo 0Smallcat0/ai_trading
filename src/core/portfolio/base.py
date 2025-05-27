@@ -19,11 +19,13 @@ logger = logging.getLogger(__name__)
 
 class PortfolioOptimizationError(Exception):
     """投資組合最佳化錯誤"""
+
     pass
 
 
 class DependencyError(Exception):
     """依賴套件錯誤"""
+
     pass
 
 
@@ -55,11 +57,15 @@ class Portfolio:
 
         # 投資組合狀態
         self.cash = initial_capital
-        self.positions = {}  # {stock_id: {'shares': 100, 'cost': 50.0, 'value': 5000.0}}
+        self.positions = (
+            {}
+        )  # {stock_id: {'shares': 100, 'cost': 50.0, 'value': 5000.0}}
         self.history = []  # 歷史狀態記錄
         self.transactions = []  # 交易記錄
 
-    def optimize(self, signals: pd.DataFrame, price_df: Optional[pd.DataFrame] = None) -> Dict[str, float]:
+    def optimize(
+        self, signals: pd.DataFrame, price_df: Optional[pd.DataFrame] = None
+    ) -> Dict[str, float]:
         """最佳化投資組合
 
         Args:
@@ -74,7 +80,9 @@ class Portfolio:
         """
         raise NotImplementedError("子類必須實現 optimize 方法")
 
-    def evaluate(self, weights: Dict[str, float], price_df: pd.DataFrame) -> Dict[str, Any]:
+    def evaluate(
+        self, weights: Dict[str, float], price_df: pd.DataFrame
+    ) -> Dict[str, Any]:
         """評估投資組合表現
 
         Args:
@@ -89,7 +97,9 @@ class Portfolio:
         """
         raise NotImplementedError("子類必須實現 evaluate 方法")
 
-    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+    def rebalance(
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
+    ) -> Dict[str, float]:
         """再平衡投資組合
 
         Args:
@@ -111,7 +121,7 @@ class Portfolio:
         price_df: pd.DataFrame,
         start_date: Optional[pd.Timestamp] = None,
         end_date: Optional[pd.Timestamp] = None,
-        rebalance_freq: str = "M"
+        rebalance_freq: str = "M",
     ) -> Dict[str, Any]:
         """模擬投資組合表現
 
@@ -231,7 +241,9 @@ class Portfolio:
             }
         )
 
-    def _execute_rebalance(self, weights: Dict[str, float], day_prices: pd.DataFrame, close_col: str) -> None:
+    def _execute_rebalance(
+        self, weights: Dict[str, float], day_prices: pd.DataFrame, close_col: str
+    ) -> None:
         """執行再平衡
 
         Args:
@@ -287,7 +299,9 @@ class Portfolio:
                 # 買入新股票
                 self._buy_stock(stock_id, target["shares"], day_prices, close_col)
 
-    def _buy_stock(self, stock_id: str, shares: float, day_prices: pd.DataFrame, close_col: str) -> None:
+    def _buy_stock(
+        self, stock_id: str, shares: float, day_prices: pd.DataFrame, close_col: str
+    ) -> None:
         """買入股票
 
         Args:
@@ -345,8 +359,13 @@ class Portfolio:
                     }
                 )
 
-    def _sell_stock(self, stock_id: str, shares: Optional[float] = None,
-                   day_prices: Optional[pd.DataFrame] = None, close_col: Optional[str] = None) -> None:
+    def _sell_stock(
+        self,
+        stock_id: str,
+        shares: Optional[float] = None,
+        day_prices: Optional[pd.DataFrame] = None,
+        close_col: Optional[str] = None,
+    ) -> None:
         """賣出股票
 
         Args:

@@ -60,11 +60,7 @@ class MockBacktest:
 
         logger.info("模擬回測完成，生成 %d 筆交易", len(trades))
 
-        return {
-            "equity_curve": equity_curve,
-            "dates": dates.tolist(),
-            "trades": trades
-        }
+        return {"equity_curve": equity_curve, "dates": dates.tolist(), "trades": trades}
 
     def _generate_mock_trades(self, dates: pd.DatetimeIndex) -> List[Dict]:
         """生成模擬交易記錄

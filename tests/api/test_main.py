@@ -14,38 +14,38 @@ import sys
 from unittest.mock import MagicMock
 
 # 模擬 FastAPI 相關模組
-sys.modules['uvicorn'] = MagicMock()
-sys.modules['fastapi'] = MagicMock()
-sys.modules['fastapi.middleware'] = MagicMock()
-sys.modules['fastapi.middleware.cors'] = MagicMock()
-sys.modules['fastapi.middleware.trustedhost'] = MagicMock()
-sys.modules['fastapi.security'] = MagicMock()
-sys.modules['fastapi.responses'] = MagicMock()
-sys.modules['fastapi.openapi'] = MagicMock()
-sys.modules['fastapi.openapi.utils'] = MagicMock()
+sys.modules["uvicorn"] = MagicMock()
+sys.modules["fastapi"] = MagicMock()
+sys.modules["fastapi.middleware"] = MagicMock()
+sys.modules["fastapi.middleware.cors"] = MagicMock()
+sys.modules["fastapi.middleware.trustedhost"] = MagicMock()
+sys.modules["fastapi.security"] = MagicMock()
+sys.modules["fastapi.responses"] = MagicMock()
+sys.modules["fastapi.openapi"] = MagicMock()
+sys.modules["fastapi.openapi.utils"] = MagicMock()
 
 # 模擬 API 相關模組
-sys.modules['src.api.routers'] = MagicMock()
-sys.modules['src.api.routers.data_management'] = MagicMock()
-sys.modules['src.api.routers.strategy_management'] = MagicMock()
-sys.modules['src.api.routers.ai_models'] = MagicMock()
-sys.modules['src.api.routers.backtest'] = MagicMock()
-sys.modules['src.api.routers.portfolio'] = MagicMock()
-sys.modules['src.api.routers.risk_management'] = MagicMock()
-sys.modules['src.api.routers.trading'] = MagicMock()
-sys.modules['src.api.routers.monitoring'] = MagicMock()
-sys.modules['src.api.routers.reports'] = MagicMock()
-sys.modules['src.api.routers.auth'] = MagicMock()
-sys.modules['src.api.routers.system'] = MagicMock()
-sys.modules['src.api.middleware'] = MagicMock()
-sys.modules['src.api.middleware.auth'] = MagicMock()
-sys.modules['src.api.middleware.rate_limit'] = MagicMock()
-sys.modules['src.api.middleware.logging'] = MagicMock()
-sys.modules['src.api.utils'] = MagicMock()
-sys.modules['src.api.utils.security'] = MagicMock()
-sys.modules['src.api.utils.exceptions'] = MagicMock()
-sys.modules['src.api.models'] = MagicMock()
-sys.modules['src.api.models.responses'] = MagicMock()
+sys.modules["src.api.routers"] = MagicMock()
+sys.modules["src.api.routers.data_management"] = MagicMock()
+sys.modules["src.api.routers.strategy_management"] = MagicMock()
+sys.modules["src.api.routers.ai_models"] = MagicMock()
+sys.modules["src.api.routers.backtest"] = MagicMock()
+sys.modules["src.api.routers.portfolio"] = MagicMock()
+sys.modules["src.api.routers.risk_management"] = MagicMock()
+sys.modules["src.api.routers.trading"] = MagicMock()
+sys.modules["src.api.routers.monitoring"] = MagicMock()
+sys.modules["src.api.routers.reports"] = MagicMock()
+sys.modules["src.api.routers.auth"] = MagicMock()
+sys.modules["src.api.routers.system"] = MagicMock()
+sys.modules["src.api.middleware"] = MagicMock()
+sys.modules["src.api.middleware.auth"] = MagicMock()
+sys.modules["src.api.middleware.rate_limit"] = MagicMock()
+sys.modules["src.api.middleware.logging"] = MagicMock()
+sys.modules["src.api.utils"] = MagicMock()
+sys.modules["src.api.utils.security"] = MagicMock()
+sys.modules["src.api.utils.exceptions"] = MagicMock()
+sys.modules["src.api.models"] = MagicMock()
+sys.modules["src.api.models.responses"] = MagicMock()
 
 
 class TestFastAPIMain:
@@ -64,7 +64,7 @@ class TestFastAPIMain:
         assert self.mock_app.title == "AI 交易系統 API"
         assert self.mock_app.version == "1.0.0"
 
-    @patch('src.api.main.FastAPI')
+    @patch("src.api.main.FastAPI")
     def test_app_creation(self, mock_fastapi):
         """測試應用創建"""
         mock_app_instance = Mock()
@@ -200,7 +200,7 @@ class TestFastAPIMain:
                 "cache": "healthy",
                 "trading": "healthy",
                 "uptime": "running",
-            }
+            },
         }
 
         assert health_response["success"] is True
@@ -224,7 +224,7 @@ class TestFastAPIMain:
                 ],
                 "authentication": "Bearer Token (JWT)",
                 "rate_limit": "1000 requests/minute",
-            }
+            },
         }
 
         assert api_info["success"] is True
@@ -247,7 +247,7 @@ class TestFastAPIMain:
                     "openapi": "/openapi.json",
                     "health": "/health",
                 },
-            }
+            },
         }
 
         assert root_response["success"] is True
@@ -281,7 +281,7 @@ class TestFastAPIMain:
         logger.setLevel(logging.INFO)
 
         assert logger.level == logging.INFO
-        assert hasattr(logging, 'basicConfig')
+        assert hasattr(logging, "basicConfig")
 
     def teardown_method(self):
         """測試後清理"""

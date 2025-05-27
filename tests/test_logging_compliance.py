@@ -13,7 +13,7 @@ from src.logging.compliance import (
     ComplianceLogger,
     ComplianceEvent,
     ComplianceEventType,
-    ComplianceLevel
+    ComplianceLevel,
 )
 
 
@@ -27,14 +27,13 @@ class TestComplianceLogger:
         self.key_dir = os.path.join(self.temp_dir, "keys")
 
         self.logger = ComplianceLogger(
-            log_dir=self.log_dir,
-            key_dir=self.key_dir,
-            enable_encryption=True
+            log_dir=self.log_dir, key_dir=self.key_dir, enable_encryption=True
         )
 
     def teardown_method(self):
         """清理測試環境"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_log_event_creation(self):
@@ -46,7 +45,7 @@ class TestComplianceLogger:
             description="測試交易決策",
             details={"symbol": "AAPL", "quantity": 100},
             business_context={"strategy": "momentum"},
-            regulatory_context={"regulation": "MiFID II"}
+            regulatory_context={"regulation": "MiFID II"},
         )
 
         assert event.event_type == ComplianceEventType.TRADING_DECISION
@@ -64,7 +63,7 @@ class TestComplianceLogger:
             event_type=ComplianceEventType.RISK_ASSESSMENT,
             level=ComplianceLevel.MEDIUM,
             user_id="test_user",
-            description="風險評估測試"
+            description="風險評估測試",
         )
 
         # 驗證事件
@@ -84,7 +83,7 @@ class TestComplianceLogger:
                 event_type=ComplianceEventType.USER_ACTION,
                 level=ComplianceLevel.LOW,
                 user_id=f"user_{i}",
-                description=f"用戶操作 {i}"
+                description=f"用戶操作 {i}",
             )
             events.append(event)
 
@@ -104,9 +103,7 @@ class TestComplianceLogger:
         assert len(type_events) == 5
 
         # 按級別過濾
-        level_events = self.logger.get_events(
-            levels=[ComplianceLevel.LOW]
-        )
+        level_events = self.logger.get_events(levels=[ComplianceLevel.LOW])
         assert len(level_events) == 5
 
     def test_compliance_report_generation(self):
@@ -124,7 +121,7 @@ class TestComplianceLogger:
                 event_type=event_type,
                 level=level,
                 user_id="test_user",
-                description=f"測試事件 {event_type.value}"
+                description=f"測試事件 {event_type.value}",
             )
 
         # 生成報告
@@ -132,8 +129,7 @@ class TestComplianceLogger:
         end_date = datetime.now() + timedelta(hours=1)
 
         report = self.logger.generate_compliance_report(
-            start_date=start_date,
-            end_date=end_date
+            start_date=start_date, end_date=end_date
         )
 
         assert report["total_events"] == 4
@@ -159,7 +155,7 @@ class TestComplianceLogger:
             description="測試事件",
             details={"key": "value"},
             business_context={},
-            regulatory_context={}
+            regulatory_context={},
         )
 
         hash1 = event.calculate_hash()
@@ -176,16 +172,14 @@ class TestComplianceLogger:
     def test_encryption_disabled(self):
         """測試停用加密的情況"""
         logger_no_encryption = ComplianceLogger(
-            log_dir=self.log_dir,
-            key_dir=self.key_dir,
-            enable_encryption=False
+            log_dir=self.log_dir, key_dir=self.key_dir, enable_encryption=False
         )
 
         event = logger_no_encryption.log_event(
             event_type=ComplianceEventType.AUDIT_ACCESS,
             level=ComplianceLevel.LOW,
             user_id="test_user",
-            description="測試審計訪問"
+            description="測試審計訪問",
         )
 
         assert event.signature == "" or event.signature is None
@@ -206,7 +200,7 @@ class TestComplianceLogger:
             "description": "測試",
             "details": {},
             "business_context": {},
-            "regulatory_context": {}
+            "regulatory_context": {},
         }
 
         assert self.logger.verify_event(invalid_event_data) is False
@@ -223,7 +217,7 @@ class TestComplianceLogger:
             "description": "測試",
             "details": {},
             "business_context": {},
-            "regulatory_context": {}
+            "regulatory_context": {},
         }
 
         # 驗證應該返回 False
@@ -245,7 +239,7 @@ class TestComplianceEvent:
             description="投資組合變更",
             details={"old_allocation": 0.5, "new_allocation": 0.6},
             business_context={"portfolio_id": "P001"},
-            regulatory_context={"rule": "diversification"}
+            regulatory_context={"rule": "diversification"},
         )
 
         event_dict = event.to_dict()

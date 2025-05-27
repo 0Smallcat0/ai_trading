@@ -8,6 +8,7 @@ import logging
 # 導入服務層
 try:
     from src.core.authentication_service import AuthenticationService
+
     SERVICES_AVAILABLE = True
     logging.info("認證服務層導入成功")
 except ImportError as e:

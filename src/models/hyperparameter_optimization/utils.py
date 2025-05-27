@@ -35,29 +35,29 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 def validate_param_grid(param_grid: Dict[str, Any]) -> None:
     """
     驗證參數網格格式
-    
+
     Args:
         param_grid: 參數網格字典
-        
+
     Raises:
         ValueError: 當參數網格格式不正確時
-        
+
     Example:
         >>> validate_param_grid({"n_estimators": [100, 200]})
     """
     if not isinstance(param_grid, dict):
         raise ValueError("參數網格必須是字典格式")
-    
+
     if not param_grid:
         raise ValueError("參數網格不能為空")
-    
+
     for param, values in param_grid.items():
         if not isinstance(param, str):
             raise ValueError(f"參數名稱必須是字串: {param}")
-        
+
         if not isinstance(values, (list, tuple)):
             raise ValueError(f"參數值必須是列表或元組: {param}")
-        
+
         if len(values) == 0:
             raise ValueError(f"參數值不能為空: {param}")
 
@@ -68,11 +68,11 @@ def log_tuning_params(
     param_grid: Dict[str, Any],
     cv: int,
     scoring: Optional[Union[str, Callable]],
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """
     記錄調優參數到 MLflow
-    
+
     Args:
         method: 調優方法名稱
         model_type: 模型類型
@@ -80,7 +80,7 @@ def log_tuning_params(
         cv: 交叉驗證折數
         scoring: 評分函數
         **kwargs: 其他參數
-        
+
     Example:
         >>> log_tuning_params("grid_search", "random_forest", param_grid, 5, "accuracy")
     """
@@ -88,60 +88,56 @@ def log_tuning_params(
     mlflow.log_param("model_type", model_type)
     mlflow.log_param("cv", cv)
     mlflow.log_param("scoring", str(scoring))
-    
+
     # 記錄參數網格
     for param, values in param_grid.items():
         mlflow.log_param(f"param_grid_{param}", str(values))
-    
+
     # 記錄其他參數
     for key, value in kwargs.items():
         mlflow.log_param(key, value)
 
 
 def save_results(
-    results: pd.DataFrame,
-    best_params: Dict[str, Any],
-    best_score: float,
-    method: str
+    results: pd.DataFrame, best_params: Dict[str, Any], best_score: float, method: str
 ) -> str:
     """
     保存調優結果
-    
+
     Args:
         results: 調優結果資料框
         best_params: 最佳參數
         best_score: 最佳分數
         method: 調優方法
-        
+
     Returns:
         結果檔案路徑
-        
+
     Example:
         >>> path = save_results(results_df, best_params, 0.95, "grid_search")
     """
     filename = f"{method}_results.csv"
     results.to_csv(filename, index=False)
     mlflow.log_artifact(filename)
-    
+
     # 記錄最佳參數和分數
     for param, value in best_params.items():
         mlflow.log_param(f"best_{param}", value)
     mlflow.log_metric("best_score", best_score)
-    
+
     return filename
 
 
 def plot_param_importance(
-    results: pd.DataFrame,
-    save_path: str = "param_importance.png"
+    results: pd.DataFrame, save_path: str = "param_importance.png"
 ) -> None:
     """
     繪製參數重要性圖
-    
+
     Args:
         results: 調優結果資料框
         save_path: 圖片保存路徑
-        
+
     Example:
         >>> plot_param_importance(results_df)
     """
@@ -157,18 +153,20 @@ def plot_param_importance(
         for param in param_names:
             # 確保參數列為字串類型
             param_values = results[param].astype(str)
-            
+
             # 計算參數與分數的關係
             if "mean_test_score" in results.columns:
                 grouped_scores = results.groupby(param_values)["mean_test_score"].mean()
-                
+
                 # 計算參數的重要性（最大分數 - 最小分數）
                 if len(grouped_scores) > 1:
                     importance = grouped_scores.max() - grouped_scores.min()
-                    importance_data.append({
-                        "parameter": param.replace("param_", ""),
-                        "importance": importance
-                    })
+                    importance_data.append(
+                        {
+                            "parameter": param.replace("param_", ""),
+                            "importance": importance,
+                        }
+                    )
 
         if not importance_data:
             logger.warning("無法計算參數重要性")
@@ -181,16 +179,13 @@ def plot_param_importance(
         # 繪製參數重要性圖
         plt.figure(figsize=(10, 6))
         sns.barplot(
-            x="importance",
-            y="parameter",
-            data=importance_df,
-            palette="viridis"
+            x="importance", y="parameter", data=importance_df, palette="viridis"
         )
         plt.title("Parameter Importance", fontsize=14, fontweight="bold")
         plt.xlabel("Importance (Score Range)", fontsize=12)
         plt.ylabel("Parameter", fontsize=12)
         plt.tight_layout()
-        
+
         # 保存圖表
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close()
@@ -198,7 +193,7 @@ def plot_param_importance(
         # 記錄到 MLflow
         if mlflow.active_run():
             mlflow.log_artifact(save_path)
-            
+
         logger.info(f"參數重要性圖已保存: {save_path}")
 
     except Exception as e:
@@ -208,18 +203,18 @@ def plot_param_importance(
 
 def compare_optimization_methods(
     results_dict: Dict[str, Dict[str, Any]],
-    save_path: str = "optimization_comparison.png"
+    save_path: str = "optimization_comparison.png",
 ) -> pd.DataFrame:
     """
     比較不同優化方法的性能
-    
+
     Args:
         results_dict: 不同方法的結果字典
         save_path: 比較圖保存路徑
-        
+
     Returns:
         比較結果資料框
-        
+
     Example:
         >>> comparison = compare_optimization_methods({
         ...     "grid_search": grid_results,
@@ -227,34 +222,40 @@ def compare_optimization_methods(
         ... })
     """
     comparison_data = []
-    
+
     for method, results in results_dict.items():
-        comparison_data.append({
-            "method": method,
-            "best_score": results.get("best_score", 0),
-            "n_trials": len(results.get("results", [])) if results.get("results") is not None else 0
-        })
-    
+        comparison_data.append(
+            {
+                "method": method,
+                "best_score": results.get("best_score", 0),
+                "n_trials": (
+                    len(results.get("results", []))
+                    if results.get("results") is not None
+                    else 0
+                ),
+            }
+        )
+
     comparison_df = pd.DataFrame(comparison_data)
-    
+
     # 繪製比較圖
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-    
+
     # 最佳分數比較
     sns.barplot(x="method", y="best_score", data=comparison_df, ax=ax1)
     ax1.set_title("Best Score Comparison")
     ax1.set_ylabel("Best Score")
-    
+
     # 試驗次數比較
     sns.barplot(x="method", y="n_trials", data=comparison_df, ax=ax2)
     ax2.set_title("Number of Trials Comparison")
     ax2.set_ylabel("Number of Trials")
-    
+
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
-    
+
     if mlflow.active_run():
         mlflow.log_artifact(save_path)
-    
+
     return comparison_df

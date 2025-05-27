@@ -315,6 +315,7 @@ def cache_dataframe(fn):
     """
     import hashlib
     import json
+
     # 移除不安全的 pickle 模組，使用 JSON 序列化
 
     @functools.wraps(fn)
@@ -344,8 +345,12 @@ def cache_dataframe(fn):
                 else:
                     serializable_kwargs[k] = str(type(v).__name__)
 
-            key_string = json.dumps((serializable_args, serializable_kwargs), sort_keys=True)
-            cache_key = hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
+            key_string = json.dumps(
+                (serializable_args, serializable_kwargs), sort_keys=True
+            )
+            cache_key = hashlib.md5(
+                key_string.encode(), usedforsecurity=False
+            ).hexdigest()
         except Exception:
             cache_key = fn.__name__
         cache_file = cache_dir / f"{fn.__name__}_{cache_key}.csv"
@@ -474,7 +479,7 @@ def get_trading_dates(start_date, end_date):
         end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
     # 生成日期範圍
-    date_range = pd.date_range(start=start_date, end=end_date, freq='D')
+    date_range = pd.date_range(start=start_date, end=end_date, freq="D")
 
     # 過濾週末（週六=5, 週日=6）
     trading_dates = [d.date() for d in date_range if d.weekday() < 5]

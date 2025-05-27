@@ -40,6 +40,7 @@ class OrderRequest(BaseModel):
         ...     price=500.0
         ... )
     """
+
     symbol: str = Field(..., description="股票代碼", example="2330.TW")
     action: str = Field(..., description="交易動作 (buy/sell)")
     quantity: int = Field(..., gt=0, description="交易數量")
@@ -105,7 +106,9 @@ class OrderRequest(BaseModel):
         return v.lower()
 
     @validator("price")
-    def validate_price_for_limit_order(cls, v, values):  # pylint: disable=no-self-argument
+    def validate_price_for_limit_order(
+        cls, v, values
+    ):  # pylint: disable=no-self-argument
         """驗證限價單必須有價格
 
         Args:
@@ -123,7 +126,9 @@ class OrderRequest(BaseModel):
         return v
 
     @validator("stop_price")
-    def validate_stop_price_for_stop_order(cls, v, values):  # pylint: disable=no-self-argument
+    def validate_stop_price_for_stop_order(
+        cls, v, values
+    ):  # pylint: disable=no-self-argument
         """驗證停損單必須有停損價格
 
         Args:
@@ -159,6 +164,7 @@ class OrderUpdateRequest(BaseModel):
     Note:
         所有欄位都是可選的，只有提供的欄位會被更新
     """
+
     quantity: Optional[int] = Field(default=None, gt=0, description="新的交易數量")
     price: Optional[float] = Field(default=None, gt=0, description="新的價格")
     stop_price: Optional[float] = Field(default=None, gt=0, description="新的停損價格")
@@ -195,6 +201,7 @@ class TradingModeRequest(BaseModel):
         is_simulation: 是否為模擬交易模式
         reason: 切換原因
     """
+
     is_simulation: bool = Field(..., description="是否為模擬交易模式")
     reason: Optional[str] = Field(default=None, description="切換原因")
 
@@ -208,6 +215,7 @@ class BatchOrderRequest(BaseModel):
         orders: 訂單列表，最多 50 個
         execute_all_or_none: 是否全部執行或全部不執行
     """
+
     orders: List[OrderRequest] = Field(
         ..., min_items=1, max_items=50, description="訂單列表"
     )
@@ -247,6 +255,7 @@ class OrderResponse(BaseModel):
         net_amount: 淨金額
         notes: 備註
     """
+
     order_id: str = Field(..., description="訂單 ID")
     symbol: str = Field(..., description="股票代碼")
     action: str = Field(..., description="交易動作")
@@ -290,6 +299,7 @@ class TradeExecutionResponse(BaseModel):
         broker: 券商
         execution_venue: 執行場所
     """
+
     execution_id: str = Field(..., description="執行 ID")
     order_id: str = Field(..., description="訂單 ID")
     symbol: str = Field(..., description="股票代碼")
@@ -323,6 +333,7 @@ class TradingStatusResponse(BaseModel):
         total_position_value: 總持倉價值
         last_update: 最後更新時間
     """
+
     is_simulation_mode: bool = Field(..., description="是否為模擬交易模式")
     broker_connected: bool = Field(..., description="券商是否連接")
     current_broker: str = Field(..., description="當前券商")

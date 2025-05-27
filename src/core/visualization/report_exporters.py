@@ -28,7 +28,7 @@ class ReportExporterService:
 
     def __init__(self, session_factory: sessionmaker):
         """初始化報表匯出服務
-        
+
         Args:
             session_factory: SQLAlchemy session factory
         """
@@ -44,13 +44,13 @@ class ReportExporterService:
         user_id: str = "system",
     ) -> Tuple[bool, str, Optional[str]]:
         """匯出報表
-        
+
         Args:
             report_data: 報表數據
             export_format: 匯出格式 ('pdf', 'excel', 'json', 'csv', 'html')
             template_id: 模板ID
             user_id: 用戶ID
-            
+
         Returns:
             (成功標誌, 訊息, 檔案路徑)
         """
@@ -102,12 +102,12 @@ class ReportExporterService:
         self, report_data: Dict[str, Any], export_id: str, timestamp: str
     ) -> Tuple[bool, str, str]:
         """匯出為 JSON 格式
-        
+
         Args:
             report_data: 報表數據
             export_id: 匯出ID
             timestamp: 時間戳
-            
+
         Returns:
             (成功標誌, 訊息, 檔案路徑)
         """
@@ -133,12 +133,12 @@ class ReportExporterService:
         self, report_data: Dict[str, Any], export_id: str, timestamp: str
     ) -> Tuple[bool, str, str]:
         """匯出為 CSV 格式
-        
+
         Args:
             report_data: 報表數據
             export_id: 匯出ID
             timestamp: 時間戳
-            
+
         Returns:
             (成功標誌, 訊息, 檔案路徑)
         """
@@ -170,12 +170,12 @@ class ReportExporterService:
         self, report_data: Dict[str, Any], export_id: str, timestamp: str
     ) -> Tuple[bool, str, str]:
         """匯出為 Excel 格式
-        
+
         Args:
             report_data: 報表數據
             export_id: 匯出ID
             timestamp: 時間戳
-            
+
         Returns:
             (成功標誌, 訊息, 檔案路徑)
         """
@@ -218,13 +218,13 @@ class ReportExporterService:
         template_id: Optional[str] = None,
     ) -> Tuple[bool, str, str]:
         """匯出為 HTML 格式
-        
+
         Args:
             report_data: 報表數據
             export_id: 匯出ID
             timestamp: 時間戳
             template_id: 模板ID
-            
+
         Returns:
             (成功標誌, 訊息, 檔案路徑)
         """
@@ -257,13 +257,13 @@ class ReportExporterService:
         template_id: Optional[str] = None,
     ) -> Tuple[bool, str, str]:
         """匯出為 PDF 格式
-        
+
         Args:
             report_data: 報表數據
             export_id: 匯出ID
             timestamp: 時間戳
             template_id: 模板ID
-            
+
         Returns:
             (成功標誌, 訊息, 檔案路徑)
         """
@@ -294,11 +294,11 @@ class ReportExporterService:
         self, report_data: Dict[str, Any], template_id: Optional[str] = None
     ) -> str:
         """生成 HTML 內容
-        
+
         Args:
             report_data: 報表數據
             template_id: 模板ID
-            
+
         Returns:
             HTML 內容字串
         """
@@ -389,9 +389,7 @@ class ReportExporterService:
         if "data" in report_data and isinstance(report_data["data"], list):
             df = pd.DataFrame(report_data["data"])
             if not df.empty:
-                html_table = df.to_html(
-                    index=False, classes='data-table'
-                )
+                html_table = df.to_html(index=False, classes="data-table")
                 data_section = f"<h2>交易明細</h2>{html_table}"
 
         return html_template.format(

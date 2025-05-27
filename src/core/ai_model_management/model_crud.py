@@ -57,8 +57,7 @@ class ModelCRUD:
 
                 # 檢查模型名稱是否已存在
                 cursor.execute(
-                    "SELECT id FROM ai_models WHERE name = ?",
-                    (model_data.get("name"),)
+                    "SELECT id FROM ai_models WHERE name = ?", (model_data.get("name"),)
                 )
                 if cursor.fetchone():
                     raise ModelManagementError(
@@ -100,14 +99,15 @@ class ModelCRUD:
                         version,
                         parameters_json,
                         "初始版本",
-                        model_data.get("author", "系統")
+                        model_data.get("author", "系統"),
                     ),
                 )
 
                 conn.commit()
 
-                logger.info("模型創建成功: %s (ID: %s)",
-                           model_data.get("name"), model_id)
+                logger.info(
+                    "模型創建成功: %s (ID: %s)", model_data.get("name"), model_id
+                )
                 return model_id
 
         except Exception as e:
@@ -216,9 +216,7 @@ class ModelCRUD:
                     model_dict["parameters"] = json.loads(
                         model_dict["parameters"] or "{}"
                     )
-                    model_dict["features"] = json.loads(
-                        model_dict["features"] or "[]"
-                    )
+                    model_dict["features"] = json.loads(model_dict["features"] or "[]")
                     model_dict["performance_metrics"] = json.loads(
                         model_dict["performance_metrics"] or "{}"
                     )
@@ -287,8 +285,13 @@ class ModelCRUD:
         """
         try:
             valid_statuses = [
-                "created", "training", "trained", "deployed",
-                "testing", "failed", "archived"
+                "created",
+                "training",
+                "trained",
+                "deployed",
+                "testing",
+                "failed",
+                "archived",
             ]
             if status not in valid_statuses:
                 raise ModelManagementError("無效的狀態: %s" % status)
@@ -318,6 +321,7 @@ class ModelCRUD:
             model_dir = self.models_dir / model_id
             if model_dir.exists():
                 import shutil
+
                 shutil.rmtree(model_dir)
 
         except Exception as e:

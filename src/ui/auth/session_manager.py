@@ -25,9 +25,7 @@ def set_user_session(username: str, user_data: Dict[str, Any]) -> None:
     logging.info("用戶 %s 登入成功（簡化模式）", username)
 
 
-def set_service_user_session(
-    user_info: Dict[str, Any], result: Dict[str, Any]
-) -> None:
+def set_service_user_session(user_info: Dict[str, Any], result: Dict[str, Any]) -> None:
     """設定用戶會話狀態（服務模式）
 
     Args:
@@ -43,7 +41,7 @@ def set_service_user_session(
     st.session_state.email = user_info["email"]
     st.session_state.session_id = result["session_id"]
     st.session_state.jwt_token = result["jwt_token"]
-    logging.info("用戶 %s 登入成功（服務模式）", user_info['username'])
+    logging.info("用戶 %s 登入成功（服務模式）", user_info["username"])
 
 
 def logout():
@@ -89,7 +87,10 @@ def require_auth(role=None):
         def wrapper(*args, **kwargs):
             if not check_auth():
                 # 延遲導入避免循環導入
-                from .login_form import login_form  # pylint: disable=import-outside-toplevel
+                from .login_form import (
+                    login_form,
+                )  # pylint: disable=import-outside-toplevel
+
                 login_form()
                 return None
 

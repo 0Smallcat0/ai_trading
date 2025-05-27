@@ -242,14 +242,10 @@ class DataIngestionManager:
     def _setup_priority_groups(self):
         """設定優先級組"""
         # 設定價格資料優先級
-        self.failover_manager.set_priority_order(
-            "price", ["yahoo", "broker"]
-        )
+        self.failover_manager.set_priority_order("price", ["yahoo", "broker"])
 
         # 設定基本面資料優先級
-        self.failover_manager.set_priority_order(
-            "fundamental", ["yahoo"]
-        )
+        self.failover_manager.set_priority_order("fundamental", ["yahoo"])
 
     def _create_health_check_func(self, source_name: str):
         """創建健康檢查函數
@@ -260,6 +256,7 @@ class DataIngestionManager:
         Returns:
             Callable: 健康檢查函數
         """
+
         def health_check():
             try:
                 adapter = self.adapters.get(source_name)
@@ -273,7 +270,7 @@ class DataIngestionManager:
                         "AAPL",
                         start_date="2024-01-01",
                         end_date="2024-01-02",
-                        use_cache=False
+                        use_cache=False,
                     )
                     return not test_data.empty
                 if source_name == "broker":
@@ -397,9 +394,7 @@ class DataIngestionManager:
                 # 記錄成功到故障轉移管理器
                 start_time = time.time()
                 response_time = time.time() - start_time
-                self.failover_manager.record_request_result(
-                    source, True, response_time
-                )
+                self.failover_manager.record_request_result(source, True, response_time)
 
                 # 更新統計信息
                 self.stats["requests_success"] += 1
@@ -418,9 +413,7 @@ class DataIngestionManager:
                 self.stats["requests_failed"] += 1
 
                 # 記錄失敗到故障轉移管理器
-                self.failover_manager.record_request_result(
-                    source, False, 0.0, str(e)
-                )
+                self.failover_manager.record_request_result(source, False, 0.0, str(e))
 
                 # 報告失敗
                 self.rate_limiter.report_failure()
@@ -438,7 +431,7 @@ class DataIngestionManager:
                         end_date=end_date,
                         interval=interval,
                         source=backup_source,
-                        use_cache=use_cache
+                        use_cache=use_cache,
                     )
 
                 return {}
@@ -568,7 +561,8 @@ class DataIngestionManager:
                     if self.data_queue.qsize() >= self.data_queue.maxsize * 0.9:
                         logger.warning(
                             "消息隊列接近滿載 (%d/%d)，可能需要增加處理速度",
-                            self.data_queue.qsize(), self.data_queue.maxsize
+                            self.data_queue.qsize(),
+                            self.data_queue.maxsize,
                         )
 
                     # 將消息放入隊列
@@ -890,7 +884,7 @@ def load_data(start_date=None, end_date=None, data_types=None):
         if os.path.exists(price_file):
             # 使用 parquet 格式替代 pickle 以提高安全性
             try:
-                parquet_file = price_file.replace('.pkl', '.parquet')
+                parquet_file = price_file.replace(".pkl", ".parquet")
                 if os.path.exists(parquet_file):
                     result["price"] = pd.read_parquet(parquet_file)
                 else:

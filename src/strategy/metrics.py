@@ -46,7 +46,9 @@ def calculate_total_return(returns: pd.Series) -> float:
         總收益率
     """
     cumulative_returns = (1 + returns).cumprod()
-    return float(cumulative_returns.iloc[-1] - 1) if not cumulative_returns.empty else 0.0
+    return (
+        float(cumulative_returns.iloc[-1] - 1) if not cumulative_returns.empty else 0.0
+    )
 
 
 def calculate_sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
@@ -118,10 +120,7 @@ def calculate_volatility(returns: pd.Series) -> float:
     return float(returns.std() * np.sqrt(252))
 
 
-def calculate_all_metrics(
-    signals: pd.DataFrame,
-    price_data: pd.DataFrame
-) -> dict:
+def calculate_all_metrics(signals: pd.DataFrame, price_data: pd.DataFrame) -> dict:
     """計算所有策略評估指標。
 
     Args:
@@ -138,5 +137,5 @@ def calculate_all_metrics(
         "sharpe_ratio": calculate_sharpe_ratio(returns),
         "max_drawdown": calculate_max_drawdown(returns),
         "win_rate": calculate_win_rate(returns),
-        "volatility": calculate_volatility(returns)
+        "volatility": calculate_volatility(returns),
     }

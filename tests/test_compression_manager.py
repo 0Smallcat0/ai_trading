@@ -31,7 +31,7 @@ from src.database.compression_manager import (
     SizeBasedCompressionStrategy,
     CompressionError,
     CompressionConfigError,
-    CompressionOperationError
+    CompressionOperationError,
 )
 
 
@@ -54,7 +54,7 @@ def test_session():
             high=105.0,
             low=98.0,
             close=103.0,
-            volume=1000000
+            volume=1000000,
         ),
         MarketDaily(
             symbol="2330.TW",
@@ -63,7 +63,7 @@ def test_session():
             high=108.0,
             low=101.0,
             close=106.0,
-            volume=1200000
+            volume=1200000,
         ),
         MarketDaily(
             symbol="2454.TW",
@@ -72,8 +72,8 @@ def test_session():
             high=52.0,
             low=49.0,
             close=51.0,
-            volume=800000
-        )
+            volume=800000,
+        ),
     ]
 
     for data in test_data:
@@ -148,19 +148,21 @@ class TestCompressionManager:
         assert "custom_weekly" in compression_manager.strategies
         assert compression_manager.strategies["custom_weekly"] == custom_strategy
 
-    @patch('src.database.compression_manager.os.makedirs')
-    @patch('src.database.compression_manager.os.path.getsize')
-    def test_compress_table_data(self, mock_getsize, mock_makedirs, compression_manager, temp_dir):
+    @patch("src.database.compression_manager.os.makedirs")
+    @patch("src.database.compression_manager.os.path.getsize")
+    def test_compress_table_data(
+        self, mock_getsize, mock_makedirs, compression_manager, temp_dir
+    ):
         """測試壓縮表格資料"""
         # 模擬檔案大小
         mock_getsize.return_value = 1024
 
-        with patch.object(compression_manager, '_save_compressed_parquet') as mock_save:
+        with patch.object(compression_manager, "_save_compressed_parquet") as mock_save:
             file_path, stats = compression_manager.compress_table_data(
                 MarketDaily,
                 date(2024, 1, 1),
                 date(2024, 1, 2),
-                compression_type="snappy"
+                compression_type="snappy",
             )
 
             assert file_path != ""
@@ -179,22 +181,20 @@ class TestCompressionManager:
             MarketDaily,
             date(2025, 1, 1),  # 未來日期，沒有資料
             date(2025, 1, 2),
-            compression_type="snappy"
+            compression_type="snappy",
         )
 
         assert file_path == ""
         assert stats == {}
 
-    @patch('src.database.compression_manager.pq.write_table')
+    @patch("src.database.compression_manager.pq.write_table")
     def test_save_compressed_parquet(self, mock_write_table, compression_manager):
         """測試儲存壓縮的 Parquet 檔案"""
-        df = pd.DataFrame({
-            'symbol': ['2330.TW'],
-            'date': [date(2024, 1, 1)],
-            'close': [100.0]
-        })
+        df = pd.DataFrame(
+            {"symbol": ["2330.TW"], "date": [date(2024, 1, 1)], "close": [100.0]}
+        )
 
-        with patch('src.database.compression_manager.os.makedirs'):
+        with patch("src.database.compression_manager.os.makedirs"):
             compression_manager._save_compressed_parquet(
                 df, "/test/path.parquet", "snappy"
             )
@@ -224,29 +224,25 @@ class TestCompressionManager:
         options = compression_manager._get_compression_options("unknown")
         assert options == {}
 
-    @patch('src.database.compression_manager.pd.read_parquet')
-    @patch('src.database.compression_manager.os.path.getsize')
-    @patch('src.database.compression_manager.os.makedirs')
+    @patch("src.database.compression_manager.pd.read_parquet")
+    @patch("src.database.compression_manager.os.path.getsize")
+    @patch("src.database.compression_manager.os.makedirs")
     def test_convert_compression_format(
         self, mock_makedirs, mock_getsize, mock_read_parquet, compression_manager
     ):
         """測試轉換壓縮格式"""
         # 模擬讀取的資料
-        mock_df = pd.DataFrame({
-            'symbol': ['2330.TW'],
-            'date': [date(2024, 1, 1)],
-            'close': [100.0]
-        })
+        mock_df = pd.DataFrame(
+            {"symbol": ["2330.TW"], "date": [date(2024, 1, 1)], "close": [100.0]}
+        )
         mock_read_parquet.return_value = mock_df
 
         # 模擬檔案大小
         mock_getsize.side_effect = [2048, 1024]  # 原始大小, 新大小
 
-        with patch.object(compression_manager, '_save_compressed_parquet') as mock_save:
+        with patch.object(compression_manager, "_save_compressed_parquet") as mock_save:
             stats = compression_manager.convert_compression_format(
-                "/source/path.parquet",
-                "/target/path.parquet",
-                "gzip"
+                "/source/path.parquet", "/target/path.parquet", "gzip"
             )
 
             assert stats["original_size_bytes"] == 2048
@@ -267,14 +263,13 @@ class TestCompressionManager:
             start_date=date.today() - timedelta(days=60),
             end_date=date.today() - timedelta(days=31),
             is_compressed=False,
-            file_size_bytes=1024000
+            file_size_bytes=1024000,
         )
         test_session.add(old_shard)
         test_session.commit()
 
         results = compression_manager.auto_compress_old_data(
-            strategy_name="time_based_snappy",
-            dry_run=True
+            strategy_name="time_based_snappy", dry_run=True
         )
 
         assert len(results) == 1
@@ -304,14 +299,14 @@ class TestCompressionManager:
             shard_id="compressed_shard",
             is_compressed=True,
             compression="snappy",
-            file_size_bytes=1024
+            file_size_bytes=1024,
         )
         uncompressed_shard = DataShard(
             table_name="market_daily",
             shard_key="date",
             shard_id="uncompressed_shard",
             is_compressed=False,
-            file_size_bytes=2048
+            file_size_bytes=2048,
         )
 
         test_session.add_all([compressed_shard, uncompressed_shard])
@@ -350,7 +345,7 @@ class TestCompressionExceptions:
                 MarketDaily,
                 date(2024, 1, 1),
                 date(2024, 1, 2),
-                compression_type="invalid_format"
+                compression_type="invalid_format",
             )
 
     def test_exception_chaining(self, test_session):
@@ -358,7 +353,7 @@ class TestCompressionExceptions:
         manager = CompressionManager(test_session)
 
         # 模擬內部異常
-        with patch('src.database.compression_manager.query_to_dataframe') as mock_query:
+        with patch("src.database.compression_manager.query_to_dataframe") as mock_query:
             mock_query.side_effect = Exception("查詢錯誤")
 
             with pytest.raises(CompressionOperationError) as exc_info:
@@ -366,7 +361,7 @@ class TestCompressionExceptions:
                     MarketDaily,
                     date(2024, 1, 1),
                     date(2024, 1, 2),
-                    compression_type="snappy"
+                    compression_type="snappy",
                 )
 
             # 驗證異常鏈
@@ -415,28 +410,34 @@ class TestCompressionFormats:
         manager = CompressionManager(test_session)
 
         # 創建測試資料
-        test_df = pd.DataFrame({
-            'symbol': ['TEST.TW'] * 1000,
-            'date': [date(2024, 1, 1)] * 1000,
-            'close': list(range(1000))
-        })
+        test_df = pd.DataFrame(
+            {
+                "symbol": ["TEST.TW"] * 1000,
+                "date": [date(2024, 1, 1)] * 1000,
+                "close": list(range(1000)),
+            }
+        )
 
         formats = ["snappy", "gzip", "lz4"]
         results = {}
 
         for format_type in formats:
-            with patch('src.database.compression_manager.query_to_dataframe') as mock_query:
+            with patch(
+                "src.database.compression_manager.query_to_dataframe"
+            ) as mock_query:
                 mock_query.return_value = test_df
 
-                with patch('src.database.compression_manager.os.path.getsize') as mock_size:
+                with patch(
+                    "src.database.compression_manager.os.path.getsize"
+                ) as mock_size:
                     mock_size.return_value = 1024
 
-                    with patch.object(manager, '_save_compressed_parquet'):
+                    with patch.object(manager, "_save_compressed_parquet"):
                         _, stats = manager.compress_table_data(
                             MarketDaily,
                             date(2024, 1, 1),
                             date(2024, 1, 2),
-                            compression_type=format_type
+                            compression_type=format_type,
                         )
                         results[format_type] = stats
 
@@ -464,7 +465,7 @@ class TestCompressionPerformance:
                 start_date=date(2024, 1, 1) + timedelta(days=i),
                 end_date=date(2024, 1, 1) + timedelta(days=i),
                 is_compressed=False,
-                file_size_bytes=1024000
+                file_size_bytes=1024000,
             )
             shards.append(shard)
 
@@ -474,8 +475,7 @@ class TestCompressionPerformance:
         # 測試批次處理效能
         start_time = time.time()
         results = manager.auto_compress_old_data(
-            strategy_name="time_based_snappy",
-            dry_run=True
+            strategy_name="time_based_snappy", dry_run=True
         )
         end_time = time.time()
 
@@ -491,19 +491,21 @@ class TestCompressionPerformance:
         manager = CompressionManager(test_session)
 
         # 模擬大型資料集
-        large_df = pd.DataFrame({
-            'symbol': ['LARGE.TW'] * 10000,
-            'date': [date(2024, 1, 1)] * 10000,
-            'close': list(range(10000))
-        })
+        large_df = pd.DataFrame(
+            {
+                "symbol": ["LARGE.TW"] * 10000,
+                "date": [date(2024, 1, 1)] * 10000,
+                "close": list(range(10000)),
+            }
+        )
 
-        with patch('src.database.compression_manager.query_to_dataframe') as mock_query:
+        with patch("src.database.compression_manager.query_to_dataframe") as mock_query:
             mock_query.return_value = large_df
 
-            with patch('src.database.compression_manager.os.path.getsize') as mock_size:
+            with patch("src.database.compression_manager.os.path.getsize") as mock_size:
                 mock_size.return_value = 1024000
 
-                with patch.object(manager, '_save_compressed_parquet') as mock_save:
+                with patch.object(manager, "_save_compressed_parquet") as mock_save:
                     # 測試記憶體使用
                     import psutil
                     import os
@@ -515,7 +517,7 @@ class TestCompressionPerformance:
                         MarketDaily,
                         date(2024, 1, 1),
                         date(2024, 1, 2),
-                        compression_type="snappy"
+                        compression_type="snappy",
                     )
 
                     memory_after = process.memory_info().rss
@@ -570,14 +572,14 @@ class TestCompressionIntegration:
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
             is_compressed=True,
-            compression="snappy"
+            compression="snappy",
         )
 
         test_session.add(shard)
         test_session.commit()
 
         # 驗證 file_format 預設值
-        assert shard.file_format == 'parquet'
+        assert shard.file_format == "parquet"
 
         # 測試壓縮統計功能
         stats = manager.get_compression_statistics()
@@ -599,15 +601,14 @@ class TestCompressionIntegration:
             start_date=date.today() - timedelta(days=5),
             end_date=date.today() - timedelta(days=4),
             is_compressed=False,
-            file_size_bytes=2048000
+            file_size_bytes=2048000,
         )
         test_session.add(shard)
         test_session.commit()
 
         # 3. 測試自動壓縮（試運行）
         results = manager.auto_compress_old_data(
-            strategy_name="daily_zstd",
-            dry_run=True
+            strategy_name="daily_zstd", dry_run=True
         )
 
         # 4. 驗證結果

@@ -193,7 +193,7 @@ class AlertManager:
             sms_config: SMS 配置
         """
         # 避免重複初始化
-        if hasattr(self, '_initialized') and self._initialized:
+        if hasattr(self, "_initialized") and self._initialized:
             return
 
         self.alert_log_dir = alert_log_dir
@@ -282,7 +282,9 @@ class AlertManager:
                 if alert_time > sla_time:
                     logger.warning(
                         "警報 %s 已超過 SLA: %.2f 秒 > %s 秒",
-                        alert.alert_id, alert_time, sla_time
+                        alert.alert_id,
+                        alert_time,
+                        sla_time,
                     )
                     # 升級警報
                     self._escalate_alert(alert)

@@ -45,7 +45,7 @@ class RSIStrategy(Strategy):
         rsi_window: int = 14,
         overbought: float = 70.0,
         oversold: float = 30.0,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         初始化RSI策略。
@@ -64,7 +64,7 @@ class RSIStrategy(Strategy):
             rsi_window=rsi_window,
             overbought=overbought,
             oversold=oversold,
-            **kwargs
+            **kwargs,
         )
         self.rsi_window = rsi_window
         self.overbought = overbought
@@ -78,19 +78,13 @@ class RSIStrategy(Strategy):
             ParameterError: 當參數不符合要求時
         """
         if not isinstance(self.rsi_window, int) or self.rsi_window <= 0:
-            raise ParameterError(
-                f"rsi_window 必須是正整數，得到: {self.rsi_window}"
-            )
+            raise ParameterError(f"rsi_window 必須是正整數，得到: {self.rsi_window}")
 
         if not (0 <= self.oversold <= 100):
-            raise ParameterError(
-                f"oversold 必須在0-100之間，得到: {self.oversold}"
-            )
+            raise ParameterError(f"oversold 必須在0-100之間，得到: {self.oversold}")
 
         if not (0 <= self.overbought <= 100):
-            raise ParameterError(
-                f"overbought 必須在0-100之間，得到: {self.overbought}"
-            )
+            raise ParameterError(f"overbought 必須在0-100之間，得到: {self.overbought}")
 
         if self.oversold >= self.overbought:
             raise ParameterError(
@@ -202,7 +196,9 @@ class RSIStrategy(Strategy):
 
         logger.info(
             "生成RSI策略訊號完成，參數: rsi_window=%d, overbought=%.1f, oversold=%.1f",
-            self.rsi_window, self.overbought, self.oversold
+            self.rsi_window,
+            self.overbought,
+            self.oversold,
         )
 
         return signals
@@ -212,7 +208,7 @@ class RSIStrategy(Strategy):
         data: pd.DataFrame,
         target: Optional[pd.Series] = None,
         param_grid: Optional[Dict[str, List[Any]]] = None,
-        metric: str = "sharpe_ratio"
+        metric: str = "sharpe_ratio",
     ) -> Dict[str, Any]:
         """
         優化RSI策略參數。
@@ -245,9 +241,9 @@ class RSIStrategy(Strategy):
         logger.info("開始RSI策略參數優化，使用指標: %s", metric)
 
         total_combinations = (
-            len(param_grid["rsi_window"]) *
-            len(param_grid["overbought"]) *
-            len(param_grid["oversold"])
+            len(param_grid["rsi_window"])
+            * len(param_grid["overbought"])
+            * len(param_grid["oversold"])
         )
         current_combination = 0
 
@@ -265,7 +261,7 @@ class RSIStrategy(Strategy):
                         temp_strategy = RSIStrategy(
                             rsi_window=rsi_window,
                             overbought=overbought,
-                            oversold=oversold
+                            oversold=oversold,
                         )
 
                         # 評估策略
@@ -274,7 +270,8 @@ class RSIStrategy(Strategy):
 
                         # 更新最佳參數
                         is_better = (
-                            score > best_score if metric != "max_drawdown"
+                            score > best_score
+                            if metric != "max_drawdown"
                             else score > best_score
                         )
 
@@ -285,20 +282,24 @@ class RSIStrategy(Strategy):
                                 "overbought": overbought,
                                 "oversold": oversold,
                                 "best_score": best_score,
-                                "optimization_metric": metric
+                                "optimization_metric": metric,
                             }
 
                         if current_combination % 20 == 0:
                             logger.info(
                                 "參數優化進度: %d/%d (%.1f%%)",
-                                current_combination, total_combinations,
-                                100 * current_combination / total_combinations
+                                current_combination,
+                                total_combinations,
+                                100 * current_combination / total_combinations,
                             )
 
                     except Exception as e:
                         logger.warning(
                             "參數組合 (window=%d, overbought=%.1f, oversold=%.1f) 評估失敗: %s",
-                            rsi_window, overbought, oversold, str(e)
+                            rsi_window,
+                            overbought,
+                            oversold,
+                            str(e),
                         )
                         continue
 
@@ -307,8 +308,11 @@ class RSIStrategy(Strategy):
 
         logger.info(
             "RSI策略參數優化完成，最佳參數: window=%d, overbought=%.1f, oversold=%.1f, %s=%.4f",
-            best_params["rsi_window"], best_params["overbought"],
-            best_params["oversold"], metric, best_params["best_score"]
+            best_params["rsi_window"],
+            best_params["overbought"],
+            best_params["oversold"],
+            metric,
+            best_params["best_score"],
         )
 
         return best_params
@@ -323,7 +327,7 @@ class RSIStrategy(Strategy):
         return {
             "rsi_window": [10, 14, 20, 25],
             "overbought": [70.0, 75.0, 80.0],
-            "oversold": [20.0, 25.0, 30.0]
+            "oversold": [20.0, 25.0, 30.0],
         }
 
     def get_signal_summary(self, signals: pd.DataFrame) -> Dict[str, Any]:
@@ -353,5 +357,7 @@ class RSIStrategy(Strategy):
             "oversold_periods": int(oversold_periods),
             "avg_rsi": float(rsi_values.mean()) if not rsi_values.empty else 0.0,
             "rsi_volatility": float(rsi_values.std()) if not rsi_values.empty else 0.0,
-            "signal_frequency": float(buy_signals / total_periods) if total_periods > 0 else 0.0
+            "signal_frequency": (
+                float(buy_signals / total_periods) if total_periods > 0 else 0.0
+            ),
         }

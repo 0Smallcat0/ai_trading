@@ -20,6 +20,7 @@ import pandas as pd
 # 可選依賴處理
 try:
     import scipy.optimize as sco
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -27,6 +28,7 @@ except ImportError:
 
 try:
     from pypfopt import EfficientFrontier, expected_returns, risk_models
+
     PYPFOPT_AVAILABLE = True
 except ImportError:
     PYPFOPT_AVAILABLE = False
@@ -58,7 +60,7 @@ def kelly_weight(
     stocks: List[str],
     expected_returns: pd.Series,
     win_rates: pd.Series,
-    loss_rates: pd.Series
+    loss_rates: pd.Series,
 ) -> Dict[str, float]:
     """Kelly 公式權重計算
 
@@ -102,9 +104,7 @@ def kelly_weight(
 
 
 def momentum_weight(
-    stocks: List[str],
-    returns_data: pd.DataFrame,
-    lookback_period: int = 252
+    stocks: List[str], returns_data: pd.DataFrame, lookback_period: int = 252
 ) -> Dict[str, float]:
     """動量權重配置
 
@@ -137,7 +137,9 @@ def momentum_weight(
         # 正規化權重
         total_score = sum(momentum_scores.values())
         if total_score > 0:
-            return {stock: score / total_score for stock, score in momentum_scores.items()}
+            return {
+                stock: score / total_score for stock, score in momentum_scores.items()
+            }
         else:
             return equal_weight(stocks)
 
@@ -150,7 +152,7 @@ def mean_variance_optimization(
     stocks: List[str],
     returns_data: pd.DataFrame,
     target_return: float = 0.1,
-    risk_free_rate: float = 0.02
+    risk_free_rate: float = 0.02,
 ) -> Dict[str, float]:
     """均值變異數最佳化
 
@@ -218,8 +220,7 @@ def mean_variance_optimization(
 
 
 def minimum_variance_optimization(
-    stocks: List[str],
-    returns_data: pd.DataFrame
+    stocks: List[str], returns_data: pd.DataFrame
 ) -> Dict[str, float]:
     """最小變異數最佳化
 
@@ -278,9 +279,7 @@ def minimum_variance_optimization(
 
 
 def maximum_sharpe_optimization(
-    stocks: List[str],
-    returns_data: pd.DataFrame,
-    risk_free_rate: float = 0.02
+    stocks: List[str], returns_data: pd.DataFrame, risk_free_rate: float = 0.02
 ) -> Dict[str, float]:
     """最大夏普比率最佳化
 
@@ -345,8 +344,7 @@ def maximum_sharpe_optimization(
 
 
 def risk_parity_optimization(
-    stocks: List[str],
-    returns_data: pd.DataFrame
+    stocks: List[str], returns_data: pd.DataFrame
 ) -> Dict[str, float]:
     """風險平價最佳化
 
@@ -400,7 +398,7 @@ def risk_parity_optimization(
             x0,
             method="SLSQP",
             bounds=bounds,
-            constraints=constraints
+            constraints=constraints,
         )
 
         if result.success:

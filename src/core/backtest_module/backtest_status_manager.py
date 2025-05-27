@@ -95,9 +95,7 @@ class BacktestStatusManager:
             target_func: 目標函數
             args: 函數參數
         """
-        thread = threading.Thread(
-            target=target_func, args=args, daemon=True
-        )
+        thread = threading.Thread(target=target_func, args=args, daemon=True)
 
         self.backtest_threads[backtest_id] = thread
         thread.start()

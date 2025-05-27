@@ -37,6 +37,7 @@ from .position_sizing import (
     RiskBasedPositionSizing,
     VolatilityPositionSizing,
 )
+
 # from .risk_manager_new import RiskManager  # Temporarily commented due to snownlp dependency
 from .risk_manager_base import RiskManagerBase
 from .strategy_manager import StrategyManager

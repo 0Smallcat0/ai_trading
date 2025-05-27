@@ -26,7 +26,7 @@ class TradeExecutionOrderManager:
 
     def __init__(self, session_factory: sessionmaker, risk_service=None):
         """初始化訂單管理器
-        
+
         Args:
             session_factory: SQLAlchemy session factory
             risk_service: 風險管理服務實例
@@ -38,10 +38,10 @@ class TradeExecutionOrderManager:
         self, order_data: Dict[str, Any]
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """驗證訂單
-        
+
         Args:
             order_data: 訂單數據字典
-            
+
         Returns:
             Tuple[bool, str, Dict]: (是否有效, 訊息, 風險檢查結果)
         """
@@ -74,10 +74,10 @@ class TradeExecutionOrderManager:
 
     def _perform_risk_check(self, order_data: Dict[str, Any]) -> Dict[str, Any]:
         """執行風險檢查
-        
+
         Args:
             order_data: 訂單數據
-            
+
         Returns:
             Dict: 風險檢查結果
         """
@@ -126,20 +126,20 @@ class TradeExecutionOrderManager:
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """獲取訂單歷史記錄
-        
+
         Args:
             symbol: 股票代碼篩選
             status: 訂單狀態篩選
             start_date: 開始日期
             end_date: 結束日期
             limit: 返回記錄數量限制
-            
+
         Returns:
             List[Dict]: 訂單歷史記錄列表
         """
         try:
             from src.database.schema import TradingOrder
-            
+
             with self.session_factory() as session:
                 query = session.query(TradingOrder)
 
@@ -196,16 +196,16 @@ class TradeExecutionOrderManager:
 
     def get_order_details(self, order_id: str) -> Optional[Dict[str, Any]]:
         """獲取訂單詳情
-        
+
         Args:
             order_id: 訂單ID
-            
+
         Returns:
             Optional[Dict]: 訂單詳情字典，如果不存在則返回None
         """
         try:
             from src.database.schema import TradingOrder
-            
+
             with self.session_factory() as session:
                 order = session.query(TradingOrder).filter_by(order_id=order_id).first()
                 if not order:
@@ -240,18 +240,18 @@ class TradeExecutionOrderManager:
         self, page: int = 1, page_size: int = 20, filters: Dict = None
     ) -> Dict[str, Any]:
         """獲取訂單列表
-        
+
         Args:
             page: 頁碼
             page_size: 每頁大小
             filters: 篩選條件字典
-            
+
         Returns:
             Dict: 包含訂單列表和總數的字典
         """
         try:
             from src.database.schema import TradingOrder
-            
+
             with self.session_factory() as session:
                 query = session.query(TradingOrder)
 
@@ -314,17 +314,17 @@ class TradeExecutionOrderManager:
         self, order_id: str, update_data: Dict[str, Any]
     ) -> Tuple[bool, str]:
         """更新訂單
-        
+
         Args:
             order_id: 訂單ID
             update_data: 更新數據字典
-            
+
         Returns:
             Tuple[bool, str]: (是否成功, 訊息)
         """
         try:
             from src.database.schema import TradingOrder
-            
+
             with self.session_factory() as session:
                 order = session.query(TradingOrder).filter_by(order_id=order_id).first()
                 if not order:
@@ -345,17 +345,17 @@ class TradeExecutionOrderManager:
         self, format_type: str = "csv", **kwargs
     ) -> Tuple[bool, str, Optional[str]]:
         """匯出訂單歷史
-        
+
         Args:
             format_type: 匯出格式 ('csv' 或 'excel')
             **kwargs: 其他參數傳遞給 get_order_history
-            
+
         Returns:
             Tuple[bool, str, Optional[str]]: (是否成功, 訊息, 檔案路徑)
         """
         try:
             from src.config import CACHE_DIR
-            
+
             # 獲取訂單歷史
             orders = self.get_order_history(**kwargs)
             if not orders:

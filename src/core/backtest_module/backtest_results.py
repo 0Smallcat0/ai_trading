@@ -29,10 +29,7 @@ class BacktestResultsManager:
         self.results_dir.mkdir(parents=True, exist_ok=True)
 
     def save_backtest_results(
-        self,
-        backtest_id: str,
-        results: Dict[str, Any],
-        metrics: Dict[str, float]
+        self, backtest_id: str, results: Dict[str, Any], metrics: Dict[str, float]
     ) -> bool:
         """
         保存回測結果
@@ -54,9 +51,7 @@ class BacktestResultsManager:
 
             # 保存權益曲線到資料庫
             self._save_equity_curve_to_db(
-                backtest_id,
-                results.get("equity_curve", []),
-                results.get("dates", [])
+                backtest_id, results.get("equity_curve", []), results.get("dates", [])
             )
 
             # 保存完整結果到檔案
@@ -97,9 +92,7 @@ class BacktestResultsManager:
             return None
 
     def get_backtest_list(
-        self,
-        limit: int = 50,
-        offset: int = 0
+        self, limit: int = 50, offset: int = 0
     ) -> List[Dict[str, Any]]:
         """
         獲取回測列表
@@ -114,7 +107,8 @@ class BacktestResultsManager:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT r.id, r.strategy_id, r.strategy_name, r.symbols,
                            r.start_date, r.end_date, r.initial_capital, r.status,
                            r.progress, r.created_at, r.completed_at,
@@ -123,29 +117,33 @@ class BacktestResultsManager:
                     LEFT JOIN backtest_metrics m ON r.id = m.backtest_id
                     ORDER BY r.created_at DESC
                     LIMIT ? OFFSET ?
-                """, (limit, offset))
+                """,
+                    (limit, offset),
+                )
 
                 rows = cursor.fetchall()
                 backtest_list = []
 
                 for row in rows:
-                    backtest_list.append({
-                        "id": row[0],
-                        "strategy_id": row[1],
-                        "strategy_name": row[2],
-                        "symbols": json.loads(row[3]) if row[3] else [],
-                        "start_date": row[4],
-                        "end_date": row[5],
-                        "initial_capital": row[6],
-                        "status": row[7],
-                        "progress": row[8],
-                        "created_at": row[9],
-                        "completed_at": row[10],
-                        "total_return": row[11],
-                        "sharpe_ratio": row[12],
-                        "max_drawdown": row[13],
-                        "win_rate": row[14],
-                    })
+                    backtest_list.append(
+                        {
+                            "id": row[0],
+                            "strategy_id": row[1],
+                            "strategy_name": row[2],
+                            "symbols": json.loads(row[3]) if row[3] else [],
+                            "start_date": row[4],
+                            "end_date": row[5],
+                            "initial_capital": row[6],
+                            "status": row[7],
+                            "progress": row[8],
+                            "created_at": row[9],
+                            "completed_at": row[10],
+                            "total_return": row[11],
+                            "sharpe_ratio": row[12],
+                            "max_drawdown": row[13],
+                            "win_rate": row[14],
+                        }
+                    )
 
                 return backtest_list
 
@@ -157,7 +155,8 @@ class BacktestResultsManager:
         """保存績效指標到資料庫"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO backtest_metrics
                 (backtest_id, initial_capital, final_capital, total_return,
                  annual_return, sharpe_ratio, max_drawdown, win_rate,
@@ -165,29 +164,31 @@ class BacktestResultsManager:
                  avg_trade_duration, max_consecutive_wins, max_consecutive_losses,
                  calmar_ratio, sortino_ratio, var_95, beta, alpha, information_ratio)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                backtest_id,
-                metrics.get("initial_capital", 0),
-                metrics.get("final_capital", 0),
-                metrics.get("total_return", 0),
-                metrics.get("annual_return", 0),
-                metrics.get("sharpe_ratio", 0),
-                metrics.get("max_drawdown", 0),
-                metrics.get("win_rate", 0),
-                metrics.get("profit_ratio", 0),
-                metrics.get("total_trades", 0),
-                metrics.get("winning_trades", 0),
-                metrics.get("losing_trades", 0),
-                metrics.get("avg_trade_duration", 0),
-                metrics.get("max_consecutive_wins", 0),
-                metrics.get("max_consecutive_losses", 0),
-                metrics.get("calmar_ratio", 0),
-                metrics.get("sortino_ratio", 0),
-                metrics.get("var_95", 0),
-                metrics.get("beta", 0),
-                metrics.get("alpha", 0),
-                metrics.get("information_ratio", 0),
-            ))
+            """,
+                (
+                    backtest_id,
+                    metrics.get("initial_capital", 0),
+                    metrics.get("final_capital", 0),
+                    metrics.get("total_return", 0),
+                    metrics.get("annual_return", 0),
+                    metrics.get("sharpe_ratio", 0),
+                    metrics.get("max_drawdown", 0),
+                    metrics.get("win_rate", 0),
+                    metrics.get("profit_ratio", 0),
+                    metrics.get("total_trades", 0),
+                    metrics.get("winning_trades", 0),
+                    metrics.get("losing_trades", 0),
+                    metrics.get("avg_trade_duration", 0),
+                    metrics.get("max_consecutive_wins", 0),
+                    metrics.get("max_consecutive_losses", 0),
+                    metrics.get("calmar_ratio", 0),
+                    metrics.get("sortino_ratio", 0),
+                    metrics.get("var_95", 0),
+                    metrics.get("beta", 0),
+                    metrics.get("alpha", 0),
+                    metrics.get("information_ratio", 0),
+                ),
+            )
             conn.commit()
 
     def _save_trades_to_db(self, backtest_id: str, trades: List[Dict[str, Any]]):
@@ -195,38 +196,38 @@ class BacktestResultsManager:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             for trade in trades:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO backtest_trades
                     (backtest_id, symbol, entry_date, exit_date, entry_price,
                      exit_price, quantity, position_size, trade_type, profit,
                      profit_pct, commission_paid, slippage_cost, tax_paid,
                      hold_days, signal_strength)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    backtest_id,
-                    trade.get("symbol", ""),
-                    trade.get("entry_date", ""),
-                    trade.get("exit_date", ""),
-                    trade.get("entry_price", 0),
-                    trade.get("exit_price", 0),
-                    trade.get("quantity", 0),
-                    trade.get("position_size", 0),
-                    trade.get("trade_type", ""),
-                    trade.get("profit", 0),
-                    trade.get("profit_pct", 0),
-                    trade.get("commission_paid", 0),
-                    trade.get("slippage_cost", 0),
-                    trade.get("tax_paid", 0),
-                    trade.get("hold_days", 0),
-                    trade.get("signal_strength", 0),
-                ))
+                """,
+                    (
+                        backtest_id,
+                        trade.get("symbol", ""),
+                        trade.get("entry_date", ""),
+                        trade.get("exit_date", ""),
+                        trade.get("entry_price", 0),
+                        trade.get("exit_price", 0),
+                        trade.get("quantity", 0),
+                        trade.get("position_size", 0),
+                        trade.get("trade_type", ""),
+                        trade.get("profit", 0),
+                        trade.get("profit_pct", 0),
+                        trade.get("commission_paid", 0),
+                        trade.get("slippage_cost", 0),
+                        trade.get("tax_paid", 0),
+                        trade.get("hold_days", 0),
+                        trade.get("signal_strength", 0),
+                    ),
+                )
             conn.commit()
 
     def _save_equity_curve_to_db(
-        self,
-        backtest_id: str,
-        equity_curve: List[float],
-        dates: List[Any]
+        self, backtest_id: str, equity_curve: List[float], dates: List[Any]
     ):
         """保存權益曲線到資料庫"""
         with sqlite3.connect(self.db_path) as conn:
@@ -241,31 +242,31 @@ class BacktestResultsManager:
                     cumulative_return = (equity / equity_curve[0] - 1) * 100
 
                     # 計算回撤
-                    peak = max(equity_curve[:i + 1])
+                    peak = max(equity_curve[: i + 1])
                     drawdown = (peak - equity) / peak * 100
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO backtest_equity
                     (backtest_id, date, equity_value, cash_value, position_value,
                      daily_return, cumulative_return, drawdown)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    backtest_id,
-                    date.isoformat() if hasattr(date, "isoformat") else str(date),
-                    equity,
-                    equity * 0.1,  # 假設現金比例
-                    equity * 0.9,  # 假設持倉比例
-                    daily_return,
-                    cumulative_return,
-                    drawdown,
-                ))
+                """,
+                    (
+                        backtest_id,
+                        date.isoformat() if hasattr(date, "isoformat") else str(date),
+                        equity,
+                        equity * 0.1,  # 假設現金比例
+                        equity * 0.9,  # 假設持倉比例
+                        daily_return,
+                        cumulative_return,
+                        drawdown,
+                    ),
+                )
             conn.commit()
 
     def _save_results_to_file(
-        self,
-        backtest_id: str,
-        results: Dict[str, Any],
-        metrics: Dict[str, float]
+        self, backtest_id: str, results: Dict[str, Any], metrics: Dict[str, float]
     ):
         """保存完整結果到檔案"""
         results_file = self.results_dir / f"{backtest_id}.json"
@@ -287,9 +288,12 @@ class BacktestResultsManager:
         results_file = self.results_dir / f"{backtest_id}.json"
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE backtest_runs SET results_path = ? WHERE id = ?
-            """, (str(results_file), backtest_id))
+            """,
+                (str(results_file), backtest_id),
+            )
             conn.commit()
 
     def _rebuild_results_from_db(self, backtest_id: str) -> Optional[Dict[str, Any]]:
@@ -298,12 +302,15 @@ class BacktestResultsManager:
             cursor = conn.cursor()
 
             # 獲取基本資訊和指標
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT r.*, m.*
                 FROM backtest_runs r
                 LEFT JOIN backtest_metrics m ON r.id = m.backtest_id
                 WHERE r.id = ?
-            """, (backtest_id,))
+            """,
+                (backtest_id,),
+            )
 
             row = cursor.fetchone()
             if not row:
@@ -313,5 +320,5 @@ class BacktestResultsManager:
             return {
                 "backtest_id": backtest_id,
                 "status": "completed",
-                "message": "從資料庫重建的結果"
+                "message": "從資料庫重建的結果",
             }

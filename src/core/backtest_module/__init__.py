@@ -9,14 +9,14 @@ from .backtest_metrics import calculate_performance_metrics
 from .backtest_validator import (
     validate_backtest_config,
     validate_market_data,
-    validate_signals
+    validate_signals,
 )
 from .backtest_data_handler import (
     load_market_data,
     initialize_strategy,
     generate_signals,
     process_backtest_results,
-    validate_data_integrity
+    validate_data_integrity,
 )
 from .backtest_database import BacktestDatabaseManager
 from .backtest_results import BacktestResultsManager
@@ -33,7 +33,7 @@ from .backtest_reports import (
     get_chart_data,
     export_to_csv,
     export_to_excel,
-    export_to_html
+    export_to_html,
 )
 
 __all__ = [

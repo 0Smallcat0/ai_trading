@@ -29,13 +29,13 @@ risk_service = RiskManagementService()
 async def set_risk_parameters(request: RiskParametersRequest):
     """
     設定風險參數
-    
+
     Args:
         request: 風險參數設定請求
-        
+
     Returns:
         APIResponse[RiskParameters]: 包含設定後風險參數的 API 回應
-        
+
     Raises:
         HTTPException: 當參數設定失敗時
     """
@@ -97,10 +97,10 @@ async def set_risk_parameters(request: RiskParametersRequest):
 async def get_risk_parameters():
     """
     獲取風險參數
-    
+
     Returns:
         APIResponse[RiskParameters]: 包含當前風險參數的 API 回應
-        
+
     Raises:
         HTTPException: 當參數獲取失敗時
     """
@@ -152,13 +152,13 @@ async def get_risk_parameters():
 async def update_risk_parameters(request: RiskParametersRequest):
     """
     更新風險參數
-    
+
     Args:
         request: 風險參數更新請求
-        
+
     Returns:
         APIResponse[RiskParameters]: 包含更新後風險參數的 API 回應
-        
+
     Raises:
         HTTPException: 當參數更新失敗時
     """

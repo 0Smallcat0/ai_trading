@@ -460,7 +460,7 @@ class EnhancedTimedRotatingFileHandler(TimedRotatingFileHandler):
 
     def _cleanup_old_logs(self):
         """清理過期日誌"""
-        if not hasattr(self, 'retention_days') or self.retention_days <= 0:
+        if not hasattr(self, "retention_days") or self.retention_days <= 0:
             return
 
         try:

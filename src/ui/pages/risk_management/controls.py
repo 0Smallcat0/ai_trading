@@ -20,13 +20,13 @@ from .utils import get_default_risk_parameters
 
 def show_risk_controls() -> None:
     """顯示風控機制管理
-    
+
     提供完整的風控機制管理界面，包括主開關、個別機制控制、
     緊急停止功能和風控動作記錄。
-    
+
     Returns:
         None
-        
+
     Side Effects:
         - 在 Streamlit 界面顯示風控機制管理面板
         - 更新風控機制狀態到 session_state
@@ -87,7 +87,7 @@ def _show_master_control_panel() -> None:
 def _show_individual_controls() -> None:
     """顯示個別風控機制控制"""
     st.divider()
-    
+
     # 個別風控機制控制
     col1, col2 = st.columns(2)
     master_switch = st.session_state.get("master_risk_switch", True)
@@ -118,9 +118,7 @@ def _show_stop_loss_controls(master_switch: bool) -> None:
         st.success(
             f"✅ 停損機制啟用 ({st.session_state.risk_params['stop_loss_type']})"
         )
-        st.info(
-            f"停損閾值: {st.session_state.risk_params['stop_loss_percent']:.1f}%"
-        )
+        st.info(f"停損閾值: {st.session_state.risk_params['stop_loss_percent']:.1f}%")
     else:
         st.error("❌ 停損機制停用")
 
@@ -137,9 +135,7 @@ def _show_stop_loss_controls(master_switch: bool) -> None:
         st.success(
             f"✅ 停利機制啟用 ({st.session_state.risk_params['take_profit_type']})"
         )
-        st.info(
-            f"停利閾值: {st.session_state.risk_params['take_profit_percent']:.1f}%"
-        )
+        st.info(f"停利閾值: {st.session_state.risk_params['take_profit_percent']:.1f}%")
     else:
         st.error("❌ 停利機制停用")
 
@@ -158,9 +154,7 @@ def _show_position_controls(master_switch: bool) -> None:
 
     if st.session_state.risk_controls_status["position_limit_active"]:
         st.success("✅ 部位限制啟用")
-        st.info(
-            f"最大部位: {st.session_state.risk_params['max_position_size']:.1f}%"
-        )
+        st.info(f"最大部位: {st.session_state.risk_params['max_position_size']:.1f}%")
         st.info(f"最大持倉數: {st.session_state.risk_params['max_positions']}")
     else:
         st.error("❌ 部位限制停用")
@@ -198,24 +192,18 @@ def _show_monitoring_controls(master_switch: bool) -> None:
 
     if st.session_state.risk_controls_status["var_monitoring_active"]:
         st.success("✅ VaR 監控啟用")
-        st.info(
-            f"VaR 信心水準: {st.session_state.risk_params['var_confidence']:.1f}%"
-        )
+        st.info(f"VaR 信心水準: {st.session_state.risk_params['var_confidence']:.1f}%")
         st.info(f"VaR 方法: {st.session_state.risk_params['var_method']}")
     else:
         st.error("❌ VaR 監控停用")
 
     # 回撤保護
-    st.session_state.risk_controls_status["drawdown_protection_active"] = (
-        st.checkbox(
-            "回撤保護",
-            value=st.session_state.risk_controls_status[
-                "drawdown_protection_active"
-            ]
-            and master_switch,
-            disabled=not master_switch
-            or st.session_state.risk_controls_status["emergency_stop_active"],
-        )
+    st.session_state.risk_controls_status["drawdown_protection_active"] = st.checkbox(
+        "回撤保護",
+        value=st.session_state.risk_controls_status["drawdown_protection_active"]
+        and master_switch,
+        disabled=not master_switch
+        or st.session_state.risk_controls_status["emergency_stop_active"],
     )
 
     if st.session_state.risk_controls_status["drawdown_protection_active"]:
@@ -238,9 +226,7 @@ def _show_monitoring_controls(master_switch: bool) -> None:
 
     if st.session_state.risk_controls_status["correlation_check_active"]:
         st.success("✅ 相關性檢查啟用")
-        st.info(
-            f"相關性限制: {st.session_state.risk_params['correlation_limit']:.2f}"
-        )
+        st.info(f"相關性限制: {st.session_state.risk_params['correlation_limit']:.2f}")
     else:
         st.error("❌ 相關性檢查停用")
 

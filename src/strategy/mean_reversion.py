@@ -27,7 +27,9 @@ class MeanReversionStrategy(Strategy):
         >>> signals = strategy.generate_signals(price_data)
     """
 
-    def __init__(self, window: int = 20, threshold: float = 0.02, **kwargs: Any) -> None:
+    def __init__(
+        self, window: int = 20, threshold: float = 0.02, **kwargs: Any
+    ) -> None:
         """
         初始化均值回歸策略。
 
@@ -39,7 +41,9 @@ class MeanReversionStrategy(Strategy):
         Raises:
             ParameterError: 當參數不符合要求時
         """
-        super().__init__(name="MeanReversion", window=window, threshold=threshold, **kwargs)
+        super().__init__(
+            name="MeanReversion", window=window, threshold=threshold, **kwargs
+        )
         self.window = window
         self.threshold = threshold
 
@@ -101,10 +105,9 @@ class MeanReversionStrategy(Strategy):
         # 均值回歸訊號：
         # 當偏離度小於負閾值時買入（價格被低估）
         # 當偏離度大於正閾值時賣出（價格被高估）
-        signals["signal"] = (
-            (deviation < -self.threshold).astype(int) -
-            (deviation > self.threshold).astype(int)
-        )
+        signals["signal"] = (deviation < -self.threshold).astype(int) - (
+            deviation > self.threshold
+        ).astype(int)
 
         # 計算訊號變化
         signals["position_change"] = signals["signal"].diff()
@@ -131,7 +134,4 @@ class MeanReversionStrategy(Strategy):
         Returns:
             預設參數網格
         """
-        return {
-            "window": [10, 15, 20, 25, 30],
-            "threshold": [0.01, 0.02, 0.03, 0.05]
-        }
+        return {"window": [10, 15, 20, 25, 30], "threshold": [0.01, 0.02, 0.03, 0.05]}

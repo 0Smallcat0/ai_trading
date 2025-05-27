@@ -776,8 +776,8 @@ def show_reports_analysis(monitoring_service):
                 st.write("**報告摘要**")
 
                 period = report.get("period", {})
-                start_date = period.get('start_date', '')
-                end_date = period.get('end_date', '')
+                start_date = period.get("start_date", "")
+                end_date = period.get("end_date", "")
                 st.write(f"報告期間: {start_date} 至 {end_date}")
 
                 # 系統指標摘要

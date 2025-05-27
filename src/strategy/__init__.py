@@ -27,14 +27,11 @@ from .base import (
     StrategyError,
     ParameterError,
     ModelNotTrainedError,
-    DataValidationError
+    DataValidationError,
 )
 
 # 技術分析策略
-from .technical import (
-    MovingAverageCrossStrategy,
-    RSIStrategy
-)
+from .technical import MovingAverageCrossStrategy, RSIStrategy
 
 # 機器學習策略
 from .ml import MachineLearningStrategy
@@ -45,7 +42,7 @@ from .utils import (
     continuous_trading_signal,
     triple_barrier,
     fixed_time_horizon,
-    generate_signals
+    generate_signals,
 )
 
 # 保持向後相容性
@@ -59,16 +56,13 @@ __all__ = [
     "ParameterError",
     "ModelNotTrainedError",
     "DataValidationError",
-
     # 技術分析策略
     "MovingAverageCrossStrategy",
     "RSIStrategy",
     "MomentumStrategy",
     "MeanReversionStrategy",
-
     # 機器學習策略
     "MachineLearningStrategy",
-
     # 工具函數
     "trade_point_decision",
     "continuous_trading_signal",

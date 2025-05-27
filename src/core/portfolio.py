@@ -19,6 +19,7 @@ import pandas as pd
 # 可選依賴處理
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -26,6 +27,7 @@ except ImportError:
 
 try:
     import scipy.optimize as sco
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -33,6 +35,7 @@ except ImportError:
 
 try:
     import seaborn as sns
+
     SEABORN_AVAILABLE = True
 except ImportError:
     SEABORN_AVAILABLE = False
@@ -40,6 +43,7 @@ except ImportError:
 
 try:
     from pypfopt import EfficientFrontier, expected_returns, risk_models
+
     PYPFOPT_AVAILABLE = True
 except ImportError:
     PYPFOPT_AVAILABLE = False
@@ -55,11 +59,13 @@ logger = logging.getLogger(__name__)
 
 class PortfolioOptimizationError(Exception):
     """投資組合最佳化錯誤"""
+
     pass
 
 
 class DependencyError(Exception):
     """依賴套件錯誤"""
+
     pass
 
 
@@ -98,7 +104,9 @@ class Portfolio:
         self.history = []  # 歷史狀態記錄
         self.transactions = []  # 交易記錄
 
-    def optimize(self, signals: pd.DataFrame, price_df: Optional[pd.DataFrame] = None) -> Dict[str, float]:
+    def optimize(
+        self, signals: pd.DataFrame, price_df: Optional[pd.DataFrame] = None
+    ) -> Dict[str, float]:
         """最佳化投資組合
 
         Args:
@@ -115,7 +123,9 @@ class Portfolio:
         # 子類應該覆寫此方法
         raise NotImplementedError("子類必須實現 optimize 方法")
 
-    def evaluate(self, weights: Dict[str, float], price_df: pd.DataFrame) -> Dict[str, Any]:
+    def evaluate(
+        self, weights: Dict[str, float], price_df: pd.DataFrame
+    ) -> Dict[str, Any]:
         """評估投資組合表現
 
         Args:
@@ -132,7 +142,9 @@ class Portfolio:
         # 子類應該覆寫此方法
         raise NotImplementedError("子類必須實現 evaluate 方法")
 
-    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+    def rebalance(
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
+    ) -> Dict[str, float]:
         """再平衡投資組合
 
         Args:
@@ -943,7 +955,9 @@ class MeanVariancePortfolio(Portfolio):
             "max_drawdown": max_drawdown,
         }
 
-    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+    def rebalance(
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
+    ) -> Dict[str, float]:
         """再平衡均值方差投資組合
 
         Args:
@@ -1132,7 +1146,9 @@ class RiskParityPortfolio(Portfolio):
 
         return result["x"]
 
-    def evaluate(self, weights: Dict[str, float], price_df: pd.DataFrame) -> Dict[str, Any]:
+    def evaluate(
+        self, weights: Dict[str, float], price_df: pd.DataFrame
+    ) -> Dict[str, Any]:
         """評估風險平價投資組合表現
 
         Args:
@@ -1158,7 +1174,8 @@ class RiskParityPortfolio(Portfolio):
                 # 獲取該日期的權重
                 date_weights = (
                     weights.xs(date, level="date", drop_level=False)
-                    if hasattr(weights, 'xs') and date in weights.index.get_level_values("date")
+                    if hasattr(weights, "xs")
+                    and date in weights.index.get_level_values("date")
                     else pd.DataFrame()
                 )
 
@@ -1196,7 +1213,9 @@ class RiskParityPortfolio(Portfolio):
             max_drawdown = (cumulative_returns / cumulative_returns.cummax() - 1).min()
 
             # 計算風險貢獻分析
-            risk_contribution = self._calculate_risk_contribution(weights, daily_returns)
+            risk_contribution = self._calculate_risk_contribution(
+                weights, daily_returns
+            )
 
             return {
                 "cumulative_returns": (
@@ -1220,7 +1239,9 @@ class RiskParityPortfolio(Portfolio):
                 "risk_contribution": {},
             }
 
-    def _calculate_risk_contribution(self, weights: Dict[str, float], returns: pd.Series) -> Dict[str, float]:
+    def _calculate_risk_contribution(
+        self, weights: Dict[str, float], returns: pd.Series
+    ) -> Dict[str, float]:
         """計算風險貢獻
 
         Args:
@@ -1248,14 +1269,20 @@ class RiskParityPortfolio(Portfolio):
             cov_matrix = symbol_returns.cov()
 
             # 計算投資組合方差
-            portfolio_variance = np.dot(weight_series.values, np.dot(cov_matrix.values, weight_series.values))
+            portfolio_variance = np.dot(
+                weight_series.values, np.dot(cov_matrix.values, weight_series.values)
+            )
 
             # 計算風險貢獻
             risk_contributions = {}
             for symbol in symbols:
                 if symbol in weight_series.index and symbol in cov_matrix.index:
-                    marginal_contrib = np.dot(cov_matrix.loc[symbol].values, weight_series.values)
-                    risk_contrib = weight_series[symbol] * marginal_contrib / portfolio_variance
+                    marginal_contrib = np.dot(
+                        cov_matrix.loc[symbol].values, weight_series.values
+                    )
+                    risk_contrib = (
+                        weight_series[symbol] * marginal_contrib / portfolio_variance
+                    )
                     risk_contributions[symbol] = risk_contrib
                 else:
                     risk_contributions[symbol] = 0.0
@@ -1269,7 +1296,9 @@ class RiskParityPortfolio(Portfolio):
             else:
                 return {}
 
-    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+    def rebalance(
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
+    ) -> Dict[str, float]:
         """再平衡風險平價投資組合
 
         Args:
@@ -1545,7 +1574,9 @@ class MaxSharpePortfolio(Portfolio):
             "max_drawdown": max_drawdown,
         }
 
-    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+    def rebalance(
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
+    ) -> Dict[str, float]:
         """再平衡最大夏普比率投資組合
 
         Args:
@@ -1798,7 +1829,9 @@ class MinVariancePortfolio(Portfolio):
             "max_drawdown": max_drawdown,
         }
 
-    def rebalance(self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M") -> Dict[str, float]:
+    def rebalance(
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
+    ) -> Dict[str, float]:
         """再平衡最小方差投資組合
 
         Args:

@@ -201,8 +201,10 @@ class Backtest:
 
         # 賣出持倉中的股票
         for stock_id in list(portfolio["positions"].keys()):
-            if (stock_id in stocks_to_sell
-                    or stock_id not in day_prices.index.get_level_values("stock_id")):
+            if (
+                stock_id in stocks_to_sell
+                or stock_id not in day_prices.index.get_level_values("stock_id")
+            ):
                 if stock_id in day_prices.index.get_level_values("stock_id"):
                     # 獲取當日收盤價
                     price = day_prices.loc[(stock_id, day), close_col]
@@ -416,8 +418,12 @@ class Backtest:
                 ]
                 if not sell_records.empty:
                     sell = sell_records.iloc[0]
-                    profit = ((sell["price"] - buy.price) * buy.shares
-                              - buy.fee - sell["fee"] - sell["tax"])
+                    profit = (
+                        (sell["price"] - buy.price) * buy.shares
+                        - buy.fee
+                        - sell["fee"]
+                        - sell["tax"]
+                    )
                     trades.append(
                         {
                             "stock_id": buy.stock_id,
@@ -434,10 +440,12 @@ class Backtest:
             trades_df = pd.DataFrame(trades)
             if not trades_df.empty:
                 win_rate = (trades_df["profit"] > 0).mean()
-                profit_loss_ratio = (abs(trades_df[trades_df["profit"] > 0]["profit"].mean())
-                                      / abs(trades_df[trades_df["profit"] < 0]["profit"].mean())
-                                      if (trades_df["profit"] < 0).any()
-                                      else float("inf"))
+                profit_loss_ratio = (
+                    abs(trades_df[trades_df["profit"] > 0]["profit"].mean())
+                    / abs(trades_df[trades_df["profit"] < 0]["profit"].mean())
+                    if (trades_df["profit"] < 0).any()
+                    else float("inf")
+                )
             else:
                 win_rate = 0
                 profit_loss_ratio = 0

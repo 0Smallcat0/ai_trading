@@ -12,7 +12,7 @@ import sys
 from unittest.mock import MagicMock
 
 # 模擬 Pydantic 模組
-sys.modules['pydantic'] = MagicMock()
+sys.modules["pydantic"] = MagicMock()
 
 
 class TestAPIResponseModels:
@@ -30,7 +30,7 @@ class TestAPIResponseModels:
             "message": "操作成功",
             "data": {"result": "test_data"},
             "timestamp": self.test_timestamp.isoformat(),
-            "request_id": "req_123456"
+            "request_id": "req_123456",
         }
 
         # 驗證必要欄位
@@ -54,7 +54,7 @@ class TestAPIResponseModels:
             "message": "請求參數錯誤",
             "details": {"field": "email", "error": "格式不正確"},
             "timestamp": self.test_timestamp.isoformat(),
-            "request_id": "req_123456"
+            "request_id": "req_123456",
         }
 
         # 驗證必要欄位
@@ -78,11 +78,18 @@ class TestAPIResponseModels:
             "total_items": 150,
             "total_pages": 8,
             "has_next": True,
-            "has_prev": False
+            "has_prev": False,
         }
 
         # 驗證必要欄位
-        required_fields = ["page", "page_size", "total_items", "total_pages", "has_next", "has_prev"]
+        required_fields = [
+            "page",
+            "page_size",
+            "total_items",
+            "total_pages",
+            "has_next",
+            "has_prev",
+        ]
         for field in required_fields:
             assert field in pagination_meta
 
@@ -110,9 +117,9 @@ class TestAPIResponseModels:
                 "total_items": 150,
                 "total_pages": 8,
                 "has_next": True,
-                "has_prev": False
+                "has_prev": False,
             },
-            "timestamp": self.test_timestamp.isoformat()
+            "timestamp": self.test_timestamp.isoformat(),
         }
 
         # 驗證必要欄位
@@ -132,7 +139,7 @@ class TestAPIResponseModels:
         validation_error_detail = {
             "field": "email",
             "message": "郵箱格式不正確",
-            "value": "invalid-email"
+            "value": "invalid-email",
         }
 
         # 驗證必要欄位
@@ -155,16 +162,12 @@ class TestAPIResponseModels:
                 {
                     "field": "email",
                     "message": "郵箱格式不正確",
-                    "value": "invalid-email"
+                    "value": "invalid-email",
                 },
-                {
-                    "field": "password",
-                    "message": "密碼長度不足",
-                    "value": "123"
-                }
+                {"field": "password", "message": "密碼長度不足", "value": "123"},
             ],
             "timestamp": self.test_timestamp.isoformat(),
-            "request_id": "req_123456"
+            "request_id": "req_123456",
         }
 
         # 驗證必要欄位
@@ -186,7 +189,7 @@ class TestAPIResponseModels:
             "success": True,
             "affected_count": 1,
             "resource_id": "user_123",
-            "message": "用戶創建成功"
+            "message": "用戶創建成功",
         }
 
         # 驗證必要欄位
@@ -209,9 +212,9 @@ class TestAPIResponseModels:
             "services": {
                 "database": "healthy",
                 "cache": "healthy",
-                "trading_api": "healthy"
+                "trading_api": "healthy",
             },
-            "uptime": "2 days, 3 hours, 45 minutes"
+            "uptime": "2 days, 3 hours, 45 minutes",
         }
 
         # 驗證必要欄位
@@ -233,10 +236,7 @@ class TestAPIResponseModels:
             "value": 12345,
             "unit": "requests",
             "timestamp": self.test_timestamp.isoformat(),
-            "labels": {
-                "method": "GET",
-                "endpoint": "/api/v1/users"
-            }
+            "labels": {"method": "GET", "endpoint": "/api/v1/users"},
         }
 
         # 驗證必要欄位
@@ -258,13 +258,20 @@ class TestAPIResponseModels:
             "success_rate": 0.95,
             "errors": [
                 {"item_id": "item_1", "error": "資料格式錯誤"},
-                {"item_id": "item_2", "error": "重複資料"}
+                {"item_id": "item_2", "error": "重複資料"},
             ],
-            "execution_time": 2.5
+            "execution_time": 2.5,
         }
 
         # 驗證必要欄位
-        required_fields = ["total_items", "successful_items", "failed_items", "success_rate", "errors", "execution_time"]
+        required_fields = [
+            "total_items",
+            "successful_items",
+            "failed_items",
+            "success_rate",
+            "errors",
+            "execution_time",
+        ]
         for field in required_fields:
             assert field in bulk_operation_response
 
@@ -291,11 +298,17 @@ class TestAPIResponseModels:
             "file_type": "text/csv",
             "file_path": "/uploads/2024/12/data.csv",
             "upload_time": self.test_timestamp.isoformat(),
-            "checksum": "md5:abc123def456"
+            "checksum": "md5:abc123def456",
         }
 
         # 驗證必要欄位
-        required_fields = ["filename", "file_size", "file_type", "file_path", "upload_time"]
+        required_fields = [
+            "filename",
+            "file_size",
+            "file_type",
+            "file_path",
+            "upload_time",
+        ]
         for field in required_fields:
             assert field in file_upload_response
 
@@ -315,7 +328,7 @@ class TestAPIResponseModels:
             "download_url": "/api/v1/exports/export_123456/download",
             "file_size": 2048000,
             "expires_at": "2024-12-21T10:30:00",
-            "created_at": self.test_timestamp.isoformat()
+            "created_at": self.test_timestamp.isoformat(),
         }
 
         # 驗證必要欄位
@@ -346,10 +359,10 @@ class TestAPIResponseModels:
                         "success": True,
                         "message": "操作成功",
                         "data": {},
-                        "timestamp": "2024-12-20T10:30:00"
+                        "timestamp": "2024-12-20T10:30:00",
                     }
                 }
-            }
+            },
         }
 
         assert "description" in response_example

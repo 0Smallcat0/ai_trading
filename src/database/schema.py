@@ -2038,7 +2038,9 @@ class DataShard(Base):
     # 分片資訊
     row_count = Column(Integer, comment="資料列數")
     file_path = Column(String(255), comment="檔案路徑")
-    file_format = Column(String(50), default='parquet', comment="檔案格式 (parquet/arrow/csv)")
+    file_format = Column(
+        String(50), default="parquet", comment="檔案格式 (parquet/arrow/csv)"
+    )
     file_size_bytes = Column(Integer, comment="檔案大小 (位元組)")
 
     # 壓縮資訊

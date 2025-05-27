@@ -76,7 +76,7 @@ class EmailChannel(NotificationChannel):
 
                 server.send_message(msg)
 
-            module_logger.info("Email 通知發送成功: %s", data.get('alert_id'))
+            module_logger.info("Email 通知發送成功: %s", data.get("alert_id"))
             return True
 
         except Exception as e:

@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class FileUploadResponse(BaseModel):
     """檔案上傳響應
-    
+
     檔案上傳操作的響應格式。
-    
+
     Attributes:
         filename: 檔案名稱
         file_size: 檔案大小（位元組）
@@ -21,7 +21,7 @@ class FileUploadResponse(BaseModel):
         file_path: 檔案存儲路徑
         upload_time: 上傳時間
         checksum: 檔案校驗和
-        
+
     Example:
         >>> response = FileUploadResponse(
         ...     filename="data.csv",
@@ -32,36 +32,18 @@ class FileUploadResponse(BaseModel):
         ... )
     """
 
-    filename: str = Field(
-        description="檔案名稱",
-        example="data.csv"
-    )
+    filename: str = Field(description="檔案名稱", example="data.csv")
 
-    file_size: int = Field(
-        description="檔案大小（位元組）",
-        example=1024000,
-        ge=0
-    )
+    file_size: int = Field(description="檔案大小（位元組）", example=1024000, ge=0)
 
-    file_type: str = Field(
-        description="檔案類型",
-        example="text/csv"
-    )
+    file_type: str = Field(description="檔案類型", example="text/csv")
 
-    file_path: str = Field(
-        description="檔案路徑",
-        example="/uploads/2024/12/data.csv"
-    )
+    file_path: str = Field(description="檔案路徑", example="/uploads/2024/12/data.csv")
 
-    upload_time: datetime = Field(
-        default_factory=datetime.now,
-        description="上傳時間"
-    )
+    upload_time: datetime = Field(default_factory=datetime.now, description="上傳時間")
 
     checksum: Optional[str] = Field(
-        default=None,
-        description="檔案校驗和",
-        example="md5:abc123def456"
+        default=None, description="檔案校驗和", example="md5:abc123def456"
     )
 
     model_config = ConfigDict(
@@ -73,17 +55,17 @@ class FileUploadResponse(BaseModel):
                 "file_type": "text/csv",
                 "file_path": "/uploads/2024/12/data.csv",
                 "upload_time": "2024-12-20T10:30:00Z",
-                "checksum": "md5:abc123def456"
+                "checksum": "md5:abc123def456",
             }
-        }
+        },
     )
 
 
 class ExportResponse(BaseModel):
     """匯出響應
-    
+
     資料匯出操作的響應格式。
-    
+
     Attributes:
         export_id: 匯出任務 ID
         format: 匯出格式
@@ -92,7 +74,7 @@ class ExportResponse(BaseModel):
         file_size: 檔案大小
         expires_at: 連結過期時間
         created_at: 創建時間
-        
+
     Example:
         >>> response = ExportResponse(
         ...     export_id="export_123456",
@@ -103,81 +85,64 @@ class ExportResponse(BaseModel):
         ... )
     """
 
-    export_id: str = Field(
-        description="匯出任務 ID",
-        example="export_123456"
-    )
+    export_id: str = Field(description="匯出任務 ID", example="export_123456")
 
-    format: str = Field(
-        description="匯出格式",
-        example="csv"
-    )
+    format: str = Field(description="匯出格式", example="csv")
 
-    status: str = Field(
-        description="匯出狀態",
-        example="completed"
-    )
+    status: str = Field(description="匯出狀態", example="completed")
 
     download_url: Optional[str] = Field(
         default=None,
         description="下載連結",
-        example="/api/v1/exports/export_123456/download"
+        example="/api/v1/exports/export_123456/download",
     )
 
     file_size: Optional[int] = Field(
-        default=None,
-        description="檔案大小",
-        example=2048000,
-        ge=0
+        default=None, description="檔案大小", example=2048000, ge=0
     )
 
     expires_at: Optional[datetime] = Field(
-        default=None,
-        description="連結過期時間",
-        example="2024-12-21T10:30:00Z"
+        default=None, description="連結過期時間", example="2024-12-21T10:30:00Z"
     )
 
-    created_at: datetime = Field(
-        default_factory=datetime.now,
-        description="創建時間"
-    )
+    created_at: datetime = Field(default_factory=datetime.now, description="創建時間")
 
-    @field_validator('format')
+    @field_validator("format")
     @classmethod
     # pylint: disable=missing-type-doc
     def validate_format(cls, v: str) -> str:
         """驗證匯出格式
-        
+
         Args:
             v: 匯出格式
-            
+
         Returns:
             str: 驗證後的格式
-            
+
         Raises:
             ValueError: 當格式不支援時
         """
-        allowed_formats = ['csv', 'xlsx', 'json', 'pdf']
+        allowed_formats = ["csv", "xlsx", "json", "pdf"]
         if v.lower() not in allowed_formats:
             raise ValueError(f"不支援的匯出格式: {v}，支援的格式: {allowed_formats}")
         return v.lower()
 
-    @field_validator('status')
+    @field_validator("status")
     @classmethod
     # pylint: disable=missing-type-doc
     def validate_status(cls, v: str) -> str:
         """驗證匯出狀態
-        
+
         Args:
             v: 匯出狀態
-            
+
         Returns:
             str: 驗證後的狀態
-            
+
         Raises:
             ValueError: 當狀態不正確時
         """
-        allowed_statuses = ['pending', 'processing', 'completed', 'failed', 'expired']
+        allowed_statuses = ["pending", "processing", "completed", "failed", "expired"]
         if v.lower() not in allowed_statuses:
             raise ValueError(f"不正確的匯出狀態: {v}，允許的狀態: {allowed_statuses}")
         return v.lower()
@@ -192,7 +157,7 @@ class ExportResponse(BaseModel):
                 "download_url": "/api/v1/exports/export_123456/download",
                 "file_size": 2048000,
                 "expires_at": "2024-12-21T10:30:00Z",
-                "created_at": "2024-12-20T10:30:00Z"
+                "created_at": "2024-12-20T10:30:00Z",
             }
-        }
+        },
     )

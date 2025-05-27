@@ -183,9 +183,7 @@ class ResponsiveUtils:
             return device_max_cols
 
     @staticmethod
-    def format_responsive_text(
-        text: str, max_length: Optional[int] = None
-    ) -> str:
+    def format_responsive_text(text: str, max_length: Optional[int] = None) -> str:
         """格式化響應式文字
 
         根據裝置類型調整文字長度和格式。
@@ -210,7 +208,7 @@ class ResponsiveUtils:
         if len(text) <= max_length:
             return text
         else:
-            return text[:max_length - 3] + "..."
+            return text[: max_length - 3] + "..."
 
     @staticmethod
     def get_responsive_image_size() -> Dict[str, int]:
@@ -290,6 +288,7 @@ class ResponsiveUtils:
 
         # 應用響應式樣式
         from .layout_manager import responsive_manager
+
         responsive_manager.apply_responsive_styles()
 
         # 注入螢幕尺寸檢測

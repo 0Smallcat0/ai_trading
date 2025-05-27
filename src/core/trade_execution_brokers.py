@@ -208,7 +208,9 @@ class TradeExecutionBrokerManager:
             List[str]: 可交易標的列表
         """
         try:
-            broker = self.brokers.get(broker_name) if broker_name else self.current_broker
+            broker = (
+                self.brokers.get(broker_name) if broker_name else self.current_broker
+            )
             if not broker:
                 return []
 
@@ -244,7 +246,9 @@ class TradeExecutionBrokerManager:
             Dict: 市場狀態信息
         """
         try:
-            broker = self.brokers.get(broker_name) if broker_name else self.current_broker
+            broker = (
+                self.brokers.get(broker_name) if broker_name else self.current_broker
+            )
             if not broker:
                 return {"status": "unknown", "message": "券商不可用"}
 
@@ -288,7 +292,9 @@ class TradeExecutionBrokerManager:
             Dict: 帳戶信息
         """
         try:
-            broker = self.brokers.get(broker_name) if broker_name else self.current_broker
+            broker = (
+                self.brokers.get(broker_name) if broker_name else self.current_broker
+            )
             if not broker:
                 return {"error": "券商不可用"}
 
@@ -323,7 +329,9 @@ class TradeExecutionBrokerManager:
             List[Dict]: 持倉信息列表
         """
         try:
-            broker = self.brokers.get(broker_name) if broker_name else self.current_broker
+            broker = (
+                self.brokers.get(broker_name) if broker_name else self.current_broker
+            )
             if not broker:
                 return []
 

@@ -177,9 +177,7 @@ class TestJWTSecurity:
         results = []
 
         def make_request():
-            response = security_test_client.get(
-                "/health", headers=valid_auth_headers
-            )
+            response = security_test_client.get("/health", headers=valid_auth_headers)
             results.append(response.status_code)
 
         # 創建多個併發請求 - 減少數量以避免速率限制
@@ -258,13 +256,17 @@ class TestJWTSecurity:
         """測試 JWT 時序攻擊"""
         # 測量有效 Token 的回應時間
         start_time = time.time()
-        response = security_test_client.get("/api/v1/data/sources", headers=valid_auth_headers)
+        response = security_test_client.get(
+            "/api/v1/data/sources", headers=valid_auth_headers
+        )
         valid_time = time.time() - start_time
 
         # 測量無效 Token 的回應時間
         invalid_headers = {"Authorization": "Bearer invalid_token"}
         start_time = time.time()
-        response = security_test_client.get("/api/v1/data/sources", headers=invalid_headers)
+        response = security_test_client.get(
+            "/api/v1/data/sources", headers=invalid_headers
+        )
         invalid_time = time.time() - start_time
 
         # 時間差異不應該太大（避免時序攻擊）

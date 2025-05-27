@@ -27,7 +27,7 @@ from .backfill_manager import BackfillManager
 __all__ = [
     # Data structures
     "BackfillConfig",
-    "ComprehensiveBackfillResult", 
+    "ComprehensiveBackfillResult",
     "DataQualityReport",
     "DataQualityStatus",
     "DownloadProgress",
@@ -37,7 +37,7 @@ __all__ = [
     "OutlierTreatmentStrategy",
     # Core classes
     "ParallelDownloader",
-    "IncrementalUpdater", 
+    "IncrementalUpdater",
     "ContinuityChecker",
     "OutlierDetector",
     "BackfillManager",

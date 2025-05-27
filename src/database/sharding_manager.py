@@ -38,16 +38,19 @@ logger = logging.getLogger(__name__)
 
 class ShardingError(Exception):
     """分片操作相關的異常類別."""
+
     pass
 
 
 class ShardingConfigError(ShardingError):
     """分片配置錯誤."""
+
     pass
 
 
 class ShardingOperationError(ShardingError):
     """分片操作錯誤."""
+
     pass
 
 
@@ -74,8 +77,11 @@ class ShardingStrategy(ABC):
         self.name = name.strip()
 
     @abstractmethod
-    def should_create_shard(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                          session: Session) -> bool:
+    def should_create_shard(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> bool:
         """判斷是否需要創建新分片.
 
         Args:
@@ -91,8 +97,11 @@ class ShardingStrategy(ABC):
         pass
 
     @abstractmethod
-    def get_shard_parameters(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                           session: Session) -> Dict[str, Any]:
+    def get_shard_parameters(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> Dict[str, Any]:
         """獲取分片參數.
 
         Args:
@@ -131,8 +140,11 @@ class TimeBasedShardingStrategy(ShardingStrategy):
             raise ShardingConfigError("分片時間間隔必須大於 0")
         self.shard_interval_days = shard_interval_days
 
-    def should_create_shard(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                          session: Session) -> bool:
+    def should_create_shard(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> bool:
         """判斷是否需要創建新的時間分片.
 
         Args:
@@ -167,8 +179,11 @@ class TimeBasedShardingStrategy(ShardingStrategy):
         except Exception as e:
             raise ShardingOperationError(f"檢查分片需求時發生錯誤: {e}") from e
 
-    def get_shard_parameters(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                           session: Session) -> Dict[str, Any]:
+    def get_shard_parameters(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> Dict[str, Any]:
         """獲取時間分片參數.
 
         Args:
@@ -201,14 +216,17 @@ class TimeBasedShardingStrategy(ShardingStrategy):
             return {
                 "start_date": start_date,
                 "end_date": end_date,
-                "shard_key": "date" if table_class == MarketDaily else "timestamp"
+                "shard_key": "date" if table_class == MarketDaily else "timestamp",
             }
 
         except Exception as e:
             raise ShardingOperationError(f"獲取分片參數時發生錯誤: {e}") from e
 
-    def _get_earliest_date(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                          session: Session) -> date:
+    def _get_earliest_date(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> date:
         """獲取表中最早的日期.
 
         Args:
@@ -255,8 +273,11 @@ class SizeBasedShardingStrategy(ShardingStrategy):
             raise ShardingConfigError("每個分片的最大行數必須大於 0")
         self.max_rows_per_shard = max_rows_per_shard
 
-    def should_create_shard(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                          session: Session) -> bool:
+    def should_create_shard(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> bool:
         """判斷是否需要創建新的大小分片.
 
         Args:
@@ -277,7 +298,8 @@ class SizeBasedShardingStrategy(ShardingStrategy):
             sharded_rows = (
                 session.query(func.sum(DataShard.row_count))
                 .filter_by(table_name=table_class.__tablename__)
-                .scalar() or 0
+                .scalar()
+                or 0
             )
 
             unsharded_rows = row_count - sharded_rows
@@ -286,8 +308,11 @@ class SizeBasedShardingStrategy(ShardingStrategy):
         except Exception as e:
             raise ShardingOperationError(f"檢查分片需求時發生錯誤: {e}") from e
 
-    def get_shard_parameters(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                           session: Session) -> Dict[str, Any]:
+    def get_shard_parameters(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> Dict[str, Any]:
         """獲取大小分片參數.
 
         Args:
@@ -307,14 +332,17 @@ class SizeBasedShardingStrategy(ShardingStrategy):
             return {
                 "start_date": start_date,
                 "end_date": end_date,
-                "shard_key": "date" if table_class == MarketDaily else "timestamp"
+                "shard_key": "date" if table_class == MarketDaily else "timestamp",
             }
 
         except Exception as e:
             raise ShardingOperationError(f"獲取分片參數時發生錯誤: {e}") from e
 
-    def _get_start_date(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                       session: Session) -> date:
+    def _get_start_date(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+    ) -> date:
         """獲取分片開始日期."""
         latest_shard = (
             session.query(DataShard)
@@ -335,8 +363,12 @@ class SizeBasedShardingStrategy(ShardingStrategy):
         earliest_date = session.query(func.min(date_column)).scalar()
         return earliest_date or date.today()
 
-    def _calculate_end_date(self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-                          session: Session, start_date: date) -> date:
+    def _calculate_end_date(
+        self,
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
+        session: Session,
+        start_date: date,
+    ) -> date:
         """計算分片結束日期."""
         if table_class == MarketDaily:
             date_column = table_class.date
@@ -344,7 +376,9 @@ class SizeBasedShardingStrategy(ShardingStrategy):
             date_column = func.date(table_class.timestamp)
 
         # 計算需要分片的日期範圍
-        query = select(date_column).where(date_column >= start_date).order_by(date_column)
+        query = (
+            select(date_column).where(date_column >= start_date).order_by(date_column)
+        )
         dates = [row[0] for row in session.execute(query).fetchall()]
 
         if len(dates) >= self.max_rows_per_shard:
@@ -421,7 +455,7 @@ class ShardingManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         strategy_name: str = "time_based",
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> Optional[Tuple[DataShard, str]]:
         """根據策略自動創建分片.
 
@@ -456,7 +490,7 @@ class ShardingManager:
                 table_class,
                 params["start_date"],
                 params["end_date"],
-                symbols
+                symbols,
             )
 
             # 更新快取
@@ -475,7 +509,7 @@ class ShardingManager:
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         start_date: date,
         end_date: date,
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> List[DataShard]:
         """獲取查詢所需的分片列表.
 
@@ -501,7 +535,7 @@ class ShardingManager:
                 .filter(
                     and_(
                         DataShard.start_date <= end_date,
-                        DataShard.end_date >= start_date
+                        DataShard.end_date >= start_date,
                     )
                 )
                 .order_by(DataShard.start_date)
@@ -526,7 +560,7 @@ class ShardingManager:
         start_date: date,
         end_date: date,
         symbols: Optional[List[str]] = None,
-        columns: Optional[List[str]] = None
+        columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """跨分片查詢資料.
 
@@ -545,7 +579,9 @@ class ShardingManager:
         """
         try:
             # 獲取相關分片
-            shards = self.get_shards_for_query(table_class, start_date, end_date, symbols)
+            shards = self.get_shards_for_query(
+                table_class, start_date, end_date, symbols
+            )
 
             if not shards:
                 logger.warning(f"未找到相關分片: {table_class.__tablename__}")
@@ -561,11 +597,13 @@ class ShardingManager:
                         continue
 
                     # 根據日期範圍過濾
-                    df = self._filter_by_date_range(df, table_class, start_date, end_date)
+                    df = self._filter_by_date_range(
+                        df, table_class, start_date, end_date
+                    )
 
                     # 根據股票代碼過濾
-                    if symbols and 'symbol' in df.columns:
-                        df = df[df['symbol'].isin(symbols)]
+                    if symbols and "symbol" in df.columns:
+                        df = df[df["symbol"].isin(symbols)]
 
                     if not df.empty:
                         dataframes.append(df)
@@ -585,18 +623,18 @@ class ShardingManager:
         df: pd.DataFrame,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         start_date: date,
-        end_date: date
+        end_date: date,
     ) -> pd.DataFrame:
         """根據日期範圍過濾資料."""
         if table_class == MarketDaily:
-            date_col = 'date'
+            date_col = "date"
         else:
-            date_col = 'timestamp'
+            date_col = "timestamp"
 
         if date_col in df.columns:
             df = df[
-                (pd.to_datetime(df[date_col]).dt.date >= start_date) &
-                (pd.to_datetime(df[date_col]).dt.date <= end_date)
+                (pd.to_datetime(df[date_col]).dt.date >= start_date)
+                & (pd.to_datetime(df[date_col]).dt.date <= end_date)
             ]
 
         return df
@@ -604,7 +642,7 @@ class ShardingManager:
     def _merge_dataframes(
         self,
         dataframes: List[pd.DataFrame],
-        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]]
+        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
     ) -> pd.DataFrame:
         """合併多個 DataFrame."""
         if not dataframes:
@@ -613,10 +651,10 @@ class ShardingManager:
         result = pd.concat(dataframes, ignore_index=True)
 
         # 根據時間排序
-        if table_class == MarketDaily and 'date' in result.columns:
-            result = result.sort_values('date')
-        elif 'timestamp' in result.columns:
-            result = result.sort_values('timestamp')
+        if table_class == MarketDaily and "date" in result.columns:
+            result = result.sort_values("date")
+        elif "timestamp" in result.columns:
+            result = result.sort_values("timestamp")
 
         return result
 
@@ -661,11 +699,7 @@ class ShardingManager:
 
     def _get_table_statistics(self, table_name: str) -> Dict[str, Any]:
         """獲取單個表的統計資訊."""
-        shards = (
-            self.session.query(DataShard)
-            .filter_by(table_name=table_name)
-            .all()
-        )
+        shards = self.session.query(DataShard).filter_by(table_name=table_name).all()
 
         total_rows = sum(shard.row_count or 0 for shard in shards)
         total_size = sum(shard.file_size_bytes or 0 for shard in shards)
@@ -682,10 +716,10 @@ class ShardingManager:
                     "start_date": shard.start_date,
                     "end_date": shard.end_date,
                     "row_count": shard.row_count,
-                    "file_size_bytes": shard.file_size_bytes
+                    "file_size_bytes": shard.file_size_bytes,
                 }
                 for shard in shards
-            ]
+            ],
         }
 
     def _get_all_tables_statistics(self) -> Dict[str, Any]:
@@ -699,7 +733,7 @@ class ShardingManager:
                 stats_by_table[table] = {
                     "shard_count": 0,
                     "total_rows": 0,
-                    "total_size_bytes": 0
+                    "total_size_bytes": 0,
                 }
 
             stats_by_table[table]["shard_count"] += 1
@@ -709,6 +743,8 @@ class ShardingManager:
         # 計算 MB
         for table_stats in stats_by_table.values():
             total_size = table_stats["total_size_bytes"]
-            table_stats["total_size_mb"] = total_size / (1024 * 1024) if total_size > 0 else 0
+            table_stats["total_size_mb"] = (
+                total_size / (1024 * 1024) if total_size > 0 else 0
+            )
 
         return stats_by_table

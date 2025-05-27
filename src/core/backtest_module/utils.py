@@ -67,9 +67,7 @@ def calculate_sharpe(equity_curve, risk_free_rate=0.0, periods_per_year=252):
     annual_return = returns.mean() * periods_per_year
     annual_volatility = returns.std() * np.sqrt(periods_per_year)
     sharpe = (
-        (annual_return - risk_free_rate) / annual_volatility
-        if annual_volatility
-        else 0
+        (annual_return - risk_free_rate) / annual_volatility if annual_volatility else 0
     )
     return sharpe
 

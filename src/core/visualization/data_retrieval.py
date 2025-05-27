@@ -25,7 +25,7 @@ class DataRetrievalService:
 
     def __init__(self, session_factory: sessionmaker):
         """初始化數據檢索服務
-        
+
         Args:
             session_factory: SQLAlchemy session factory
         """
@@ -38,12 +38,12 @@ class DataRetrievalService:
         strategy_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """獲取交易績效數據
-        
+
         Args:
             start_date: 開始日期
             end_date: 結束日期
             strategy_name: 策略名稱
-            
+
         Returns:
             包含交易績效數據的字典
         """
@@ -122,13 +122,13 @@ class DataRetrievalService:
         limit: int = 1000,
     ) -> Dict[str, Any]:
         """獲取交易明細數據
-        
+
         Args:
             start_date: 開始日期
             end_date: 結束日期
             symbol: 股票代碼
             limit: 限制筆數
-            
+
         Returns:
             包含交易明細數據的字典
         """
@@ -143,8 +143,7 @@ class DataRetrievalService:
                 query = (
                     session.query(TradingOrder, TradeExecution)
                     .join(
-                        TradeExecution, 
-                        TradingOrder.order_id == TradeExecution.order_id
+                        TradeExecution, TradingOrder.order_id == TradeExecution.order_id
                     )
                     .filter(
                         and_(
@@ -158,9 +157,7 @@ class DataRetrievalService:
                     query = query.filter(TradingOrder.symbol == symbol)
 
                 results = (
-                    query.order_by(desc(TradingOrder.created_at))
-                    .limit(limit)
-                    .all()
+                    query.order_by(desc(TradingOrder.created_at)).limit(limit).all()
                 )
 
                 if not results:
@@ -221,12 +218,12 @@ class DataRetrievalService:
         end_date: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         """比較策略績效
-        
+
         Args:
             strategy_names: 策略名稱列表
             start_date: 開始日期
             end_date: 結束日期
-            
+
         Returns:
             包含策略比較數據的字典
         """
@@ -283,10 +280,10 @@ class DataRetrievalService:
 
     def _calculate_performance_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
         """計算績效指標
-        
+
         Args:
             df: 交易數據 DataFrame
-            
+
         Returns:
             績效指標字典
         """
@@ -359,10 +356,10 @@ class DataRetrievalService:
 
     def _calculate_trade_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
         """計算交易統計資訊
-        
+
         Args:
             df: 交易明細 DataFrame
-            
+
         Returns:
             交易統計資訊字典
         """

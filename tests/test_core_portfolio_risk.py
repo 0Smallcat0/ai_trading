@@ -22,9 +22,7 @@ class TestPortfolioBasics:
     def test_portfolio_creation(self):
         """Test basic portfolio creation"""
         portfolio = Portfolio(
-            name="TestPortfolio",
-            initial_capital=100000,
-            transaction_cost=0.001425
+            name="TestPortfolio", initial_capital=100000, transaction_cost=0.001425
         )
 
         assert portfolio.name == "TestPortfolio"
@@ -41,7 +39,7 @@ class TestPortfolioBasics:
             initial_capital=50000,
             transaction_cost=0.002,
             tax=0.003,
-            slippage=0.001
+            slippage=0.001,
         )
 
         assert portfolio.initial_capital == 50000
@@ -61,9 +59,9 @@ class TestPortfolioBasics:
         assert len(portfolio.transactions) == 0
 
         # Portfolio should have methods for tracking
-        assert hasattr(portfolio, 'positions')
-        assert hasattr(portfolio, 'history')
-        assert hasattr(portfolio, 'transactions')
+        assert hasattr(portfolio, "positions")
+        assert hasattr(portfolio, "history")
+        assert hasattr(portfolio, "transactions")
 
 
 class TestRiskMetricsCalculator:

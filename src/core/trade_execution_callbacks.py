@@ -23,7 +23,7 @@ class TradeExecutionCallbackManager:
 
     def __init__(self, session_factory: sessionmaker):
         """初始化回調管理器
-        
+
         Args:
             session_factory: SQLAlchemy session factory
         """
@@ -38,7 +38,7 @@ class TradeExecutionCallbackManager:
 
     def register_callback(self, event_type: str, callback: Callable):
         """註冊回調函數
-        
+
         Args:
             event_type: 事件類型
             callback: 回調函數
@@ -50,7 +50,7 @@ class TradeExecutionCallbackManager:
 
     def unregister_callback(self, event_type: str, callback: Callable):
         """取消註冊回調函數
-        
+
         Args:
             event_type: 事件類型
             callback: 回調函數
@@ -60,7 +60,7 @@ class TradeExecutionCallbackManager:
 
     def trigger_callbacks(self, event_type: str, *args, **kwargs):
         """觸發回調函數
-        
+
         Args:
             event_type: 事件類型
             *args: 位置參數
@@ -75,7 +75,7 @@ class TradeExecutionCallbackManager:
 
     def on_order_status_change(self, order):
         """訂單狀態變更回調
-        
+
         Args:
             order: 訂單對象
         """
@@ -108,7 +108,7 @@ class TradeExecutionCallbackManager:
 
     def on_order_filled(self, order):
         """訂單成交回調
-        
+
         Args:
             order: 訂單對象
         """
@@ -145,7 +145,7 @@ class TradeExecutionCallbackManager:
 
     def on_order_rejected(self, order, reason: str):
         """訂單拒絕回調
-        
+
         Args:
             order: 訂單對象
             reason: 拒絕原因
@@ -180,7 +180,7 @@ class TradeExecutionCallbackManager:
 
     def on_order_cancelled(self, order, reason: str = "用戶取消"):
         """訂單取消回調
-        
+
         Args:
             order: 訂單對象
             reason: 取消原因
@@ -215,13 +215,13 @@ class TradeExecutionCallbackManager:
 
     def _update_order_in_db(self, order):
         """更新資料庫中的訂單
-        
+
         Args:
             order: 訂單對象
         """
         try:
             from src.database.schema import TradingOrder
-            
+
             with self.session_factory() as session:
                 db_order = (
                     session.query(TradingOrder)
@@ -246,13 +246,13 @@ class TradeExecutionCallbackManager:
 
     def _create_execution_record(self, order):
         """創建成交記錄
-        
+
         Args:
             order: 訂單對象
         """
         try:
             from src.database.schema import TradeExecution
-            
+
             with self.session_factory() as session:
                 execution = TradeExecution(
                     execution_id=f"exec_{order.order_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -285,14 +285,14 @@ class TradeExecutionCallbackManager:
 
     def _log_execution_event(self, event_type: str, event_data: Dict[str, Any]):
         """記錄執行事件
-        
+
         Args:
             event_type: 事件類型
             event_data: 事件數據
         """
         try:
             from src.database.schema import ExecutionLog
-            
+
             with self.session_factory() as session:
                 log_entry = ExecutionLog(
                     log_id=f"log_{datetime.now().strftime('%Y%m%d%H%M%S%f')}",
@@ -317,19 +317,19 @@ class TradeExecutionCallbackManager:
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """獲取執行日誌
-        
+
         Args:
             event_type: 事件類型篩選
             start_date: 開始日期
             end_date: 結束日期
             limit: 返回記錄數量限制
-            
+
         Returns:
             List[Dict]: 執行日誌列表
         """
         try:
             from src.database.schema import ExecutionLog
-            
+
             with self.session_factory() as session:
                 query = session.query(ExecutionLog)
 

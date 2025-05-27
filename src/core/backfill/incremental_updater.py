@@ -71,16 +71,15 @@ class IncrementalUpdater:
 
             logger.debug(
                 "%s: 需要更新=%s, 更新範圍=%d",
-                symbol, incremental_info.needs_update,
-                len(incremental_info.update_ranges)
+                symbol,
+                incremental_info.needs_update,
+                len(incremental_info.update_ranges),
             )
 
         needs_update_count = sum(
             1 for info in update_info.values() if info.needs_update
         )
-        logger.info(
-            "增量更新檢測完成，%d 個股票需要更新", needs_update_count
-        )
+        logger.info("增量更新檢測完成，%d 個股票需要更新", needs_update_count)
 
         return update_info
 
@@ -90,9 +89,7 @@ class IncrementalUpdater:
             return [symbols]
         return symbols
 
-    def _normalize_date(
-        self, date: Union[str, datetime.date]
-    ) -> datetime.date:
+    def _normalize_date(self, date: Union[str, datetime.date]) -> datetime.date:
         """標準化日期格式。"""
         if isinstance(date, str):
             return datetime.datetime.strptime(date, "%Y-%m-%d").date()
@@ -114,6 +111,7 @@ class IncrementalUpdater:
         try:
             # 嘗試從快取或數據庫載入現有數據
             from src.core.data_ingest import load_data
+
             existing_data = load_data(symbol, start_date, end_date)
 
             if existing_data is not None and not existing_data.empty:
@@ -141,13 +139,13 @@ class IncrementalUpdater:
         return {
             "exists": True,
             "last_date": (
-                last_date.date() if hasattr(last_date, 'date') else last_date
+                last_date.date() if hasattr(last_date, "date") else last_date
             ),
             "record_count": len(data),
             "checksum": checksum,
             "data_range": (
-                data.index.min().date(), data.index.max().date()
-            ) if is_local else None
+                (data.index.min().date(), data.index.max().date()) if is_local else None
+            ),
         }
 
     def _create_empty_data_info(self) -> Dict[str, Any]:
@@ -157,7 +155,7 @@ class IncrementalUpdater:
             "last_date": None,
             "record_count": 0,
             "checksum": None,
-            "data_range": None
+            "data_range": None,
         }
 
     def _get_remote_data_info(
@@ -176,6 +174,7 @@ class IncrementalUpdater:
         try:
             # 獲取最新的交易日期
             from src.utils.utils import get_trading_dates
+
             trading_dates = get_trading_dates(start_date, end_date)
             latest_trading_date = max(trading_dates) if trading_dates else end_date
 
@@ -264,10 +263,7 @@ class IncrementalUpdater:
 
         # 檢查開始日期之前的缺失
         if start_date < local_start:
-            update_ranges.append((
-                start_date,
-                local_start - datetime.timedelta(days=1)
-            ))
+            update_ranges.append((start_date, local_start - datetime.timedelta(days=1)))
 
         # 檢查結束日期之後的缺失
         if local_end < remote_latest and local_end < end_date:
@@ -283,7 +279,7 @@ class IncrementalUpdater:
         symbol: str,
         local_data: pd.DataFrame,
         remote_data: pd.DataFrame,
-        strategy: str = "remote_wins"
+        strategy: str = "remote_wins",
     ) -> pd.DataFrame:
         """解決數據衝突。
 
@@ -313,5 +309,5 @@ class IncrementalUpdater:
         # 簡單的合併策略：遠端數據優先，但保留本地獨有的數據
         combined = pd.concat([local_data, remote_data])
         # 移除重複項，保留最後的（遠端的）
-        combined = combined[~combined.index.duplicated(keep='last')]
+        combined = combined[~combined.index.duplicated(keep="last")]
         return combined.sort_index()

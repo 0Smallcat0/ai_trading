@@ -19,20 +19,26 @@ import numpy as np
 # 可選導入 numba
 try:
     from numba import njit
+
     NUMBA_AVAILABLE = True
 except ImportError:
     NUMBA_AVAILABLE = False
+
     # 如果沒有 numba，創建一個空的裝飾器
     def njit(*args, **kwargs):  # pylint: disable=unused-argument
         def decorator(func):
             return func
+
         return decorator
+
 
 # 設定日誌
 logger = logging.getLogger(__name__)
 
 
-def trade_point_decision(price_series: pd.Series, threshold: float = 200.0) -> pd.Series:
+def trade_point_decision(
+    price_series: pd.Series, threshold: float = 200.0
+) -> pd.Series:
     """
     交易點決策函數。
 
@@ -122,7 +128,7 @@ def triple_barrier(
     price_series: pd.Series,
     upper_barrier: float = 1.1,
     lower_barrier: float = 0.9,
-    max_period: int = 20
+    max_period: int = 20,
 ) -> pd.DataFrame:
     """
     三重障礙法訊號生成。
@@ -146,11 +152,13 @@ def triple_barrier(
         >>> result = triple_barrier(prices, upper_barrier=1.1, lower_barrier=0.9)
     """
     if price_series.empty or max_period <= 0:
-        return pd.DataFrame(columns=[
-            "triple_barrier_profit",
-            "triple_barrier_sell_time",
-            "triple_barrier_signal"
-        ])
+        return pd.DataFrame(
+            columns=[
+                "triple_barrier_profit",
+                "triple_barrier_sell_time",
+                "triple_barrier_signal",
+            ]
+        )
 
     def end_price(s: np.ndarray) -> float:
         """
@@ -209,18 +217,26 @@ def triple_barrier(
     )
 
     # 將時間索引轉換為實際時間
-    t = pd.Series([
-        t.index[int(k + i)] if not math.isnan(k + i) and int(k + i) < len(t.index)
-        else np.datetime64("NaT")
-        for i, k in enumerate(t)
-    ], index=t.index).dropna()
+    t = pd.Series(
+        [
+            (
+                t.index[int(k + i)]
+                if not math.isnan(k + i) and int(k + i) < len(t.index)
+                else np.datetime64("NaT")
+            )
+            for i, k in enumerate(t)
+        ],
+        index=t.index,
+    ).dropna()
 
     # 創建結果DataFrame
-    ret = pd.DataFrame({
-        "triple_barrier_profit": p,
-        "triple_barrier_sell_time": t,
-        "triple_barrier_signal": 0,
-    })
+    ret = pd.DataFrame(
+        {
+            "triple_barrier_profit": p,
+            "triple_barrier_sell_time": t,
+            "triple_barrier_signal": 0,
+        }
+    )
 
     # 生成訊號
     ret.loc[ret["triple_barrier_profit"] > upper_barrier, "triple_barrier_signal"] = 1
@@ -268,6 +284,7 @@ def fixed_time_horizon(price_series: pd.Series, window: int = 20) -> pd.Series:
 
     ret.name = f"fixed_time_horizon_{window}"
     return ret
+
 
 @njit(fastmath=True, cache=True)
 def numba_moving_average(arr: np.ndarray, window: int) -> np.ndarray:

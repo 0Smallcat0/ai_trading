@@ -98,7 +98,7 @@ class ReportService:
         start_date: datetime,
         end_date: datetime,
         time_range: TimeRangeEnum = TimeRangeEnum.DAILY,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """生成交易摘要報表
 
@@ -164,7 +164,7 @@ class ReportService:
         end_date: datetime,
         benchmark_symbol: str = "^TWII",
         include_attribution: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """生成投資組合績效報表
 
@@ -237,7 +237,7 @@ class ReportService:
         start_date: datetime,
         end_date: datetime,
         include_stress_test: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """生成風險分析報表
 
@@ -252,9 +252,9 @@ class ReportService:
         """
         try:
             # 處理預設值
-            confidence_levels = kwargs.get('confidence_levels', [0.95, 0.99])
+            confidence_levels = kwargs.get("confidence_levels", [0.95, 0.99])
             # risk_types 參數保留供未來使用
-            _ = kwargs.get('risk_types', ["market", "credit", "liquidity"])
+            _ = kwargs.get("risk_types", ["market", "credit", "liquidity"])
 
             report_id = str(uuid.uuid4())
 
@@ -307,7 +307,7 @@ class ReportService:
         chart_type: ChartTypeEnum,
         library: ChartLibraryEnum,
         data_source: str,
-        **kwargs
+        **kwargs,
     ) -> ChartData:
         """生成圖表數據
 
@@ -322,8 +322,8 @@ class ReportService:
         """
         try:
             # 從 kwargs 獲取參數
-            filters = kwargs.get('filters', {})
-            config = kwargs.get('config', None)
+            filters = kwargs.get("filters", {})
+            config = kwargs.get("config", None)
 
             # 根據數據來源獲取數據
             raw_data = self._get_data_by_source(data_source, filters)
@@ -346,10 +346,7 @@ class ReportService:
             raise ReportServiceError("生成圖表數據失敗") from e
 
     def export_report(
-        self,
-        export_format: str,
-        include_charts: bool = True,
-        **kwargs
+        self, export_format: str, include_charts: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """匯出報表
 
@@ -564,12 +561,12 @@ class ReportService:
             _ = end_date
 
             report_id = str(uuid.uuid4())
-            export_format = kwargs.get('format', 'json')
+            export_format = kwargs.get("format", "json")
             return {
                 "success": True,
                 "report_id": report_id,
                 "file_url": f"/api/reports/download/{report_id}.{export_format}",
-                "message": "績效報表生成成功"
+                "message": "績效報表生成成功",
             }
         except Exception as e:
             logger.error("生成績效報表失敗: %s", e)
@@ -591,18 +588,19 @@ class ReportService:
         _ = end_date
 
         # 模擬績效數據
-        include_benchmark = kwargs.get('include_benchmark', True)
+        include_benchmark = kwargs.get("include_benchmark", True)
         return {
             "portfolio_performance": {
                 "total_return": 0.15,
                 "annualized_return": 0.12,
                 "volatility": 0.18,
-                "sharpe_ratio": 1.25
+                "sharpe_ratio": 1.25,
             },
-            "benchmark_performance": {
-                "total_return": 0.10,
-                "annualized_return": 0.08
-            } if include_benchmark else None
+            "benchmark_performance": (
+                {"total_return": 0.10, "annualized_return": 0.08}
+                if include_benchmark
+                else None
+            ),
         }
 
     def compare_portfolio_performance(self, start_date, end_date, **kwargs):
@@ -625,7 +623,7 @@ class ReportService:
             "portfolios": {},
             "ranking": {},
             "correlation_matrix": [],
-            "summary": {}
+            "summary": {},
         }
 
     def generate_portfolio_report(self, start_date, end_date, **kwargs):
@@ -645,12 +643,12 @@ class ReportService:
             _ = end_date
 
             report_id = str(uuid.uuid4())
-            export_format = kwargs.get('format', 'json')
+            export_format = kwargs.get("format", "json")
             return {
                 "success": True,
                 "report_id": report_id,
                 "file_url": f"/api/reports/download/{report_id}.{export_format}",
-                "message": "投資組合報表生成成功"
+                "message": "投資組合報表生成成功",
             }
         except Exception as e:
             logger.error("生成投資組合報表失敗: %s", e)
@@ -677,7 +675,7 @@ class ReportService:
             "asset_allocation": {},
             "sector_allocation": {},
             "top_holdings": [],
-            "performance_summary": {}
+            "performance_summary": {},
         }
 
     def get_portfolio_allocation(self, portfolio_id, **kwargs):
@@ -697,7 +695,7 @@ class ReportService:
             "portfolio_id": portfolio_id,
             "allocation": {},
             "concentration_metrics": {},
-            "diversification_ratio": 0.78
+            "diversification_ratio": 0.78,
         }
 
     def _generate_trading_charts(self, data: List[Dict[str, Any]]) -> List[ChartData]:

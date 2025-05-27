@@ -13,7 +13,7 @@ from src.logging.data_masking import (
     DataMasker,
     MaskingStrategy,
     SensitiveDataType,
-    mask_sensitive_data
+    mask_sensitive_data,
 )
 
 
@@ -28,22 +28,19 @@ class TestDataMasker:
         """測試 API 金鑰遮罩"""
         test_data = {
             "api_key": "sk-1234567890abcdef1234567890abcdef",
-            "other_field": "normal_value"
+            "other_field": "normal_value",
         }
 
         masked_data = self.masker.mask_data(test_data)
 
         assert masked_data["api_key"] != test_data["api_key"]
-        assert "sk" in masked_data["api_key"]   # 保留前綴
-        assert "*" in masked_data["api_key"]    # 包含遮罩字符
+        assert "sk" in masked_data["api_key"]  # 保留前綴
+        assert "*" in masked_data["api_key"]  # 包含遮罩字符
         assert masked_data["other_field"] == "normal_value"  # 其他欄位不變
 
     def test_password_masking(self):
         """測試密碼遮罩"""
-        test_data = {
-            "password": "mySecretPassword123",
-            "username": "testuser"
-        }
+        test_data = {"password": "mySecretPassword123", "username": "testuser"}
 
         masked_data = self.masker.mask_data(test_data)
 
@@ -58,9 +55,9 @@ class TestDataMasker:
         masked_data = self.masker.mask_data(test_data)
 
         assert "4532-1234-5678-9012" not in masked_data
-        assert "45" in masked_data    # 保留前2位
-        assert "12" in masked_data    # 保留後2位
-        assert "*" in masked_data     # 包含遮罩字符
+        assert "45" in masked_data  # 保留前2位
+        assert "12" in masked_data  # 保留後2位
+        assert "*" in masked_data  # 包含遮罩字符
 
     def test_phone_number_masking(self):
         """測試電話號碼遮罩"""
@@ -79,9 +76,9 @@ class TestDataMasker:
         masked_data = self.masker.mask_data(test_data)
 
         assert "user@example.com" not in masked_data
-        assert "us" in masked_data    # 保留前2位
-        assert "om" in masked_data    # 保留後2位
-        assert "*" in masked_data     # 包含遮罩字符
+        assert "us" in masked_data  # 保留前2位
+        assert "om" in masked_data  # 保留後2位
+        assert "*" in masked_data  # 包含遮罩字符
 
     def test_id_number_masking(self):
         """測試身分證字號遮罩"""
@@ -90,9 +87,9 @@ class TestDataMasker:
         masked_data = self.masker.mask_data(test_data)
 
         assert "A123456789" not in masked_data
-        assert "A1" in masked_data    # 保留前2位
-        assert "89" in masked_data    # 保留後2位
-        assert "*" in masked_data     # 包含遮罩字符
+        assert "A1" in masked_data  # 保留前2位
+        assert "89" in masked_data  # 保留後2位
+        assert "*" in masked_data  # 包含遮罩字符
 
     def test_nested_data_masking(self):
         """測試嵌套資料遮罩"""
@@ -100,23 +97,23 @@ class TestDataMasker:
             "user": {
                 "name": "John Doe",
                 "email": "john@example.com",
-                "credentials": {
-                    "password": "secret123",
-                    "api_key": "sk-abcdef123456"
-                }
+                "credentials": {"password": "secret123", "api_key": "sk-abcdef123456"},
             },
-            "metadata": {
-                "created_at": "2023-01-01",
-                "phone": "0912-345-678"
-            }
+            "metadata": {"created_at": "2023-01-01", "phone": "0912-345-678"},
         }
 
         masked_data = self.masker.mask_data(test_data)
 
         assert masked_data["user"]["name"] == "John Doe"  # 普通欄位不變
         assert masked_data["user"]["email"] != test_data["user"]["email"]
-        assert masked_data["user"]["credentials"]["password"] != test_data["user"]["credentials"]["password"]
-        assert masked_data["user"]["credentials"]["api_key"] != test_data["user"]["credentials"]["api_key"]
+        assert (
+            masked_data["user"]["credentials"]["password"]
+            != test_data["user"]["credentials"]["password"]
+        )
+        assert (
+            masked_data["user"]["credentials"]["api_key"]
+            != test_data["user"]["credentials"]["api_key"]
+        )
         assert masked_data["metadata"]["created_at"] == "2023-01-01"
 
     def test_list_data_masking(self):
@@ -124,7 +121,7 @@ class TestDataMasker:
         test_data = [
             {"email": "user1@example.com", "name": "User 1"},
             {"email": "user2@example.com", "name": "User 2"},
-            {"phone": "0912-345-678", "description": "測試電話"}
+            {"phone": "0912-345-678", "description": "測試電話"},
         ]
 
         masked_data = self.masker.mask_data(test_data)
@@ -145,7 +142,7 @@ class TestDataMasker:
             pattern=r"TEST-\d{4}",
             strategy=MaskingStrategy.PARTIAL,
             field_names=["test_field"],
-            description="測試用的自定義規則"
+            description="測試用的自定義規則",
         )
 
         test_data = "測試代碼：TEST-1234"
@@ -166,7 +163,7 @@ class TestDataMasker:
             data_type=SensitiveDataType.CUSTOM,
             pattern=r"CUSTOM-\d+",
             strategy=MaskingStrategy.HASH,
-            field_names=["custom_field"]
+            field_names=["custom_field"],
         )
 
         # 檢查規則數量增加
@@ -200,7 +197,7 @@ class TestDataMasker:
             data_type=SensitiveDataType.CUSTOM,
             pattern=r"sensitive_data_\d+",
             strategy=MaskingStrategy.FULL,
-            field_names=[]
+            field_names=[],
         )
 
         masked_full = self.masker.mask_data(test_text)
@@ -214,7 +211,7 @@ class TestDataMasker:
             data_type=SensitiveDataType.CUSTOM,
             pattern=r"sensitive_data_\d+",
             strategy=MaskingStrategy.HASH,
-            field_names=[]
+            field_names=[],
         )
 
         masked_hash = self.masker.mask_data(test_text)
@@ -228,7 +225,7 @@ class TestDataMasker:
             data_type=SensitiveDataType.CUSTOM,
             pattern=r"sensitive_data_\d+",
             strategy=MaskingStrategy.TOKENIZE,
-            field_names=[]
+            field_names=[],
         )
 
         masked_token = self.masker.mask_data(test_text)
@@ -269,7 +266,7 @@ class TestDataMasker:
 
     def test_config_export_import(self):
         """測試配置匯出和匯入"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             config_file = f.name
 
         try:
@@ -280,7 +277,7 @@ class TestDataMasker:
             assert os.path.exists(config_file)
 
             # 檢查文件內容
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 config = json.load(f)
 
             assert "custom_rules" in config
@@ -293,10 +290,7 @@ class TestDataMasker:
 
     def test_global_masker_function(self):
         """測試全域遮罩函數"""
-        test_data = {
-            "password": "secret123",
-            "normal_field": "normal_value"
-        }
+        test_data = {"password": "secret123", "normal_field": "normal_value"}
 
         masked_data = mask_sensitive_data(test_data)
 
@@ -312,7 +306,7 @@ class TestDataMasker:
                 data_type=SensitiveDataType.CUSTOM,
                 pattern="[invalid regex",  # 無效的正則表達式
                 strategy=MaskingStrategy.PARTIAL,
-                field_names=[]
+                field_names=[],
             )
 
         # 測試空資料

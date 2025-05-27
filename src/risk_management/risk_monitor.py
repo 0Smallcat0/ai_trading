@@ -112,8 +112,13 @@ class RiskMonitor:
                 continue
 
             # 檢查是否超過閾值
-            if metric in ["max_drawdown", "max_daily_loss", "max_weekly_loss", 
-                         "max_monthly_loss", "max_volatility"]:
+            if metric in [
+                "max_drawdown",
+                "max_daily_loss",
+                "max_weekly_loss",
+                "max_monthly_loss",
+                "max_volatility",
+            ]:
                 # 這些指標值越小越好
                 violated = value > threshold
             elif metric in ["min_sharpe_ratio"]:
@@ -154,8 +159,9 @@ class RiskMonitor:
         return True
 
     def calculate_portfolio_risk(
-        self, positions: Dict[str, Dict[str, Any]], 
-        market_data: Optional[pd.DataFrame] = None
+        self,
+        positions: Dict[str, Dict[str, Any]],
+        market_data: Optional[pd.DataFrame] = None,
     ) -> Dict[str, float]:
         """計算投資組合風險
 
@@ -188,7 +194,9 @@ class RiskMonitor:
             sector_weights = {}
             for symbol, position in positions.items():
                 sector = position.get("sector", "Unknown")
-                sector_weights[sector] = sector_weights.get(sector, 0) + weights.get(symbol, 0)
+                sector_weights[sector] = sector_weights.get(sector, 0) + weights.get(
+                    symbol, 0
+                )
 
             sector_concentration = max(sector_weights.values()) if sector_weights else 0
 
@@ -246,7 +254,11 @@ class RiskMonitor:
                 if violated:
                     if metric == "max_drawdown":
                         recommendations.append("考慮減少倉位或調整停損策略")
-                    elif metric in ["max_daily_loss", "max_weekly_loss", "max_monthly_loss"]:
+                    elif metric in [
+                        "max_daily_loss",
+                        "max_weekly_loss",
+                        "max_monthly_loss",
+                    ]:
                         recommendations.append("檢查交易頻率和倉位大小")
                     elif metric == "min_sharpe_ratio":
                         recommendations.append("優化投資組合配置以提高風險調整後收益")
@@ -263,13 +275,17 @@ class RiskMonitor:
                 "summary": {
                     "total_metrics": total_metrics,
                     "violated_metrics": total_violations,
-                    "compliance_rate": (total_metrics - total_violations) / total_metrics * 100
-                    if total_metrics > 0
-                    else 100,
+                    "compliance_rate": (
+                        (total_metrics - total_violations) / total_metrics * 100
+                        if total_metrics > 0
+                        else 100
+                    ),
                 },
             }
 
-            logger.info("已生成風險報告: 風險等級 %s, 評分 %.1f", risk_level, risk_score)
+            logger.info(
+                "已生成風險報告: 風險等級 %s, 評分 %.1f", risk_level, risk_score
+            )
             return report
 
         except Exception as e:

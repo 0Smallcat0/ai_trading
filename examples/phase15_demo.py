@@ -14,6 +14,7 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 
 # 添加專案根目錄到 Python 路徑
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -38,7 +39,8 @@ from src.core.indicators import TechnicalIndicators
 
 
 def create_sample_data(n_rows=10000, n_cols=10):
-    """創建示例數據"""print(f"創建示例數據: {n_rows} 行 x {n_cols} 列")
+    """創建示例數據"""
+    print(f"創建示例數據: {n_rows} 行 x {n_cols} 列")
 
     # 創建基礎價格數據
     np.random.seed(42)
@@ -58,10 +60,12 @@ def create_sample_data(n_rows=10000, n_cols=10):
     high_prices = np.maximum(open_prices,
         close_prices) * (1 + np.random.uniform(0,
         0.01,
-        n_rows))    low_prices = np.minimum(open_prices,
+        n_rows))
+    low_prices = np.minimum(open_prices,
         close_prices) * (1 - np.random.uniform(0,
         0.01,
-        n_rows))    volumes = np.random.randint(100000, 1000000, n_rows)
+        n_rows))
+    volumes = np.random.randint(100000, 1000000, n_rows)
 
     data = pd.DataFrame({
         'date': dates,
@@ -90,7 +94,8 @@ def create_sample_data(n_rows=10000, n_cols=10):
 
 
 def demo_distributed_computing():
-    """演示分散式計算功能"""print("\n=== 分散式計算演示 ===")
+    """演示分散式計算功能"""
+    print("\n=== 分散式計算演示 ===")
 
     # 初始化分散式計算環境
     success = initialize_distributed_computing()
@@ -140,7 +145,8 @@ def demo_distributed_computing():
 
 
 def demo_memory_management():
-    """演示記憶體管理功能"""print("\n=== 記憶體管理演示 ===")
+    """演示記憶體管理功能"""
+    print("\n=== 記憶體管理演示 ===")
 
     # 記憶體監控
     monitor = MemoryMonitor()
@@ -160,7 +166,8 @@ def demo_memory_management():
     chunk_processor = ChunkProcessor(max_memory_mb=100)
 
     def process_chunk(df):
-        """處理單個數據塊"""return {
+        """處理單個數據塊"""
+        return {
             'mean': df.select_dtypes(include=[np.number]).mean().mean(),
             'rows': len(df)
         }
@@ -183,7 +190,8 @@ def demo_memory_management():
     efficient_processor = MemoryEfficientProcessor(max_memory_mb=50)
 
     def calculate_correlation(df):
-        """計算相關性矩陣"""numeric_cols = df.select_dtypes(include=[np.number]).columns
+        """計算相關性矩陣"""
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
         return df[numeric_cols].corr()
 
     print("\n使用記憶體高效處理器...")
@@ -202,7 +210,8 @@ def demo_memory_management():
 
 
 def demo_data_cleaning():
-    """演示資料清洗功能"""print("\n=== 資料清洗演示 ===")
+    """演示資料清洗功能"""
+    print("\n=== 資料清洗演示 ===")
 
     # 創建測試數據
     test_data = create_sample_data(n_rows=5000, n_cols=8)
@@ -233,7 +242,8 @@ def demo_data_cleaning():
 
 
 def demo_feature_engineering():
-    """演示特徵工程功能"""print("\n=== 特徵工程演示 ===")
+    """演示特徵工程功能"""
+    print("\n=== 特徵工程演示 ===")
 
     # 創建價格數據
     price_data = create_sample_data(n_rows=1000,
@@ -241,7 +251,8 @@ def demo_feature_engineering():
         'high',
         'low',
         'close',
-        'volume']]    print(f"價格數據形狀: {price_data.shape}")
+        'volume']]
+    print(f"價格數據形狀: {price_data.shape}")
 
     # 技術指標計算
     indicators = TechnicalIndicators(price_data)

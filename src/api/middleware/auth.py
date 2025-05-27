@@ -19,15 +19,19 @@ logger = logging.getLogger(__name__)
 # JWT 配置 - 從環境變數讀取，提供安全的預設值
 JWT_SECRET_KEY = os.getenv(
     "JWT_SECRET_KEY",
-    "dev-secret-key-change-in-production"  # 開發環境預設值，生產環境必須設定
+    "dev-secret-key-change-in-production",  # 開發環境預設值，生產環境必須設定
 )
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
 
 # 檢查生產環境是否使用了不安全的預設密鑰
-if (JWT_SECRET_KEY == "dev-secret-key-change-in-production" and
-    os.getenv("ENVIRONMENT") == "production"):
-    logger.error("⚠️  生產環境使用了不安全的預設 JWT 密鑰，請設定 JWT_SECRET_KEY 環境變數")
+if (
+    JWT_SECRET_KEY == "dev-secret-key-change-in-production"
+    and os.getenv("ENVIRONMENT") == "production"
+):
+    logger.error(
+        "⚠️  生產環境使用了不安全的預設 JWT 密鑰，請設定 JWT_SECRET_KEY 環境變數"
+    )
     raise ValueError("生產環境必須設定安全的 JWT_SECRET_KEY")
 
 
@@ -82,7 +86,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         try:
             logger.debug("驗證 Token: %s...", token[:20])
             payload = self._verify_token(token)
-            logger.debug("Token 驗證成功，用戶: %s", payload.get('username'))
+            logger.debug("Token 驗證成功，用戶: %s", payload.get("username"))
 
             # 將用戶資訊添加到請求狀態
             request.state.user = payload

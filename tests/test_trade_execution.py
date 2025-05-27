@@ -35,6 +35,7 @@ def trade_service():
     """創建交易執行服務實例的 pytest fixture"""
     try:
         from src.core.trade_execution_service import TradeExecutionService
+
         return TradeExecutionService()
     except ImportError as e:
         pytest.skip(f"無法導入交易執行服務: {e}")
@@ -139,7 +140,9 @@ def test_order_submission(trade_service):
 
             if is_valid:
                 # 提交訂單
-                success, submit_message, order_id = trade_service.submit_order(order_data)
+                success, submit_message, order_id = trade_service.submit_order(
+                    order_data
+                )
                 if success:
                     logger.info("✅ 訂單提交成功: %s", order_id)
                     submitted_orders.append(order_id)
@@ -187,8 +190,8 @@ def test_order_queries(trade_service):
         if stats:
             logger.info(
                 "交易統計: 總訂單 %s, 成功率 %s%%",
-                stats['orders']['total'],
-                stats['orders']['success_rate']
+                stats["orders"]["total"],
+                stats["orders"]["success_rate"],
             )
         else:
             logger.info("暫無交易統計數據")
@@ -212,7 +215,7 @@ def test_trading_mode_switch(trade_service):
     try:
         # 獲取當前模式
         current_mode = trade_service.is_simulation_mode
-        logger.info("當前交易模式: %s", '模擬交易' if current_mode else '實盤交易')
+        logger.info("當前交易模式: %s", "模擬交易" if current_mode else "實盤交易")
 
         # 測試切換到相同模式
         success, message = trade_service.switch_trading_mode(current_mode)
@@ -244,16 +247,16 @@ def test_broker_status(trade_service):
         status = trade_service.get_broker_status()
 
         if "error" in status:
-            logger.error("獲取券商狀態失敗: %s", status['error'])
+            logger.error("獲取券商狀態失敗: %s", status["error"])
         else:
             logger.info("券商狀態:")
-            logger.info("  - 當前券商: %s", status['current_broker'])
-            logger.info("  - 連線狀態: %s", status['connected'])
+            logger.info("  - 當前券商: %s", status["current_broker"])
+            logger.info("  - 連線狀態: %s", status["connected"])
             logger.info(
-                "  - 交易模式: %s", '模擬' if status['is_simulation'] else '實盤'
+                "  - 交易模式: %s", "模擬" if status["is_simulation"] else "實盤"
             )
-            logger.info("  - 錯誤次數: %s", status['error_count'])
-            logger.info("  - 今日下單: %s", status['daily_order_count'])
+            logger.info("  - 錯誤次數: %s", status["error_count"])
+            logger.info("  - 今日下單: %s", status["daily_order_count"])
 
         logger.info("✅ 券商狀態測試成功")
         assert True

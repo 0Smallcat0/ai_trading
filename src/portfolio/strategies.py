@@ -19,6 +19,7 @@ import pandas as pd
 # 可選依賴處理
 try:
     import scipy.optimize as sco
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -26,6 +27,7 @@ except ImportError:
 
 try:
     from pypfopt import EfficientFrontier, expected_returns, risk_models
+
     PYPFOPT_AVAILABLE = True
 except ImportError:
     PYPFOPT_AVAILABLE = False
@@ -136,10 +138,7 @@ class EqualWeightPortfolio(Portfolio):
         }
 
     def rebalance(
-        self,
-        weights: Dict[str, float],
-        price_df: pd.DataFrame,
-        frequency: str = "M"
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
     ) -> Dict[str, float]:
         """等權重再平衡
 
@@ -224,7 +223,8 @@ class MeanVariancePortfolio(Portfolio):
                 {"type": "eq", "fun": lambda x: np.sum(x) - 1},  # 權重和為1
                 {
                     "type": "eq",
-                    "fun": lambda x: np.dot(x, expected_returns_vec.values) - self.target_return,
+                    "fun": lambda x: np.dot(x, expected_returns_vec.values)
+                    - self.target_return,
                 },  # 目標收益率
             ]
             bounds = tuple((0.01, 0.5) for _ in range(len(available_stocks)))
@@ -260,10 +260,7 @@ class MeanVariancePortfolio(Portfolio):
         return equal_weight.evaluate(weights, price_df)
 
     def rebalance(
-        self,
-        weights: Dict[str, float],
-        price_df: pd.DataFrame,
-        frequency: str = "M"
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
     ) -> Dict[str, float]:
         """均值變異數再平衡
 
@@ -308,7 +305,8 @@ class MeanVariancePortfolio(Portfolio):
                 {"type": "eq", "fun": lambda x: np.sum(x) - 1},
                 {
                     "type": "eq",
-                    "fun": lambda x: np.dot(x, expected_returns_vec.values) - self.target_return,
+                    "fun": lambda x: np.dot(x, expected_returns_vec.values)
+                    - self.target_return,
                 },
             ]
             bounds = tuple((0.01, 0.5) for _ in range(len(available_stocks)))
@@ -382,7 +380,9 @@ class RiskParityPortfolio(Portfolio):
 
             # 風險平價目標函數
             def risk_parity_objective(weights):
-                portfolio_vol = np.sqrt(np.dot(weights, np.dot(cov_matrix.values, weights)))
+                portfolio_vol = np.sqrt(
+                    np.dot(weights, np.dot(cov_matrix.values, weights))
+                )
                 marginal_contrib = np.dot(cov_matrix.values, weights) / portfolio_vol
                 contrib = weights * marginal_contrib
                 target_contrib = portfolio_vol / len(weights)
@@ -401,7 +401,7 @@ class RiskParityPortfolio(Portfolio):
                 x0,
                 method="SLSQP",
                 bounds=bounds,
-                constraints=constraints
+                constraints=constraints,
             )
 
             if result.success:
@@ -424,10 +424,7 @@ class RiskParityPortfolio(Portfolio):
         return equal_weight.evaluate(weights, price_df)
 
     def rebalance(
-        self,
-        weights: Dict[str, float],
-        price_df: pd.DataFrame,
-        frequency: str = "M"
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
     ) -> Dict[str, float]:
         """風險平價再平衡"""
         # 重新計算風險平價權重
@@ -463,7 +460,11 @@ class RiskParityPortfolio(Portfolio):
             x0 = np.array([1.0 / len(available_stocks)] * len(available_stocks))
 
             result = sco.minimize(
-                risk_parity_objective, x0, method="SLSQP", bounds=bounds, constraints=constraints
+                risk_parity_objective,
+                x0,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=constraints,
             )
 
             if result.success:
@@ -537,7 +538,9 @@ class MaxSharpePortfolio(Portfolio):
             # 負夏普比率目標函數（最小化負值等於最大化正值）
             def negative_sharpe(weights):
                 portfolio_return = np.dot(weights, expected_returns_vec.values)
-                portfolio_vol = np.sqrt(np.dot(weights, np.dot(cov_matrix.values, weights)))
+                portfolio_vol = np.sqrt(
+                    np.dot(weights, np.dot(cov_matrix.values, weights))
+                )
                 if portfolio_vol == 0:
                     return -np.inf
                 return -(portfolio_return - self.risk_free_rate) / portfolio_vol
@@ -551,7 +554,11 @@ class MaxSharpePortfolio(Portfolio):
 
             # 最佳化
             result = sco.minimize(
-                negative_sharpe, x0, method="SLSQP", bounds=bounds, constraints=constraints
+                negative_sharpe,
+                x0,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=constraints,
             )
 
             if result.success:
@@ -574,10 +581,7 @@ class MaxSharpePortfolio(Portfolio):
         return equal_weight.evaluate(weights, price_df)
 
     def rebalance(
-        self,
-        weights: Dict[str, float],
-        price_df: pd.DataFrame,
-        frequency: str = "M"
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
     ) -> Dict[str, float]:
         """最大夏普比率再平衡"""
         # 重新計算最大夏普比率權重
@@ -614,7 +618,11 @@ class MaxSharpePortfolio(Portfolio):
             x0 = np.array([1.0 / len(available_stocks)] * len(available_stocks))
 
             result = sco.minimize(
-                negative_sharpe, x0, method="SLSQP", bounds=bounds, constraints=constraints
+                negative_sharpe,
+                x0,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=constraints,
             )
 
             if result.success:
@@ -715,10 +723,7 @@ class MinVariancePortfolio(Portfolio):
         return equal_weight.evaluate(weights, price_df)
 
     def rebalance(
-        self,
-        weights: Dict[str, float],
-        price_df: pd.DataFrame,
-        frequency: str = "M"
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
     ) -> Dict[str, float]:
         """最小變異數再平衡
 

@@ -25,14 +25,21 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database.schema import Base, DataShard, MarketDaily, MarketMinute, MarketTick, init_db
+from src.database.schema import (
+    Base,
+    DataShard,
+    MarketDaily,
+    MarketMinute,
+    MarketTick,
+    init_db,
+)
 from src.database.sharding_manager import (
     ShardingManager,
     TimeBasedShardingStrategy,
     SizeBasedShardingStrategy,
     ShardingError,
     ShardingConfigError,
-    ShardingOperationError
+    ShardingOperationError,
 )
 
 
@@ -55,7 +62,7 @@ def test_session():
             high=105.0,
             low=98.0,
             close=103.0,
-            volume=1000000
+            volume=1000000,
         ),
         MarketDaily(
             symbol="2330.TW",
@@ -64,7 +71,7 @@ def test_session():
             high=108.0,
             low=101.0,
             close=106.0,
-            volume=1200000
+            volume=1200000,
         ),
         MarketDaily(
             symbol="2454.TW",
@@ -73,8 +80,8 @@ def test_session():
             high=52.0,
             low=49.0,
             close=51.0,
-            volume=800000
-        )
+            volume=800000,
+        ),
     ]
 
     for data in test_data:
@@ -108,7 +115,7 @@ class TestTimeBasedShardingStrategy:
             shard_key="date",
             shard_id="test_shard",
             start_date=date.today() - timedelta(days=60),
-            end_date=date.today() - timedelta(days=31)
+            end_date=date.today() - timedelta(days=31),
         )
         test_session.add(old_shard)
         test_session.commit()
@@ -125,7 +132,7 @@ class TestTimeBasedShardingStrategy:
             shard_key="date",
             shard_id="recent_shard",
             start_date=date.today() - timedelta(days=10),
-            end_date=date.today() - timedelta(days=1)
+            end_date=date.today() - timedelta(days=1),
         )
         test_session.add(recent_shard)
         test_session.commit()
@@ -176,7 +183,7 @@ class TestShardingManager:
         assert "custom_weekly" in sharding_manager.strategies
         assert sharding_manager.strategies["custom_weekly"] == custom_strategy
 
-    @patch('src.database.sharding_manager.create_market_data_shard')
+    @patch("src.database.sharding_manager.create_market_data_shard")
     def test_create_shard_if_needed_success(self, mock_create_shard, sharding_manager):
         """測試成功創建分片"""
         # 模擬創建分片的返回值
@@ -185,7 +192,7 @@ class TestShardingManager:
             shard_key="date",
             shard_id="test_shard_123",
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31)
+            end_date=date(2024, 1, 31),
         )
         mock_create_shard.return_value = (mock_shard, "/path/to/shard.parquet")
 
@@ -205,7 +212,7 @@ class TestShardingManager:
             shard_key="date",
             shard_id="recent_shard",
             start_date=date.today() - timedelta(days=10),
-            end_date=date.today() - timedelta(days=1)
+            end_date=date.today() - timedelta(days=1),
         )
         test_session.add(recent_shard)
         test_session.commit()
@@ -226,21 +233,21 @@ class TestShardingManager:
             shard_key="date",
             shard_id="shard_2024_01",
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31)
+            end_date=date(2024, 1, 31),
         )
         shard2 = DataShard(
             table_name="market_daily",
             shard_key="date",
             shard_id="shard_2024_02",
             start_date=date(2024, 2, 1),
-            end_date=date(2024, 2, 29)
+            end_date=date(2024, 2, 29),
         )
         shard3 = DataShard(
             table_name="market_daily",
             shard_key="date",
             shard_id="shard_2024_03",
             start_date=date(2024, 3, 1),
-            end_date=date(2024, 3, 31)
+            end_date=date(2024, 3, 31),
         )
 
         test_session.add_all([shard1, shard2, shard3])
@@ -248,16 +255,14 @@ class TestShardingManager:
 
         # 查詢跨越兩個分片的日期範圍
         shards = sharding_manager.get_shards_for_query(
-            MarketDaily,
-            date(2024, 1, 15),
-            date(2024, 2, 15)
+            MarketDaily, date(2024, 1, 15), date(2024, 2, 15)
         )
 
         assert len(shards) == 2
         assert shards[0].shard_id == "shard_2024_01"
         assert shards[1].shard_id == "shard_2024_02"
 
-    @patch('src.database.sharding_manager.load_from_shard')
+    @patch("src.database.sharding_manager.load_from_shard")
     def test_query_across_shards(self, mock_load_shard, sharding_manager, test_session):
         """測試跨分片查詢"""
         # 創建測試分片
@@ -266,30 +271,30 @@ class TestShardingManager:
             shard_key="date",
             shard_id="shard_2024_01",
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31)
+            end_date=date(2024, 1, 31),
         )
         test_session.add(shard1)
         test_session.commit()
 
         # 模擬從分片讀取的資料
-        mock_data = pd.DataFrame({
-            'symbol': ['2330.TW', '2454.TW'],
-            'date': [date(2024, 1, 1), date(2024, 1, 1)],
-            'close': [100.0, 50.0]
-        })
+        mock_data = pd.DataFrame(
+            {
+                "symbol": ["2330.TW", "2454.TW"],
+                "date": [date(2024, 1, 1), date(2024, 1, 1)],
+                "close": [100.0, 50.0],
+            }
+        )
         mock_load_shard.return_value = mock_data
 
         result = sharding_manager.query_across_shards(
-            MarketDaily,
-            date(2024, 1, 1),
-            date(2024, 1, 31)
+            MarketDaily, date(2024, 1, 1), date(2024, 1, 31)
         )
 
         assert not result.empty
         assert len(result) == 2
-        assert 'symbol' in result.columns
-        assert 'date' in result.columns
-        assert 'close' in result.columns
+        assert "symbol" in result.columns
+        assert "date" in result.columns
+        assert "close" in result.columns
 
     def test_get_shard_statistics(self, sharding_manager, test_session):
         """測試獲取分片統計"""
@@ -301,7 +306,7 @@ class TestShardingManager:
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
             row_count=1000,
-            file_size_bytes=1024000
+            file_size_bytes=1024000,
         )
         shard2 = DataShard(
             table_name="market_daily",
@@ -310,7 +315,7 @@ class TestShardingManager:
             start_date=date(2024, 2, 1),
             end_date=date(2024, 2, 29),
             row_count=1200,
-            file_size_bytes=1228800
+            file_size_bytes=1228800,
         )
 
         test_session.add_all([shard1, shard2])
@@ -356,7 +361,9 @@ class TestShardingExceptions:
         manager = ShardingManager(test_session)
 
         # 模擬內部異常
-        with patch('src.database.sharding_manager.create_market_data_shard') as mock_create:
+        with patch(
+            "src.database.sharding_manager.create_market_data_shard"
+        ) as mock_create:
             mock_create.side_effect = Exception("內部錯誤")
 
             with pytest.raises(ShardingOperationError) as exc_info:
@@ -377,7 +384,7 @@ class TestShardingManagerRefactored:
 
         # 檢查 __init__ 方法的型別提示
         init_signature = inspect.signature(ShardingManager.__init__)
-        assert init_signature.parameters['session'].annotation is not None
+        assert init_signature.parameters["session"].annotation is not None
 
         # 檢查其他方法的型別提示
         create_signature = inspect.signature(ShardingManager.create_shard_if_needed)
@@ -453,10 +460,10 @@ class TestShardingManagerRefactored:
                 table_name="market_daily",
                 shard_key="date",
                 shard_id=f"shard_{i}",
-                start_date=date(2024, 1, 1) + timedelta(days=i*30),
-                end_date=date(2024, 1, 31) + timedelta(days=i*30),
+                start_date=date(2024, 1, 1) + timedelta(days=i * 30),
+                end_date=date(2024, 1, 31) + timedelta(days=i * 30),
                 row_count=1000,
-                file_size_bytes=1024000
+                file_size_bytes=1024000,
             )
             shards.append(shard)
 
@@ -480,7 +487,7 @@ class TestShardingManagerRefactored:
         manager = ShardingManager(test_session)
 
         # 模擬資料庫連接錯誤
-        with patch.object(test_session, 'query') as mock_query:
+        with patch.object(test_session, "query") as mock_query:
             mock_query.side_effect = Exception("資料庫連接錯誤")
 
             with pytest.raises(ShardingOperationError) as exc_info:
@@ -504,14 +511,14 @@ class TestShardingIntegration:
             shard_key="date",
             shard_id="test_integration_shard",
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31)
+            end_date=date(2024, 1, 31),
         )
 
         test_session.add(shard)
         test_session.commit()
 
         # 驗證 file_format 預設值
-        assert shard.file_format == 'parquet'
+        assert shard.file_format == "parquet"
 
         # 測試查詢功能
         stats = manager.get_shard_statistics("market_daily")
@@ -551,19 +558,21 @@ class TestShardingIntegration:
             high=105.0,
             low=98.0,
             close=103.0,
-            volume=1000000
+            volume=1000000,
         )
         test_session.add(test_data)
         test_session.commit()
 
         # 4. 測試分片創建（模擬）
-        with patch('src.database.sharding_manager.create_market_data_shard') as mock_create:
+        with patch(
+            "src.database.sharding_manager.create_market_data_shard"
+        ) as mock_create:
             mock_shard = DataShard(
                 table_name="market_daily",
                 shard_key="date",
                 shard_id="weekly_shard_001",
                 start_date=date(2024, 1, 1),
-                end_date=date(2024, 1, 7)
+                end_date=date(2024, 1, 7),
             )
             mock_create.return_value = (mock_shard, "/path/to/weekly_shard.parquet")
 

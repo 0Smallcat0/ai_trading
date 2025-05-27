@@ -27,6 +27,7 @@ except ImportError:
 # 嘗試導入機器學習相關庫
 try:
     import joblib  # pylint: disable=unused-import
+
     JOBLIB_AVAILABLE = True
 except ImportError:
     JOBLIB_AVAILABLE = False
@@ -78,7 +79,8 @@ class AIModelManagementService:
                 cursor = conn.cursor()
 
                 # 創建模型表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS ai_models (
                         id TEXT PRIMARY KEY,
                         name TEXT NOT NULL UNIQUE,
@@ -101,10 +103,12 @@ class AIModelManagementService:
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         last_inference TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # 創建模型版本表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS model_versions (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         model_id TEXT NOT NULL,
@@ -115,10 +119,12 @@ class AIModelManagementService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (model_id) REFERENCES ai_models (id)
                     )
-                """)
+                """
+                )
 
                 # 創建模型訓練日誌表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS model_training_logs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         model_id TEXT NOT NULL,
@@ -131,10 +137,12 @@ class AIModelManagementService:
                         log_message TEXT,
                         FOREIGN KEY (model_id) REFERENCES ai_models (id)
                     )
-                """)
+                """
+                )
 
                 # 創建模型推論日誌表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS model_inference_logs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         model_id TEXT NOT NULL,
@@ -144,10 +152,12 @@ class AIModelManagementService:
                         execution_time REAL,
                         FOREIGN KEY (model_id) REFERENCES ai_models (id)
                     )
-                """)
+                """
+                )
 
                 # 創建模型解釋性分析表
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS model_explanations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         model_id TEXT NOT NULL,
@@ -158,7 +168,8 @@ class AIModelManagementService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (model_id) REFERENCES ai_models (id)
                     )
-                """)
+                """
+                )
 
                 conn.commit()
                 logger.info("AI模型資料庫初始化成功")
@@ -289,15 +300,11 @@ class AIModelManagementService:
                 total_models = cursor.fetchone()[0]
 
                 # 按類型統計
-                cursor.execute(
-                    "SELECT type, COUNT(*) FROM ai_models GROUP BY type"
-                )
+                cursor.execute("SELECT type, COUNT(*) FROM ai_models GROUP BY type")
                 by_type = dict(cursor.fetchall())
 
                 # 按狀態統計
-                cursor.execute(
-                    "SELECT status, COUNT(*) FROM ai_models GROUP BY status"
-                )
+                cursor.execute("SELECT status, COUNT(*) FROM ai_models GROUP BY status")
                 by_status = dict(cursor.fetchall())
 
                 # 活躍模型數

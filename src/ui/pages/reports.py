@@ -645,7 +645,7 @@ def show_report_export(report_service):
         settings_summary = {
             "包含圖表": include_charts,
             "包含原始數據": include_raw_data,
-            "浮水印": watermark_text if add_watermark else "無"
+            "浮水印": watermark_text if add_watermark else "無",
         }
         st.write("設定摘要:", settings_summary)
 

@@ -158,7 +158,10 @@ async def get_risk_data(
                 "scenarios": {
                     "market_crash_2008": {"portfolio_loss": -0.35, "var_breach": True},
                     "covid_crash_2020": {"portfolio_loss": -0.28, "var_breach": True},
-                    "interest_rate_shock": {"portfolio_loss": -0.15, "var_breach": False},
+                    "interest_rate_shock": {
+                        "portfolio_loss": -0.15,
+                        "var_breach": False,
+                    },
                     "sector_rotation": {"portfolio_loss": -0.12, "var_breach": False},
                 },
                 "worst_case_scenario": "market_crash_2008",
@@ -332,9 +335,7 @@ async def run_stress_test(
             ],
         }
 
-        return APIResponse(
-            success=True, message="壓力測試執行成功", data=test_results
-        )
+        return APIResponse(success=True, message="壓力測試執行成功", data=test_results)
 
     except Exception as e:
         logger.error("執行壓力測試失敗: %s", e)

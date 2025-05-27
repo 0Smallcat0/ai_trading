@@ -39,7 +39,9 @@ class ReportRequest(BaseModel):
 class PerformanceReportRequest(ReportRequest):
     """績效報表請求模型"""
 
-    portfolio_ids: Optional[List[str]] = Field(default=None, description="投資組合 ID 列表")
+    portfolio_ids: Optional[List[str]] = Field(
+        default=None, description="投資組合 ID 列表"
+    )
     benchmark: Optional[str] = Field(default="TAIEX", description="基準指數")
     include_benchmark: bool = Field(default=True, description="是否包含基準比較")
     metrics: Optional[List[str]] = Field(default=None, description="指定績效指標")
@@ -68,7 +70,9 @@ class PerformanceReportRequest(ReportRequest):
 class PortfolioReportRequest(ReportRequest):
     """投資組合報表請求模型"""
 
-    portfolio_ids: Optional[List[str]] = Field(default=None, description="投資組合 ID 列表")
+    portfolio_ids: Optional[List[str]] = Field(
+        default=None, description="投資組合 ID 列表"
+    )
     include_positions: bool = Field(default=True, description="是否包含持倉詳情")
     include_transactions: bool = Field(default=False, description="是否包含交易記錄")
     groupby: Optional[str] = Field(default=None, description="分組方式")
@@ -77,7 +81,13 @@ class PortfolioReportRequest(ReportRequest):
     def validate_groupby(cls, v):  # pylint: disable=no-self-argument
         """驗證分組方式"""
         if v is not None:
-            allowed_groupby = ["sector", "industry", "market_cap", "country", "currency"]
+            allowed_groupby = [
+                "sector",
+                "industry",
+                "market_cap",
+                "country",
+                "currency",
+            ]
             if v not in allowed_groupby:
                 raise ValueError(f'分組方式必須是: {", ".join(allowed_groupby)}')
         return v
@@ -86,7 +96,9 @@ class PortfolioReportRequest(ReportRequest):
 class RiskReportRequest(ReportRequest):
     """風險報表請求模型"""
 
-    portfolio_ids: Optional[List[str]] = Field(default=None, description="投資組合 ID 列表")
+    portfolio_ids: Optional[List[str]] = Field(
+        default=None, description="投資組合 ID 列表"
+    )
     risk_metrics: Optional[List[str]] = Field(default=None, description="風險指標")
     confidence_levels: List[float] = Field(
         default=[0.95, 0.99], description="信心水準列表"
@@ -123,7 +135,9 @@ class RiskReportRequest(ReportRequest):
 class TradingReportRequest(ReportRequest):
     """交易報表請求模型"""
 
-    portfolio_ids: Optional[List[str]] = Field(default=None, description="投資組合 ID 列表")
+    portfolio_ids: Optional[List[str]] = Field(
+        default=None, description="投資組合 ID 列表"
+    )
     symbols: Optional[List[str]] = Field(default=None, description="股票代碼列表")
     order_types: Optional[List[str]] = Field(default=None, description="訂單類型")
     include_costs: bool = Field(default=True, description="是否包含交易成本")

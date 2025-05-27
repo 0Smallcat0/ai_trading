@@ -10,7 +10,7 @@ from .model_inference import ModelInference, ModelInferenceError
 __all__ = [
     "ModelCRUD",
     "ModelManagementError",
-    "ModelTraining", 
+    "ModelTraining",
     "ModelTrainingError",
     "ModelInference",
     "ModelInferenceError",

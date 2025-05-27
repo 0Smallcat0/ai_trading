@@ -95,7 +95,7 @@ class TestDataManagementService:
     def test_get_last_update_time(self):
         """測試獲取最後更新時間"""
         # 測試正常情況
-        with patch.object(self.service, 'session_factory') as mock_factory:
+        with patch.object(self.service, "session_factory") as mock_factory:
             mock_session = MagicMock()
             mock_factory.return_value.__enter__.return_value = mock_session
             mock_session.execute.return_value.scalar.return_value = datetime.now()
@@ -111,7 +111,7 @@ class TestDataManagementService:
 
     def test_get_last_update_time_error(self):
         """測試獲取最後更新時間錯誤處理"""
-        with patch.object(self.service, 'session_factory') as mock_factory:
+        with patch.object(self.service, "session_factory") as mock_factory:
             mock_factory.side_effect = Exception("Database error")
 
             result = self.service._get_last_update_time("Yahoo Finance")
@@ -125,9 +125,9 @@ class TestDataManagementService:
 
     def test_calculate_data_quality_error(self):
         """測試計算資料品質分數錯誤處理"""
-        with patch('src.core.data_management_service.logger') as mock_logger:
+        with patch("src.core.data_management_service.logger") as mock_logger:
             # 模擬內部錯誤
-            with patch.object(self.service, '_calculate_data_quality') as mock_calc:
+            with patch.object(self.service, "_calculate_data_quality") as mock_calc:
                 mock_calc.side_effect = Exception("Calculation error")
 
                 try:
@@ -149,11 +149,12 @@ class TestDataManagementService:
 
     def test_get_available_symbols_with_database(self):
         """測試從資料庫獲取股票代碼"""
-        with patch.object(self.service, 'session_factory') as mock_factory:
+        with patch.object(self.service, "session_factory") as mock_factory:
             mock_session = MagicMock()
             mock_factory.return_value.__enter__.return_value = mock_session
             mock_session.execute.return_value.fetchall.return_value = [
-                ("2330.TW",), ("AAPL",)
+                ("2330.TW",),
+                ("AAPL",),
             ]
 
             symbols = self.service.get_available_symbols()
@@ -169,7 +170,7 @@ class TestDataManagementService:
 
     def test_get_available_symbols_error(self):
         """測試獲取股票代碼錯誤處理"""
-        with patch.object(self.service, 'session_factory') as mock_factory:
+        with patch.object(self.service, "session_factory") as mock_factory:
             mock_factory.side_effect = Exception("Database error")
 
             symbols = self.service.get_available_symbols()
@@ -317,7 +318,7 @@ class TestDataManagementService:
         self.service.update_status[task_id] = {
             "status": "running",
             "progress": 0,
-            "message": "開始"
+            "message": "開始",
         }
 
         # 測試進度更新
@@ -414,7 +415,7 @@ class TestDataManagementService:
             "data_types": ["股價資料", "基本面資料"],
             "symbols": ["2330.TW"],
             "start_date": date.today() - timedelta(days=1),
-            "end_date": date.today()
+            "end_date": date.today(),
         }
 
         # 初始化任務狀態
@@ -422,7 +423,7 @@ class TestDataManagementService:
             "status": "running",
             "progress": 0,
             "message": "開始",
-            "config": config
+            "config": config,
         }
 
         # 執行更新
@@ -444,7 +445,7 @@ class TestDataManagementService:
             "data_types": ["未知資料類型"],
             "symbols": ["2330.TW"],
             "start_date": date.today() - timedelta(days=1),
-            "end_date": date.today()
+            "end_date": date.today(),
         }
 
         # 初始化任務狀態
@@ -452,7 +453,7 @@ class TestDataManagementService:
             "status": "running",
             "progress": 0,
             "message": "開始",
-            "config": config
+            "config": config,
         }
 
         # 執行更新
@@ -474,7 +475,7 @@ class TestDataManagementService:
         self.service.update_status[task_id] = {
             "status": "running",
             "progress": 0,
-            "message": "開始"
+            "message": "開始",
         }
 
         # 執行更新
@@ -492,7 +493,7 @@ class TestDataManagementService:
             "data_types": ["股價資料"],
             "symbols": ["2330.TW"],
             "start_date": date.today() - timedelta(days=1),
-            "end_date": date.today()
+            "end_date": date.today(),
         }
 
         # 初始化任務狀態
@@ -500,11 +501,11 @@ class TestDataManagementService:
             "status": "running",
             "progress": 0,
             "message": "開始",
-            "config": config
+            "config": config,
         }
 
         # 模擬 _update_price_data 拋出異常
-        with patch.object(self.service, '_update_price_data') as mock_update:
+        with patch.object(self.service, "_update_price_data") as mock_update:
             mock_update.side_effect = Exception("Update error")
 
             # 執行更新

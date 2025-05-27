@@ -9,7 +9,7 @@ from .strategy_template import StrategyTemplate, StrategyTemplateError
 
 __all__ = [
     "StrategyCRUD",
-    "StrategyManagementError", 
+    "StrategyManagementError",
     "StrategyVersion",
     "StrategyVersionError",
     "StrategyTemplate",

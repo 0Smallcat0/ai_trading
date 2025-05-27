@@ -193,11 +193,14 @@ class TestDashboardManager(unittest.TestCase):
     def test_save_and_load_dashboard(self):
         """測試儲存和載入儀表板"""
         # 直接使用字典模擬 session_state
-        with patch("streamlit.session_state", {
-            "dashboard_configs": {},
-            "dashboard_history": {},
-            "current_dashboard": None
-        }):
+        with patch(
+            "streamlit.session_state",
+            {
+                "dashboard_configs": {},
+                "dashboard_history": {},
+                "current_dashboard": None,
+            },
+        ):
             # 創建和儲存儀表板
             config = DashboardConfig(name="測試儀表板")
             result = self.manager.save_dashboard(config)

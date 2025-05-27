@@ -30,15 +30,12 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 # 導入新的模組化實現
-from .model_governance.legacy_interface import (
-    ModelRegistry,
-    ModelMonitor
-)
+from .model_governance.legacy_interface import ModelRegistry, ModelMonitor
 from .model_governance import (
     create_model_registry,
     create_model_monitor,
     register_model,
-    deploy_model
+    deploy_model,
 )
 from .model_governance.registry import ModelRegistry as NewModelRegistry
 from .model_governance.monitor import ModelMonitor as NewModelMonitor
@@ -51,16 +48,14 @@ __all__ = [
     # Legacy classes
     "ModelRegistry",
     "ModelMonitor",
-
     # New modular classes
     "NewModelRegistry",
     "NewModelMonitor",
     "DeploymentManager",
     "ModelLifecycleManager",
-
     # Convenience functions
     "create_model_registry",
     "create_model_monitor",
     "register_model",
-    "deploy_model"
+    "deploy_model",
 ]

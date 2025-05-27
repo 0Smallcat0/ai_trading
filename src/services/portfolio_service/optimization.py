@@ -19,6 +19,7 @@ import numpy as np
 # 可選依賴
 try:
     from scipy.optimize import minimize
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -44,7 +45,7 @@ class PortfolioOptimizationService:
         self,
         portfolio_id: str,
         target_weights: Dict[str, float],
-        constraints: Dict[str, Any] = None
+        constraints: Dict[str, Any] = None,
     ) -> Tuple[bool, str]:
         """驗證再平衡配置
 
@@ -83,9 +84,15 @@ class PortfolioOptimizationService:
 
                 for symbol, weight in target_weights.items():
                     if weight > max_weight:
-                        return False, f"權重超過最大限制: {symbol} = {weight} > {max_weight}"
+                        return (
+                            False,
+                            f"權重超過最大限制: {symbol} = {weight} > {max_weight}",
+                        )
                     if weight < min_weight:
-                        return False, f"權重低於最小限制: {symbol} = {weight} < {min_weight}"
+                        return (
+                            False,
+                            f"權重低於最小限制: {symbol} = {weight} < {min_weight}",
+                        )
 
             return True, ""
 
@@ -98,7 +105,7 @@ class PortfolioOptimizationService:
         symbols: List[str],
         optimization_method: str = "equal_weight",
         returns_data: pd.DataFrame = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, float]:
         """計算目標權重
 
@@ -120,10 +127,14 @@ class PortfolioOptimizationService:
                 return self._risk_parity_optimization(symbols, returns_data)
             elif optimization_method == "mean_variance":
                 target_return = kwargs.get("target_return", 0.1)
-                return self._mean_variance_optimization(symbols, returns_data, target_return)
+                return self._mean_variance_optimization(
+                    symbols, returns_data, target_return
+                )
             elif optimization_method == "maximum_sharpe":
                 risk_free_rate = kwargs.get("risk_free_rate", 0.02)
-                return self._maximum_sharpe_optimization(symbols, returns_data, risk_free_rate)
+                return self._maximum_sharpe_optimization(
+                    symbols, returns_data, risk_free_rate
+                )
             else:
                 logger.warning(f"未知的最佳化方法: {optimization_method}，使用等權重")
                 return self._equal_weight_optimization(symbols)
@@ -218,7 +229,7 @@ class PortfolioOptimizationService:
                 x0,
                 method="SLSQP",
                 bounds=bounds,
-                constraints=constraints
+                constraints=constraints,
             )
 
             if result.success:
@@ -235,7 +246,7 @@ class PortfolioOptimizationService:
         self,
         symbols: List[str],
         returns_data: pd.DataFrame = None,
-        target_return: float = 0.1
+        target_return: float = 0.1,
     ) -> Dict[str, float]:
         """均值變異數最佳化"""
         if returns_data is None:
@@ -285,7 +296,7 @@ class PortfolioOptimizationService:
         self,
         symbols: List[str],
         returns_data: pd.DataFrame = None,
-        risk_free_rate: float = 0.02
+        risk_free_rate: float = 0.02,
     ) -> Dict[str, float]:
         """最大夏普比率最佳化"""
         if returns_data is None:
@@ -316,7 +327,11 @@ class PortfolioOptimizationService:
 
         try:
             result = minimize(
-                negative_sharpe, x0, method="SLSQP", bounds=bounds, constraints=constraints
+                negative_sharpe,
+                x0,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=constraints,
             )
 
             if result.success:
@@ -338,7 +353,9 @@ class PortfolioOptimizationService:
         for symbol in symbols:
             # 使用隨機數生成模擬收益率
             np.random.seed(hash(symbol) % 2**32)  # 確保每個股票的資料一致
-            daily_returns = np.random.normal(0.0008, 0.02, n_days)  # 年化8%收益，20%波動
+            daily_returns = np.random.normal(
+                0.0008, 0.02, n_days
+            )  # 年化8%收益，20%波動
             returns_data[symbol] = daily_returns
 
         return pd.DataFrame(returns_data)
@@ -348,7 +365,7 @@ class PortfolioOptimizationService:
         portfolio_id: str,
         current_weights: Dict[str, float],
         target_weights: Dict[str, float],
-        total_value: float
+        total_value: float,
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """執行交易
 
@@ -383,7 +400,7 @@ class PortfolioOptimizationService:
                         "target_weight": target_weight,
                         "weight_change": weight_diff,
                         "trade_value": abs(trade_value),
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
                     }
                     trades.append(trade)
 
@@ -391,10 +408,12 @@ class PortfolioOptimizationService:
             trade_summary = {
                 "total_trades": len(trades),
                 "total_trade_value": sum(trade["trade_value"] for trade in trades),
-                "trades": trades
+                "trades": trades,
             }
 
-            logger.info(f"執行 {len(trades)} 筆交易，總交易金額: {trade_summary['total_trade_value']:,.0f}")
+            logger.info(
+                f"執行 {len(trades)} 筆交易，總交易金額: {trade_summary['total_trade_value']:,.0f}"
+            )
 
             return True, "", trade_summary
 

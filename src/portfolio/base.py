@@ -22,11 +22,13 @@ logger = logging.getLogger(__name__)
 
 class PortfolioOptimizationError(Exception):
     """投資組合最佳化錯誤"""
+
     pass
 
 
 class DependencyError(Exception):
     """依賴套件錯誤"""
+
     pass
 
 
@@ -101,10 +103,7 @@ class Portfolio(ABC):
 
     @abstractmethod
     def rebalance(
-        self,
-        weights: Dict[str, float],
-        price_df: pd.DataFrame,
-        frequency: str = "M"
+        self, weights: Dict[str, float], price_df: pd.DataFrame, frequency: str = "M"
     ) -> Dict[str, float]:
         """再平衡投資組合
 
@@ -127,7 +126,7 @@ class Portfolio(ABC):
         price_df: pd.DataFrame,
         start_date=None,
         end_date=None,
-        rebalance_freq: str = "M"
+        rebalance_freq: str = "M",
     ) -> Dict[str, Any]:
         """模擬投資組合表現
 
@@ -366,7 +365,7 @@ class Portfolio(ABC):
         stock_id: str,
         shares: Optional[float] = None,
         day_prices: Optional[pd.DataFrame] = None,
-        close_col: Optional[str] = None
+        close_col: Optional[str] = None,
     ):
         """賣出股票
 
@@ -452,9 +451,7 @@ class Portfolio(ABC):
         annual_volatility = daily_returns.std() * np.sqrt(252)
 
         # 計算夏普比率
-        sharpe_ratio = (
-            annual_return / annual_volatility if annual_volatility else 0
-        )
+        sharpe_ratio = annual_return / annual_volatility if annual_volatility else 0
 
         # 計算最大回撤
         max_drawdown = (equity_curve / equity_curve.cummax() - 1).min()

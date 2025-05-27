@@ -187,10 +187,7 @@ class ExtendedBusinessMetricsCollector:
         )
 
     def update_trading_performance(
-        self,
-        strategy: str,
-        symbol: str,
-        trades: List[Dict[str, Any]]
+        self, strategy: str, symbol: str, trades: List[Dict[str, Any]]
     ) -> None:
         """更新交易效能指標
 
@@ -204,19 +201,21 @@ class ExtendedBusinessMetricsCollector:
                 return
 
             # 計算勝率
-            winning_trades = [t for t in trades if t.get('pnl', 0) > 0]
+            winning_trades = [t for t in trades if t.get("pnl", 0) > 0]
             win_rate = len(winning_trades) / len(trades) * 100
-            self.metrics["win_rate"].labels(
-                strategy=strategy, symbol=symbol
-            ).set(win_rate)
+            self.metrics["win_rate"].labels(strategy=strategy, symbol=symbol).set(
+                win_rate
+            )
 
             # 計算平均持倉時間
             holding_times = []
             for trade in trades:
-                if 'entry_time' in trade and 'exit_time' in trade:
-                    entry_time = datetime.fromisoformat(trade['entry_time'])
-                    exit_time = datetime.fromisoformat(trade['exit_time'])
-                    holding_time = (exit_time - entry_time).total_seconds() / 3600  # 小時
+                if "entry_time" in trade and "exit_time" in trade:
+                    entry_time = datetime.fromisoformat(trade["entry_time"])
+                    exit_time = datetime.fromisoformat(trade["exit_time"])
+                    holding_time = (
+                        exit_time - entry_time
+                    ).total_seconds() / 3600  # 小時
                     holding_times.append(holding_time)
 
             if holding_times:
@@ -227,17 +226,17 @@ class ExtendedBusinessMetricsCollector:
 
             module_logger.debug(
                 "交易效能指標已更新: %s-%s, 勝率: %.2f%%, 平均持倉: %.2f小時",
-                strategy, symbol, win_rate, avg_holding_time if holding_times else 0
+                strategy,
+                symbol,
+                win_rate,
+                avg_holding_time if holding_times else 0,
             )
 
         except Exception as e:
             module_logger.error("更新交易效能指標失敗: %s", e)
 
     def update_portfolio_metrics(
-        self,
-        strategy: str,
-        returns: List[float],
-        period: str = "daily"
+        self, strategy: str, returns: List[float], period: str = "daily"
     ) -> None:
         """更新投資組合指標
 
@@ -274,9 +273,9 @@ class ExtendedBusinessMetricsCollector:
             drawdown = (cumulative_returns - running_max) / running_max
             max_drawdown = np.min(drawdown) * 100  # 轉換為百分比
 
-            self.metrics["max_drawdown"].labels(
-                strategy=strategy, period=period
-            ).set(abs(max_drawdown))
+            self.metrics["max_drawdown"].labels(strategy=strategy, period=period).set(
+                abs(max_drawdown)
+            )
 
             # 計算收益波動率
             volatility = np.std(returns_array) * 100  # 轉換為百分比
@@ -291,7 +290,10 @@ class ExtendedBusinessMetricsCollector:
 
             module_logger.debug(
                 "投資組合指標已更新: %s, 夏普比率: %.3f, 最大回撤: %.2f%%, 波動率: %.2f%%",
-                strategy, sharpe_ratio, abs(max_drawdown), volatility
+                strategy,
+                sharpe_ratio,
+                abs(max_drawdown),
+                volatility,
             )
 
         except Exception as e:
@@ -302,7 +304,7 @@ class ExtendedBusinessMetricsCollector:
         portfolio_returns: List[float],
         positions: Dict[str, float],
         total_capital: float,
-        portfolio: str = "main"
+        portfolio: str = "main",
     ) -> None:
         """更新風險管理指標
 
@@ -320,13 +322,13 @@ class ExtendedBusinessMetricsCollector:
                 var_95 = np.percentile(returns_array, 5) * 100  # 95% VaR
                 var_99 = np.percentile(returns_array, 1) * 100  # 99% VaR
 
-                self.metrics["var_95"].labels(
-                    portfolio=portfolio, period="daily"
-                ).set(abs(var_95))
+                self.metrics["var_95"].labels(portfolio=portfolio, period="daily").set(
+                    abs(var_95)
+                )
 
-                self.metrics["var_99"].labels(
-                    portfolio=portfolio, period="daily"
-                ).set(abs(var_99))
+                self.metrics["var_99"].labels(portfolio=portfolio, period="daily").set(
+                    abs(var_99)
+                )
 
             # 計算部位暴露和集中度風險
             if positions and total_capital > 0:
@@ -343,18 +345,17 @@ class ExtendedBusinessMetricsCollector:
 
                     # 集中度風險
                     concentration = (
-                        abs(value) / total_exposure * 100
-                        if total_exposure > 0 else 0
+                        abs(value) / total_exposure * 100 if total_exposure > 0 else 0
                     )
-                    self.metrics["concentration_risk"].labels(
-                        symbol=symbol
-                    ).set(concentration)
+                    self.metrics["concentration_risk"].labels(symbol=symbol).set(
+                        concentration
+                    )
 
                 # 資金使用率
                 utilization = total_exposure / total_capital * 100
-                self.metrics["capital_utilization"].labels(
-                    portfolio=portfolio
-                ).set(utilization)
+                self.metrics["capital_utilization"].labels(portfolio=portfolio).set(
+                    utilization
+                )
 
                 # 槓桿比率
                 leverage = total_exposure / total_capital
@@ -370,7 +371,7 @@ class ExtendedBusinessMetricsCollector:
         model_name: str,
         feature_data: Dict[str, List[float]],
         predictions: List[float],
-        reference_predictions: List[float]
+        reference_predictions: List[float],
     ) -> None:
         """更新模型漂移指標
 
@@ -395,12 +396,12 @@ class ExtendedBusinessMetricsCollector:
                 if len(predictions) == len(reference_predictions):
                     # 使用均方根誤差作為漂移指標
                     pred_diff = np.array(predictions) - np.array(reference_predictions)
-                    mse = np.mean(pred_diff ** 2)
+                    mse = np.mean(pred_diff**2)
                     drift_score = np.sqrt(mse)
 
-                    self.metrics["prediction_drift"].labels(
-                        model_name=model_name
-                    ).set(drift_score)
+                    self.metrics["prediction_drift"].labels(model_name=model_name).set(
+                        drift_score
+                    )
 
             module_logger.debug("模型漂移指標已更新: %s", model_name)
 
@@ -418,26 +419,34 @@ class ExtendedBusinessMetricsCollector:
                 "trading_performance": {
                     "metrics_count": 5,
                     "metrics": [
-                        "win_rate", "sharpe_ratio", "max_drawdown",
-                        "avg_holding_time", "return_volatility"
-                    ]
+                        "win_rate",
+                        "sharpe_ratio",
+                        "max_drawdown",
+                        "avg_holding_time",
+                        "return_volatility",
+                    ],
                 },
                 "risk_management": {
                     "metrics_count": 6,
                     "metrics": [
-                        "var_95", "var_99", "position_exposure",
-                        "capital_utilization", "leverage_ratio",
-                        "concentration_risk"
-                    ]
+                        "var_95",
+                        "var_99",
+                        "position_exposure",
+                        "capital_utilization",
+                        "leverage_ratio",
+                        "concentration_risk",
+                    ],
                 },
                 "model_drift": {
                     "metrics_count": 4,
                     "metrics": [
-                        "feature_drift", "prediction_drift",
-                        "accuracy_trend", "data_quality"
-                    ]
+                        "feature_drift",
+                        "prediction_drift",
+                        "accuracy_trend",
+                        "data_quality",
+                    ],
                 },
-                "total_metrics": len(self.metrics)
+                "total_metrics": len(self.metrics),
             }
 
             return summary

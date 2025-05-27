@@ -428,7 +428,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         logger.info(
             "清理過期限制器: IP=%d, User=%d, Endpoint=%d",
-            len(expired_ips), len(expired_users), len(expired_endpoints)
+            len(expired_ips),
+            len(expired_users),
+            len(expired_endpoints),
         )
 
 

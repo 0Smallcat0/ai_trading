@@ -20,10 +20,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
     """
 
     def generate_signals(
-        self,
-        sentiment_threshold: float = 0.1,
-        window: int = 7,
-        **kwargs
+        self, sentiment_threshold: float = 0.1, window: int = 7, **kwargs
     ) -> pd.DataFrame:
         """生成新聞情緒策略訊號
 
@@ -37,7 +34,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 訊號資料，包含 'signal' 列，1 表示買入，-1 表示賣出，0 表示持平
         """
-        if not self.validate_data('news'):
+        if not self.validate_data("news"):
             logger.warning(LOG_MSGS["no_news"])
             return pd.DataFrame()
 
@@ -82,10 +79,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         return signals
 
     def generate_sentiment_momentum_signals(
-        self,
-        short_window: int = 3,
-        long_window: int = 14,
-        **kwargs
+        self, short_window: int = 3, long_window: int = 14, **kwargs
     ) -> pd.DataFrame:
         """生成情緒動量訊號
 
@@ -99,7 +93,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 情緒動量訊號
         """
-        if not self.validate_data('news'):
+        if not self.validate_data("news"):
             logger.warning(LOG_MSGS["no_news"])
             return pd.DataFrame()
 
@@ -147,10 +141,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         return signals
 
     def generate_sentiment_reversal_signals(
-        self,
-        extreme_threshold: float = 0.8,
-        window: int = 5,
-        **kwargs
+        self, extreme_threshold: float = 0.8, window: int = 5, **kwargs
     ) -> pd.DataFrame:
         """生成情緒反轉訊號
 
@@ -164,7 +155,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 情緒反轉訊號
         """
-        if not self.validate_data('news'):
+        if not self.validate_data("news"):
             logger.warning(LOG_MSGS["no_news"])
             return pd.DataFrame()
 
@@ -200,10 +191,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         return signals
 
     def generate_news_volume_signals(
-        self,
-        volume_threshold: int = 5,
-        sentiment_threshold: float = 0.2,
-        **kwargs
+        self, volume_threshold: int = 5, sentiment_threshold: float = 0.2, **kwargs
     ) -> pd.DataFrame:
         """生成新聞量情緒訊號
 
@@ -217,7 +205,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 新聞量情緒訊號
         """
-        if not self.validate_data('news'):
+        if not self.validate_data("news"):
             logger.warning(LOG_MSGS["no_news"])
             return pd.DataFrame()
 
@@ -231,21 +219,21 @@ class SentimentSignalGenerator(BaseSignalGenerator):
             stock_news = news_data.loc[stock_id]
 
             # 按日期分組計算新聞數量和平均情緒
-            daily_stats = stock_news.groupby(stock_news.index.date).agg({
-                'sentiment': ['count', 'mean']
-            }).fillna(0)
-
-            daily_stats.columns = ['news_count', 'avg_sentiment']
-
-            # 生成訊號條件
-            high_volume_positive = (
-                (daily_stats['news_count'] >= volume_threshold) &
-                (daily_stats['avg_sentiment'] > sentiment_threshold)
+            daily_stats = (
+                stock_news.groupby(stock_news.index.date)
+                .agg({"sentiment": ["count", "mean"]})
+                .fillna(0)
             )
 
-            high_volume_negative = (
-                (daily_stats['news_count'] >= volume_threshold) &
-                (daily_stats['avg_sentiment'] < -sentiment_threshold)
+            daily_stats.columns = ["news_count", "avg_sentiment"]
+
+            # 生成訊號條件
+            high_volume_positive = (daily_stats["news_count"] >= volume_threshold) & (
+                daily_stats["avg_sentiment"] > sentiment_threshold
+            )
+
+            high_volume_negative = (daily_stats["news_count"] >= volume_threshold) & (
+                daily_stats["avg_sentiment"] < -sentiment_threshold
             )
 
             # 創建訊號
@@ -257,7 +245,9 @@ class SentimentSignalGenerator(BaseSignalGenerator):
             for date, signal in stock_signals.items():
                 mask = stock_news.index.date == date
                 if mask.any():
-                    signals.loc[(stock_id, stock_news[mask].index[0]), "signal"] = signal
+                    signals.loc[(stock_id, stock_news[mask].index[0]), "signal"] = (
+                        signal
+                    )
 
         # 儲存訊號
         self.signals["news_volume"] = signals
@@ -282,20 +272,20 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         Returns:
             pd.DataFrame: 主題情緒訊號
         """
-        if not self.validate_data('news'):
+        if not self.validate_data("news"):
             logger.warning(LOG_MSGS["no_news"])
             return pd.DataFrame()
 
         # 預設主題權重
         if topic_weights is None:
             topic_weights = {
-                '財報': 1.5,
-                '併購': 1.2,
-                '產品': 1.0,
-                '技術': 0.8,
-                '市場': 0.9,
-                '政策': 1.1,
-                '人事': 0.7
+                "財報": 1.5,
+                "併購": 1.2,
+                "產品": 1.0,
+                "技術": 0.8,
+                "市場": 0.9,
+                "政策": 1.1,
+                "人事": 0.7,
             }
 
         signals = pd.DataFrame(index=self.news_data.index)
@@ -304,7 +294,7 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         news_data = self.news_data.copy()
 
         # 確保有主題和情緒欄位
-        required_cols = ['topic', 'sentiment']
+        required_cols = ["topic", "sentiment"]
         if not all(col in news_data.columns for col in required_cols):
             logger.warning("新聞資料缺少必要欄位: %s", required_cols)
             return signals
@@ -317,10 +307,10 @@ class SentimentSignalGenerator(BaseSignalGenerator):
             weighted_sentiment = pd.Series(0.0, index=stock_news.index)
 
             for topic, weight in topic_weights.items():
-                topic_mask = stock_news['topic'] == topic
+                topic_mask = stock_news["topic"] == topic
                 if topic_mask.any():
                     weighted_sentiment[topic_mask] = (
-                        stock_news.loc[topic_mask, 'sentiment'] * weight
+                        stock_news.loc[topic_mask, "sentiment"] * weight
                     )
 
             # 計算移動平均加權情緒
@@ -353,15 +343,21 @@ class SentimentSignalGenerator(BaseSignalGenerator):
         signals_dict["news_sentiment"] = self.generate_signals(**kwargs)
 
         # 生成情緒動量訊號
-        signals_dict["sentiment_momentum"] = self.generate_sentiment_momentum_signals(**kwargs)
+        signals_dict["sentiment_momentum"] = self.generate_sentiment_momentum_signals(
+            **kwargs
+        )
 
         # 生成情緒反轉訊號
-        signals_dict["sentiment_reversal"] = self.generate_sentiment_reversal_signals(**kwargs)
+        signals_dict["sentiment_reversal"] = self.generate_sentiment_reversal_signals(
+            **kwargs
+        )
 
         # 生成新聞量情緒訊號
         signals_dict["news_volume"] = self.generate_news_volume_signals(**kwargs)
 
         # 生成主題情緒訊號
-        signals_dict["topic_sentiment"] = self.generate_topic_sentiment_signals(**kwargs)
+        signals_dict["topic_sentiment"] = self.generate_topic_sentiment_signals(
+            **kwargs
+        )
 
         return signals_dict

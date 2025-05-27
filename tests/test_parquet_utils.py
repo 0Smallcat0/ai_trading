@@ -41,7 +41,7 @@ from src.database.parquet_utils import (
     load_from_shard,
     ParquetError,
     ParquetConfigError,
-    ParquetOperationError
+    ParquetOperationError,
 )
 
 
@@ -259,13 +259,13 @@ class TestParquetExceptions:
 
     def test_parquet_config_error_empty_file_path(self):
         """測試空檔案路徑配置錯誤"""
-        df = pd.DataFrame({'a': [1, 2, 3]})
+        df = pd.DataFrame({"a": [1, 2, 3]})
         with pytest.raises(ParquetConfigError, match="檔案路徑不能為空"):
             save_to_parquet(df, "")
 
     def test_parquet_config_error_invalid_compression(self):
         """測試無效壓縮格式配置錯誤"""
-        df = pd.DataFrame({'a': [1, 2, 3]})
+        df = pd.DataFrame({"a": [1, 2, 3]})
         with pytest.raises(ParquetConfigError, match="不支援的壓縮格式"):
             save_to_parquet(df, "test.parquet", compression="invalid")
 
@@ -282,10 +282,10 @@ class TestParquetExceptions:
     def test_exception_chaining(self):
         """測試異常鏈追蹤機制"""
         # 模擬內部異常
-        with patch('src.database.parquet_utils.pa.Table.from_pandas') as mock_table:
+        with patch("src.database.parquet_utils.pa.Table.from_pandas") as mock_table:
             mock_table.side_effect = Exception("內部錯誤")
 
-            df = pd.DataFrame({'a': [1, 2, 3]})
+            df = pd.DataFrame({"a": [1, 2, 3]})
             with pytest.raises(ParquetOperationError) as exc_info:
                 save_to_parquet(df, "test.parquet")
 
@@ -301,14 +301,16 @@ class TestArrowOperations:
         """測試 Arrow 儲存和讀取"""
         with tempfile.TemporaryDirectory() as temp_dir:
             # 創建測試資料
-            df = pd.DataFrame({
-                'id': [1, 2, 3],
-                'name': ['Alice', 'Bob', 'Charlie'],
-                'score': [95.5, 87.2, 92.8]
-            })
+            df = pd.DataFrame(
+                {
+                    "id": [1, 2, 3],
+                    "name": ["Alice", "Bob", "Charlie"],
+                    "score": [95.5, 87.2, 92.8],
+                }
+            )
 
             # 測試儲存
-            file_path = os.path.join(temp_dir, 'test.feather')
+            file_path = os.path.join(temp_dir, "test.feather")
             saved_path = save_to_arrow(df, file_path, compression="lz4")
 
             assert saved_path == file_path
@@ -318,18 +320,18 @@ class TestArrowOperations:
             loaded_df = read_from_arrow(file_path)
 
             assert len(loaded_df) == 3
-            assert list(loaded_df.columns) == ['id', 'name', 'score']
-            assert loaded_df['name'].tolist() == ['Alice', 'Bob', 'Charlie']
+            assert list(loaded_df.columns) == ["id", "name", "score"]
+            assert loaded_df["name"].tolist() == ["Alice", "Bob", "Charlie"]
 
     def test_arrow_compression_formats(self):
         """測試 Arrow 壓縮格式"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            df = pd.DataFrame({'x': list(range(100)), 'y': list(range(100, 200))})
+            df = pd.DataFrame({"x": list(range(100)), "y": list(range(100, 200))})
 
             formats = ["lz4", "zstd", "uncompressed"]
 
             for compression in formats:
-                file_path = os.path.join(temp_dir, f'test_{compression}.feather')
+                file_path = os.path.join(temp_dir, f"test_{compression}.feather")
 
                 # 測試儲存
                 saved_path = save_to_arrow(df, file_path, compression=compression)
@@ -338,11 +340,11 @@ class TestArrowOperations:
                 # 測試讀取
                 loaded_df = read_from_arrow(saved_path)
                 assert len(loaded_df) == 100
-                assert loaded_df['x'].tolist() == list(range(100))
+                assert loaded_df["x"].tolist() == list(range(100))
 
     def test_arrow_config_errors(self):
         """測試 Arrow 配置錯誤"""
-        df = pd.DataFrame({'a': [1, 2, 3]})
+        df = pd.DataFrame({"a": [1, 2, 3]})
 
         # 測試無效壓縮格式
         with pytest.raises(ParquetConfigError, match="Arrow 格式不支援的壓縮格式"):
@@ -360,13 +362,15 @@ class TestParquetPerformance:
         """測試大型 DataFrame 效能"""
         with tempfile.TemporaryDirectory() as temp_dir:
             # 創建大型測試資料
-            large_df = pd.DataFrame({
-                'id': list(range(10000)),
-                'value': list(range(10000, 20000)),
-                'category': ['A', 'B', 'C'] * (10000 // 3 + 1)
-            })[:10000]
+            large_df = pd.DataFrame(
+                {
+                    "id": list(range(10000)),
+                    "value": list(range(10000, 20000)),
+                    "category": ["A", "B", "C"] * (10000 // 3 + 1),
+                }
+            )[:10000]
 
-            file_path = os.path.join(temp_dir, 'large_data.parquet')
+            file_path = os.path.join(temp_dir, "large_data.parquet")
 
             # 測試儲存效能
             start_time = time.time()
@@ -386,13 +390,15 @@ class TestParquetPerformance:
     def test_concurrent_operations(self):
         """測試並發操作"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            df = pd.DataFrame({'data': list(range(1000))})
+            df = pd.DataFrame({"data": list(range(1000))})
             results = []
             errors = []
 
             def worker(worker_id):
                 try:
-                    file_path = os.path.join(temp_dir, f'concurrent_{worker_id}.parquet')
+                    file_path = os.path.join(
+                        temp_dir, f"concurrent_{worker_id}.parquet"
+                    )
                     save_to_parquet(df, file_path)
                     loaded_df = read_from_parquet(file_path)
                     results.append(len(loaded_df))
@@ -428,33 +434,37 @@ class TestParquetIntegration:
                 shard_key="date",
                 shard_id="parquet_integration_shard",
                 start_date=date(2024, 1, 1),
-                end_date=date(2024, 1, 31)
+                end_date=date(2024, 1, 31),
             )
 
             session.add(shard)
             session.commit()
 
             # 驗證 file_format 預設值
-            assert shard.file_format == 'parquet'
+            assert shard.file_format == "parquet"
 
             # 測試查詢功能
-            query = session.query(DataShard).filter_by(shard_id="parquet_integration_shard")
+            query = session.query(DataShard).filter_by(
+                shard_id="parquet_integration_shard"
+            )
             result = query.first()
             assert result is not None
-            assert result.file_format == 'parquet'
+            assert result.file_format == "parquet"
 
     def test_load_from_shard_with_arrow_format(self, temp_db):
         """測試從 Arrow 格式分片載入資料"""
         with tempfile.TemporaryDirectory() as temp_dir:
             with Session(temp_db) as session:
                 # 創建測試資料並儲存為 Arrow 格式
-                test_df = pd.DataFrame({
-                    'symbol': ['TEST.TW'],
-                    'date': [date(2024, 1, 1)],
-                    'close': [100.0]
-                })
+                test_df = pd.DataFrame(
+                    {
+                        "symbol": ["TEST.TW"],
+                        "date": [date(2024, 1, 1)],
+                        "close": [100.0],
+                    }
+                )
 
-                file_path = os.path.join(temp_dir, 'test_shard.feather')
+                file_path = os.path.join(temp_dir, "test_shard.feather")
                 save_to_arrow(test_df, file_path)
 
                 # 創建分片記錄
@@ -465,7 +475,7 @@ class TestParquetIntegration:
                     start_date=date(2024, 1, 1),
                     end_date=date(2024, 1, 1),
                     file_path=file_path,
-                    file_format="arrow"
+                    file_format="arrow",
                 )
 
                 session.add(shard)
@@ -475,5 +485,5 @@ class TestParquetIntegration:
                 loaded_df = load_from_shard(session, "test_arrow_shard")
 
                 assert len(loaded_df) == 1
-                assert loaded_df['symbol'].iloc[0] == 'TEST.TW'
-                assert loaded_df['close'].iloc[0] == 100.0
+                assert loaded_df["symbol"].iloc[0] == "TEST.TW"
+                assert loaded_df["close"].iloc[0] == 100.0

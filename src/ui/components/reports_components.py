@@ -49,10 +49,7 @@ except ImportError as e:
             return default_height
 
         def create_responsive_columns(
-            self,
-            desktop_cols: int = 3,
-            tablet_cols: int = 2,
-            mobile_cols: int = 1
+            self, desktop_cols: int = 3, tablet_cols: int = 2, mobile_cols: int = 1
         ) -> List[Any]:
             """創建響應式列"""
             del tablet_cols, mobile_cols  # 避免未使用變數警告
@@ -396,7 +393,7 @@ class ReportsComponents:
         """匯出 CSV"""
         try:
             csv_data = data.to_csv(index=False, encoding="utf-8-sig")
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{filename_prefix}_{timestamp}.csv"
             st.download_button(
                 label="下載 CSV 檔案",
@@ -419,11 +416,10 @@ class ReportsComponents:
 
             excel_data = output.getvalue()
 
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{filename_prefix}_{timestamp}.xlsx"
             mime_type = (
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
+                "application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"
             )
             st.download_button(
                 label="下載 Excel 檔案",
@@ -440,7 +436,7 @@ class ReportsComponents:
         """匯出 JSON"""
         try:
             json_data = data.to_json(orient="records", force_ascii=False, indent=2)
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{filename_prefix}_{timestamp}.json"
             st.download_button(
                 label="下載 JSON 檔案",
@@ -525,7 +521,7 @@ class ReportsComponents:
                         "type": report_type,
                         "schedule": schedule_type,
                         "time": send_time,
-                        "recipients": recipients
+                        "recipients": recipients,
                     }
                     st.success(f"排程報表 '{config['name']}' 已新增")
 

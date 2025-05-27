@@ -88,9 +88,7 @@ class BacktestServiceRefactored:
         return self.config_manager.validate_config(config)
 
     def start_backtest(
-        self,
-        config: BacktestConfig,
-        progress_callback: Callable = None
+        self, config: BacktestConfig, progress_callback: Callable = None
     ) -> str:
         """啟動回測
 
@@ -162,11 +160,18 @@ class BacktestServiceRefactored:
             result = {
                 "backtest_id": backtest_id,
                 "metrics": {
-                    key: run_info.get(key) for key in [
-                        "initial_capital", "final_capital", "total_return",
-                        "annual_return", "sharpe_ratio", "max_drawdown",
-                        "win_rate", "total_trades"
-                    ] if key in run_info
+                    key: run_info.get(key)
+                    for key in [
+                        "initial_capital",
+                        "final_capital",
+                        "total_return",
+                        "annual_return",
+                        "sharpe_ratio",
+                        "max_drawdown",
+                        "win_rate",
+                        "total_trades",
+                    ]
+                    if key in run_info
                 },
                 "trades": trades,
                 "equity_curve": [],  # 需要從其他地方重建
@@ -180,10 +185,7 @@ class BacktestServiceRefactored:
             return None
 
     def get_backtest_list(
-        self,
-        limit: int = 50,
-        offset: int = 0,
-        status_filter: str = None
+        self, limit: int = 50, offset: int = 0, status_filter: str = None
     ) -> List[Dict[str, Any]]:
         """獲取回測列表
 
@@ -223,9 +225,7 @@ class BacktestServiceRefactored:
             return False
 
     def export_results(
-        self,
-        backtest_id: str,
-        export_format: str = "json"
+        self, backtest_id: str, export_format: str = "json"
     ) -> Optional[bytes]:
         """匯出回測結果
 

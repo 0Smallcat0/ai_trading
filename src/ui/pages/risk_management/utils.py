@@ -20,7 +20,9 @@ import pandas as pd
 import numpy as np
 
 # 添加項目根目錄到 Python 路徑
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+project_root = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
@@ -297,10 +299,16 @@ def validate_risk_parameters(params: Dict[str, Any]) -> List[str]:
             errors.append(f"缺少必要參數: {param}")
 
     # 檢查數值範圍
-    if params.get("stop_loss_percent", 0) <= 0 or params.get("stop_loss_percent", 0) > 50:
+    if (
+        params.get("stop_loss_percent", 0) <= 0
+        or params.get("stop_loss_percent", 0) > 50
+    ):
         errors.append("停損百分比必須在 0-50% 之間")
 
-    if params.get("max_position_size", 0) <= 0 or params.get("max_position_size", 0) > 100:
+    if (
+        params.get("max_position_size", 0) <= 0
+        or params.get("max_position_size", 0) > 100
+    ):
         errors.append("最大部位大小必須在 0-100% 之間")
 
     return errors

@@ -12,8 +12,11 @@ from fastapi import APIRouter, HTTPException, Path, status
 from src.api.models.responses import APIResponse, COMMON_RESPONSES
 from src.core.trade_execution_service import TradeExecutionService
 from .models import (
-    BatchOrderRequest, TradingModeRequest, OrderResponse,
-    TradeExecutionResponse, TradingStatusResponse
+    BatchOrderRequest,
+    TradingModeRequest,
+    OrderResponse,
+    TradeExecutionResponse,
+    TradingStatusResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,8 +55,7 @@ async def cancel_order(order_id: str = Path(..., description="訂單 ID")):
         existing_order = trade_service.get_order_details(order_id)
         if not existing_order:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"訂單 {order_id} 不存在"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"訂單 {order_id} 不存在"
             )
 
         # 檢查訂單狀態是否可取消
@@ -76,11 +78,7 @@ async def cancel_order(order_id: str = Path(..., description="訂單 ID")):
         cancelled_order = trade_service.get_order_details(order_id)
         response_data = _convert_to_order_response(cancelled_order)
 
-        return APIResponse(
-            success=True,
-            message="訂單取消成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="訂單取消成功", data=response_data)
 
     except HTTPException:
         raise
@@ -133,19 +131,21 @@ async def create_batch_orders(request: BatchOrderRequest):
                 try:
                     # 驗證訂單（不實際創建）
                     order_data = _build_order_data_from_request(order_request)
-                    is_valid, validation_message = trade_service.validate_order(order_data)
+                    is_valid, validation_message = trade_service.validate_order(
+                        order_data
+                    )
 
                     if not is_valid:
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"批量訂單創建失敗（全部執行或全部不執行模式），"
-                                   f"第 {i + 1} 個訂單驗證失敗: {validation_message}",
+                            f"第 {i + 1} 個訂單驗證失敗: {validation_message}",
                         )
                 except Exception as order_error:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"批量訂單創建失敗（全部執行或全部不執行模式），"
-                               f"第 {i + 1} 個訂單異常: {str(order_error)}",
+                        f"第 {i + 1} 個訂單異常: {str(order_error)}",
                     ) from order_error
 
         # 創建所有訂單
@@ -159,18 +159,18 @@ async def create_batch_orders(request: BatchOrderRequest):
                     if order_details:
                         created_orders.append(_convert_to_order_response(order_details))
                 else:
-                    failed_orders.append({
-                        "index": i + 1,
-                        "error": message,
-                        "order_data": order_data
-                    })
+                    failed_orders.append(
+                        {"index": i + 1, "error": message, "order_data": order_data}
+                    )
 
             except Exception as order_error:
-                failed_orders.append({
-                    "index": i + 1,
-                    "error": str(order_error),
-                    "order_data": order_request.dict()
-                })
+                failed_orders.append(
+                    {
+                        "index": i + 1,
+                        "error": str(order_error),
+                        "order_data": order_request.dict(),
+                    }
+                )
 
         # 處理結果
         if request.execute_all_or_none and failed_orders:
@@ -192,7 +192,7 @@ async def create_batch_orders(request: BatchOrderRequest):
         return APIResponse(
             success=True,
             message=f"批量訂單創建完成，成功: {len(created_orders)}，失敗: {len(failed_orders)}",
-            data=created_orders
+            data=created_orders,
         )
 
     except HTTPException:
@@ -251,9 +251,7 @@ async def switch_trading_mode(request: TradingModeRequest):
 
         mode_text = "模擬交易" if request.is_simulation else "實盤交易"
         return APIResponse(
-            success=True,
-            message=f"已切換至{mode_text}模式",
-            data=response_data
+            success=True, message=f"已切換至{mode_text}模式", data=response_data
         )
 
     except HTTPException:
@@ -289,11 +287,7 @@ async def get_trading_status():
         trading_status = trade_service.get_trading_status()
         response_data = _convert_to_trading_status_response(trading_status)
 
-        return APIResponse(
-            success=True,
-            message="交易狀態獲取成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="交易狀態獲取成功", data=response_data)
 
     except Exception as e:
         logger.error("獲取交易狀態失敗: %s", e)
@@ -343,7 +337,8 @@ def _convert_to_order_response(order_details: dict):
         action=order_details["action"],
         quantity=order_details["quantity"],
         filled_quantity=order_details.get("filled_quantity", 0),
-        remaining_quantity=order_details["quantity"] - order_details.get("filled_quantity", 0),
+        remaining_quantity=order_details["quantity"]
+        - order_details.get("filled_quantity", 0),
         order_type=order_details["order_type"],
         price=order_details.get("price"),
         stop_price=order_details.get("stop_price"),

@@ -85,7 +85,7 @@ class PrometheusCollectorBase(ABC):
             self._collection_thread = threading.Thread(
                 target=self._collection_loop,
                 daemon=True,
-                name=f"{self.__class__.__name__}Thread"
+                name=f"{self.__class__.__name__}Thread",
             )
             self._collection_thread.start()
 

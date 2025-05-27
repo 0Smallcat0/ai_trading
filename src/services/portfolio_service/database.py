@@ -191,9 +191,7 @@ class PortfolioDatabaseService:
             return False
 
     def update_holdings(
-        self,
-        portfolio_id: str,
-        holdings: List[PortfolioHolding]
+        self, portfolio_id: str, holdings: List[PortfolioHolding]
     ) -> bool:
         """更新投資組合持倉
 
@@ -211,7 +209,7 @@ class PortfolioDatabaseService:
                 # 刪除舊的持倉記錄
                 cursor.execute(
                     "DELETE FROM portfolio_holdings WHERE portfolio_id = ?",
-                    (portfolio_id,)
+                    (portfolio_id,),
                 )
 
                 # 插入新的持倉記錄
@@ -256,11 +254,7 @@ class PortfolioDatabaseService:
             logger.error(f"更新持倉失敗: {e}")
             return False
 
-    def get_adjustment_history(
-        self,
-        portfolio_id: str,
-        limit: int = 50
-    ) -> List[Dict]:
+    def get_adjustment_history(self, portfolio_id: str, limit: int = 50) -> List[Dict]:
         """獲取調整歷史
 
         Args:
@@ -310,9 +304,7 @@ class PortfolioDatabaseService:
             return []
 
     def export_portfolio_data(
-        self,
-        portfolio_id: str,
-        include_history: bool = True
+        self, portfolio_id: str, include_history: bool = True
     ) -> Dict[str, Any]:
         """匯出投資組合資料
 
@@ -349,7 +341,9 @@ class PortfolioDatabaseService:
 
             # 如果需要包含歷史記錄
             if include_history:
-                export_data["adjustment_history"] = self.get_adjustment_history(portfolio_id)
+                export_data["adjustment_history"] = self.get_adjustment_history(
+                    portfolio_id
+                )
 
             return export_data
 
@@ -358,9 +352,7 @@ class PortfolioDatabaseService:
             return {"error": f"匯出失敗: {e}"}
 
     def import_portfolio_data(
-        self,
-        import_data: Dict[str, Any],
-        overwrite: bool = False
+        self, import_data: Dict[str, Any], overwrite: bool = False
     ) -> Optional[str]:
         """匯入投資組合資料
 
@@ -445,11 +437,15 @@ class PortfolioDatabaseService:
                 total_portfolios = cursor.fetchone()[0]
 
                 # 總市值
-                cursor.execute("SELECT SUM(total_value) FROM portfolios WHERE is_active = 1")
+                cursor.execute(
+                    "SELECT SUM(total_value) FROM portfolios WHERE is_active = 1"
+                )
                 total_value = cursor.fetchone()[0] or 0
 
                 # 平均市值
-                avg_value = total_value / total_portfolios if total_portfolios > 0 else 0
+                avg_value = (
+                    total_value / total_portfolios if total_portfolios > 0 else 0
+                )
 
                 # 最近創建的投資組合
                 cursor.execute(
@@ -462,8 +458,7 @@ class PortfolioDatabaseService:
                 """
                 )
                 recent_portfolios = [
-                    {"name": row[0], "created_at": row[1]}
-                    for row in cursor.fetchall()
+                    {"name": row[0], "created_at": row[1]} for row in cursor.fetchall()
                 ]
 
                 return {

@@ -36,7 +36,7 @@ from .hyperparameter_optimization.grid_search import GridSearchOptimizer
 from .hyperparameter_optimization.utils import (
     validate_param_grid,
     log_tuning_params,
-    save_results
+    save_results,
 )
 
 # 設定日誌
@@ -46,6 +46,7 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 # 檢查 Optuna 是否可用
 try:
     import optuna
+
     OPTUNA_AVAILABLE = True
 except ImportError:
     OPTUNA_AVAILABLE = False
@@ -147,11 +148,7 @@ class HyperparameterTuner:
         self.run_id: Optional[str] = None
 
     def grid_search(
-        self,
-        X: pd.DataFrame,
-        y: pd.Series,
-        log_to_mlflow: bool = True,
-        **kwargs: Any
+        self, X: pd.DataFrame, y: pd.Series, log_to_mlflow: bool = True, **kwargs: Any
     ) -> Dict[str, Any]:
         """
         執行網格搜索超參數調優 (向後兼容方法)
@@ -178,7 +175,7 @@ class HyperparameterTuner:
             tracking_uri=self.tracking_uri,
             scoring=self.scoring,
             cv=self.cv,
-            n_jobs=self.n_jobs
+            n_jobs=self.n_jobs,
         )
 
         results = optimizer.optimize(X, y, log_to_mlflow=log_to_mlflow, **kwargs)
@@ -197,7 +194,7 @@ class HyperparameterTuner:
         y: pd.Series,
         n_iter: int = 10,
         log_to_mlflow: bool = True,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         執行隨機搜索超參數調優 (向後兼容方法)
@@ -241,7 +238,7 @@ class HyperparameterTuner:
                     self.param_grid,
                     self.cv,
                     self.scoring,
-                    n_iter=n_iter
+                    n_iter=n_iter,
                 )
 
             random_search.fit(X, y)
@@ -251,7 +248,9 @@ class HyperparameterTuner:
             self.results = pd.DataFrame(random_search.cv_results_)
 
             if log_to_mlflow:
-                save_results(self.results, self.best_params, self.best_score, "random_search")
+                save_results(
+                    self.results, self.best_params, self.best_score, "random_search"
+                )
                 mlflow.end_run()
 
             return {
@@ -273,7 +272,7 @@ class HyperparameterTuner:
         y: pd.Series,  # pylint: disable=unused-argument
         n_trials: int = 100,  # pylint: disable=unused-argument
         log_to_mlflow: bool = True,  # pylint: disable=unused-argument
-        **kwargs: Any  # pylint: disable=unused-argument
+        **kwargs: Any,  # pylint: disable=unused-argument
     ) -> Dict[str, Any]:
         """
         執行貝葉斯優化 (向後兼容方法)

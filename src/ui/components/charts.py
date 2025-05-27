@@ -14,6 +14,7 @@ import plotly.express as px
 # 條件導入 streamlit
 try:
     import streamlit as st
+
     HAS_STREAMLIT = True
 except ImportError:
     HAS_STREAMLIT = False
@@ -38,6 +39,7 @@ except ImportError:
 @dataclass
 class ChartConfig:
     """圖表配置類"""
+
     title: str = "圖表"
     height: int = 400
     width: Optional[int] = None
@@ -49,6 +51,7 @@ class ChartConfig:
 @dataclass
 class CandlestickConfig(ChartConfig):
     """K線圖配置類"""
+
     open_col: str = "開盤價"
     high_col: str = "最高價"
     low_col: str = "最低價"
@@ -63,7 +66,7 @@ def line_chart(
     data: pd.DataFrame,
     x: Optional[str] = None,
     y: Optional[Union[str, List[str]]] = None,
-    config: Optional[ChartConfig] = None
+    config: Optional[ChartConfig] = None,
 ) -> go.Figure:
     """繪製折線圖
 
@@ -87,8 +90,7 @@ def line_chart(
             raise ValueError("數據不能為空")
 
         fig = px.line(
-            data, x=x, y=y, title=config.title,
-            height=config.height, width=config.width
+            data, x=x, y=y, title=config.title, height=config.height, width=config.width
         )
         fig.update_layout(
             xaxis_title=x,
@@ -110,7 +112,7 @@ def bar_chart(
     x: Optional[str] = None,
     y: Optional[Union[str, List[str]]] = None,
     color: Optional[str] = None,
-    config: Optional[ChartConfig] = None
+    config: Optional[ChartConfig] = None,
 ) -> go.Figure:
     """繪製柱狀圖
 
@@ -135,8 +137,13 @@ def bar_chart(
             raise ValueError("數據不能為空")
 
         fig = px.bar(
-            data, x=x, y=y, title=config.title,
-            height=config.height, width=config.width, color=color
+            data,
+            x=x,
+            y=y,
+            title=config.title,
+            height=config.height,
+            width=config.width,
+            color=color,
         )
         fig.update_layout(
             xaxis_title=x,
@@ -154,8 +161,7 @@ def bar_chart(
 
 
 def candlestick_chart(
-    data: pd.DataFrame,
-    config: Optional[CandlestickConfig] = None
+    data: pd.DataFrame, config: Optional[CandlestickConfig] = None
 ) -> go.Figure:
     """繪製K線圖
 
@@ -177,8 +183,11 @@ def candlestick_chart(
 
         # 檢查必要欄位
         required_cols = [
-            config.date_col, config.open_col, config.high_col,
-            config.low_col, config.close_col
+            config.date_col,
+            config.open_col,
+            config.high_col,
+            config.low_col,
+            config.close_col,
         ]
         missing_cols = [col for col in required_cols if col not in data.columns]
         if missing_cols:
@@ -214,8 +223,10 @@ def candlestick_chart(
             # 設置雙Y軸
             fig.update_layout(
                 yaxis2={
-                    "title": "成交量", "overlaying": "y",
-                    "side": "right", "showgrid": False
+                    "title": "成交量",
+                    "overlaying": "y",
+                    "side": "right",
+                    "showgrid": False,
                 }
             )
 
@@ -243,7 +254,7 @@ def pie_chart(
     data: pd.DataFrame,
     names: Optional[str] = None,
     values: Optional[str] = None,
-    config: Optional[ChartConfig] = None
+    config: Optional[ChartConfig] = None,
 ) -> go.Figure:
     """繪製圓餅圖
 
@@ -267,13 +278,15 @@ def pie_chart(
             raise ValueError("數據不能為空")
 
         fig = px.pie(
-            data, names=names, values=values, title=config.title,
-            height=config.height, width=config.width
+            data,
+            names=names,
+            values=values,
+            title=config.title,
+            height=config.height,
+            width=config.width,
         )
         fig.update_layout(
-            legend_title="類別",
-            template=config.template,
-            showlegend=config.show_legend
+            legend_title="類別", template=config.template, showlegend=config.show_legend
         )
         st.plotly_chart(fig, use_container_width=config.use_container_width)
         return fig
@@ -283,10 +296,7 @@ def pie_chart(
         raise ValueError("圓餅圖生成失敗") from e
 
 
-def heatmap(
-    data: pd.DataFrame,
-    config: Optional[ChartConfig] = None
-) -> go.Figure:
+def heatmap(data: pd.DataFrame, config: Optional[ChartConfig] = None) -> go.Figure:
     """繪製熱力圖
 
     Args:
@@ -307,13 +317,9 @@ def heatmap(
             raise ValueError("數據不能為空")
 
         fig = px.imshow(
-            data, title=config.title,
-            height=config.height, width=config.width
+            data, title=config.title, height=config.height, width=config.width
         )
-        fig.update_layout(
-            template=config.template,
-            showlegend=config.show_legend
-        )
+        fig.update_layout(template=config.template, showlegend=config.show_legend)
         st.plotly_chart(fig, use_container_width=config.use_container_width)
         return fig
     except Exception as e:

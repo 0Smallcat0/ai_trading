@@ -40,12 +40,13 @@ class ParallelDownloader:
         # 初始化速率限制器
         try:
             from src.core.rate_limiter import AdaptiveRateLimiter
+
             self.rate_limiter = AdaptiveRateLimiter(
                 max_calls=60,
                 period=60,
                 retry_count=config.retry_attempts,
                 retry_backoff=2.0,
-                jitter=0.1
+                jitter=0.1,
             )
         except ImportError:
             logger.warning("Rate limiter not available, proceeding without it")
@@ -81,17 +82,14 @@ class ParallelDownloader:
         time_chunks = self._split_date_range_optimized(start_date, end_date)
 
         logger.info(
-            "開始分時段平行下載：%d 個股票，%d 個時間段",
-            len(symbols), len(time_chunks)
+            "開始分時段平行下載：%d 個股票，%d 個時間段", len(symbols), len(time_chunks)
         )
 
         # 創建下載任務
         download_tasks = self._create_download_tasks(symbols, time_chunks)
 
         # 並行下載
-        return self._execute_parallel_download(
-            download_tasks, show_progress
-        )
+        return self._execute_parallel_download(download_tasks, show_progress)
 
     def _normalize_symbols(self, symbols: Union[str, List[str]]) -> List[str]:
         """標準化股票代碼列表。"""
@@ -99,19 +97,14 @@ class ParallelDownloader:
             return [symbols]
         return symbols
 
-    def _normalize_date(
-        self, date: Union[str, datetime.date]
-    ) -> datetime.date:
+    def _normalize_date(self, date: Union[str, datetime.date]) -> datetime.date:
         """標準化日期格式。"""
         if isinstance(date, str):
             return datetime.datetime.strptime(date, "%Y-%m-%d").date()
         return date
 
     def _initialize_progress(
-        self,
-        symbols: List[str],
-        start_date: datetime.date,
-        end_date: datetime.date
+        self, symbols: List[str], start_date: datetime.date, end_date: datetime.date
     ) -> None:
         """初始化進度追蹤。"""
         if not self.config.enable_progress_tracking:
@@ -119,8 +112,7 @@ class ParallelDownloader:
 
         with self.progress_lock:
             self.progress = DownloadProgress(
-                total_symbols=len(symbols),
-                start_time=datetime.datetime.now()
+                total_symbols=len(symbols), start_time=datetime.datetime.now()
             )
 
     def _split_date_range_optimized(
@@ -146,15 +138,13 @@ class ParallelDownloader:
 
         while current_date <= end_date:
             chunk_end = min(
-                current_date + datetime.timedelta(days=chunk_size - 1),
-                end_date
+                current_date + datetime.timedelta(days=chunk_size - 1), end_date
             )
             chunks.append((current_date, chunk_end))
             current_date = chunk_end + datetime.timedelta(days=1)
 
         logger.debug(
-            "時間範圍 %s 到 %s 分割為 %d 個分塊",
-            start_date, end_date, len(chunks)
+            "時間範圍 %s 到 %s 分割為 %d 個分塊", start_date, end_date, len(chunks)
         )
         return chunks
 
@@ -174,9 +164,7 @@ class ParallelDownloader:
         return min(chunk_size, self.config.chunk_size)
 
     def _create_download_tasks(
-        self,
-        symbols: List[str],
-        time_chunks: List[Tuple[datetime.date, datetime.date]]
+        self, symbols: List[str], time_chunks: List[Tuple[datetime.date, datetime.date]]
     ) -> List[Tuple[str, datetime.date, datetime.date]]:
         """創建下載任務列表。"""
         download_tasks = []
@@ -194,7 +182,7 @@ class ParallelDownloader:
     def _execute_parallel_download(
         self,
         download_tasks: List[Tuple[str, datetime.date, datetime.date]],
-        show_progress: bool
+        show_progress: bool,
     ) -> Dict[str, pd.DataFrame]:
         """執行並行下載。"""
         results = {}
@@ -204,19 +192,14 @@ class ParallelDownloader:
         progress_bar = None
         if show_progress and self.config.enable_progress_tracking:
             progress_bar = tqdm(
-                total=len(download_tasks),
-                desc="下載歷史資料",
-                unit="chunk"
+                total=len(download_tasks), desc="下載歷史資料", unit="chunk"
             )
 
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
             # 提交所有任務
             future_to_task = {
                 executor.submit(
-                    self._download_chunk_with_retry,
-                    symbol,
-                    chunk_start,
-                    chunk_end
+                    self._download_chunk_with_retry, symbol, chunk_start, chunk_end
                 ): (symbol, chunk_start, chunk_end)
                 for symbol, chunk_start, chunk_end in download_tasks
             }
@@ -230,9 +213,7 @@ class ParallelDownloader:
 
                     if chunk_data is not None and not chunk_data.empty:
                         # 合併數據
-                        results = self._merge_chunk_data(
-                            results, symbol, chunk_data
-                        )
+                        results = self._merge_chunk_data(results, symbol, chunk_data)
 
                     # 更新進度
                     self._update_progress(progress_bar)
@@ -240,7 +221,10 @@ class ParallelDownloader:
                 except Exception as exc:
                     logger.error(
                         "下載 %s 時間段 %s-%s 失敗: %s",
-                        symbol, chunk_start, chunk_end, exc
+                        symbol,
+                        chunk_start,
+                        chunk_end,
+                        exc,
                     )
                     failed_tasks.append((symbol, chunk_start, chunk_end))
                     self._update_progress(progress_bar, failed=True)
@@ -255,16 +239,14 @@ class ParallelDownloader:
         total_records = sum(len(df) for df in results.values())
         logger.info(
             "分時段平行下載完成：成功下載 %d 個股票，共 %d 筆記錄",
-            len(results), total_records
+            len(results),
+            total_records,
         )
 
         return results
 
     def _merge_chunk_data(
-        self,
-        results: Dict[str, pd.DataFrame],
-        symbol: str,
-        chunk_data: pd.DataFrame
+        self, results: Dict[str, pd.DataFrame], symbol: str, chunk_data: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         """合併分塊數據。"""
         if symbol not in results:
@@ -274,7 +256,7 @@ class ParallelDownloader:
             results[symbol] = results[symbol].sort_index()
             # 移除重複的索引
             results[symbol] = results[symbol][
-                ~results[symbol].index.duplicated(keep='first')
+                ~results[symbol].index.duplicated(keep="first")
             ]
         return results
 
@@ -342,30 +324,30 @@ class ParallelDownloader:
 
                 if symbol in data and not data[symbol].empty:
                     logger.debug(
-                        "成功下載 %s 的數據：%s 到 %s",
-                        symbol, start_date, end_date
+                        "成功下載 %s 的數據：%s 到 %s", symbol, start_date, end_date
                     )
                     return data[symbol]
 
                 logger.warning(
-                    "下載 %s 的數據為空：%s 到 %s",
-                    symbol, start_date, end_date
+                    "下載 %s 的數據為空：%s 到 %s", symbol, start_date, end_date
                 )
                 return pd.DataFrame()
 
             except Exception as exc:
                 logger.warning(
                     "下載 %s 數據失敗 (嘗試 %d/%d): %s",
-                    symbol, attempt + 1, self.config.retry_attempts, exc
+                    symbol,
+                    attempt + 1,
+                    self.config.retry_attempts,
+                    exc,
                 )
                 if attempt < self.config.retry_attempts - 1:
                     # 指數退避
-                    wait_time = self.config.retry_delay * (2 ** attempt)
+                    wait_time = self.config.retry_delay * (2**attempt)
                     time.sleep(wait_time)
                 else:
                     logger.error(
-                        "下載 %s 數據最終失敗：%s 到 %s",
-                        symbol, start_date, end_date
+                        "下載 %s 數據最終失敗：%s 到 %s", symbol, start_date, end_date
                     )
 
         return None

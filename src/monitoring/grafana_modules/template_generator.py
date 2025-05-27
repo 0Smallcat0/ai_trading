@@ -21,9 +21,7 @@ class TemplateGenerator:
     """
 
     def __init__(
-        self,
-        default_time_range: Dict[str, str] = None,
-        default_refresh: str = "30s"
+        self, default_time_range: Dict[str, str] = None, default_refresh: str = "30s"
     ):
         """初始化模板生成器
 
@@ -31,10 +29,7 @@ class TemplateGenerator:
             default_time_range: 預設時間範圍
             default_refresh: 預設刷新間隔
         """
-        self.default_time_range = default_time_range or {
-            "from": "now-1h",
-            "to": "now"
-        }
+        self.default_time_range = default_time_range or {"from": "now-1h", "to": "now"}
         self.default_refresh = default_refresh
 
         module_logger.info("模板生成器初始化成功")
@@ -46,7 +41,7 @@ class TemplateGenerator:
         panel_type: str,
         targets: List[Dict[str, Any]],
         grid_pos: Dict[str, int],
-        field_config: Optional[Dict[str, Any]] = None
+        field_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """創建儀表板面板
 
@@ -82,7 +77,7 @@ class TemplateGenerator:
         legend_format: str,
         grid_pos: Dict[str, int],
         unit: str = "short",
-        thresholds: Optional[List[Dict[str, Any]]] = None
+        thresholds: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """創建統計面板
 
@@ -114,9 +109,7 @@ class TemplateGenerator:
         field_config = {
             "defaults": {
                 "unit": unit,
-                "thresholds": {
-                    "steps": thresholds or default_thresholds
-                },
+                "thresholds": {"steps": thresholds or default_thresholds},
             }
         }
 
@@ -133,7 +126,7 @@ class TemplateGenerator:
         grid_pos: Dict[str, int],
         min_value: float = 0,
         max_value: float = 100,
-        unit: str = "percent"
+        unit: str = "percent",
     ) -> Dict[str, Any]:
         """創建儀表盤面板
 
@@ -182,7 +175,7 @@ class TemplateGenerator:
         title: str,
         targets: List[Dict[str, str]],
         grid_pos: Dict[str, int],
-        y_axes_unit: str = "short"
+        y_axes_unit: str = "short",
     ) -> Dict[str, Any]:
         """創建圖表面板
 
@@ -196,9 +189,7 @@ class TemplateGenerator:
         Returns:
             Dict[str, Any]: 圖表面板配置
         """
-        panel = self.create_panel(
-            panel_id, title, "graph", targets, grid_pos
-        )
+        panel = self.create_panel(panel_id, title, "graph", targets, grid_pos)
 
         panel["yAxes"] = [{"unit": y_axes_unit, "min": 0}]
 
@@ -209,7 +200,7 @@ class TemplateGenerator:
         title: str,
         tags: List[str],
         panels: List[Dict[str, Any]],
-        timezone: str = "Asia/Taipei"
+        timezone: str = "Asia/Taipei",
     ) -> Dict[str, Any]:
         """創建儀表板模板
 
@@ -243,23 +234,35 @@ class TemplateGenerator:
         """
         panels = [
             self.create_stat_panel(
-                1, "CPU 使用率", "system_cpu_usage_percent", "CPU 使用率",
-                {"h": 8, "w": 6, "x": 0, "y": 0}, "percent"
+                1,
+                "CPU 使用率",
+                "system_cpu_usage_percent",
+                "CPU 使用率",
+                {"h": 8, "w": 6, "x": 0, "y": 0},
+                "percent",
             ),
             self.create_stat_panel(
-                2, "記憶體使用率", "system_memory_usage_percent", "記憶體使用率",
-                {"h": 8, "w": 6, "x": 6, "y": 0}, "percent"
+                2,
+                "記憶體使用率",
+                "system_memory_usage_percent",
+                "記憶體使用率",
+                {"h": 8, "w": 6, "x": 6, "y": 0},
+                "percent",
             ),
             self.create_gauge_panel(
-                3, "系統健康分數", "system_health_score", "健康分數",
-                {"h": 8, "w": 6, "x": 12, "y": 0}, 0, 100, "short"
+                3,
+                "系統健康分數",
+                "system_health_score",
+                "健康分數",
+                {"h": 8, "w": 6, "x": 12, "y": 0},
+                0,
+                100,
+                "short",
             ),
         ]
 
         return self.create_dashboard_template(
-            "AI 交易系統 - 系統監控",
-            ["trading", "system", "monitoring"],
-            panels
+            "AI 交易系統 - 系統監控", ["trading", "system", "monitoring"], panels
         )
 
     def generate_trading_dashboard(self) -> Dict[str, Any]:
@@ -270,21 +273,24 @@ class TemplateGenerator:
         """
         panels = [
             self.create_stat_panel(
-                1, "訂單成功率", "trading_order_success_rate",
+                1,
+                "訂單成功率",
+                "trading_order_success_rate",
                 "{{order_type}} 成功率",
-                {"h": 8, "w": 8, "x": 0, "y": 0}, "percent"
+                {"h": 8, "w": 8, "x": 0, "y": 0},
+                "percent",
             ),
             self.create_gauge_panel(
-                2, "資金使用率", "trading_capital_utilization_percent",
+                2,
                 "資金使用率",
-                {"h": 8, "w": 8, "x": 8, "y": 0}
+                "trading_capital_utilization_percent",
+                "資金使用率",
+                {"h": 8, "w": 8, "x": 8, "y": 0},
             ),
         ]
 
         return self.create_dashboard_template(
-            "AI 交易系統 - 交易監控",
-            ["trading", "performance", "monitoring"],
-            panels
+            "AI 交易系統 - 交易監控", ["trading", "performance", "monitoring"], panels
         )
 
     def generate_risk_dashboard(self) -> Dict[str, Any]:
@@ -295,27 +301,26 @@ class TemplateGenerator:
         """
         panels = [
             self.create_stat_panel(
-                1, "活躍警報", "sum(active_alerts_count)", "總警報數",
-                {"h": 8, "w": 12, "x": 0, "y": 0}, "short",
+                1,
+                "活躍警報",
+                "sum(active_alerts_count)",
+                "總警報數",
+                {"h": 8, "w": 12, "x": 0, "y": 0},
+                "short",
                 [
                     {"color": "green", "value": 0},
                     {"color": "yellow", "value": 5},
                     {"color": "red", "value": 10},
-                ]
+                ],
             ),
         ]
 
         return self.create_dashboard_template(
-            "AI 交易系統 - 風險監控",
-            ["trading", "risk", "monitoring"],
-            panels
+            "AI 交易系統 - 風險監控", ["trading", "risk", "monitoring"], panels
         )
 
     def generate_custom_dashboard(
-        self,
-        title: str,
-        tags: List[str],
-        panel_configs: List[Dict[str, Any]]
+        self, title: str, tags: List[str], panel_configs: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """生成自定義儀表板
 
@@ -331,7 +336,7 @@ class TemplateGenerator:
 
         for i, config in enumerate(panel_configs, 1):
             panel_type = config.get("type", "stat")
-            
+
             if panel_type == "stat":
                 panel = self.create_stat_panel(
                     i,
@@ -340,7 +345,7 @@ class TemplateGenerator:
                     config.get("legend", config["title"]),
                     config["grid_pos"],
                     config.get("unit", "short"),
-                    config.get("thresholds")
+                    config.get("thresholds"),
                 )
             elif panel_type == "gauge":
                 panel = self.create_gauge_panel(
@@ -351,7 +356,7 @@ class TemplateGenerator:
                     config["grid_pos"],
                     config.get("min", 0),
                     config.get("max", 100),
-                    config.get("unit", "percent")
+                    config.get("unit", "percent"),
                 )
             else:
                 continue

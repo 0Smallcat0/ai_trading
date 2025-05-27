@@ -285,7 +285,9 @@ class InferencePipeline:
             os.makedirs(output_dir, exist_ok=True)
 
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            output_path = os.path.join(output_dir, f"predictions_{timestamp}.{file_format}")
+            output_path = os.path.join(
+                output_dir, f"predictions_{timestamp}.{file_format}"
+            )
 
         # 保存結果
         if file_format == "csv":

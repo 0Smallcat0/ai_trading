@@ -43,21 +43,22 @@ try:
 except ImportError as e:
     # 如果子模組導入失敗，提供錯誤處理
     import streamlit as st
+
     st.error(f"資料管理子模組導入失敗: {e}")
-    
+
     # 提供空的替代函數
     def show_data_sources_management():
         st.error("資料來源管理模組不可用")
-    
+
     def show_data_update_management():
         st.error("資料更新管理模組不可用")
-    
+
     def show_data_query_interface():
         st.error("資料查詢介面模組不可用")
-    
+
     def show_data_quality_monitoring():
         st.error("資料品質監控模組不可用")
-    
+
     def show_data_export_tools():
         st.error("資料匯出工具模組不可用")
 
@@ -65,48 +66,44 @@ except ImportError as e:
 def show() -> None:
     """
     顯示資料管理主頁面
-    
+
     這是資料管理模組的主要入口點，提供完整的資料管理功能介面。
     使用標籤頁組織不同的功能模組，確保使用者體驗的一致性。
-    
+
     主要功能標籤頁：
     1. 資料來源 - 資料來源狀態監控和管理
     2. 資料更新 - 手動和自動資料更新功能
     3. 資料查詢 - 靈活的資料查詢和篩選
     4. 資料品質 - 資料品質監控和驗證
     5. 資料匯出 - 資料匯出和報告工具
-    
+
     Returns:
         None
-        
+
     Side Effects:
         - 渲染 Streamlit 界面組件
         - 可能修改 st.session_state 中的相關狀態
-        
+
     Example:
         ```python
         from src.ui.pages.data_management import show
         show()
         ```
-        
+
     Note:
         此函數整合了所有資料管理子模組，提供統一的使用者介面。
         如果某個子模組不可用，會顯示相應的錯誤訊息。
     """
     import streamlit as st
-    
+
     st.title("📊 資料管理")
     st.markdown("---")
-    
+
     # 創建標籤頁
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📈 資料來源",
-        "🔄 資料更新", 
-        "🔍 資料查詢",
-        "✅ 資料品質",
-        "📤 資料匯出"
-    ])
-    
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        ["📈 資料來源", "🔄 資料更新", "🔍 資料查詢", "✅ 資料品質", "📤 資料匯出"]
+    )
+
     # 資料來源管理
     with tab1:
         try:
@@ -115,7 +112,7 @@ def show() -> None:
             st.error(f"資料來源管理功能發生錯誤: {e}")
             with st.expander("錯誤詳情"):
                 st.code(str(e))
-    
+
     # 資料更新管理
     with tab2:
         try:
@@ -124,7 +121,7 @@ def show() -> None:
             st.error(f"資料更新管理功能發生錯誤: {e}")
             with st.expander("錯誤詳情"):
                 st.code(str(e))
-    
+
     # 資料查詢介面
     with tab3:
         try:
@@ -133,7 +130,7 @@ def show() -> None:
             st.error(f"資料查詢功能發生錯誤: {e}")
             with st.expander("錯誤詳情"):
                 st.code(str(e))
-    
+
     # 資料品質監控
     with tab4:
         try:
@@ -142,7 +139,7 @@ def show() -> None:
             st.error(f"資料品質監控功能發生錯誤: {e}")
             with st.expander("錯誤詳情"):
                 st.code(str(e))
-    
+
     # 資料匯出工具
     with tab5:
         try:
@@ -157,13 +154,13 @@ def show() -> None:
 def show_data_management() -> None:
     """
     向後兼容的函數名稱
-    
+
     這是為了保持與現有代碼的兼容性而提供的別名函數。
     實際功能由 show() 函數提供。
-    
+
     Returns:
         None
-        
+
     Deprecated:
         建議使用 show() 函數替代此函數
     """

@@ -42,11 +42,7 @@ class ResponsiveBreakpoints:
             >>> breakpoints = ResponsiveBreakpoints.get_breakpoints()
             >>> print(breakpoints["mobile"])  # 輸出: 768
         """
-        return {
-            "mobile": cls.MOBILE,
-            "tablet": cls.TABLET,
-            "desktop": cls.DESKTOP
-        }
+        return {"mobile": cls.MOBILE, "tablet": cls.TABLET, "desktop": cls.DESKTOP}
 
     @classmethod
     def get_device_type(cls, width: int) -> str:
@@ -117,7 +113,7 @@ class ResponsiveBreakpoints:
             int: 建議的列數
         """
         device_type = cls.get_device_type(width)
-        
+
         if device_type == "mobile":
             return 1
         elif device_type == "tablet":

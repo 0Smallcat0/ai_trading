@@ -11,7 +11,7 @@ from .business_metrics import BusinessMetricsCollector
 
 __all__ = [
     "PrometheusCollectorBase",
-    "SystemMetricsCollector", 
+    "SystemMetricsCollector",
     "TradingMetricsCollector",
     "APIMetricsCollector",
     "BusinessMetricsCollector",

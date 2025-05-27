@@ -30,10 +30,10 @@ risk_service = RiskManagementService()
 async def get_risk_control_status():
     """
     獲取風控機制狀態
-    
+
     Returns:
         APIResponse[List[RiskControlStatus]]: 包含所有風控機制狀態的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取風控機制狀態失敗時
     """
@@ -111,7 +111,9 @@ async def get_risk_control_status():
             ]
 
         # 轉換為響應模型
-        response_data = [RiskControlStatus(**control) for control in control_status_list]
+        response_data = [
+            RiskControlStatus(**control) for control in control_status_list
+        ]
 
         return APIResponse(
             success=True,
@@ -137,13 +139,13 @@ async def get_risk_control_status():
 async def toggle_risk_control(request: RiskControlToggleRequest):
     """
     切換風控機制
-    
+
     Args:
         request: 風控機制切換請求
-        
+
     Returns:
         APIResponse[RiskControlStatus]: 包含切換後風控機制狀態的 API 回應
-        
+
     Raises:
         HTTPException: 當切換風控機制失敗時
     """
@@ -202,10 +204,10 @@ async def toggle_risk_control(request: RiskControlToggleRequest):
 async def emergency_stop():
     """
     緊急停止
-    
+
     Returns:
         APIResponse[dict]: 包含緊急停止結果的 API 回應
-        
+
     Raises:
         HTTPException: 當緊急停止失敗時
     """
@@ -230,9 +232,7 @@ async def emergency_stop():
             ],
         }
 
-        return APIResponse(
-            success=True, message="緊急停止執行成功", data=response_data
-        )
+        return APIResponse(success=True, message="緊急停止執行成功", data=response_data)
 
     except Exception as e:
         logger.error("緊急停止失敗: %s", e)
@@ -252,10 +252,10 @@ async def emergency_stop():
 async def resume_trading():
     """
     恢復交易
-    
+
     Returns:
         APIResponse[dict]: 包含恢復交易結果的 API 回應
-        
+
     Raises:
         HTTPException: 當恢復交易失敗時
     """

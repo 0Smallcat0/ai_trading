@@ -36,7 +36,7 @@ from .models import (
 __all__ = [
     "router",
     "RiskParametersRequest",
-    "RiskControlToggleRequest", 
+    "RiskControlToggleRequest",
     "AlertAcknowledgeRequest",
     "RiskParameters",
     "RiskMetrics",

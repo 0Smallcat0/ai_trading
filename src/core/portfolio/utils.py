@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # 可選依賴處理
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -26,6 +27,7 @@ except ImportError:
 
 try:
     import scipy.optimize as sco
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -33,6 +35,7 @@ except ImportError:
 
 try:
     import seaborn as sns
+
     SEABORN_AVAILABLE = True
 except ImportError:
     SEABORN_AVAILABLE = False
@@ -40,6 +43,7 @@ except ImportError:
 
 try:
     from pypfopt import EfficientFrontier, expected_returns, risk_models
+
     PYPFOPT_AVAILABLE = True
 except ImportError:
     PYPFOPT_AVAILABLE = False
@@ -62,13 +66,15 @@ def validate_signals(signals: pd.DataFrame) -> bool:
     """
     if not isinstance(signals, pd.DataFrame):
         raise ValueError("signals 必須為 pandas.DataFrame")
-    
+
     if signals.index.nlevels < 1:
-        raise ValueError("signals 必須有至少一層 index (建議為 MultiIndex: stock_id, date)")
-    
+        raise ValueError(
+            "signals 必須有至少一層 index (建議為 MultiIndex: stock_id, date)"
+        )
+
     if "buy_signal" not in signals.columns and "signal" not in signals.columns:
         raise ValueError("signals 必須包含 'buy_signal' 或 'signal' 欄位")
-    
+
     return True
 
 
@@ -86,10 +92,10 @@ def validate_prices(prices: pd.DataFrame) -> bool:
     """
     if not isinstance(prices, pd.DataFrame):
         raise ValueError("prices 必須為 pandas.DataFrame")
-    
+
     if "close" not in prices.columns and "收盤價" not in prices.columns:
         raise ValueError("價格資料必須包含 'close' 或 '收盤價' 欄位")
-    
+
     return True
 
 
@@ -136,7 +142,7 @@ def calculate_equal_weights(stocks: list) -> Dict[str, float]:
     """
     if len(stocks) == 0:
         return {}
-    
+
     weight = 1.0 / len(stocks)
     return {stock: weight for stock in stocks}
 
@@ -153,7 +159,7 @@ def normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
     total_weight = sum(weights.values())
     if total_weight == 0:
         return weights
-    
+
     return {stock: weight / total_weight for stock, weight in weights.items()}
 
 
@@ -172,25 +178,24 @@ def validate_weights(weights: Dict[str, float], tolerance: float = 1e-6) -> bool
     """
     if not weights:
         return True
-    
+
     # 檢查權重是否為非負數
     for stock, weight in weights.items():
         if weight < 0:
             raise ValueError(f"權重不能為負數: {stock} = {weight}")
         if weight > 1:
             raise ValueError(f"權重不能超過1: {stock} = {weight}")
-    
+
     # 檢查權重總和是否接近1
     total_weight = sum(weights.values())
     if abs(total_weight - 1.0) > tolerance:
         raise ValueError(f"權重總和必須為1，當前為: {total_weight}")
-    
+
     return True
 
 
 def calculate_portfolio_returns(
-    weights: pd.DataFrame, 
-    prices: pd.DataFrame
+    weights: pd.DataFrame, prices: pd.DataFrame
 ) -> pd.Series:
     """計算投資組合收益率
 
@@ -203,15 +208,15 @@ def calculate_portfolio_returns(
     """
     # 確定價格欄位
     price_col = get_price_column(prices)
-    
+
     # 計算每日收益率
     daily_returns = prices[price_col].pct_change()
-    
+
     # 計算投資組合收益率
     portfolio_returns = pd.Series(
         0.0, index=daily_returns.index.get_level_values("date").unique()
     )
-    
+
     for date in portfolio_returns.index:
         # 獲取該日期的權重
         date_weights = (
@@ -219,23 +224,21 @@ def calculate_portfolio_returns(
             if date in weights.index.get_level_values("date")
             else pd.DataFrame()
         )
-        
+
         if date_weights.empty:
             continue
-        
+
         # 獲取該日期的收益率
         date_returns = daily_returns.xs(date, level="date", drop_level=False)
-        
+
         # 計算該日期的投資組合收益率
         portfolio_return = 0.0
         for stock_id, stock_weight in date_weights["weight"].items():
             if (stock_id, date) in date_returns.index:
-                portfolio_return += (
-                    stock_weight * date_returns.loc[(stock_id, date)]
-                )
-        
+                portfolio_return += stock_weight * date_returns.loc[(stock_id, date)]
+
         portfolio_returns[date] = portfolio_return
-    
+
     return portfolio_returns
 
 
@@ -250,26 +253,26 @@ def calculate_performance_metrics(returns: pd.Series) -> Dict[str, float]:
     """
     if returns.empty:
         return {}
-    
+
     # 計算累積收益率
     cumulative_returns = (1 + returns).cumprod()
-    
+
     # 計算年化收益率
     annual_return = returns.mean() * 252
-    
+
     # 計算年化波動率
     annual_volatility = returns.std() * np.sqrt(252)
-    
+
     # 計算夏普比率
-    sharpe_ratio = (
-        annual_return / annual_volatility if annual_volatility != 0 else 0
-    )
-    
+    sharpe_ratio = annual_return / annual_volatility if annual_volatility != 0 else 0
+
     # 計算最大回撤
     max_drawdown = (cumulative_returns / cumulative_returns.cummax() - 1).min()
-    
+
     return {
-        "cumulative_returns": cumulative_returns.iloc[-1] if not cumulative_returns.empty else 1.0,
+        "cumulative_returns": (
+            cumulative_returns.iloc[-1] if not cumulative_returns.empty else 1.0
+        ),
         "annual_return": annual_return,
         "annual_volatility": annual_volatility,
         "sharpe_ratio": sharpe_ratio,
@@ -278,8 +281,7 @@ def calculate_performance_metrics(returns: pd.Series) -> Dict[str, float]:
 
 
 def check_data_sufficiency(
-    historical_returns: pd.DataFrame, 
-    min_periods: int = 30
+    historical_returns: pd.DataFrame, min_periods: int = 30
 ) -> bool:
     """檢查歷史資料是否充足
 
@@ -292,11 +294,11 @@ def check_data_sufficiency(
     """
     if historical_returns.empty:
         return False
-    
+
     # 檢查每個股票的資料點數
     stock_counts = historical_returns.groupby(level="stock_id").count()
     min_count = stock_counts.min().min() if not stock_counts.empty else 0
-    
+
     return min_count >= min_periods
 
 
@@ -326,7 +328,7 @@ def log_portfolio_info(portfolio_name: str, weights: Dict[str, float]) -> None:
     logger.info(f"投資組合 {portfolio_name} 權重分配:")
     for stock, weight in weights.items():
         logger.info(f"  {stock}: {weight:.4f}")
-    
+
     total_weight = sum(weights.values())
     logger.info(f"  總權重: {total_weight:.4f}")
 

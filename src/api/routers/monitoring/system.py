@@ -42,6 +42,7 @@ class SystemResourceMetrics(BaseModel):
         load_average: 系統負載平均值
         process_count: 進程數量
     """
+
     timestamp: datetime = Field(..., description="時間戳")
     cpu_usage: float = Field(..., description="CPU 使用率 (%)")
     memory_usage: float = Field(..., description="記憶體使用率 (%)")
@@ -75,6 +76,7 @@ class TradingPerformanceMetrics(BaseModel):
         queue_length: 佇列長度
         cache_hit_rate: 快取命中率 (%)
     """
+
     timestamp: datetime = Field(..., description="時間戳")
     api_latency_avg: float = Field(..., description="API 平均延遲 (ms)")
     api_latency_p95: float = Field(..., description="API P95 延遲 (ms)")
@@ -104,6 +106,7 @@ class SystemHealthStatus(BaseModel):
         active_alerts: 活躍警報數量
         critical_issues: 嚴重問題列表
     """
+
     overall_status: str = Field(..., description="整體狀態")
     health_score: float = Field(..., description="健康分數 (0-100)")
     components: dict = Field(..., description="組件狀態")
@@ -150,13 +153,13 @@ async def get_system_resources(
         time_ranges = {
             "1h": timedelta(hours=1),
             "24h": timedelta(hours=24),
-            "7d": timedelta(days=7)
+            "7d": timedelta(days=7),
         }
 
         if time_range not in time_ranges:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"無效的時間範圍，支援: {', '.join(time_ranges.keys())}"
+                detail=f"無效的時間範圍，支援: {', '.join(time_ranges.keys())}",
             )
 
         # 解析數據間隔
@@ -164,13 +167,13 @@ async def get_system_resources(
             "1m": timedelta(minutes=1),
             "5m": timedelta(minutes=5),
             "15m": timedelta(minutes=15),
-            "1h": timedelta(hours=1)
+            "1h": timedelta(hours=1),
         }
 
         if interval not in intervals:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"無效的數據間隔，支援: {', '.join(intervals.keys())}"
+                detail=f"無效的數據間隔，支援: {', '.join(intervals.keys())}",
             )
 
         # 計算查詢時間範圍
@@ -179,9 +182,7 @@ async def get_system_resources(
 
         # 獲取系統資源數據
         resource_data = monitoring_service.get_system_resource_metrics(
-            start_time=start_time,
-            end_time=end_time,
-            interval=intervals[interval]
+            start_time=start_time, end_time=end_time, interval=intervals[interval]
         )
 
         # 轉換為響應模型
@@ -199,14 +200,14 @@ async def get_system_resources(
                 network_io_sent=data["network_io_sent"],
                 network_io_recv=data["network_io_recv"],
                 load_average=data["load_average"],
-                process_count=data["process_count"]
+                process_count=data["process_count"],
             )
             metrics_list.append(metrics)
 
         return APIResponse(
             success=True,
             message=f"獲取到 {len(metrics_list)} 個系統資源數據點",
-            data=metrics_list
+            data=metrics_list,
         )
 
     except HTTPException:
@@ -215,7 +216,7 @@ async def get_system_resources(
         logger.error("獲取系統資源監控數據失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"獲取系統資源監控數據失敗: {str(e)}"
+            detail=f"獲取系統資源監控數據失敗: {str(e)}",
         ) from e
 
 
@@ -253,20 +254,18 @@ async def get_system_health():
             uptime_seconds=health_data["uptime_seconds"],
             system_info=health_data["system_info"],
             active_alerts=health_data["active_alerts"],
-            critical_issues=health_data["critical_issues"]
+            critical_issues=health_data["critical_issues"],
         )
 
         return APIResponse(
-            success=True,
-            message="系統健康狀態獲取成功",
-            data=health_status
+            success=True, message="系統健康狀態獲取成功", data=health_status
         )
 
     except Exception as e:
         logger.error("獲取系統健康狀態失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"獲取系統健康狀態失敗: {str(e)}"
+            detail=f"獲取系統健康狀態失敗: {str(e)}",
         ) from e
 
 
@@ -308,20 +307,18 @@ async def get_current_system_status():
             network_io_sent=current_data["network_io_sent"],
             network_io_recv=current_data["network_io_recv"],
             load_average=current_data["load_average"],
-            process_count=current_data["process_count"]
+            process_count=current_data["process_count"],
         )
 
         return APIResponse(
-            success=True,
-            message="當前系統資源狀態獲取成功",
-            data=current_metrics
+            success=True, message="當前系統資源狀態獲取成功", data=current_metrics
         )
 
     except Exception as e:
         logger.error("獲取當前系統資源狀態失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"獲取當前系統資源狀態失敗: {str(e)}"
+            detail=f"獲取當前系統資源狀態失敗: {str(e)}",
         ) from e
 
 
@@ -358,13 +355,13 @@ async def get_trading_performance(
         time_ranges = {
             "1h": timedelta(hours=1),
             "24h": timedelta(hours=24),
-            "7d": timedelta(days=7)
+            "7d": timedelta(days=7),
         }
 
         if time_range not in time_ranges:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"無效的時間範圍，支援: {', '.join(time_ranges.keys())}"
+                detail=f"無效的時間範圍，支援: {', '.join(time_ranges.keys())}",
             )
 
         # 解析數據間隔
@@ -372,13 +369,13 @@ async def get_trading_performance(
             "1m": timedelta(minutes=1),
             "5m": timedelta(minutes=5),
             "15m": timedelta(minutes=15),
-            "1h": timedelta(hours=1)
+            "1h": timedelta(hours=1),
         }
 
         if interval not in intervals:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"無效的數據間隔，支援: {', '.join(intervals.keys())}"
+                detail=f"無效的數據間隔，支援: {', '.join(intervals.keys())}",
             )
 
         # 計算查詢時間範圍
@@ -387,9 +384,7 @@ async def get_trading_performance(
 
         # 獲取交易效能數據
         performance_data = monitoring_service.get_trading_performance_metrics(
-            start_time=start_time,
-            end_time=end_time,
-            interval=intervals[interval]
+            start_time=start_time, end_time=end_time, interval=intervals[interval]
         )
 
         # 轉換為響應模型
@@ -407,14 +402,14 @@ async def get_trading_performance(
                 timeout_rate=data["timeout_rate"],
                 active_connections=data["active_connections"],
                 queue_length=data["queue_length"],
-                cache_hit_rate=data["cache_hit_rate"]
+                cache_hit_rate=data["cache_hit_rate"],
             )
             metrics_list.append(metrics)
 
         return APIResponse(
             success=True,
             message=f"獲取到 {len(metrics_list)} 個交易效能數據點",
-            data=metrics_list
+            data=metrics_list,
         )
 
     except HTTPException:
@@ -423,5 +418,5 @@ async def get_trading_performance(
         logger.error("獲取交易效能指標失敗: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"獲取交易效能指標失敗: {str(e)}"
+            detail=f"獲取交易效能指標失敗: {str(e)}",
         ) from e

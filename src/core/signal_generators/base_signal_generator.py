@@ -17,6 +17,7 @@ try:
         SentimentIndicators,
         TechnicalIndicators,
     )
+
     INDICATORS_AVAILABLE = True
 except ImportError as e:
     warnings.warn(f"無法匯入 indicators 模組，部分功能將無法使用: {e}")
@@ -25,6 +26,7 @@ except ImportError as e:
 # 嘗試導入 model_integration 模組
 try:
     from src.core.model_integration import ModelManager
+
     MODEL_INTEGRATION_AVAILABLE = True
 except ImportError as e:
     warnings.warn(f"無法匯入 model_integration 模組，AI 模型整合功能將無法使用: {e}")
@@ -161,10 +163,10 @@ class BaseSignalGenerator(ABC):
             bool: 資料是否可用
         """
         data_map = {
-            'price': self.price_data,
-            'financial': self.financial_data,
-            'news': self.news_data,
-            'volume': self.volume_data,
+            "price": self.price_data,
+            "financial": self.financial_data,
+            "news": self.news_data,
+            "volume": self.volume_data,
         }
 
         data = data_map.get(required_data)

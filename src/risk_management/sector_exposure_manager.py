@@ -119,7 +119,9 @@ class SectorExposureManager:
 
         return adjustments
 
-    def get_sector_weights(self, portfolio: Dict[str, Dict[str, Any]]) -> Dict[str, float]:
+    def get_sector_weights(
+        self, portfolio: Dict[str, Dict[str, Any]]
+    ) -> Dict[str, float]:
         """
         獲取行業權重
 
@@ -145,7 +147,9 @@ class SectorExposureManager:
                 sector_values[sector] += position["value"]
 
         # 計算行業權重
-        return {sector: value / portfolio_value for sector, value in sector_values.items()}
+        return {
+            sector: value / portfolio_value for sector, value in sector_values.items()
+        }
 
     def get_sector_exposure_report(
         self, portfolio: Dict[str, Dict[str, Any]]
@@ -217,6 +221,3 @@ class SectorExposureManager:
             logger.info("移除行業限制: %s", sector)
         else:
             logger.warning("行業限制不存在: %s", sector)
-
-
-

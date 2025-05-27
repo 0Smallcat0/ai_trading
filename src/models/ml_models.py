@@ -14,6 +14,7 @@ from typing import Any, Dict
 
 try:
     import lightgbm as lgb
+
     LIGHTGBM_AVAILABLE = True
 except ImportError:
     lgb = None
@@ -21,6 +22,7 @@ except ImportError:
 
 try:
     import xgboost as xgb
+
     XGBOOST_AVAILABLE = True
 except ImportError:
     xgb = None
@@ -42,6 +44,7 @@ try:
     )
     from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
     from sklearn.svm import SVC, SVR
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False

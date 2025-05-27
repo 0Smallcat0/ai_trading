@@ -701,7 +701,9 @@ class DataManagementService:
         # 避免 pylint 警告，記錄參數使用意圖
         logger.debug(
             "更新股價資料: symbols=%s, start_date=%s, end_date=%s",
-            len(symbols), start_date, end_date
+            len(symbols),
+            start_date,
+            end_date,
         )
 
         results = {"processed": 0, "new": 0, "updated": 0, "errors": 0}
@@ -757,7 +759,9 @@ class DataManagementService:
         # 避免 pylint 警告，記錄參數使用意圖
         logger.debug(
             "更新基本面資料: symbols=%s, start_date=%s, end_date=%s",
-            len(symbols), start_date, end_date
+            len(symbols),
+            start_date,
+            end_date,
         )
 
         # 模擬實作
@@ -793,7 +797,9 @@ class DataManagementService:
         # 避免 pylint 警告，記錄參數使用意圖
         logger.debug(
             "更新技術指標資料: symbols=%s, start_date=%s, end_date=%s",
-            len(symbols), start_date, end_date
+            len(symbols),
+            start_date,
+            end_date,
         )
 
         # 模擬實作

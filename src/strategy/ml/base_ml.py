@@ -23,6 +23,7 @@ try:
     from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
     from sklearn.svm import SVC
     from sklearn.metrics import accuracy_score, precision_score, recall_score
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
@@ -88,6 +89,7 @@ except ImportError:
         """模擬召回率計算"""
         return 0.5
 
+
 # 設定日誌
 logger = logging.getLogger(__name__)
 
@@ -117,7 +119,7 @@ class MachineLearningStrategy(Strategy):
         self,
         model_type: str = "random_forest",
         threshold: float = 0.5,
-        **model_params: Any
+        **model_params: Any,
     ) -> None:
         """
         初始化機器學習策略。
@@ -134,7 +136,7 @@ class MachineLearningStrategy(Strategy):
             name=f"ML_{model_type}",
             model_type=model_type,
             threshold=threshold,
-            **model_params
+            **model_params,
         )
         self.model_type = model_type
         self.threshold = threshold
@@ -156,9 +158,7 @@ class MachineLearningStrategy(Strategy):
             )
 
         if not (0 <= self.threshold <= 1):
-            raise ParameterError(
-                f"threshold 必須在0-1之間，得到: {self.threshold}"
-            )
+            raise ParameterError(f"threshold 必須在0-1之間，得到: {self.threshold}")
 
     def _create_model(self):
         """
@@ -192,10 +192,7 @@ class MachineLearningStrategy(Strategy):
             raise ParameterError(f"不支援的模型類型: {self.model_type}")
 
     def train(
-        self,
-        features: pd.DataFrame,
-        target: pd.Series,
-        validation_split: float = 0.2
+        self, features: pd.DataFrame, target: pd.Series, validation_split: float = 0.2
     ) -> Dict[str, float]:
         """
         訓練機器學習模型。
@@ -250,12 +247,14 @@ class MachineLearningStrategy(Strategy):
                 metrics = {
                     "accuracy": accuracy_score(y_val, y_pred),
                     "precision": precision_score(y_val, y_pred, zero_division=0),
-                    "recall": recall_score(y_val, y_pred, zero_division=0)
+                    "recall": recall_score(y_val, y_pred, zero_division=0),
                 }
 
                 logger.info(
                     "模型訓練完成 - 準確率: %.3f, 精確率: %.3f, 召回率: %.3f",
-                    metrics["accuracy"], metrics["precision"], metrics["recall"]
+                    metrics["accuracy"],
+                    metrics["precision"],
+                    metrics["recall"],
                 )
             else:
                 metrics = {"accuracy": 0.0, "precision": 0.0, "recall": 0.0}
@@ -327,7 +326,8 @@ class MachineLearningStrategy(Strategy):
 
             logger.info(
                 "生成機器學習策略訊號完成，模型: %s, 閾值: %.3f",
-                self.model_type, self.threshold
+                self.model_type,
+                self.threshold,
             )
 
             return signals
@@ -347,20 +347,20 @@ class MachineLearningStrategy(Strategy):
                 "n_estimators": [50, 100, 200],
                 "max_depth": [None, 5, 10, 20],
                 "min_samples_split": [2, 5, 10],
-                "threshold": [0.4, 0.5, 0.6]
+                "threshold": [0.4, 0.5, 0.6],
             }
         elif self.model_type == "gradient_boosting":
             return {
                 "n_estimators": [50, 100, 200],
                 "learning_rate": [0.01, 0.1, 0.2],
                 "max_depth": [3, 5, 10],
-                "threshold": [0.4, 0.5, 0.6]
+                "threshold": [0.4, 0.5, 0.6],
             }
         elif self.model_type == "svm":
             return {
                 "C": [0.1, 1.0, 10.0],
                 "kernel": ["rbf", "linear"],
-                "threshold": [0.4, 0.5, 0.6]
+                "threshold": [0.4, 0.5, 0.6],
             }
         else:
             return {"threshold": [0.4, 0.5, 0.6]}
@@ -377,10 +377,7 @@ class MachineLearningStrategy(Strategy):
             return None
 
         if hasattr(self.model, "feature_importances_"):
-            return pd.Series(
-                self.model.feature_importances_,
-                name="importance"
-            )
+            return pd.Series(self.model.feature_importances_, name="importance")
         else:
             logger.warning("模型 %s 不支援特徵重要性", self.model_type)
             return None
@@ -397,5 +394,5 @@ class MachineLearningStrategy(Strategy):
             "threshold": self.threshold,
             "is_trained": self._is_trained,
             "model_params": self.model_params,
-            "sklearn_available": SKLEARN_AVAILABLE
+            "sklearn_available": SKLEARN_AVAILABLE,
         }

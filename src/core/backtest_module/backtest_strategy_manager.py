@@ -43,7 +43,9 @@ class BacktestStrategyManager:
             for strategy_id in self.strategy_registry.keys()
         }
 
-    def initialize_strategy(self, strategy_id: str, config: BacktestConfig) -> Dict[str, Any]:
+    def initialize_strategy(
+        self, strategy_id: str, config: BacktestConfig
+    ) -> Dict[str, Any]:
         """初始化策略
 
         Args:

@@ -10,6 +10,7 @@ from typing import Dict, Any
 # 嘗試導入 psutil
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -31,7 +32,7 @@ class MonitoringCore:
 
     def get_system_metrics(self) -> Dict[str, Any]:
         """獲取系統指標
-        
+
         Returns:
             Dict[str, Any]: 系統指標字典
         """
@@ -51,7 +52,7 @@ class MonitoringCore:
             memory_total = memory.total
 
             # 磁碟使用情況
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_percent = (disk.used / disk.total) * 100
             disk_used = disk.used
             disk_total = disk.total
@@ -94,10 +95,10 @@ class MonitoringCore:
 
     def calculate_health_score(self, metrics: Dict[str, Any]) -> float:
         """計算系統健康評分
-        
+
         Args:
             metrics: 系統指標字典
-            
+
         Returns:
             float: 健康評分 (0-100)
         """
@@ -143,7 +144,7 @@ class MonitoringCore:
 
     def check_system_health(self) -> Dict[str, Any]:
         """檢查系統健康狀態
-        
+
         Returns:
             Dict[str, Any]: 健康狀態字典
         """
@@ -189,17 +190,18 @@ class MonitoringCore:
 
     def get_health_history(self, hours: int = 24) -> list:
         """獲取健康狀態歷史
-        
+
         Args:
             hours: 查詢小時數
-            
+
         Returns:
             list: 健康狀態歷史列表
         """
         try:
             cutoff_time = datetime.now() - timedelta(hours=hours)
             filtered_history = [
-                record for record in self.health_history
+                record
+                for record in self.health_history
                 if record.get("timestamp", datetime.min) >= cutoff_time
             ]
 
@@ -245,47 +247,59 @@ class MonitoringCore:
         # 檢查 CPU 使用率
         cpu_percent = metrics.get("cpu", {}).get("percent", 0)
         if cpu_percent > 90:
-            issues.append({
-                "type": "cpu",
-                "severity": "critical",
-                "message": "CPU 使用率過高: %.1f%%" % cpu_percent,
-            })
+            issues.append(
+                {
+                    "type": "cpu",
+                    "severity": "critical",
+                    "message": "CPU 使用率過高: %.1f%%" % cpu_percent,
+                }
+            )
         elif cpu_percent > 80:
-            issues.append({
-                "type": "cpu",
-                "severity": "warning",
-                "message": "CPU 使用率較高: %.1f%%" % cpu_percent,
-            })
+            issues.append(
+                {
+                    "type": "cpu",
+                    "severity": "warning",
+                    "message": "CPU 使用率較高: %.1f%%" % cpu_percent,
+                }
+            )
 
         # 檢查記憶體使用率
         memory_percent = metrics.get("memory", {}).get("percent", 0)
         if memory_percent > 90:
-            issues.append({
-                "type": "memory",
-                "severity": "critical",
-                "message": "記憶體使用率過高: %.1f%%" % memory_percent,
-            })
+            issues.append(
+                {
+                    "type": "memory",
+                    "severity": "critical",
+                    "message": "記憶體使用率過高: %.1f%%" % memory_percent,
+                }
+            )
         elif memory_percent > 80:
-            issues.append({
-                "type": "memory",
-                "severity": "warning",
-                "message": "記憶體使用率較高: %.1f%%" % memory_percent,
-            })
+            issues.append(
+                {
+                    "type": "memory",
+                    "severity": "warning",
+                    "message": "記憶體使用率較高: %.1f%%" % memory_percent,
+                }
+            )
 
         # 檢查磁碟使用率
         disk_percent = metrics.get("disk", {}).get("percent", 0)
         if disk_percent > 95:
-            issues.append({
-                "type": "disk",
-                "severity": "critical",
-                "message": "磁碟使用率過高: %.1f%%" % disk_percent,
-            })
+            issues.append(
+                {
+                    "type": "disk",
+                    "severity": "critical",
+                    "message": "磁碟使用率過高: %.1f%%" % disk_percent,
+                }
+            )
         elif disk_percent > 90:
-            issues.append({
-                "type": "disk",
-                "severity": "warning",
-                "message": "磁碟使用率較高: %.1f%%" % disk_percent,
-            })
+            issues.append(
+                {
+                    "type": "disk",
+                    "severity": "warning",
+                    "message": "磁碟使用率較高: %.1f%%" % disk_percent,
+                }
+            )
 
         return issues
 

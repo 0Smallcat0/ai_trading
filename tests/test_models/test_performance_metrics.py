@@ -24,27 +24,27 @@ from src.models.performance_metrics import (
     calculate_var,
     calculate_win_rate,
     calculate_pnl_ratio,
-    calculate_expectancy
+    calculate_expectancy,
 )
 from src.models.performance_metrics.trading_metrics import (
     calculate_sharpe_ratio as new_calculate_sharpe_ratio,
     calculate_sortino_ratio as new_calculate_sortino_ratio,
-    calculate_calmar_ratio as new_calculate_calmar_ratio
+    calculate_calmar_ratio as new_calculate_calmar_ratio,
 )
 from src.models.performance_metrics.risk_metrics import (
     calculate_max_drawdown as new_calculate_max_drawdown,
     calculate_volatility as new_calculate_volatility,
-    calculate_var as new_calculate_var
+    calculate_var as new_calculate_var,
 )
 from src.models.performance_metrics.statistical_metrics import (
     calculate_win_rate as new_calculate_win_rate,
     calculate_pnl_ratio as new_calculate_pnl_ratio,
-    calculate_expectancy as new_calculate_expectancy
+    calculate_expectancy as new_calculate_expectancy,
 )
 from src.models.performance_metrics.utils import (
     validate_performance_inputs,
     create_performance_report,
-    plot_performance_comparison
+    plot_performance_comparison,
 )
 
 
@@ -82,7 +82,7 @@ class TestPerformanceInputValidation:
 
     def test_non_numeric_input(self):
         """測試非數值輸入"""
-        non_numeric = pd.Series(['a', 'b', 'c'])
+        non_numeric = pd.Series(["a", "b", "c"])
         with pytest.raises(TypeError, match="輸入資料必須是數值類型"):
             validate_performance_inputs(non_numeric)
 
@@ -100,7 +100,7 @@ class TestTradingMetrics:
         """測試夏普比率計算"""
         sharpe = calculate_sharpe_ratio(sample_returns, risk_free_rate=0.02)
         new_sharpe = new_calculate_sharpe_ratio(sample_returns, risk_free_rate=0.02)
-        
+
         # 驗證向後兼容性
         assert abs(sharpe - new_sharpe) < 1e-10
         assert isinstance(sharpe, float)
@@ -115,7 +115,7 @@ class TestTradingMetrics:
         """測試索提諾比率計算"""
         sortino = calculate_sortino_ratio(sample_returns, target_return=0.005)
         new_sortino = new_calculate_sortino_ratio(sample_returns, target_return=0.005)
-        
+
         # 驗證向後兼容性
         assert abs(sortino - new_sortino) < 1e-10
         assert isinstance(sortino, float)
@@ -124,7 +124,7 @@ class TestTradingMetrics:
         """測試卡爾馬比率計算"""
         calmar = calculate_calmar_ratio(sample_returns)
         new_calmar = new_calculate_calmar_ratio(sample_returns)
-        
+
         # 驗證向後兼容性
         assert abs(calmar - new_calmar) < 1e-10
         assert isinstance(calmar, float)
@@ -132,7 +132,7 @@ class TestTradingMetrics:
     def test_empty_returns(self):
         """測試空收益率序列"""
         empty_returns = pd.Series([])
-        
+
         assert calculate_sharpe_ratio(empty_returns) == 0.0
         assert calculate_sortino_ratio(empty_returns) == 0.0
         assert calculate_calmar_ratio(empty_returns) == 0.0
@@ -156,7 +156,7 @@ class TestRiskMetrics:
         """測試最大回撤計算"""
         max_dd = calculate_max_drawdown(sample_returns)
         new_max_dd = new_calculate_max_drawdown(sample_returns)
-        
+
         # 驗證向後兼容性
         assert abs(max_dd - new_max_dd) < 1e-10
         assert max_dd <= 0  # 最大回撤應該是負值或零
@@ -170,7 +170,7 @@ class TestRiskMetrics:
         """測試波動率計算"""
         vol = calculate_volatility(sample_returns)
         new_vol = new_calculate_volatility(sample_returns)
-        
+
         # 驗證向後兼容性
         assert abs(vol - new_vol) < 1e-10
         assert vol >= 0  # 波動率應該是非負值
@@ -179,7 +179,7 @@ class TestRiskMetrics:
         """測試 VaR 計算"""
         var_95 = calculate_var(sample_returns, confidence_level=0.95)
         new_var_95 = new_calculate_var(sample_returns, confidence_level=0.95)
-        
+
         # 驗證向後兼容性
         assert abs(var_95 - new_var_95) < 1e-10
         assert isinstance(var_95, float)
@@ -202,7 +202,7 @@ class TestStatisticalMetrics:
         """測試勝率計算"""
         win_rate = calculate_win_rate(sample_returns)
         new_win_rate = new_calculate_win_rate(sample_returns)
-        
+
         # 驗證向後兼容性
         assert abs(win_rate - new_win_rate) < 1e-10
         assert 0 <= win_rate <= 1  # 勝率應該在0到1之間
@@ -216,7 +216,7 @@ class TestStatisticalMetrics:
         """測試盈虧比計算"""
         pnl_ratio = calculate_pnl_ratio(sample_returns)
         new_pnl_ratio = new_calculate_pnl_ratio(sample_returns)
-        
+
         # 驗證向後兼容性
         assert abs(pnl_ratio - new_pnl_ratio) < 1e-10
         assert pnl_ratio >= 0  # 盈虧比應該是非負值
@@ -225,7 +225,7 @@ class TestStatisticalMetrics:
         """測試期望值計算"""
         expectancy = calculate_expectancy(sample_returns)
         new_expectancy = new_calculate_expectancy(sample_returns)
-        
+
         # 驗證向後兼容性
         assert abs(expectancy - new_expectancy) < 1e-10
         assert isinstance(expectancy, float)
@@ -246,22 +246,26 @@ class TestComprehensiveMetrics:
     def test_calculate_all_metrics(self, sample_data):
         """測試計算所有指標"""
         returns, prices, trades = sample_data
-        
+
         metrics = calculate_all_metrics(
-            returns=returns,
-            prices=prices,
-            trades=trades,
-            risk_free_rate=0.02
+            returns=returns, prices=prices, trades=trades, risk_free_rate=0.02
         )
-        
+
         # 驗證返回的指標
         expected_metrics = [
-            'sharpe_ratio', 'sortino_ratio', 'calmar_ratio',
-            'max_drawdown', 'volatility', 'var_95',
-            'win_rate', 'pnl_ratio', 'expectancy',
-            'total_return', 'annual_return'
+            "sharpe_ratio",
+            "sortino_ratio",
+            "calmar_ratio",
+            "max_drawdown",
+            "volatility",
+            "var_95",
+            "win_rate",
+            "pnl_ratio",
+            "expectancy",
+            "total_return",
+            "annual_return",
         ]
-        
+
         for metric in expected_metrics:
             assert metric in metrics
             assert isinstance(metrics[metric], (int, float))
@@ -270,28 +274,28 @@ class TestComprehensiveMetrics:
         """測試最小參數的綜合指標計算"""
         returns = pd.Series([0.01, -0.02, 0.015, 0.008, -0.005])
         metrics = calculate_all_metrics(returns)
-        
-        # 驗證基本指標存在
-        assert 'sharpe_ratio' in metrics
-        assert 'max_drawdown' in metrics
-        assert 'win_rate' in metrics
 
-    @patch('src.models.performance_metrics.utils.plt')
+        # 驗證基本指標存在
+        assert "sharpe_ratio" in metrics
+        assert "max_drawdown" in metrics
+        assert "win_rate" in metrics
+
+    @patch("src.models.performance_metrics.utils.plt")
     def test_performance_report_generation(self, mock_plt, sample_data):
         """測試績效報告生成"""
         returns, _, _ = sample_data
         metrics = calculate_all_metrics(returns)
-        
-        report_path = create_performance_report(metrics, "Test Strategy")
-        assert report_path.endswith('.html')
 
-    @patch('src.models.performance_metrics.utils.plt')
+        report_path = create_performance_report(metrics, "Test Strategy")
+        assert report_path.endswith(".html")
+
+    @patch("src.models.performance_metrics.utils.plt")
     def test_performance_comparison_plot(self, mock_plt):
         """測試績效比較圖"""
         strategies_metrics = {
             "Strategy A": {"sharpe_ratio": 1.5, "max_drawdown": -0.1},
-            "Strategy B": {"sharpe_ratio": 1.2, "max_drawdown": -0.15}
+            "Strategy B": {"sharpe_ratio": 1.2, "max_drawdown": -0.15},
         }
-        
+
         plot_path = plot_performance_comparison(strategies_metrics)
-        assert plot_path.endswith('.png')
+        assert plot_path.endswith(".png")

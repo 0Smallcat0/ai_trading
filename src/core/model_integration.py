@@ -31,6 +31,7 @@ try:
     import mlflow.sklearn  # pylint: disable=unused-import
     import mlflow.pytorch  # pylint: disable=unused-import
     import mlflow.tensorflow  # pylint: disable=unused-import
+
     MLFLOW_AVAILABLE = True
 except ImportError:
     warnings.warn("無法匯入 MLflow，部分功能將無法使用")
@@ -40,6 +41,7 @@ except ImportError:
 try:
     import onnxruntime as ort  # pylint: disable=unused-import
     import onnx  # pylint: disable=unused-import
+
     ONNX_AVAILABLE = True
 except ImportError:
     warnings.warn("無法匯入 ONNX Runtime，部分優化功能將無法使用")
@@ -247,7 +249,9 @@ class ModelManager:
                     if current_idx > 0:
                         previous_version = versions[current_idx - 1]
                         logger.info(
-                            "嘗試載入模型 %s 的前一個版本 %s", model_name, previous_version
+                            "嘗試載入模型 %s 的前一個版本 %s",
+                            model_name,
+                            previous_version,
                         )
                         self.load_model(model_name, version=previous_version)
                     else:
@@ -292,7 +296,9 @@ class ModelManager:
             try:
                 model = self.model_registry.load_model(model_name, version)
             except Exception as registry_error:
-                raise ModelLoadError(f"從註冊表載入模型 {model_name} 失敗") from registry_error
+                raise ModelLoadError(
+                    f"從註冊表載入模型 {model_name} 失敗"
+                ) from registry_error
 
             # 將模型加入快取
             self.model_cache[cache_key] = model
@@ -449,7 +455,9 @@ class ModelManager:
         except Exception as e:
             return self._handle_prediction_error(e, model_name, data)
 
-    def _ensure_model_loaded(self, model_name: str, version: Optional[str] = None) -> bool:
+    def _ensure_model_loaded(
+        self, model_name: str, version: Optional[str] = None
+    ) -> bool:
         """確保模型已載入"""
         cache_key = f"{model_name}_{version or 'latest'}"
         if cache_key not in self.model_cache:
@@ -461,9 +469,7 @@ class ModelManager:
         return True
 
     def _check_model_health_for_prediction(
-        self,
-        model_name: str,
-        data: pd.DataFrame  # pylint: disable=unused-argument
+        self, model_name: str, data: pd.DataFrame  # pylint: disable=unused-argument
     ) -> bool:
         """檢查模型健康狀態是否適合預測"""
         if (
@@ -482,7 +488,7 @@ class ModelManager:
         data: pd.DataFrame,
         model_name: str,
         version: Optional[str] = None,
-        use_pipeline: bool = True
+        use_pipeline: bool = True,
     ) -> np.ndarray:
         """執行實際預測"""
         # 預處理特徵
@@ -494,7 +500,9 @@ class ModelManager:
         else:
             return self._batch_predict(features, model_name, version)
 
-    def _batch_predict(self, features: pd.DataFrame, model_name: str, version: Optional[str] = None) -> np.ndarray:
+    def _batch_predict(
+        self, features: pd.DataFrame, model_name: str, version: Optional[str] = None
+    ) -> np.ndarray:
         """批次預測"""
         cache_key = f"{model_name}_{version or 'latest'}"
 
@@ -508,7 +516,9 @@ class ModelManager:
         else:
             return self.model_cache[cache_key].predict(features)
 
-    def _handle_prediction_error(self, error: Exception, model_name: str, data: pd.DataFrame) -> np.ndarray:
+    def _handle_prediction_error(
+        self, error: Exception, model_name: str, data: pd.DataFrame
+    ) -> np.ndarray:
         """處理預測錯誤"""
         logger.error(f"使用模型 {model_name} 預測時發生錯誤: {error}")
 
@@ -694,14 +704,14 @@ class ModelManager:
         """
         try:
             model_info = self.model_registry.get_model_info(model_name)
-            performance_metrics = model_info.get('performance_metrics', {})
+            performance_metrics = model_info.get("performance_metrics", {})
 
             # 確保返回基本性能指標
             default_metrics = {
-                'accuracy': 0.5,
-                'precision': 0.5,
-                'recall': 0.5,
-                'f1_score': 0.5
+                "accuracy": 0.5,
+                "precision": 0.5,
+                "recall": 0.5,
+                "f1_score": 0.5,
             }
 
             # 合併實際指標和預設值
@@ -710,12 +720,7 @@ class ModelManager:
 
         except Exception as e:
             logger.warning(f"無法獲取模型 {model_name} 的性能指標: {e}")
-            return {
-                'accuracy': 0.5,
-                'precision': 0.5,
-                'recall': 0.5,
-                'f1_score': 0.5
-            }
+            return {"accuracy": 0.5, "precision": 0.5, "recall": 0.5, "f1_score": 0.5}
 
     def predict_single(self, model_name: str, data: pd.DataFrame) -> float:
         """

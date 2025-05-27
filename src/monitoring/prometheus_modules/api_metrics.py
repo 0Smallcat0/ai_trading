@@ -55,8 +55,21 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_request_duration_seconds",
                 "API 請求處理時間（秒）",
                 ["method", "endpoint", "status_code"],
-                buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
-                registry=self.registry
+                buckets=[
+                    0.001,
+                    0.005,
+                    0.01,
+                    0.025,
+                    0.05,
+                    0.1,
+                    0.25,
+                    0.5,
+                    1,
+                    2.5,
+                    5,
+                    10,
+                ],
+                registry=self.registry,
             )
 
             # 請求數量計數器
@@ -64,7 +77,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_requests_total",
                 "API 請求總數",
                 ["method", "endpoint", "status_code"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 錯誤數量計數器
@@ -72,14 +85,12 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_errors_total",
                 "API 錯誤總數",
                 ["method", "endpoint", "error_type"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 活躍連接數
             self.metrics["active_connections"] = Gauge(
-                "api_active_connections",
-                "API 活躍連接數",
-                registry=self.registry
+                "api_active_connections", "API 活躍連接數", registry=self.registry
             )
 
             # 請求大小（位元組）
@@ -88,7 +99,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "API 請求大小（位元組）",
                 ["method", "endpoint"],
                 buckets=[64, 256, 1024, 4096, 16384, 65536, 262144, 1048576],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 回應大小（位元組）
@@ -97,7 +108,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "API 回應大小（位元組）",
                 ["method", "endpoint"],
                 buckets=[64, 256, 1024, 4096, 16384, 65536, 262144, 1048576],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 當前 QPS
@@ -105,7 +116,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_current_qps",
                 "當前每秒請求數",
                 ["endpoint"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 平均回應時間
@@ -113,7 +124,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_avg_response_time_seconds",
                 "平均回應時間（秒）",
                 ["endpoint"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 錯誤率
@@ -121,7 +132,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_error_rate_percent",
                 "API 錯誤率百分比",
                 ["endpoint"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 超時請求數
@@ -129,7 +140,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_timeouts_total",
                 "API 超時請求總數",
                 ["method", "endpoint"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 限流請求數
@@ -137,7 +148,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_rate_limited_total",
                 "API 限流請求總數",
                 ["endpoint"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 認證失敗數
@@ -145,7 +156,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
                 "api_auth_failures_total",
                 "API 認證失敗總數",
                 ["endpoint", "auth_type"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             module_logger.info("API 效能指標初始化完成")
@@ -220,7 +231,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
         status_code: int,
         duration: float,
         request_size: Optional[int] = None,
-        response_size: Optional[int] = None
+        response_size: Optional[int] = None,
     ) -> None:
         """記錄 API 請求
 
@@ -235,37 +246,29 @@ class APIMetricsCollector(PrometheusCollectorBase):
         try:
             # 記錄請求數量和處理時間
             self.metrics["request_count"].labels(
-                method=method,
-                endpoint=endpoint,
-                status_code=str(status_code)
+                method=method, endpoint=endpoint, status_code=str(status_code)
             ).inc()
 
             self.metrics["request_duration"].labels(
-                method=method,
-                endpoint=endpoint,
-                status_code=str(status_code)
+                method=method, endpoint=endpoint, status_code=str(status_code)
             ).observe(duration)
 
             # 記錄請求和回應大小
             if request_size is not None:
                 self.metrics["request_size"].labels(
-                    method=method,
-                    endpoint=endpoint
+                    method=method, endpoint=endpoint
                 ).observe(request_size)
 
             if response_size is not None:
                 self.metrics["response_size"].labels(
-                    method=method,
-                    endpoint=endpoint
+                    method=method, endpoint=endpoint
                 ).observe(response_size)
 
             # 記錄錯誤
             if status_code >= 400:
                 error_type = self._get_error_type(status_code)
                 self.metrics["error_count"].labels(
-                    method=method,
-                    endpoint=endpoint,
-                    error_type=error_type
+                    method=method, endpoint=endpoint, error_type=error_type
                 ).inc()
 
         except Exception as e:
@@ -279,10 +282,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
             endpoint: API 端點
         """
         try:
-            self.metrics["timeout_count"].labels(
-                method=method,
-                endpoint=endpoint
-            ).inc()
+            self.metrics["timeout_count"].labels(method=method, endpoint=endpoint).inc()
         except Exception as e:
             module_logger.error("記錄超時請求失敗: %s", e)
 
@@ -293,9 +293,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
             endpoint: API 端點
         """
         try:
-            self.metrics["rate_limited_count"].labels(
-                endpoint=endpoint
-            ).inc()
+            self.metrics["rate_limited_count"].labels(endpoint=endpoint).inc()
         except Exception as e:
             module_logger.error("記錄限流請求失敗: %s", e)
 
@@ -308,8 +306,7 @@ class APIMetricsCollector(PrometheusCollectorBase):
         """
         try:
             self.metrics["auth_failures"].labels(
-                endpoint=endpoint,
-                auth_type=auth_type
+                endpoint=endpoint, auth_type=auth_type
             ).inc()
         except Exception as e:
             module_logger.error("記錄認證失敗失敗: %s", e)

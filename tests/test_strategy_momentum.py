@@ -24,21 +24,23 @@ class TestMomentumStrategy(unittest.TestCase):
     def setUp(self):
         """設置測試環境"""
         # 創建測試資料
-        self.test_data = pd.DataFrame({
-            'Close': [100, 102, 101, 105, 107, 106, 110, 108, 112, 115],
-            '收盤價': [100, 102, 101, 105, 107, 106, 110, 108, 112, 115],
-            'Volume': [1000, 1100, 950, 1200, 1300, 1150, 1400, 1250, 1500, 1600]
-        })
+        self.test_data = pd.DataFrame(
+            {
+                "Close": [100, 102, 101, 105, 107, 106, 110, 108, 112, 115],
+                "收盤價": [100, 102, 101, 105, 107, 106, 110, 108, 112, 115],
+                "Volume": [1000, 1100, 950, 1200, 1300, 1150, 1400, 1250, 1500, 1600],
+            }
+        )
 
         # 創建上升趨勢資料
-        self.uptrend_data = pd.DataFrame({
-            'Close': [100, 102, 104, 106, 108, 110, 112, 114, 116, 118]
-        })
+        self.uptrend_data = pd.DataFrame(
+            {"Close": [100, 102, 104, 106, 108, 110, 112, 114, 116, 118]}
+        )
 
         # 創建下降趨勢資料
-        self.downtrend_data = pd.DataFrame({
-            'Close': [118, 116, 114, 112, 110, 108, 106, 104, 102, 100]
-        })
+        self.downtrend_data = pd.DataFrame(
+            {"Close": [118, 116, 114, 112, 110, 108, 106, 104, 102, 100]}
+        )
 
         # 創建測試策略
         self.strategy = MomentumStrategy(window=5)
@@ -89,7 +91,13 @@ class TestMomentumStrategy(unittest.TestCase):
 
         # 檢查訊號資料框架結構
         self.assertIsInstance(signals, pd.DataFrame)
-        expected_columns = ['momentum_ma', 'signal', 'position_change', 'buy_signal', 'sell_signal']
+        expected_columns = [
+            "momentum_ma",
+            "signal",
+            "position_change",
+            "buy_signal",
+            "sell_signal",
+        ]
         for col in expected_columns:
             self.assertIn(col, signals.columns)
 
@@ -97,16 +105,16 @@ class TestMomentumStrategy(unittest.TestCase):
         self.assertEqual(len(signals), len(self.test_data))
 
         # 檢查移動平均線計算
-        self.assertIsNotNone(signals['momentum_ma'].iloc[-1])
+        self.assertIsNotNone(signals["momentum_ma"].iloc[-1])
 
         # 檢查訊號值範圍
-        self.assertTrue(all(signals['signal'].isin([-1, 0, 1])))
-        self.assertTrue(all(signals['buy_signal'].isin([0, 1])))
-        self.assertTrue(all(signals['sell_signal'].isin([0, 1])))
+        self.assertTrue(all(signals["signal"].isin([-1, 0, 1])))
+        self.assertTrue(all(signals["buy_signal"].isin([0, 1])))
+        self.assertTrue(all(signals["sell_signal"].isin([0, 1])))
 
     def test_generate_signals_with_chinese_column(self):
         """測試使用中文欄位名稱生成訊號"""
-        chinese_data = self.test_data[['收盤價', 'Volume']].copy()
+        chinese_data = self.test_data[["收盤價", "Volume"]].copy()
         signals = self.strategy.generate_signals(chinese_data)
 
         # 檢查基本結構
@@ -114,18 +122,18 @@ class TestMomentumStrategy(unittest.TestCase):
         self.assertEqual(len(signals), len(chinese_data))
 
         # 檢查訊號生成
-        self.assertIn('signal', signals.columns)
-        self.assertIn('momentum_ma', signals.columns)
+        self.assertIn("signal", signals.columns)
+        self.assertIn("momentum_ma", signals.columns)
 
     def test_generate_signals_uptrend(self):
         """測試上升趨勢中的訊號生成"""
         signals = self.strategy.generate_signals(self.uptrend_data)
 
         # 在明顯上升趨勢中，應該有買入訊號
-        self.assertTrue(signals['buy_signal'].sum() > 0)
+        self.assertTrue(signals["buy_signal"].sum() > 0)
 
         # 檢查最後幾個訊號應該是正的（買入）
-        last_signals = signals['signal'].iloc[-3:].dropna()
+        last_signals = signals["signal"].iloc[-3:].dropna()
         if len(last_signals) > 0:
             self.assertTrue(all(last_signals >= 0))
 
@@ -134,18 +142,20 @@ class TestMomentumStrategy(unittest.TestCase):
         signals = self.strategy.generate_signals(self.downtrend_data)
 
         # 在明顯下降趨勢中，應該有賣出訊號
-        self.assertTrue(signals['sell_signal'].sum() > 0)
+        self.assertTrue(signals["sell_signal"].sum() > 0)
 
         # 檢查最後幾個訊號應該是負的（賣出）
-        last_signals = signals['signal'].iloc[-3:].dropna()
+        last_signals = signals["signal"].iloc[-3:].dropna()
         if len(last_signals) > 0:
             self.assertTrue(all(last_signals <= 0))
 
     def test_data_validation_errors(self):
         """測試資料驗證錯誤"""
         # 測試缺少必要欄位
-        invalid_data = pd.DataFrame({'Volume': [1000, 1100, 1200]})
-        with pytest.raises(DataValidationError, match="資料必須包含 'Close' 或 '收盤價' 欄位"):
+        invalid_data = pd.DataFrame({"Volume": [1000, 1100, 1200]})
+        with pytest.raises(
+            DataValidationError, match="資料必須包含 'Close' 或 '收盤價' 欄位"
+        ):
             self.strategy.generate_signals(invalid_data)
 
         # 測試空資料
@@ -158,34 +168,34 @@ class TestMomentumStrategy(unittest.TestCase):
         signals = self.strategy.generate_signals(self.test_data)
 
         # 買入和賣出訊號不應該同時出現
-        simultaneous_signals = (signals['buy_signal'] == 1) & (signals['sell_signal'] == 1)
+        simultaneous_signals = (signals["buy_signal"] == 1) & (
+            signals["sell_signal"] == 1
+        )
         self.assertFalse(simultaneous_signals.any())
 
         # 檢查訊號變化的邏輯
         for i in range(1, len(signals)):
-            if signals['buy_signal'].iloc[i] == 1:
+            if signals["buy_signal"].iloc[i] == 1:
                 # 買入訊號應該對應正的主訊號
-                self.assertEqual(signals['signal'].iloc[i], 1)
+                self.assertEqual(signals["signal"].iloc[i], 1)
 
-            if signals['sell_signal'].iloc[i] == 1:
+            if signals["sell_signal"].iloc[i] == 1:
                 # 賣出訊號應該對應負的主訊號
-                self.assertEqual(signals['signal'].iloc[i], -1)
+                self.assertEqual(signals["signal"].iloc[i], -1)
 
     def test_moving_average_calculation(self):
         """測試移動平均線計算"""
         # 使用簡單的測試資料
-        simple_data = pd.DataFrame({'Close': [10, 20, 30, 40, 50]})
+        simple_data = pd.DataFrame({"Close": [10, 20, 30, 40, 50]})
         strategy = MomentumStrategy(window=3)
         signals = strategy.generate_signals(simple_data)
 
         # 檢查移動平均線計算（忽略NaN填充的差異）
-        expected_ma = simple_data['Close'].rolling(window=3).mean()
+        expected_ma = simple_data["Close"].rolling(window=3).mean()
         # 只比較非NaN的值
         mask = ~expected_ma.isna()
         pd.testing.assert_series_equal(
-            signals['momentum_ma'][mask],
-            expected_ma[mask],
-            check_names=False
+            signals["momentum_ma"][mask], expected_ma[mask], check_names=False
         )
 
     def test_get_default_param_grid(self):
@@ -194,17 +204,17 @@ class TestMomentumStrategy(unittest.TestCase):
 
         # 檢查參數網格結構
         self.assertIsInstance(param_grid, dict)
-        self.assertIn('window', param_grid)
-        self.assertIsInstance(param_grid['window'], list)
+        self.assertIn("window", param_grid)
+        self.assertIsInstance(param_grid["window"], list)
 
         # 檢查參數值
         expected_windows = [10, 15, 20, 25, 30, 50]
-        self.assertEqual(param_grid['window'], expected_windows)
+        self.assertEqual(param_grid["window"], expected_windows)
 
     def test_edge_cases(self):
         """測試邊界條件"""
         # 測試窗口大小等於資料長度
-        small_data = pd.DataFrame({'Close': [100, 101, 102]})
+        small_data = pd.DataFrame({"Close": [100, 101, 102]})
         strategy = MomentumStrategy(window=3)
         signals = strategy.generate_signals(small_data)
 
@@ -216,23 +226,21 @@ class TestMomentumStrategy(unittest.TestCase):
         signals = strategy.generate_signals(small_data)
 
         # 由於fillna(0)的處理，移動平均線被填充為0，訊號也應該為0
-        self.assertTrue(all(signals['momentum_ma'] == 0))
-        self.assertTrue(all(signals['signal'] == 0))
+        self.assertTrue(all(signals["momentum_ma"] == 0))
+        self.assertTrue(all(signals["signal"] == 0))
 
     def test_nan_handling(self):
         """測試NaN值處理"""
         # 創建包含NaN的資料
-        nan_data = pd.DataFrame({
-            'Close': [100, np.nan, 102, 103, np.nan, 105]
-        })
+        nan_data = pd.DataFrame({"Close": [100, np.nan, 102, 103, np.nan, 105]})
 
         signals = self.strategy.generate_signals(nan_data)
 
         # 檢查NaN值被正確處理
-        self.assertFalse(signals['signal'].isna().any())
-        self.assertFalse(signals['buy_signal'].isna().any())
-        self.assertFalse(signals['sell_signal'].isna().any())
+        self.assertFalse(signals["signal"].isna().any())
+        self.assertFalse(signals["buy_signal"].isna().any())
+        self.assertFalse(signals["sell_signal"].isna().any())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

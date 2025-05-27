@@ -111,7 +111,7 @@ class SignalCombiner:
         self,
         combined_signals: pd.DataFrame,
         weights: Dict[str, float],
-        threshold: float
+        threshold: float,
     ) -> pd.DataFrame:
         """加權平均合併法
 
@@ -166,8 +166,8 @@ class SignalCombiner:
                     # 計算平均信心度
                     if confidence_count > 0:
                         combined_signals.loc[idx, "confidence"] = (
-                        confidence_sum / confidence_count
-                    )
+                            confidence_sum / confidence_count
+                        )
                     else:
                         combined_signals.loc[idx, "confidence"] = abs(avg_signal)
                 else:
@@ -181,9 +181,7 @@ class SignalCombiner:
         return combined_signals
 
     def _majority_vote_combination(
-        self,
-        combined_signals: pd.DataFrame,
-        weights: Dict[str, float]
+        self, combined_signals: pd.DataFrame, weights: Dict[str, float]
     ) -> pd.DataFrame:
         """多數投票合併法
 
@@ -238,7 +236,7 @@ class SignalCombiner:
         self,
         combined_signals: pd.DataFrame,
         weights: Dict[str, float],
-        threshold: float
+        threshold: float,
     ) -> pd.DataFrame:
         """共識合併法（需要多數策略同意才生成訊號）
 

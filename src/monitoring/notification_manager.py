@@ -140,7 +140,9 @@ class NotificationServices:
                 if attempt < self.max_retries:
                     module_logger.warning(
                         "通知發送失敗，%s秒後重試 (%s/%s)",
-                        self.retry_delay, attempt + 1, self.max_retries
+                        self.retry_delay,
+                        attempt + 1,
+                        self.max_retries,
                     )
                     time.sleep(self.retry_delay)
 
@@ -201,9 +203,7 @@ class NotificationServices:
         Returns:
             List[str]: 已啟用的渠道名稱列表
         """
-        return [
-            name for name, channel in self.channels.items() if channel.is_enabled()
-        ]
+        return [name for name, channel in self.channels.items() if channel.is_enabled()]
 
     def get_channel_status(self) -> Dict[str, Dict[str, Any]]:
         """獲取所有渠道狀態

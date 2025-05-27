@@ -65,10 +65,7 @@ def validate_backtest_config(config: BacktestConfig) -> Tuple[bool, str]:
 
 
 def validate_market_data(
-    data: pd.DataFrame,
-    symbols: List[str],
-    start_date: datetime,
-    end_date: datetime
+    data: pd.DataFrame, symbols: List[str], start_date: datetime, end_date: datetime
 ) -> Tuple[bool, str]:
     """
     驗證市場數據
@@ -106,15 +103,15 @@ def validate_market_data(
 
         # 檢查價格邏輯
         invalid_prices = (
-            (data["high"] < data["low"]) |
-            (data["high"] < data["open"]) |
-            (data["high"] < data["close"]) |
-            (data["low"] > data["open"]) |
-            (data["low"] > data["close"]) |
-            (data["open"] <= 0) |
-            (data["high"] <= 0) |
-            (data["low"] <= 0) |
-            (data["close"] <= 0)
+            (data["high"] < data["low"])
+            | (data["high"] < data["open"])
+            | (data["high"] < data["close"])
+            | (data["low"] > data["open"])
+            | (data["low"] > data["close"])
+            | (data["open"] <= 0)
+            | (data["high"] <= 0)
+            | (data["low"] <= 0)
+            | (data["close"] <= 0)
         )
 
         if invalid_prices.any():
@@ -126,12 +123,15 @@ def validate_market_data(
             return False, "成交量不能為負數"
 
         # 檢查日期範圍
-        if hasattr(data.index, 'min') and hasattr(data.index, 'max'):
+        if hasattr(data.index, "min") and hasattr(data.index, "max"):
             data_start = data.index.min()
             data_end = data.index.max()
 
             if data_start > start_date:
-                return False, f"數據開始日期 {data_start} 晚於要求的開始日期 {start_date}"
+                return (
+                    False,
+                    f"數據開始日期 {data_start} 晚於要求的開始日期 {start_date}",
+                )
 
             if data_end < end_date:
                 return False, f"數據結束日期 {data_end} 早於要求的結束日期 {end_date}"
@@ -159,7 +159,9 @@ def validate_signals(signals: pd.DataFrame) -> Tuple[bool, str]:
 
         # 檢查必要欄位
         required_columns = ["signal"]
-        missing_columns = [col for col in required_columns if col not in signals.columns]
+        missing_columns = [
+            col for col in required_columns if col not in signals.columns
+        ]
         if missing_columns:
             return False, f"缺少必要欄位: {missing_columns}"
 
@@ -169,7 +171,10 @@ def validate_signals(signals: pd.DataFrame) -> Tuple[bool, str]:
 
         if invalid_signals.any():
             invalid_count = invalid_signals.sum()
-            return False, f"發現 {invalid_count} 筆無效信號值，有效值為: {valid_signals}"
+            return (
+                False,
+                f"發現 {invalid_count} 筆無效信號值，有效值為: {valid_signals}",
+            )
 
         return True, ""
 
@@ -185,7 +190,8 @@ def _validate_strategy_id(strategy_id: str) -> bool:
 
     # 只允許字母、數字和下劃線
     import re
-    pattern = r'^[a-zA-Z0-9_]+$'
+
+    pattern = r"^[a-zA-Z0-9_]+$"
     return bool(re.match(pattern, strategy_id))
 
 
@@ -204,7 +210,8 @@ def _validate_symbols(symbols: List[str]) -> Tuple[bool, str]:
 
         # 檢查是否包含非法字符
         import re
-        if not re.match(r'^[A-Za-z0-9.]+$', symbol):
+
+        if not re.match(r"^[A-Za-z0-9.]+$", symbol):
             return False, f"股票代碼包含非法字符: {symbol}"
 
     return True, ""
@@ -242,9 +249,7 @@ def _validate_date_range(start_date: datetime, end_date: datetime) -> Tuple[bool
 
 
 def _validate_trading_costs(
-    commission: float,
-    slippage: float,
-    tax: float
+    commission: float, slippage: float, tax: float
 ) -> Tuple[bool, str]:
     """驗證交易成本參數"""
     if commission < 0:

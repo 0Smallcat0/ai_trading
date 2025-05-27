@@ -37,7 +37,7 @@ from src.database.schema import (
     MarketDaily,
     MarketMinute,
     MarketTick,
-    DataShard
+    DataShard,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,16 +45,19 @@ logger = logging.getLogger(__name__)
 
 class ChecksumError(Exception):
     """校驗碼操作相關的異常類別."""
+
     pass
 
 
 class ChecksumConfigError(ChecksumError):
     """校驗碼配置錯誤."""
+
     pass
 
 
 class ChecksumOperationError(ChecksumError):
     """校驗碼操作錯誤."""
+
     pass
 
 
@@ -223,17 +226,17 @@ class ChecksumManager:
 
             self.register_strategy(
                 "market_daily_standard",
-                TimeBasedChecksumStrategy(market_fields + ["date"], 7)
+                TimeBasedChecksumStrategy(market_fields + ["date"], 7),
             )
 
             self.register_strategy(
                 "market_minute_standard",
-                TimeBasedChecksumStrategy(market_fields + ["timestamp"], 3)
+                TimeBasedChecksumStrategy(market_fields + ["timestamp"], 3),
             )
 
             self.register_strategy(
                 "market_tick_critical",
-                CriticalDataChecksumStrategy(market_fields + ["timestamp"], 1)
+                CriticalDataChecksumStrategy(market_fields + ["timestamp"], 1),
             )
         except Exception as e:
             logger.error(f"註冊預設策略失敗: {e}")
@@ -258,11 +261,7 @@ class ChecksumManager:
             self.strategies[name.strip()] = strategy
             logger.info(f"註冊校驗策略: {name}")
 
-    def generate_checksum_for_record(
-        self,
-        record: Any,
-        fields: List[str]
-    ) -> str:
+    def generate_checksum_for_record(self, record: Any, fields: List[str]) -> str:
         """為記錄生成校驗碼.
 
         Args:
@@ -323,7 +322,7 @@ class ChecksumManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         record_id: int,
-        strategy_name: str
+        strategy_name: str,
     ) -> DataChecksum:
         """創建校驗記錄.
 
@@ -365,7 +364,7 @@ class ChecksumManager:
                 checksum=checksum,
                 checksum_fields=strategy.fields,
                 is_valid=True,
-                verified_at=datetime.now(timezone.utc)
+                verified_at=datetime.now(timezone.utc),
             )
 
             self.session.add(checksum_record)
@@ -382,7 +381,7 @@ class ChecksumManager:
     def verify_record_integrity(
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-        record_id: int
+        record_id: int,
     ) -> Dict[str, Any]:
         """驗證記錄完整性.
 
@@ -407,7 +406,7 @@ class ChecksumManager:
                 return {
                     "is_valid": False,
                     "error": f"找不到記錄: {table_class.__tablename__} ID={record_id}",
-                    "record_id": record_id
+                    "record_id": record_id,
                 }
 
             # 查詢校驗記錄
@@ -416,7 +415,7 @@ class ChecksumManager:
                 return {
                     "is_valid": False,
                     "error": f"找不到校驗記錄: {table_class.__tablename__} ID={record_id}",
-                    "record_id": record_id
+                    "record_id": record_id,
                 }
 
             # 計算當前校驗碼
@@ -434,14 +433,18 @@ class ChecksumManager:
                 "stored_checksum": checksum_record.checksum,
                 "current_checksum": current_checksum,
                 "checksum_fields": checksum_record.checksum_fields,
-                "verified_at": datetime.now(timezone.utc)
+                "verified_at": datetime.now(timezone.utc),
             }
 
             # 更新校驗記錄
-            self._update_checksum_record(checksum_record, result["verified_at"], is_valid)
+            self._update_checksum_record(
+                checksum_record, result["verified_at"], is_valid
+            )
 
             if not is_valid:
-                logger.warning(f"資料完整性驗證失敗: {table_class.__tablename__} ID={record_id}")
+                logger.warning(
+                    f"資料完整性驗證失敗: {table_class.__tablename__} ID={record_id}"
+                )
 
             return result
 
@@ -453,7 +456,7 @@ class ChecksumManager:
     def _get_checksum_record(
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-        record_id: int
+        record_id: int,
     ) -> Optional[DataChecksum]:
         """獲取校驗記錄."""
         return (
@@ -463,10 +466,7 @@ class ChecksumManager:
         )
 
     def _update_checksum_record(
-        self,
-        checksum_record: DataChecksum,
-        verified_at: datetime,
-        is_valid: bool
+        self, checksum_record: DataChecksum, verified_at: datetime, is_valid: bool
     ) -> None:
         """更新校驗記錄."""
         checksum_record.verified_at = verified_at
@@ -477,7 +477,7 @@ class ChecksumManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         strategy_name: str,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Dict[str, Any]:
         """批量驗證完整性.
 
@@ -504,7 +504,9 @@ class ChecksumManager:
             start_time = time.time()
 
             # 獲取需要驗證的記錄 ID 列表
-            records_to_verify = self._get_records_to_verify(table_class, strategy, limit)
+            records_to_verify = self._get_records_to_verify(
+                table_class, strategy, limit
+            )
 
             # 執行批量驗證
             results = self._execute_batch_verification(table_class, records_to_verify)
@@ -528,12 +530,11 @@ class ChecksumManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         strategy: ChecksumStrategy,
-        limit: Optional[int]
+        limit: Optional[int],
     ) -> List[int]:
         """獲取需要驗證的記錄 ID 列表."""
-        query = (
-            self.session.query(DataChecksum)
-            .filter_by(table_name=table_class.__tablename__)
+        query = self.session.query(DataChecksum).filter_by(
+            table_name=table_class.__tablename__
         )
 
         now = datetime.now(timezone.utc)
@@ -544,7 +545,7 @@ class ChecksumManager:
             if checksum_record.verified_at:
                 last_verified_days = (now - checksum_record.verified_at).days
             else:
-                last_verified_days = float('inf')
+                last_verified_days = float("inf")
 
             # 假設記錄年齡為創建時間到現在的天數
             if checksum_record.created_at:
@@ -563,7 +564,7 @@ class ChecksumManager:
     def _execute_batch_verification(
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-        records_to_verify: List[int]
+        records_to_verify: List[int],
     ) -> Dict[str, Any]:
         """執行批量驗證."""
         results: Dict[str, Any] = {
@@ -573,7 +574,7 @@ class ChecksumManager:
             "errors": 0,
             "verification_time": 0,
             "invalid_record_ids": [],
-            "error_details": []
+            "error_details": [],
         }
 
         for record_id in records_to_verify:
@@ -589,10 +590,9 @@ class ChecksumManager:
 
             except Exception as e:
                 results["errors"] += 1
-                results["error_details"].append({
-                    "record_id": record_id,
-                    "error": str(e)
-                })
+                results["error_details"].append(
+                    {"record_id": record_id, "error": str(e)}
+                )
                 logger.error(f"驗證記錄 {record_id} 時發生錯誤: {e}")
 
         return results
@@ -601,7 +601,7 @@ class ChecksumManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         strategy_name: str,
-        batch_size: int = 1000
+        batch_size: int = 1000,
     ) -> Dict[str, Any]:
         """自動為記錄創建校驗碼.
 
@@ -627,10 +627,14 @@ class ChecksumManager:
             start_time = time.time()
 
             # 查詢沒有校驗記錄的資料
-            records_without_checksum = self._get_records_without_checksum(table_class, batch_size)
+            records_without_checksum = self._get_records_without_checksum(
+                table_class, batch_size
+            )
 
             # 執行批量創建
-            results = self._execute_batch_creation(table_class, strategy_name, records_without_checksum)
+            results = self._execute_batch_creation(
+                table_class, strategy_name, records_without_checksum
+            )
             results["processing_time"] = time.time() - start_time
 
             logger.info(
@@ -649,7 +653,7 @@ class ChecksumManager:
     def _get_records_without_checksum(
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
-        batch_size: int
+        batch_size: int,
     ) -> List[Tuple[int]]:
         """獲取沒有校驗記錄的資料."""
         existing_checksums = (
@@ -669,7 +673,7 @@ class ChecksumManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         strategy_name: str,
-        records_without_checksum: List[Tuple[int]]
+        records_without_checksum: List[Tuple[int]],
     ) -> Dict[str, Any]:
         """執行批量創建校驗碼."""
         results: Dict[str, Any] = {
@@ -677,7 +681,7 @@ class ChecksumManager:
             "successful_creates": 0,
             "errors": 0,
             "processing_time": 0,
-            "error_details": []
+            "error_details": [],
         }
 
         for (record_id,) in records_without_checksum:
@@ -686,10 +690,9 @@ class ChecksumManager:
                 results["successful_creates"] += 1
             except Exception as e:
                 results["errors"] += 1
-                results["error_details"].append({
-                    "record_id": record_id,
-                    "error": str(e)
-                })
+                results["error_details"].append(
+                    {"record_id": record_id, "error": str(e)}
+                )
                 logger.error(f"為記錄 {record_id} 創建校驗碼時發生錯誤: {e}")
 
             results["total_processed"] += 1
@@ -743,15 +746,12 @@ class ChecksumManager:
                 "within_1_week": 0,
                 "within_1_month": 0,
                 "older_than_1_month": 0,
-                "never_verified": 0
-            }
+                "never_verified": 0,
+            },
         }
 
     def _update_report_statistics(
-        self,
-        report: Dict[str, Any],
-        checksum: DataChecksum,
-        now: datetime
+        self, report: Dict[str, Any], checksum: DataChecksum, now: datetime
     ) -> None:
         """更新報告統計資訊."""
         table = checksum.table_name
@@ -762,7 +762,7 @@ class ChecksumManager:
                 "total": 0,
                 "valid": 0,
                 "invalid": 0,
-                "unverified": 0
+                "unverified": 0,
             }
 
         report["by_table"][table]["total"] += 1
@@ -782,10 +782,7 @@ class ChecksumManager:
         self._update_age_distribution(report, checksum, now)
 
     def _update_age_distribution(
-        self,
-        report: Dict[str, Any],
-        checksum: DataChecksum,
-        now: datetime
+        self, report: Dict[str, Any], checksum: DataChecksum, now: datetime
     ) -> None:
         """更新驗證年齡分佈統計."""
         if checksum.verified_at:
@@ -815,7 +812,7 @@ class ChecksumManager:
         self,
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         strategy_name: str,
-        check_interval_hours: int = 24
+        check_interval_hours: int = 24,
     ) -> Dict[str, Any]:
         """排程完整性檢查.
 
@@ -844,7 +841,7 @@ class ChecksumManager:
             "strategy_name": strategy_name,
             "check_interval_hours": check_interval_hours,
             "next_check_time": datetime.now(timezone.utc),
-            "status": "configured"
+            "status": "configured",
         }
 
         logger.info(

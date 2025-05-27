@@ -18,7 +18,7 @@ from .signal_generators import (
     trade_point_decision,
     continuous_trading_signal,
     triple_barrier,
-    fixed_time_horizon
+    fixed_time_horizon,
 )
 
 # 設定日誌
@@ -74,6 +74,7 @@ def generate_signals(
     # 導入資料載入函數
     try:
         from src.core.data_ingest import load_data
+
         data_dict = load_data()
         price_df = data_dict["price"]
     except ImportError:

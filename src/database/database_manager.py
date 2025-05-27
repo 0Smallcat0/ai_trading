@@ -38,16 +38,19 @@ logger = logging.getLogger(__name__)
 
 class DatabaseError(Exception):
     """資料庫操作相關的異常類別."""
+
     pass
 
 
 class DatabaseConfigError(DatabaseError):
     """資料庫配置錯誤."""
+
     pass
 
 
 class DatabaseOperationError(DatabaseError):
     """資料庫操作錯誤."""
+
     pass
 
 
@@ -101,7 +104,7 @@ class DatabaseManager:
         start_date: date,
         end_date: date,
         compression_type: str = "snappy",
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> Tuple[Optional[str], Dict[str, Any]]:
         """創建分片並立即壓縮.
 
@@ -141,7 +144,9 @@ class DatabaseManager:
 
                 # 更新分片記錄
                 if compressed_path:
-                    self._update_shard_record(shard, compressed_path, compression_type, compression_stats)
+                    self._update_shard_record(
+                        shard, compressed_path, compression_type, compression_stats
+                    )
 
                 # 為新分片的資料創建校驗碼
                 self._create_checksums_for_date_range(
@@ -153,7 +158,7 @@ class DatabaseManager:
                     "shard_id": shard.shard_id,
                     "shard_path": shard_path,
                     "compressed_path": compressed_path,
-                    "compression_stats": compression_stats
+                    "compression_stats": compression_stats,
                 }
 
                 logger.info(f"成功創建並壓縮分片: {shard.shard_id}")
@@ -170,7 +175,7 @@ class DatabaseManager:
         start_date: date,
         end_date: date,
         compression_type: str,
-        symbols: Optional[List[str]]
+        symbols: Optional[List[str]],
     ) -> Tuple[str, Dict[str, Any]]:
         """壓縮分片資料."""
         return self.compression_manager.compress_table_data(
@@ -182,7 +187,7 @@ class DatabaseManager:
         shard: Any,
         compressed_path: str,
         compression_type: str,
-        compression_stats: Dict[str, Any]
+        compression_stats: Dict[str, Any],
     ) -> None:
         """更新分片記錄."""
         shard.file_path = compressed_path
@@ -196,7 +201,7 @@ class DatabaseManager:
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         start_date: date,
         end_date: date,
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> None:
         """為指定日期範圍的資料創建校驗碼.
 
@@ -227,14 +232,13 @@ class DatabaseManager:
             logger.error(f"創建校驗碼時發生錯誤: {e}")
 
     def _get_checksum_strategy_name(
-        self,
-        table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]]
+        self, table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]]
     ) -> str:
         """根據表類別獲取校驗策略名稱."""
         strategy_mapping = {
             MarketDaily: "market_daily_standard",
             MarketMinute: "market_minute_standard",
-            MarketTick: "market_tick_critical"
+            MarketTick: "market_tick_critical",
         }
 
         strategy_name = strategy_mapping.get(table_class)
@@ -247,7 +251,7 @@ class DatabaseManager:
         self,
         auto_shard: bool = True,
         auto_compress: bool = True,
-        verify_integrity: bool = True
+        verify_integrity: bool = True,
     ) -> Dict[str, Any]:
         """執行資料庫維護任務.
 
@@ -294,7 +298,7 @@ class DatabaseManager:
             "auto_shard_results": {},
             "auto_compress_results": {},
             "integrity_check_results": {},
-            "errors": []
+            "errors": [],
         }
 
     def _perform_auto_sharding(self, maintenance_stats: Dict[str, Any]) -> None:
@@ -307,7 +311,7 @@ class DatabaseManager:
                 )
                 maintenance_stats["auto_shard_results"][table_class.__tablename__] = {
                     "created": result is not None,
-                    "shard_id": result[0].shard_id if result else None
+                    "shard_id": result[0].shard_id if result else None,
                 }
             except Exception as e:
                 error_msg = f"自動分片失敗 {table_class.__tablename__}: {e}"
@@ -323,8 +327,12 @@ class DatabaseManager:
             )
             maintenance_stats["auto_compress_results"] = {
                 "processed_shards": len(compress_results),
-                "compressed_count": len([r for r in compress_results if r["status"] == "compressed"]),
-                "error_count": len([r for r in compress_results if r["status"] == "error"])
+                "compressed_count": len(
+                    [r for r in compress_results if r["status"] == "compressed"]
+                ),
+                "error_count": len(
+                    [r for r in compress_results if r["status"] == "error"]
+                ),
             }
         except Exception as e:
             error_msg = f"自動壓縮失敗: {e}"
@@ -340,7 +348,9 @@ class DatabaseManager:
                 result = self.checksum_manager.batch_verify_integrity(
                     table_class, strategy_name, limit=100
                 )
-                maintenance_stats["integrity_check_results"][table_class.__tablename__] = result
+                maintenance_stats["integrity_check_results"][
+                    table_class.__tablename__
+                ] = result
 
             except Exception as e:
                 error_msg = f"完整性檢查失敗 {table_class.__tablename__}: {e}"
@@ -354,14 +364,16 @@ class DatabaseManager:
             maintenance_stats["end_time"] - maintenance_stats["start_time"]
         ).total_seconds()
 
-        logger.info(f"資料庫維護完成，耗時 {maintenance_stats['duration_seconds']:.2f} 秒")
+        logger.info(
+            f"資料庫維護完成，耗時 {maintenance_stats['duration_seconds']:.2f} 秒"
+        )
 
     def start_scheduled_maintenance(
         self,
         interval_hours: int = 24,
         auto_shard: bool = True,
         auto_compress: bool = True,
-        verify_integrity: bool = True
+        verify_integrity: bool = True,
     ) -> Dict[str, Any]:
         """啟動排程維護任務.
 
@@ -392,7 +404,7 @@ class DatabaseManager:
             "auto_compress": auto_compress,
             "verify_integrity": verify_integrity,
             "next_maintenance_time": datetime.now(),
-            "status": "configured"
+            "status": "configured",
         }
 
         logger.info(
@@ -435,7 +447,9 @@ class DatabaseManager:
 
             # 獲取各管理器統計
             status["sharding_stats"] = self.sharding_manager.get_shard_statistics()
-            status["compression_stats"] = self.compression_manager.get_compression_statistics()
+            status["compression_stats"] = (
+                self.compression_manager.get_compression_statistics()
+            )
             status["integrity_stats"] = self.checksum_manager.get_integrity_report()
 
             return status
@@ -452,8 +466,12 @@ class DatabaseManager:
             "integrity_stats": {},
             "maintenance_status": {
                 "is_running": self.maintenance_running,
-                "thread_alive": self.maintenance_thread.is_alive() if self.maintenance_thread else False
-            }
+                "thread_alive": (
+                    self.maintenance_thread.is_alive()
+                    if self.maintenance_thread
+                    else False
+                ),
+            },
         }
 
     def optimize_query_performance(
@@ -461,7 +479,7 @@ class DatabaseManager:
         table_class: Type[Union[MarketDaily, MarketMinute, MarketTick]],
         start_date: date,
         end_date: date,
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """優化查詢效能.
 
@@ -492,10 +510,14 @@ class DatabaseManager:
             # 計算查詢範圍
             date_range_days = (end_date - start_date).days + 1
 
-            optimization = self._initialize_optimization_result(date_range_days, len(shards))
+            optimization = self._initialize_optimization_result(
+                date_range_days, len(shards)
+            )
 
             if shards:
-                self._analyze_shard_coverage(optimization, shards, start_date, end_date, date_range_days)
+                self._analyze_shard_coverage(
+                    optimization, shards, start_date, end_date, date_range_days
+                )
 
             return optimization
 
@@ -504,14 +526,16 @@ class DatabaseManager:
         except Exception as e:
             raise DatabaseOperationError(f"優化查詢效能時發生錯誤: {e}") from e
 
-    def _initialize_optimization_result(self, date_range_days: int, shard_count: int) -> Dict[str, Any]:
+    def _initialize_optimization_result(
+        self, date_range_days: int, shard_count: int
+    ) -> Dict[str, Any]:
         """初始化優化結果."""
         return {
             "query_date_range_days": date_range_days,
             "available_shards": shard_count,
             "recommendation": "use_database",  # 預設使用資料庫
             "estimated_performance": "medium",
-            "shards_info": []
+            "shards_info": [],
         }
 
     def _analyze_shard_coverage(
@@ -520,7 +544,7 @@ class DatabaseManager:
         shards: List[Any],
         start_date: date,
         end_date: date,
-        date_range_days: int
+        date_range_days: int,
     ) -> None:
         """分析分片覆蓋率."""
         shard_coverage_days = 0
@@ -531,13 +555,15 @@ class DatabaseManager:
             if shard_start <= shard_end:
                 shard_coverage_days += (shard_end - shard_start).days + 1
 
-            optimization["shards_info"].append({
-                "shard_id": shard.shard_id,
-                "start_date": shard.start_date,
-                "end_date": shard.end_date,
-                "is_compressed": shard.is_compressed,
-                "file_size_mb": (shard.file_size_bytes or 0) / (1024 * 1024)
-            })
+            optimization["shards_info"].append(
+                {
+                    "shard_id": shard.shard_id,
+                    "start_date": shard.start_date,
+                    "end_date": shard.end_date,
+                    "is_compressed": shard.is_compressed,
+                    "file_size_mb": (shard.file_size_bytes or 0) / (1024 * 1024),
+                }
+            )
 
         coverage_ratio = shard_coverage_days / date_range_days
         optimization["shard_coverage_ratio"] = coverage_ratio

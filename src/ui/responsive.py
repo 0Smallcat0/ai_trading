@@ -27,6 +27,7 @@ from .responsive.components import ResponsiveComponents
 from .responsive.utils import ResponsiveUtils
 from .responsive.touch_components import TouchOptimizedComponents
 
+
 # 便捷函數（向後相容）
 def apply_responsive_design():
     """應用響應式設計（便捷函數）"""
@@ -45,14 +46,14 @@ def is_mobile_device() -> bool:
 
 # 向後相容性：重新導出所有類別和函數
 __all__ = [
-    'ResponsiveBreakpoints',
-    'ResponsiveCSS',
-    'ResponsiveLayoutManager',
-    'ResponsiveComponents',
-    'ResponsiveUtils',
-    'TouchOptimizedComponents',
-    'responsive_manager',
-    'apply_responsive_design',
-    'get_responsive_columns',
-    'is_mobile_device'
+    "ResponsiveBreakpoints",
+    "ResponsiveCSS",
+    "ResponsiveLayoutManager",
+    "ResponsiveComponents",
+    "ResponsiveUtils",
+    "TouchOptimizedComponents",
+    "responsive_manager",
+    "apply_responsive_design",
+    "get_responsive_columns",
+    "is_mobile_device",
 ]

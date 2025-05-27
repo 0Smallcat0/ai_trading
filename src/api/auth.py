@@ -120,14 +120,11 @@ class PermissionError(HTTPException):
     """權限錯誤異常"""
 
     def __init__(self, detail: str = "權限不足"):
-        super().__init__(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=detail
-        )
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict[str, Any]:
     """
     獲取當前認證用戶資訊。
@@ -220,8 +217,7 @@ def get_current_user(
 
 
 def require_permissions(
-    required_permissions: List[str],
-    require_all: bool = True
+    required_permissions: List[str], require_all: bool = True
 ) -> Callable:
     """
     權限檢查裝飾器。
@@ -246,6 +242,7 @@ def require_permissions(
             return {"message": "管理員專用端點"}
         ```
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -271,7 +268,8 @@ def require_permissions(
             if require_all:
                 # 需要所有權限
                 missing_permissions = [
-                    perm for perm in required_permissions
+                    perm
+                    for perm in required_permissions
                     if perm not in user_permissions
                 ]
                 if missing_permissions:
@@ -303,6 +301,7 @@ def require_permissions(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -321,20 +320,33 @@ def _get_role_permissions(role: str) -> List[str]:
     """
     role_permissions = {
         "admin": [
-            "admin", "user_management", "system_config", "data_management",
-            "strategy_management", "ai_models", "backtest", "portfolio",
-            "risk_management", "trading", "monitoring", "reports", "versioning"
+            "admin",
+            "user_management",
+            "system_config",
+            "data_management",
+            "strategy_management",
+            "ai_models",
+            "backtest",
+            "portfolio",
+            "risk_management",
+            "trading",
+            "monitoring",
+            "reports",
+            "versioning",
         ],
         "user": [
-            "data_management", "strategy_management", "ai_models", "backtest",
-            "portfolio", "risk_management", "trading", "monitoring", "reports"
+            "data_management",
+            "strategy_management",
+            "ai_models",
+            "backtest",
+            "portfolio",
+            "risk_management",
+            "trading",
+            "monitoring",
+            "reports",
         ],
-        "readonly": [
-            "backtest", "portfolio", "monitoring", "reports"
-        ],
-        "demo": [
-            "backtest", "portfolio", "monitoring", "reports"
-        ]
+        "readonly": ["backtest", "portfolio", "monitoring", "reports"],
+        "demo": ["backtest", "portfolio", "monitoring", "reports"],
     }
 
     return role_permissions.get(role, [])

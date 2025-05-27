@@ -28,29 +28,32 @@ logger = logging.getLogger(__name__)
 
 class ComplianceEventType(Enum):
     """合規事件類型"""
+
     TRADING_DECISION = "trading_decision"  # 交易決策
-    RISK_ASSESSMENT = "risk_assessment"    # 風險評估
+    RISK_ASSESSMENT = "risk_assessment"  # 風險評估
     PORTFOLIO_CHANGE = "portfolio_change"  # 投資組合變更
     COMPLIANCE_CHECK = "compliance_check"  # 合規檢查
-    AUDIT_ACCESS = "audit_access"          # 審計訪問
-    DATA_EXPORT = "data_export"            # 資料匯出
-    SYSTEM_CONFIG = "system_config"        # 系統配置變更
-    USER_ACTION = "user_action"            # 用戶操作
-    ALERT_TRIGGER = "alert_trigger"        # 警報觸發
+    AUDIT_ACCESS = "audit_access"  # 審計訪問
+    DATA_EXPORT = "data_export"  # 資料匯出
+    SYSTEM_CONFIG = "system_config"  # 系統配置變更
+    USER_ACTION = "user_action"  # 用戶操作
+    ALERT_TRIGGER = "alert_trigger"  # 警報觸發
     REGULATORY_REPORT = "regulatory_report"  # 監管報告
 
 
 class ComplianceLevel(Enum):
     """合規級別"""
-    LOW = "low"          # 低風險
-    MEDIUM = "medium"    # 中風險
-    HIGH = "high"        # 高風險
+
+    LOW = "low"  # 低風險
+    MEDIUM = "medium"  # 中風險
+    HIGH = "high"  # 高風險
     CRITICAL = "critical"  # 關鍵
 
 
 @dataclass
 class ComplianceEventConfig:
     """合規事件配置"""
+
     event_type: ComplianceEventType
     level: ComplianceLevel
     user_id: str
@@ -63,6 +66,7 @@ class ComplianceEventConfig:
 @dataclass
 class ComplianceEvent:
     """合規事件"""
+
     event_id: str
     event_type: ComplianceEventType
     level: ComplianceLevel
@@ -78,29 +82,29 @@ class ComplianceEvent:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         data = asdict(self)
-        data['timestamp'] = self.timestamp.isoformat()
-        data['event_type'] = self.event_type.value
-        data['level'] = self.level.value
+        data["timestamp"] = self.timestamp.isoformat()
+        data["event_type"] = self.event_type.value
+        data["level"] = self.level.value
         return data
 
     def calculate_hash(self) -> str:
         """計算事件雜湊值"""
         # 創建用於雜湊的數據
         hash_data = {
-            'event_id': self.event_id,
-            'event_type': self.event_type.value,
-            'level': self.level.value,
-            'timestamp': self.timestamp.isoformat(),
-            'user_id': self.user_id,
-            'description': self.description,
-            'details': self.details,
-            'business_context': self.business_context,
-            'regulatory_context': self.regulatory_context
+            "event_id": self.event_id,
+            "event_type": self.event_type.value,
+            "level": self.level.value,
+            "timestamp": self.timestamp.isoformat(),
+            "user_id": self.user_id,
+            "description": self.description,
+            "details": self.details,
+            "business_context": self.business_context,
+            "regulatory_context": self.regulatory_context,
         }
 
         # 序列化並計算雜湊
         json_str = json.dumps(hash_data, sort_keys=True, ensure_ascii=False)
-        return hashlib.sha256(json_str.encode('utf-8')).hexdigest()
+        return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
 
 class ComplianceLogger:
@@ -111,7 +115,7 @@ class ComplianceLogger:
         log_dir: str = "logs/compliance",
         key_dir: str = "config/keys",
         enable_encryption: bool = True,
-        retention_days: int = 2555  # 7年保存期限
+        retention_days: int = 2555,  # 7年保存期限
     ):
         """初始化合規日誌記錄器。
 
@@ -128,17 +132,17 @@ class ComplianceLogger:
 
         # 監控指標
         self.metrics = {
-            'events_logged': 0,
-            'events_by_type': defaultdict(int),
-            'events_by_level': defaultdict(int),
-            'average_log_time': 0.0,
-            'total_log_time': 0.0,
-            'verification_success_rate': 0.0,
-            'verification_attempts': 0,
-            'verification_successes': 0,
-            'batch_operations': 0,
-            'cache_hits': 0,
-            'cache_misses': 0
+            "events_logged": 0,
+            "events_by_type": defaultdict(int),
+            "events_by_level": defaultdict(int),
+            "average_log_time": 0.0,
+            "total_log_time": 0.0,
+            "verification_success_rate": 0.0,
+            "verification_attempts": 0,
+            "verification_successes": 0,
+            "batch_operations": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
         }
 
         # 創建目錄
@@ -174,25 +178,27 @@ class ComplianceLogger:
         else:
             # 生成新密鑰對
             self.private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048,
-                backend=default_backend()
+                public_exponent=65537, key_size=2048, backend=default_backend()
             )
             self.public_key = self.private_key.public_key()
 
             # 保存密鑰
             with open(private_key_path, "wb") as f:
-                f.write(self.private_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption()
-                ))
+                f.write(
+                    self.private_key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.PKCS8,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
 
             with open(public_key_path, "wb") as f:
-                f.write(self.public_key.public_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PublicFormat.SubjectPublicKeyInfo
-                ))
+                f.write(
+                    self.public_key.public_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                    )
+                )
 
     def _get_current_log_file(self) -> str:
         """獲取當前日誌文件路徑"""
@@ -209,14 +215,11 @@ class ComplianceLogger:
             self.logger.removeHandler(handler)
 
         # 創建文件處理器
-        handler = logging.FileHandler(
-            self.current_log_file,
-            encoding='utf-8'
-        )
+        handler = logging.FileHandler(self.current_log_file, encoding="utf-8")
         handler.setLevel(logging.INFO)
 
         # 設置格式
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter("%(message)s")
         handler.setFormatter(formatter)
 
         self.logger.addHandler(handler)
@@ -232,12 +235,12 @@ class ComplianceLogger:
 
             # 使用私鑰簽名
             signature = self.private_key.sign(
-                hash_value.encode('utf-8'),
+                hash_value.encode("utf-8"),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
+                    salt_length=padding.PSS.MAX_LENGTH,
                 ),
-                hashes.SHA256()
+                hashes.SHA256(),
             )
 
             return signature.hex()
@@ -253,7 +256,7 @@ class ComplianceLogger:
         description: str,
         details: Optional[Dict[str, Any]] = None,
         business_context: Optional[Dict[str, Any]] = None,
-        regulatory_context: Optional[Dict[str, Any]] = None
+        regulatory_context: Optional[Dict[str, Any]] = None,
     ) -> ComplianceEvent:
         """記錄合規事件。
 
@@ -281,7 +284,7 @@ class ComplianceLogger:
             description=description,
             details=details or {},
             business_context=business_context or {},
-            regulatory_context=regulatory_context or {}
+            regulatory_context=regulatory_context or {},
         )
 
         # 計算雜湊值
@@ -319,7 +322,7 @@ class ComplianceLogger:
         description: str,
         details: Dict[str, Any],
         business_context: Dict[str, Any],
-        regulatory_context: Dict[str, Any]
+        regulatory_context: Dict[str, Any],
     ) -> ComplianceEvent:
         """創建合規事件。"""
         event = ComplianceEvent(
@@ -331,7 +334,7 @@ class ComplianceLogger:
             description=description,
             details=details,
             business_context=business_context,
-            regulatory_context=regulatory_context
+            regulatory_context=regulatory_context,
         )
 
         # 計算雜湊值
@@ -345,15 +348,15 @@ class ComplianceLogger:
 
     def _update_metrics(self, event: ComplianceEvent, log_time: float):
         """更新監控指標。"""
-        self.metrics['events_logged'] += 1
-        self.metrics['events_by_type'][event.event_type.value] += 1
-        self.metrics['events_by_level'][event.level.value] += 1
+        self.metrics["events_logged"] += 1
+        self.metrics["events_by_type"][event.event_type.value] += 1
+        self.metrics["events_by_level"][event.level.value] += 1
 
         # 更新平均日誌記錄時間
-        self.metrics['total_log_time'] += log_time
-        total_time = self.metrics['total_log_time']
-        total_events = self.metrics['events_logged']
-        self.metrics['average_log_time'] = total_time / total_events
+        self.metrics["total_log_time"] += log_time
+        total_time = self.metrics["total_log_time"]
+        total_events = self.metrics["events_logged"]
+        self.metrics["average_log_time"] = total_time / total_events
 
     def get_metrics(self) -> Dict[str, Any]:
         """獲取監控指標。"""
@@ -362,17 +365,17 @@ class ComplianceLogger:
     def reset_metrics(self):
         """重置監控指標。"""
         self.metrics = {
-            'events_logged': 0,
-            'events_by_type': defaultdict(int),
-            'events_by_level': defaultdict(int),
-            'average_log_time': 0.0,
-            'total_log_time': 0.0,
-            'verification_success_rate': 0.0,
-            'verification_attempts': 0,
-            'verification_successes': 0,
-            'batch_operations': 0,
-            'cache_hits': 0,
-            'cache_misses': 0
+            "events_logged": 0,
+            "events_by_type": defaultdict(int),
+            "events_by_level": defaultdict(int),
+            "average_log_time": 0.0,
+            "total_log_time": 0.0,
+            "verification_success_rate": 0.0,
+            "verification_attempts": 0,
+            "verification_successes": 0,
+            "batch_operations": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
         }
 
     def log_event_with_config(self, config: ComplianceEventConfig) -> ComplianceEvent:
@@ -391,10 +394,12 @@ class ComplianceLogger:
             description=config.description,
             details=config.details,
             business_context=config.business_context,
-            regulatory_context=config.regulatory_context
+            regulatory_context=config.regulatory_context,
         )
 
-    def log_events_batch(self, configs: List[ComplianceEventConfig]) -> List[ComplianceEvent]:
+    def log_events_batch(
+        self, configs: List[ComplianceEventConfig]
+    ) -> List[ComplianceEvent]:
         """批量記錄合規事件。
 
         Args:
@@ -415,7 +420,7 @@ class ComplianceLogger:
                 description=config.description,
                 details=config.details or {},
                 business_context=config.business_context or {},
-                regulatory_context=config.regulatory_context or {}
+                regulatory_context=config.regulatory_context or {},
             )
             events.append(event)
             log_entries.append(json.dumps(event.to_dict(), ensure_ascii=False))
@@ -432,9 +437,9 @@ class ComplianceLogger:
         """批量寫入日誌。"""
         log_file = self._get_current_log_file()
         try:
-            with open(log_file, 'a', encoding='utf-8') as f:
+            with open(log_file, "a", encoding="utf-8") as f:
                 for entry in log_entries:
-                    f.write(entry + '\n')
+                    f.write(entry + "\n")
                 f.flush()  # 確保立即寫入
         except Exception as e:
             logger.error("批量寫入日誌文件時發生錯誤: %s", e)
@@ -455,34 +460,34 @@ class ComplianceLogger:
         try:
             # 重建事件對象
             event = ComplianceEvent(
-                event_id=event_data['event_id'],
-                event_type=ComplianceEventType(event_data['event_type']),
-                level=ComplianceLevel(event_data['level']),
-                timestamp=datetime.fromisoformat(event_data['timestamp']),
-                user_id=event_data['user_id'],
-                description=event_data['description'],
-                details=event_data['details'],
-                business_context=event_data['business_context'],
-                regulatory_context=event_data['regulatory_context']
+                event_id=event_data["event_id"],
+                event_type=ComplianceEventType(event_data["event_type"]),
+                level=ComplianceLevel(event_data["level"]),
+                timestamp=datetime.fromisoformat(event_data["timestamp"]),
+                user_id=event_data["user_id"],
+                description=event_data["description"],
+                details=event_data["details"],
+                business_context=event_data["business_context"],
+                regulatory_context=event_data["regulatory_context"],
             )
 
             # 驗證雜湊值
             calculated_hash = event.calculate_hash()
-            if calculated_hash != event_data.get('hash_value'):
+            if calculated_hash != event_data.get("hash_value"):
                 return False
 
             # 驗證簽名
-            if 'signature' in event_data and event_data['signature']:
+            if "signature" in event_data and event_data["signature"]:
                 try:
-                    signature_bytes = bytes.fromhex(event_data['signature'])
+                    signature_bytes = bytes.fromhex(event_data["signature"])
                     self.public_key.verify(
                         signature_bytes,
-                        calculated_hash.encode('utf-8'),
+                        calculated_hash.encode("utf-8"),
                         padding.PSS(
                             mgf=padding.MGF1(hashes.SHA256()),
-                            salt_length=padding.PSS.MAX_LENGTH
+                            salt_length=padding.PSS.MAX_LENGTH,
                         ),
-                        hashes.SHA256()
+                        hashes.SHA256(),
                     )
                     return True
                 except Exception:
@@ -500,7 +505,7 @@ class ComplianceLogger:
         event_types: Optional[List[ComplianceEventType]] = None,
         levels: Optional[List[ComplianceLevel]] = None,
         user_id: Optional[str] = None,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> List[Dict[str, Any]]:
         """獲取合規事件。
 
@@ -521,7 +526,13 @@ class ComplianceLogger:
         for log_file in log_files:
             events.extend(
                 self._read_events_from_file(
-                    log_file, start_date, end_date, event_types, levels, user_id, limit - len(events)
+                    log_file,
+                    start_date,
+                    end_date,
+                    event_types,
+                    levels,
+                    user_id,
+                    limit - len(events),
                 )
             )
             if len(events) >= limit:
@@ -551,12 +562,12 @@ class ComplianceLogger:
         event_types: Optional[List[ComplianceEventType]],
         levels: Optional[List[ComplianceLevel]],
         user_id: Optional[str],
-        remaining_limit: int
+        remaining_limit: int,
     ) -> List[Dict[str, Any]]:
         """從文件讀取事件。"""
         events = []
         try:
-            with open(log_file, 'r', encoding='utf-8') as f:
+            with open(log_file, "r", encoding="utf-8") as f:
                 for line in f:
                     if len(events) >= remaining_limit:
                         break
@@ -586,25 +597,28 @@ class ComplianceLogger:
         end_date: Optional[datetime],
         event_types: Optional[List[ComplianceEventType]],
         levels: Optional[List[ComplianceLevel]],
-        user_id: Optional[str]
+        user_id: Optional[str],
     ) -> bool:
         """檢查事件是否符合過濾條件。"""
         return (
-            self._match_time_filter(event_data, start_date, end_date) and
-            self._match_type_filter(event_data, event_types) and
-            self._match_level_filter(event_data, levels) and
-            self._match_user_filter(event_data, user_id)
+            self._match_time_filter(event_data, start_date, end_date)
+            and self._match_type_filter(event_data, event_types)
+            and self._match_level_filter(event_data, levels)
+            and self._match_user_filter(event_data, user_id)
         )
 
     def _match_time_filter(
-        self, event_data: Dict[str, Any], start_date: Optional[datetime], end_date: Optional[datetime]
+        self,
+        event_data: Dict[str, Any],
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
     ) -> bool:
         """檢查時間過濾條件。"""
         if not (start_date or end_date):
             return True
 
         try:
-            event_time = datetime.fromisoformat(event_data['timestamp'])
+            event_time = datetime.fromisoformat(event_data["timestamp"])
             if start_date and event_time < start_date:
                 return False
             if end_date and event_time > end_date:
@@ -614,13 +628,15 @@ class ComplianceLogger:
             return False
 
     def _match_type_filter(
-        self, event_data: Dict[str, Any], event_types: Optional[List[ComplianceEventType]]
+        self,
+        event_data: Dict[str, Any],
+        event_types: Optional[List[ComplianceEventType]],
     ) -> bool:
         """檢查事件類型過濾條件。"""
         if not event_types:
             return True
         event_type_values = [et.value for et in event_types]
-        return event_data.get('event_type') in event_type_values
+        return event_data.get("event_type") in event_type_values
 
     def _match_level_filter(
         self, event_data: Dict[str, Any], levels: Optional[List[ComplianceLevel]]
@@ -629,19 +645,18 @@ class ComplianceLogger:
         if not levels:
             return True
         level_values = [l.value for l in levels]
-        return event_data.get('level') in level_values
+        return event_data.get("level") in level_values
 
-    def _match_user_filter(self, event_data: Dict[str, Any], user_id: Optional[str]) -> bool:
+    def _match_user_filter(
+        self, event_data: Dict[str, Any], user_id: Optional[str]
+    ) -> bool:
         """檢查用戶過濾條件。"""
         if not user_id:
             return True
-        return event_data.get('user_id') == user_id
+        return event_data.get("user_id") == user_id
 
     def generate_compliance_report(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        report_type: str = "summary"
+        self, start_date: datetime, end_date: datetime, report_type: str = "summary"
     ) -> Dict[str, Any]:
         """生成合規報告。
 
@@ -660,13 +675,13 @@ class ComplianceLogger:
             "report_type": report_type,
             "period": {
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
+                "end_date": end_date.isoformat(),
             },
             "generated_at": datetime.now().isoformat(),
             "total_events": len(events),
             "summary": self._generate_summary(events),
             "statistics": self._generate_statistics(events),
-            "integrity_check": self._check_integrity(events)
+            "integrity_check": self._check_integrity(events),
         }
 
         return report
@@ -677,7 +692,7 @@ class ComplianceLogger:
             "by_type": self._count_by_type(events),
             "by_level": self._count_by_level(events),
             "by_user": self._count_by_user(events),
-            "by_day": self._count_by_day(events)
+            "by_day": self._count_by_day(events),
         }
         return summary
 
@@ -685,7 +700,7 @@ class ComplianceLogger:
         """按事件類型統計。"""
         counts = {}
         for event in events:
-            event_type = event.get('event_type', 'unknown')
+            event_type = event.get("event_type", "unknown")
             counts[event_type] = counts.get(event_type, 0) + 1
         return counts
 
@@ -693,7 +708,7 @@ class ComplianceLogger:
         """按風險級別統計。"""
         counts = {}
         for event in events:
-            level = event.get('level', 'unknown')
+            level = event.get("level", "unknown")
             counts[level] = counts.get(level, 0) + 1
         return counts
 
@@ -701,7 +716,7 @@ class ComplianceLogger:
         """按用戶統計。"""
         counts = {}
         for event in events:
-            user_id = event.get('user_id', 'unknown')
+            user_id = event.get("user_id", "unknown")
             counts[user_id] = counts.get(user_id, 0) + 1
         return counts
 
@@ -710,7 +725,7 @@ class ComplianceLogger:
         counts = {}
         for event in events:
             try:
-                event_timestamp = event['timestamp']
+                event_timestamp = event["timestamp"]
                 event_date = datetime.fromisoformat(event_timestamp).date().isoformat()
                 counts[event_date] = counts.get(event_date, 0) + 1
             except (KeyError, ValueError):
@@ -724,21 +739,21 @@ class ComplianceLogger:
             "critical_events": 0,
             "trading_decisions": 0,
             "compliance_violations": 0,
-            "data_exports": 0
+            "data_exports": 0,
         }
 
         for event in events:
-            level = event.get('level')
-            event_type = event.get('event_type')
+            level = event.get("level")
+            event_type = event.get("event_type")
 
-            if level == 'high':
+            if level == "high":
                 statistics["high_risk_events"] += 1
-            elif level == 'critical':
+            elif level == "critical":
                 statistics["critical_events"] += 1
 
-            if event_type == 'trading_decision':
+            if event_type == "trading_decision":
                 statistics["trading_decisions"] += 1
-            elif event_type == 'data_export':
+            elif event_type == "data_export":
                 statistics["data_exports"] += 1
 
         return statistics
@@ -749,7 +764,7 @@ class ComplianceLogger:
             "total_events": len(events),
             "verified_events": 0,
             "failed_events": 0,
-            "integrity_score": 0.0
+            "integrity_score": 0.0,
         }
 
         for event in events:

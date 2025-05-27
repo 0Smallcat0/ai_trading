@@ -23,7 +23,7 @@ class StrategyCRUD:
 
     def __init__(self, db_path: Path, strategies_dir: Path):
         """初始化策略 CRUD 操作
-        
+
         Args:
             db_path: 資料庫路徑
             strategies_dir: 策略檔案目錄
@@ -44,7 +44,7 @@ class StrategyCRUD:
         tags: List[str] = None,
     ) -> str:
         """創建新策略
-        
+
         Args:
             name: 策略名稱
             strategy_type: 策略類型
@@ -55,10 +55,10 @@ class StrategyCRUD:
             parameters: 策略參數
             risk_parameters: 風險參數
             tags: 標籤列表
-            
+
         Returns:
             str: 策略ID
-            
+
         Raises:
             StrategyManagementError: 創建失敗時拋出
         """
@@ -138,13 +138,13 @@ class StrategyCRUD:
 
     def get_strategy(self, strategy_id: str) -> Dict:
         """獲取策略詳細信息
-        
+
         Args:
             strategy_id: 策略ID
-            
+
         Returns:
             Dict: 策略信息
-            
+
         Raises:
             StrategyManagementError: 獲取失敗時拋出
         """
@@ -182,14 +182,14 @@ class StrategyCRUD:
         limit: int = 100,
     ) -> List[Dict]:
         """列出策略
-        
+
         Args:
             strategy_type: 策略類型過濾
             status: 狀態過濾
             author: 作者過濾
             search_query: 搜尋關鍵字
             limit: 返回數量限制
-            
+
         Returns:
             List[Dict]: 策略列表
         """
@@ -235,7 +235,9 @@ class StrategyCRUD:
                 result = []
                 for strategy in strategies:
                     strategy_dict = dict(strategy)
-                    strategy_dict["parameters"] = json.loads(strategy_dict["parameters"])
+                    strategy_dict["parameters"] = json.loads(
+                        strategy_dict["parameters"]
+                    )
                     strategy_dict["risk_parameters"] = json.loads(
                         strategy_dict["risk_parameters"]
                     )
@@ -250,10 +252,10 @@ class StrategyCRUD:
 
     def delete_strategy(self, strategy_id: str) -> bool:
         """刪除策略
-        
+
         Args:
             strategy_id: 策略ID
-            
+
         Returns:
             bool: 是否成功刪除
         """
@@ -263,7 +265,8 @@ class StrategyCRUD:
 
                 # 刪除策略版本
                 cursor.execute(
-                    "DELETE FROM strategy_versions WHERE strategy_id = ?", (strategy_id,)
+                    "DELETE FROM strategy_versions WHERE strategy_id = ?",
+                    (strategy_id,),
                 )
 
                 # 刪除策略
@@ -286,11 +289,11 @@ class StrategyCRUD:
 
     def update_strategy_status(self, strategy_id: str, status: str) -> bool:
         """更新策略狀態
-        
+
         Args:
             strategy_id: 策略ID
             status: 新狀態
-            
+
         Returns:
             bool: 是否成功更新
         """
@@ -337,6 +340,7 @@ class StrategyCRUD:
             strategy_dir = self.strategies_dir / strategy_id
             if strategy_dir.exists():
                 import shutil
+
                 shutil.rmtree(strategy_dir)
 
         except Exception as e:

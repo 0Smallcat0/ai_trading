@@ -78,6 +78,7 @@ def configure_openapi(app: FastAPI) -> None:
     Note:
         自定義 OpenAPI 規範，包括安全配置和標籤
     """
+
     def custom_openapi():
         if app.openapi_schema:
             return app.openapi_schema

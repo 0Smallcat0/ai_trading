@@ -36,6 +36,7 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 # TensorFlow 延遲載入以避免 DLL 問題
 try:
     import mlflow.tensorflow
+
     TENSORFLOW_MLFLOW_AVAILABLE = True
 except ImportError as e:
     TENSORFLOW_MLFLOW_AVAILABLE = False
@@ -46,7 +47,7 @@ def validate_training_inputs(
     X_train: pd.DataFrame,
     y_train: pd.Series,
     X_val: Optional[pd.DataFrame] = None,
-    y_val: Optional[pd.Series] = None
+    y_val: Optional[pd.Series] = None,
 ) -> None:
     """
     驗證訓練輸入資料格式
@@ -146,10 +147,7 @@ def setup_mlflow_tracking(config: TrainingConfig) -> None:
         raise RuntimeError(f"MLflow 設定失敗: {e}") from e
 
 
-def save_training_artifacts(
-    model: ModelBase,
-    run_id: Optional[str] = None
-) -> None:
+def save_training_artifacts(model: ModelBase, run_id: Optional[str] = None) -> None:
     """
     保存訓練產物到 MLflow
 
@@ -199,12 +197,14 @@ def save_training_artifacts(
             logger.info("Sklearn 模型已記錄到 MLflow")
 
         # 記錄模型元數據
-        mlflow.log_params({
-            "model_name": model.name,
-            "model_type": model.__class__.__name__,
-            "feature_count": len(model.feature_names) if model.feature_names else 0,
-            "target_name": model.target_name
-        })
+        mlflow.log_params(
+            {
+                "model_name": model.name,
+                "model_type": model.__class__.__name__,
+                "feature_count": len(model.feature_names) if model.feature_names else 0,
+                "target_name": model.target_name,
+            }
+        )
 
     except Exception as e:
         logger.error(f"保存訓練產物失敗: {e}")
@@ -212,8 +212,7 @@ def save_training_artifacts(
 
 
 def check_acceptance_criteria(
-    metrics: Dict[str, float],
-    thresholds: Dict[str, float]
+    metrics: Dict[str, float], thresholds: Dict[str, float]
 ) -> bool:
     """
     檢查模型是否達到接受標準
@@ -267,7 +266,9 @@ def check_acceptance_criteria(
         acceptance_rate = passed_criteria / total_criteria if total_criteria > 0 else 0
         accepted = passed_criteria == total_criteria
 
-        logger.info(f"接受標準檢查結果: {passed_criteria}/{total_criteria} 通過 ({acceptance_rate:.1%})")
+        logger.info(
+            f"接受標準檢查結果: {passed_criteria}/{total_criteria} 通過 ({acceptance_rate:.1%})"
+        )
 
         return accepted
 
@@ -280,7 +281,7 @@ def create_model_summary(
     model: ModelBase,
     train_metrics: Dict[str, float],
     val_metrics: Dict[str, float],
-    test_metrics: Optional[Dict[str, float]] = None
+    test_metrics: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """
     創建模型摘要
@@ -308,8 +309,8 @@ def create_model_summary(
             "train_metrics": train_metrics,
             "val_metrics": val_metrics,
             "test_metrics": test_metrics or {},
-            "has_feature_importance": hasattr(model, 'feature_importance'),
-            "model_params": model.get_params()
+            "has_feature_importance": hasattr(model, "feature_importance"),
+            "model_params": model.get_params(),
         }
 
         # 計算改進指標
@@ -335,10 +336,7 @@ def create_model_summary(
 
     except Exception as e:
         logger.error(f"創建模型摘要失敗: {e}")
-        return {
-            "model_name": getattr(model, 'name', 'unknown'),
-            "error": str(e)
-        }
+        return {"model_name": getattr(model, "name", "unknown"), "error": str(e)}
 
 
 def format_metrics_for_display(metrics: Dict[str, float]) -> str:

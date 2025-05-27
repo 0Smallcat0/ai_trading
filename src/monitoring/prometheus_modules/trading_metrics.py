@@ -55,7 +55,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "訂單處理延遲時間（毫秒）",
                 ["order_type", "symbol"],
                 buckets=[1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 訂單數量計數器
@@ -63,7 +63,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_orders_total",
                 "訂單總數",
                 ["order_type", "symbol", "status"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 交易量（金額）
@@ -71,7 +71,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_volume_total",
                 "交易總量（金額）",
                 ["symbol", "side"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 交易數量
@@ -79,7 +79,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_trades_total",
                 "交易總筆數",
                 ["symbol", "side"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 滑點統計（基點）
@@ -88,7 +88,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "交易滑點（基點）",
                 ["symbol", "side"],
                 buckets=[0.1, 0.5, 1, 2, 5, 10, 25, 50, 100],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 成交率
@@ -96,7 +96,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_fill_rate_percent",
                 "訂單成交率百分比",
                 ["symbol", "order_type"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 平均成交價格
@@ -104,15 +104,12 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_avg_fill_price",
                 "平均成交價格",
                 ["symbol"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 持倉價值
             self.metrics["position_value"] = Gauge(
-                "trading_position_value",
-                "持倉價值",
-                ["symbol"],
-                registry=self.registry
+                "trading_position_value", "持倉價值", ["symbol"], registry=self.registry
             )
 
             # 未實現盈虧
@@ -120,7 +117,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_unrealized_pnl",
                 "未實現盈虧",
                 ["symbol"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 已實現盈虧
@@ -128,7 +125,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_realized_pnl_total",
                 "已實現盈虧總計",
                 ["symbol"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 活躍訂單數量
@@ -136,7 +133,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_active_orders_count",
                 "活躍訂單數量",
                 ["symbol", "order_type"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 拒絕訂單數量
@@ -144,7 +141,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_rejected_orders_total",
                 "被拒絕訂單總數",
                 ["symbol", "reason"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             # 取消訂單數量
@@ -152,7 +149,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
                 "trading_cancelled_orders_total",
                 "被取消訂單總數",
                 ["symbol", "reason"],
-                registry=self.registry
+                registry=self.registry,
             )
 
             module_logger.info("交易效能指標初始化完成")
@@ -221,10 +218,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
             module_logger.error("收集盈虧指標失敗: %s", e)
 
     def record_order_latency(
-        self,
-        latency_ms: float,
-        order_type: str,
-        symbol: str
+        self, latency_ms: float, order_type: str, symbol: str
     ) -> None:
         """記錄訂單延遲
 
@@ -235,8 +229,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
         """
         try:
             self.metrics["order_latency"].labels(
-                order_type=order_type,
-                symbol=symbol
+                order_type=order_type, symbol=symbol
             ).observe(latency_ms)
         except Exception as e:
             module_logger.error("記錄訂單延遲失敗: %s", e)
@@ -247,7 +240,7 @@ class TradingMetricsCollector(PrometheusCollectorBase):
         side: str,
         volume: float,
         price: float,
-        slippage_bp: Optional[float] = None
+        slippage_bp: Optional[float] = None,
     ) -> None:
         """記錄交易
 
@@ -260,22 +253,17 @@ class TradingMetricsCollector(PrometheusCollectorBase):
         """
         try:
             # 記錄交易量和數量
-            self.metrics["trade_volume"].labels(
-                symbol=symbol,
-                side=side
-            ).inc(volume * price)
+            self.metrics["trade_volume"].labels(symbol=symbol, side=side).inc(
+                volume * price
+            )
 
-            self.metrics["trade_count"].labels(
-                symbol=symbol,
-                side=side
-            ).inc()
+            self.metrics["trade_count"].labels(symbol=symbol, side=side).inc()
 
             # 記錄滑點
             if slippage_bp is not None:
-                self.metrics["slippage"].labels(
-                    symbol=symbol,
-                    side=side
-                ).observe(slippage_bp)
+                self.metrics["slippage"].labels(symbol=symbol, side=side).observe(
+                    slippage_bp
+                )
 
         except Exception as e:
             module_logger.error("記錄交易失敗: %s", e)

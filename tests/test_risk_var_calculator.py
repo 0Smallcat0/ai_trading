@@ -24,17 +24,26 @@ class TestValueAtRisk(unittest.TestCase):
         """設置測試環境"""
         # 創建測試收益率資料
         np.random.seed(42)
-        dates = pd.date_range('2023-01-01', periods=100, freq='D')
+        dates = pd.date_range("2023-01-01", periods=100, freq="D")
 
         # 創建三個資產的收益率資料
-        self.returns = pd.DataFrame({
-            'AAPL': np.random.normal(0.001, 0.02, 100),  # 平均收益率 0.1%, 波動率 2%
-            'GOOGL': np.random.normal(0.0005, 0.025, 100),  # 平均收益率 0.05%, 波動率 2.5%
-            'MSFT': np.random.normal(0.0008, 0.018, 100)   # 平均收益率 0.08%, 波動率 1.8%
-        }, index=dates)
+        self.returns = pd.DataFrame(
+            {
+                "AAPL": np.random.normal(
+                    0.001, 0.02, 100
+                ),  # 平均收益率 0.1%, 波動率 2%
+                "GOOGL": np.random.normal(
+                    0.0005, 0.025, 100
+                ),  # 平均收益率 0.05%, 波動率 2.5%
+                "MSFT": np.random.normal(
+                    0.0008, 0.018, 100
+                ),  # 平均收益率 0.08%, 波動率 1.8%
+            },
+            index=dates,
+        )
 
         # 創建權重
-        self.weights = {'AAPL': 0.4, 'GOOGL': 0.35, 'MSFT': 0.25}
+        self.weights = {"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25}
 
         # 創建 VaR 計算器
         self.var_calculator = ValueAtRisk(self.returns, self.weights)
@@ -61,7 +70,7 @@ class TestValueAtRisk(unittest.TestCase):
     def test_weight_normalization(self):
         """測試權重正規化"""
         # 創建權重和不為1的權重
-        unnormalized_weights = {'AAPL': 0.8, 'GOOGL': 0.7, 'MSFT': 0.5}
+        unnormalized_weights = {"AAPL": 0.8, "GOOGL": 0.7, "MSFT": 0.5}
         calculator = ValueAtRisk(self.returns, unnormalized_weights)
 
         # 檢查權重是否被正規化
@@ -89,11 +98,13 @@ class TestValueAtRisk(unittest.TestCase):
 
         # 手動計算第一個值進行驗證
         expected_first_return = (
-            self.returns.iloc[0]['AAPL'] * self.weights['AAPL'] +
-            self.returns.iloc[0]['GOOGL'] * self.weights['GOOGL'] +
-            self.returns.iloc[0]['MSFT'] * self.weights['MSFT']
+            self.returns.iloc[0]["AAPL"] * self.weights["AAPL"]
+            + self.returns.iloc[0]["GOOGL"] * self.weights["GOOGL"]
+            + self.returns.iloc[0]["MSFT"] * self.weights["MSFT"]
         )
-        self.assertAlmostEqual(portfolio_returns.iloc[0], expected_first_return, places=6)
+        self.assertAlmostEqual(
+            portfolio_returns.iloc[0], expected_first_return, places=6
+        )
 
     def test_calculate_var_historical(self):
         """測試歷史模擬法 VaR 計算"""
@@ -132,7 +143,7 @@ class TestValueAtRisk(unittest.TestCase):
         self.assertLess(var_90, var)
         self.assertLess(var, var_99)
 
-    @patch('numpy.random.normal')
+    @patch("numpy.random.normal")
     def test_calculate_var_monte_carlo(self, mock_random):
         """測試蒙特卡洛模擬法 VaR 計算"""
         # 設置模擬的隨機數
@@ -178,15 +189,18 @@ class TestConditionalValueAtRisk(unittest.TestCase):
         """設置測試環境"""
         # 創建測試收益率資料
         np.random.seed(42)
-        dates = pd.date_range('2023-01-01', periods=100, freq='D')
+        dates = pd.date_range("2023-01-01", periods=100, freq="D")
 
-        self.returns = pd.DataFrame({
-            'AAPL': np.random.normal(0.001, 0.02, 100),
-            'GOOGL': np.random.normal(0.0005, 0.025, 100),
-            'MSFT': np.random.normal(0.0008, 0.018, 100)
-        }, index=dates)
+        self.returns = pd.DataFrame(
+            {
+                "AAPL": np.random.normal(0.001, 0.02, 100),
+                "GOOGL": np.random.normal(0.0005, 0.025, 100),
+                "MSFT": np.random.normal(0.0008, 0.018, 100),
+            },
+            index=dates,
+        )
 
-        self.weights = {'AAPL': 0.4, 'GOOGL': 0.35, 'MSFT': 0.25}
+        self.weights = {"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25}
 
         # 創建 CVaR 計算器
         self.cvar_calculator = ConditionalValueAtRisk(self.returns, self.weights)
@@ -239,7 +253,7 @@ class TestConditionalValueAtRisk(unittest.TestCase):
 
         # 置信水平越高，CVaR 應該越大
         for i in range(1, len(cvars)):
-            self.assertGreaterEqual(cvars[i], cvars[i-1])
+            self.assertGreaterEqual(cvars[i], cvars[i - 1])
 
     def test_portfolio_returns_calculation(self):
         """測試投資組合收益率計算"""
@@ -258,9 +272,7 @@ class TestEdgeCases(unittest.TestCase):
     def test_single_asset(self):
         """測試單一資產的情況"""
         # 創建單一資產的收益率資料
-        returns = pd.DataFrame({
-            'AAPL': np.random.normal(0.001, 0.02, 50)
-        })
+        returns = pd.DataFrame({"AAPL": np.random.normal(0.001, 0.02, 50)})
 
         calculator = ValueAtRisk(returns)
         var = calculator.calculate_var_historical(0.95)
@@ -271,13 +283,15 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_zero_weights(self):
         """測試零權重的情況"""
-        returns = pd.DataFrame({
-            'AAPL': np.random.normal(0.001, 0.02, 50),
-            'GOOGL': np.random.normal(0.0005, 0.025, 50)
-        })
+        returns = pd.DataFrame(
+            {
+                "AAPL": np.random.normal(0.001, 0.02, 50),
+                "GOOGL": np.random.normal(0.0005, 0.025, 50),
+            }
+        )
 
         # 權重和為0的情況
-        weights = {'AAPL': 0.0, 'GOOGL': 0.0}
+        weights = {"AAPL": 0.0, "GOOGL": 0.0}
         calculator = ValueAtRisk(returns, weights)
 
         # 應該使用原始權重（不進行正規化）
@@ -285,13 +299,15 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_missing_assets_in_weights(self):
         """測試權重中包含不存在的資產"""
-        returns = pd.DataFrame({
-            'AAPL': np.random.normal(0.001, 0.02, 50),
-            'GOOGL': np.random.normal(0.0005, 0.025, 50)
-        })
+        returns = pd.DataFrame(
+            {
+                "AAPL": np.random.normal(0.001, 0.02, 50),
+                "GOOGL": np.random.normal(0.0005, 0.025, 50),
+            }
+        )
 
         # 權重包含不存在的資產
-        weights = {'AAPL': 0.5, 'GOOGL': 0.3, 'TSLA': 0.2}
+        weights = {"AAPL": 0.5, "GOOGL": 0.3, "TSLA": 0.2}
         calculator = ValueAtRisk(returns, weights)
 
         # 計算投資組合收益率時應該忽略不存在的資產
@@ -299,5 +315,5 @@ class TestEdgeCases(unittest.TestCase):
         self.assertIsInstance(portfolio_returns, pd.Series)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

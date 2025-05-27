@@ -32,13 +32,13 @@ async def get_risk_metrics(
 ):
     """
     獲取風險指標
-    
+
     Args:
         lookback_days: 回看天數，用於計算風險指標
-        
+
     Returns:
         APIResponse[RiskMetrics]: 包含風險指標的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取風險指標失敗時
     """
@@ -118,14 +118,14 @@ async def get_portfolio_risk_metrics(
 ):
     """
     獲取投資組合風險指標
-    
+
     Args:
         portfolio_id: 投資組合 ID
         lookback_days: 回看天數，用於計算風險指標
-        
+
     Returns:
         APIResponse[RiskMetrics]: 包含投資組合風險指標的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取風險指標失敗時
     """
@@ -210,14 +210,14 @@ async def get_symbol_risk_metrics(
 ):
     """
     獲取單一股票風險指標
-    
+
     Args:
         symbol: 股票代碼
         lookback_days: 回看天數，用於計算風險指標
-        
+
     Returns:
         APIResponse[Dict[str, Any]]: 包含股票風險指標的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取風險指標失敗時
     """

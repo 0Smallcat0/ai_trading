@@ -40,19 +40,19 @@ from .utils import (
     save_explanation_results,
     plot_explanation_comparison,
     generate_explanation_report,
-    create_interpreter
+    create_interpreter,
 )
 
 __all__ = [
     "ModelInterpreter",
     "SHAPExplainer",
-    "LIMEExplainer", 
+    "LIMEExplainer",
     "FeatureImportanceAnalyzer",
     "validate_explanation_inputs",
     "save_explanation_results",
     "plot_explanation_comparison",
     "generate_explanation_report",
-    "create_interpreter"
+    "create_interpreter",
 ]
 
 # 版本資訊
@@ -62,12 +62,14 @@ __author__ = "AI Trading System Team"
 # 檢查依賴套件
 try:
     import shap
+
     SHAP_AVAILABLE = True
 except ImportError:
     SHAP_AVAILABLE = False
 
 try:
     import lime
+
     LIME_AVAILABLE = True
 except ImportError:
     LIME_AVAILABLE = False

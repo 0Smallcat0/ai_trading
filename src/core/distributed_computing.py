@@ -69,11 +69,7 @@ class DistributedComputeInterface(ABC):
 
     @abstractmethod
     def map_partitions(
-        self,
-        func: Callable,
-        data: pd.DataFrame,
-        *args,
-        **kwargs
+        self, func: Callable, data: pd.DataFrame, *args, **kwargs
     ) -> pd.DataFrame:
         """對數據分區應用函數
 
@@ -90,11 +86,7 @@ class DistributedComputeInterface(ABC):
 
     @abstractmethod
     def parallel_apply(
-        self,
-        func: Callable,
-        data_list: List[Any],
-        *args,
-        **kwargs
+        self, func: Callable, data_list: List[Any], *args, **kwargs
     ) -> List[Any]:
         """並行應用函數到數據列表
 
@@ -143,11 +135,7 @@ class LocalComputeEngine(DistributedComputeInterface):
         return True
 
     def map_partitions(
-        self,
-        func: Callable,
-        data: pd.DataFrame,
-        *args,
-        **kwargs
+        self, func: Callable, data: pd.DataFrame, *args, **kwargs
     ) -> pd.DataFrame:
         """本地對數據分區應用函數
 
@@ -168,11 +156,7 @@ class LocalComputeEngine(DistributedComputeInterface):
             raise
 
     def parallel_apply(
-        self,
-        func: Callable,
-        data_list: List[Any],
-        *args,
-        **kwargs
+        self, func: Callable, data_list: List[Any], *args, **kwargs
     ) -> List[Any]:
         """本地並行應用函數到數據列表（實際上是串行處理）
 
@@ -211,9 +195,7 @@ class DistributedComputeManager:
         """
         self.preferred_engine = preferred_engine
         self.current_engine: Optional[DistributedComputeInterface] = None
-        self.engines = {
-            "local": LocalComputeEngine()
-        }
+        self.engines = {"local": LocalComputeEngine()}
 
     def initialize(self, **kwargs) -> bool:
         """初始化分散式計算環境
@@ -245,11 +227,7 @@ class DistributedComputeManager:
         return self.current_engine is not None and self.current_engine.is_available()
 
     def map_partitions(
-        self,
-        func: Callable,
-        data: pd.DataFrame,
-        *args,
-        **kwargs
+        self, func: Callable, data: pd.DataFrame, *args, **kwargs
     ) -> pd.DataFrame:
         """對數據分區應用函數
 
@@ -268,11 +246,7 @@ class DistributedComputeManager:
         return self.current_engine.map_partitions(func, data, *args, **kwargs)
 
     def parallel_apply(
-        self,
-        func: Callable,
-        data_list: List[Any],
-        *args,
-        **kwargs
+        self, func: Callable, data_list: List[Any], *args, **kwargs
     ) -> List[Any]:
         """並行應用函數到數據列表
 

@@ -37,7 +37,7 @@ async def get_risk_alerts(
 ):
     """
     獲取風險警報
-    
+
     Args:
         severity: 嚴重程度篩選 (low/medium/high/critical)
         alert_type: 警報類型篩選
@@ -45,10 +45,10 @@ async def get_risk_alerts(
         resolved: 是否已解決篩選
         limit: 返回數量限制
         offset: 偏移量
-        
+
     Returns:
         APIResponse[List[RiskAlert]]: 包含風險警報列表的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取風險警報失敗時
     """
@@ -170,13 +170,13 @@ async def get_risk_alerts(
 async def get_risk_alert(alert_id: str = Path(..., description="警報 ID")):
     """
     獲取特定風險警報
-    
+
     Args:
         alert_id: 警報 ID
-        
+
     Returns:
         APIResponse[RiskAlert]: 包含風險警報詳情的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取風險警報失敗時
     """
@@ -228,13 +228,13 @@ async def get_risk_alert(alert_id: str = Path(..., description="警報 ID")):
 async def acknowledge_alerts(request: AlertAcknowledgeRequest):
     """
     確認風險警報
-    
+
     Args:
         request: 警報確認請求
-        
+
     Returns:
         APIResponse[dict]: 包含確認結果的 API 回應
-        
+
     Raises:
         HTTPException: 當確認風險警報失敗時
     """
@@ -296,13 +296,13 @@ async def acknowledge_alerts(request: AlertAcknowledgeRequest):
 async def delete_risk_alert(alert_id: str = Path(..., description="警報 ID")):
     """
     刪除風險警報
-    
+
     Args:
         alert_id: 警報 ID
-        
+
     Returns:
         APIResponse[dict]: 包含刪除結果的 API 回應
-        
+
     Raises:
         HTTPException: 當刪除風險警報失敗時
     """

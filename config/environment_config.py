@@ -193,30 +193,56 @@ class Config:
         """轉換環境變數的類型."""
         # 布林值轉換
         bool_fields = [
-            'DEBUG', 'DATABASE_ECHO', 'API_RELOAD', 'CORS_ALLOW_CREDENTIALS',
-            'SMTP_USE_TLS', 'MONITORING_ENABLED', 'ALERT_ENABLED',
-            'CACHE_ENABLED', 'TEST_MODE', 'MOCK_EXTERNAL_APIS',
-            'PERFORMANCE_MONITORING', 'MEMORY_PROFILING', 'DEBUG_MODE',
-            'VERBOSE_LOGGING', 'SQL_ECHO'
+            "DEBUG",
+            "DATABASE_ECHO",
+            "API_RELOAD",
+            "CORS_ALLOW_CREDENTIALS",
+            "SMTP_USE_TLS",
+            "MONITORING_ENABLED",
+            "ALERT_ENABLED",
+            "CACHE_ENABLED",
+            "TEST_MODE",
+            "MOCK_EXTERNAL_APIS",
+            "PERFORMANCE_MONITORING",
+            "MEMORY_PROFILING",
+            "DEBUG_MODE",
+            "VERBOSE_LOGGING",
+            "SQL_ECHO",
         ]
 
         for field_name in bool_fields:
             value = getattr(self, field_name)
             if isinstance(value, str):
-                setattr(self, field_name,
-                        value.lower() in ('true', '1', 'yes', 'on'))
+                setattr(self, field_name, value.lower() in ("true", "1", "yes", "on"))
 
         # 數值轉換
         int_fields = [
-            'APP_PORT', 'DATABASE_POOL_SIZE', 'DATABASE_MAX_OVERFLOW',
-            'REDIS_DB', 'REDIS_MAX_CONNECTIONS', 'API_PORT', 'API_WORKERS',
-            'JWT_ACCESS_TOKEN_EXPIRE_MINUTES', 'JWT_REFRESH_TOKEN_EXPIRE_DAYS',
-            'RATE_LIMIT_PER_MINUTE', 'RATE_LIMIT_BURST', 'REQUEST_TIMEOUT',
-            'RETRY_COUNT', 'MONITORING_INTERVAL', 'HEALTH_CHECK_INTERVAL',
-            'PERFORMANCE_THRESHOLD', 'PROMETHEUS_PORT', 'GRAFANA_PORT',
-            'ALERT_CHECK_INTERVAL', 'SMTP_PORT', 'SESSION_TIMEOUT',
-            'CACHE_TTL', 'CACHE_MAX_SIZE', 'CACHE_CLEANUP_INTERVAL',
-            'FLAKE8_MAX_LINE_LENGTH', 'COVERAGE_THRESHOLD'
+            "APP_PORT",
+            "DATABASE_POOL_SIZE",
+            "DATABASE_MAX_OVERFLOW",
+            "REDIS_DB",
+            "REDIS_MAX_CONNECTIONS",
+            "API_PORT",
+            "API_WORKERS",
+            "JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
+            "JWT_REFRESH_TOKEN_EXPIRE_DAYS",
+            "RATE_LIMIT_PER_MINUTE",
+            "RATE_LIMIT_BURST",
+            "REQUEST_TIMEOUT",
+            "RETRY_COUNT",
+            "MONITORING_INTERVAL",
+            "HEALTH_CHECK_INTERVAL",
+            "PERFORMANCE_THRESHOLD",
+            "PROMETHEUS_PORT",
+            "GRAFANA_PORT",
+            "ALERT_CHECK_INTERVAL",
+            "SMTP_PORT",
+            "SESSION_TIMEOUT",
+            "CACHE_TTL",
+            "CACHE_MAX_SIZE",
+            "CACHE_CLEANUP_INTERVAL",
+            "FLAKE8_MAX_LINE_LENGTH",
+            "COVERAGE_THRESHOLD",
         ]
 
         for field_name in int_fields:
@@ -226,9 +252,14 @@ class Config:
 
         # 浮點數轉換
         float_fields = [
-            'MAX_POSITION_SIZE', 'STOP_LOSS_THRESHOLD', 'MAX_DAILY_LOSS',
-            'RISK_FREE_RATE', 'RETRY_DELAY', 'PRICE_ANOMALY_THRESHOLD',
-            'VOLUME_ANOMALY_THRESHOLD', 'PYLINT_THRESHOLD'
+            "MAX_POSITION_SIZE",
+            "STOP_LOSS_THRESHOLD",
+            "MAX_DAILY_LOSS",
+            "RISK_FREE_RATE",
+            "RETRY_DELAY",
+            "PRICE_ANOMALY_THRESHOLD",
+            "VOLUME_ANOMALY_THRESHOLD",
+            "PYLINT_THRESHOLD",
         ]
 
         for field_name in float_fields:
@@ -244,7 +275,7 @@ class Config:
         errors = []
 
         # 驗證環境
-        valid_envs = ['development', 'testing', 'production']
+        valid_envs = ["development", "testing", "production"]
         if self.ENVIRONMENT not in valid_envs:
             errors.append(f"Invalid ENVIRONMENT: {self.ENVIRONMENT}")
 
@@ -260,16 +291,13 @@ class Config:
             errors.append(f"Invalid MAX_POSITION_SIZE: {self.MAX_POSITION_SIZE}")
 
         if not 0 < self.STOP_LOSS_THRESHOLD <= 1:
-            errors.append(
-                f"Invalid STOP_LOSS_THRESHOLD: {self.STOP_LOSS_THRESHOLD}")
+            errors.append(f"Invalid STOP_LOSS_THRESHOLD: {self.STOP_LOSS_THRESHOLD}")
 
         # 生產環境額外驗證
-        if self.ENVIRONMENT == 'production':
-            insecure_keys = ['your-secret-key',
-                             'dev-jwt-secret-key-not-for-production']
+        if self.ENVIRONMENT == "production":
+            insecure_keys = ["your-secret-key", "dev-jwt-secret-key-not-for-production"]
             if self.JWT_SECRET_KEY in insecure_keys:
-                errors.append(
-                    "Production environment requires a secure JWT_SECRET_KEY")
+                errors.append("Production environment requires a secure JWT_SECRET_KEY")
 
             if self.DEBUG:
                 errors.append("DEBUG should be False in production")
@@ -281,23 +309,24 @@ class Config:
     @property
     def cors_origins_list(self) -> list:
         """將 CORS_ORIGINS 字串轉換為列表."""
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(',')
-                if origin.strip()]
+        return [
+            origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()
+        ]
 
     @property
     def is_development(self) -> bool:
         """是否為開發環境."""
-        return self.ENVIRONMENT == 'development'
+        return self.ENVIRONMENT == "development"
 
     @property
     def is_testing(self) -> bool:
         """是否為測試環境."""
-        return self.ENVIRONMENT == 'testing'
+        return self.ENVIRONMENT == "testing"
 
     @property
     def is_production(self) -> bool:
         """是否為生產環境."""
-        return self.ENVIRONMENT == 'production'
+        return self.ENVIRONMENT == "production"
 
 
 def load_environment_config(env: Optional[str] = None) -> Config:
@@ -312,7 +341,7 @@ def load_environment_config(env: Optional[str] = None) -> Config:
     """
     # 確定環境
     if env is None:
-        env = os.getenv('ENVIRONMENT', 'development')
+        env = os.getenv("ENVIRONMENT", "development")
 
     # 專案根目錄
     project_root = Path(__file__).parent.parent

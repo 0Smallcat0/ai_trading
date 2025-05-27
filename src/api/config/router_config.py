@@ -26,10 +26,10 @@ from src.api.utils.security import get_current_user
 
 def get_router_configs() -> List[Dict[str, Any]]:
     """獲取路由配置列表
-    
+
     Returns:
         List[Dict[str, Any]]: 路由配置列表
-        
+
     Note:
         包含所有路由的配置資訊，如前綴、標籤、依賴項等
     """
@@ -105,15 +105,15 @@ def get_router_configs() -> List[Dict[str, Any]]:
 
 def register_routers(app: FastAPI) -> None:
     """註冊所有路由
-    
+
     Args:
         app: FastAPI 應用實例
-        
+
     Note:
         根據配置註冊所有 API 路由
     """
     router_configs = get_router_configs()
-    
+
     for config in router_configs:
         app.include_router(
             config["router"],
@@ -125,10 +125,10 @@ def register_routers(app: FastAPI) -> None:
 
 def get_public_routes() -> List[str]:
     """獲取公開路由列表
-    
+
     Returns:
         List[str]: 不需要認證的路由路徑列表
-        
+
     Note:
         這些路由不需要 JWT Token 認證
     """
@@ -149,10 +149,10 @@ def get_public_routes() -> List[str]:
 
 def get_admin_routes() -> List[str]:
     """獲取管理員路由列表
-    
+
     Returns:
         List[str]: 需要管理員權限的路由路徑列表
-        
+
     Note:
         這些路由需要管理員角色才能訪問
     """
@@ -169,10 +169,10 @@ def get_admin_routes() -> List[str]:
 
 def get_rate_limit_config() -> Dict[str, Dict[str, Any]]:
     """獲取路由速率限制配置
-    
+
     Returns:
         Dict[str, Dict[str, Any]]: 路由速率限制配置
-        
+
     Note:
         不同路由可以有不同的速率限制
     """
@@ -202,10 +202,10 @@ def get_rate_limit_config() -> Dict[str, Dict[str, Any]]:
 
 def get_cache_config() -> Dict[str, Dict[str, Any]]:
     """獲取路由快取配置
-    
+
     Returns:
         Dict[str, Dict[str, Any]]: 路由快取配置
-        
+
     Note:
         配置哪些路由需要快取以及快取時間
     """
@@ -235,10 +235,10 @@ def get_cache_config() -> Dict[str, Dict[str, Any]]:
 
 def get_validation_config() -> Dict[str, Dict[str, Any]]:
     """獲取路由驗證配置
-    
+
     Returns:
         Dict[str, Dict[str, Any]]: 路由驗證配置
-        
+
     Note:
         配置路由的輸入驗證規則
     """
@@ -264,10 +264,10 @@ def get_validation_config() -> Dict[str, Dict[str, Any]]:
 
 def get_response_config() -> Dict[str, Dict[str, Any]]:
     """獲取路由響應配置
-    
+
     Returns:
         Dict[str, Dict[str, Any]]: 路由響應配置
-        
+
     Note:
         配置路由的響應格式和壓縮設定
     """
@@ -293,10 +293,10 @@ def get_response_config() -> Dict[str, Dict[str, Any]]:
 
 def get_monitoring_config() -> Dict[str, Dict[str, Any]]:
     """獲取路由監控配置
-    
+
     Returns:
         Dict[str, Dict[str, Any]]: 路由監控配置
-        
+
     Note:
         配置路由的監控和指標收集
     """

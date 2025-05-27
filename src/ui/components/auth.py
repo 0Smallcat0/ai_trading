@@ -33,19 +33,19 @@ from ..auth import (
     logout,
     require_auth,
     USERS,
-    SERVICES_AVAILABLE
+    SERVICES_AVAILABLE,
 )
 
 # 保持向後相容性的別名
 __all__ = [
-    'login_form',
-    'show_2fa_form',
-    'check_auth',
-    'get_user_role',
-    'logout',
-    'require_auth',
-    'USERS',
-    'SERVICES_AVAILABLE'
+    "login_form",
+    "show_2fa_form",
+    "check_auth",
+    "get_user_role",
+    "logout",
+    "require_auth",
+    "USERS",
+    "SERVICES_AVAILABLE",
 ]
 
 # 所有功能已遷移到 ui.auth 子模組，此檔案僅保留向後相容性

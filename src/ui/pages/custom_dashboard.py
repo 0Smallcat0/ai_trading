@@ -323,7 +323,9 @@ def show_template_library():
     # 獲取小工具模板
     templates = widget_library.get_widget_templates()
     if templates:
-        st.info(f"💡 選擇模板快速創建包含預設組件的儀表板（共 {len(templates)} 個模板）")
+        st.info(
+            f"💡 選擇模板快速創建包含預設組件的儀表板（共 {len(templates)} 個模板）"
+        )
     else:
         st.info("💡 選擇模板快速創建包含預設組件的儀表板")
 

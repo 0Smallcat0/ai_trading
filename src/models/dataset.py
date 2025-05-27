@@ -35,11 +35,13 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 
 class DatasetError(Exception):
     """資料集處理相關錯誤"""
+
     pass
 
 
 class ValidationError(DatasetError):
     """資料驗證錯誤"""
+
     pass
 
 
@@ -132,14 +134,18 @@ class TimeSeriesSplit:
             # 計算分割點
             n = len(df)
             if n < 3:
-                raise ValidationError(f"資料集太小，無法分割，至少需要3筆資料，得到: {n}")
+                raise ValidationError(
+                    f"資料集太小，無法分割，至少需要3筆資料，得到: {n}"
+                )
 
             test_idx = int(n * (1 - self.test_size))
             val_idx = int(test_idx * (1 - self.val_size))
 
             # 確保每個集合至少有一筆資料
             if val_idx < 1 or test_idx - val_idx < 1 or n - test_idx < 1:
-                raise ValidationError("分割參數導致某個資料集為空，請調整test_size和val_size")
+                raise ValidationError(
+                    "分割參數導致某個資料集為空，請調整test_size和val_size"
+                )
 
             # 分割資料
             train = df.iloc[:val_idx].copy()
@@ -486,7 +492,9 @@ class DatasetLoader:
 
         # 添加額外特徵
         if additional_features:
-            available_features = [col for col in additional_features if col in features.columns]
+            available_features = [
+                col for col in additional_features if col in features.columns
+            ]
             if available_features:
                 logger.info(f"添加額外特徵: {available_features}")
             else:

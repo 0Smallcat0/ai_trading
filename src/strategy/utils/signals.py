@@ -15,7 +15,7 @@ from .signal_generators import (
     continuous_trading_signal,
     triple_barrier,
     fixed_time_horizon,
-    numba_moving_average
+    numba_moving_average,
 )
 
 from .signal_interface import generate_signals
@@ -27,5 +27,5 @@ __all__ = [
     "triple_barrier",
     "fixed_time_horizon",
     "numba_moving_average",
-    "generate_signals"
+    "generate_signals",
 ]

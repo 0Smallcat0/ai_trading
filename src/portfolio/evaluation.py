@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # 可選依賴處理
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -29,6 +30,7 @@ except ImportError:
 
 try:
     import seaborn as sns
+
     SEABORN_AVAILABLE = True
 except ImportError:
     SEABORN_AVAILABLE = False
@@ -36,8 +38,7 @@ except ImportError:
 
 
 def calculate_portfolio_returns(
-    weights: Dict[str, float],
-    prices: pd.DataFrame
+    weights: Dict[str, float], prices: pd.DataFrame
 ) -> Dict[str, Any]:
     """計算投資組合收益率
 
@@ -97,10 +98,7 @@ def calculate_portfolio_returns(
     }
 
 
-def calculate_var(
-    returns: pd.Series,
-    confidence_level: float = 0.05
-) -> float:
+def calculate_var(returns: pd.Series, confidence_level: float = 0.05) -> float:
     """計算風險值 (Value at Risk)
 
     Args:
@@ -120,10 +118,7 @@ def calculate_var(
         return 0.0
 
 
-def calculate_cvar(
-    returns: pd.Series,
-    confidence_level: float = 0.05
-) -> float:
+def calculate_cvar(returns: pd.Series, confidence_level: float = 0.05) -> float:
     """計算條件風險值 (Conditional Value at Risk)
 
     Args:
@@ -144,10 +139,7 @@ def calculate_cvar(
         return 0.0
 
 
-def calculate_sortino_ratio(
-    returns: pd.Series,
-    risk_free_rate: float = 0.02
-) -> float:
+def calculate_sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.02) -> float:
     """計算 Sortino 比率
 
     Args:
@@ -167,7 +159,7 @@ def calculate_sortino_ratio(
         if len(downside_returns) == 0:
             return np.inf
 
-        downside_deviation = np.sqrt(np.mean(downside_returns ** 2)) * np.sqrt(252)
+        downside_deviation = np.sqrt(np.mean(downside_returns**2)) * np.sqrt(252)
 
         if downside_deviation == 0:
             return np.inf
@@ -178,9 +170,7 @@ def calculate_sortino_ratio(
         return 0.0
 
 
-def calculate_calmar_ratio(
-    returns: pd.Series
-) -> float:
+def calculate_calmar_ratio(returns: pd.Series) -> float:
     """計算 Calmar 比率
 
     Args:
@@ -207,8 +197,7 @@ def calculate_calmar_ratio(
 
 
 def calculate_information_ratio(
-    portfolio_returns: pd.Series,
-    benchmark_returns: pd.Series
+    portfolio_returns: pd.Series, benchmark_returns: pd.Series
 ) -> float:
     """計算資訊比率
 
@@ -224,15 +213,14 @@ def calculate_information_ratio(
 
     try:
         # 對齊時間序列
-        aligned_data = pd.DataFrame({
-            'portfolio': portfolio_returns,
-            'benchmark': benchmark_returns
-        }).dropna()
+        aligned_data = pd.DataFrame(
+            {"portfolio": portfolio_returns, "benchmark": benchmark_returns}
+        ).dropna()
 
         if aligned_data.empty:
             return 0.0
 
-        excess_returns = aligned_data['portfolio'] - aligned_data['benchmark']
+        excess_returns = aligned_data["portfolio"] - aligned_data["benchmark"]
         tracking_error = excess_returns.std() * np.sqrt(252)
 
         if tracking_error == 0:
@@ -244,10 +232,7 @@ def calculate_information_ratio(
         return 0.0
 
 
-def calculate_beta(
-    portfolio_returns: pd.Series,
-    market_returns: pd.Series
-) -> float:
+def calculate_beta(portfolio_returns: pd.Series, market_returns: pd.Series) -> float:
     """計算 Beta 值
 
     Args:
@@ -262,16 +247,15 @@ def calculate_beta(
 
     try:
         # 對齊時間序列
-        aligned_data = pd.DataFrame({
-            'portfolio': portfolio_returns,
-            'market': market_returns
-        }).dropna()
+        aligned_data = pd.DataFrame(
+            {"portfolio": portfolio_returns, "market": market_returns}
+        ).dropna()
 
         if len(aligned_data) < 2:
             return 1.0
 
-        covariance = aligned_data['portfolio'].cov(aligned_data['market'])
-        market_variance = aligned_data['market'].var()
+        covariance = aligned_data["portfolio"].cov(aligned_data["market"])
+        market_variance = aligned_data["market"].var()
 
         if market_variance == 0:
             return 1.0
@@ -285,7 +269,7 @@ def calculate_beta(
 def calculate_alpha(
     portfolio_returns: pd.Series,
     market_returns: pd.Series,
-    risk_free_rate: float = 0.02
+    risk_free_rate: float = 0.02,
 ) -> float:
     """計算 Alpha 值
 
@@ -305,7 +289,9 @@ def calculate_alpha(
         portfolio_annual_return = portfolio_returns.mean() * 252
         market_annual_return = market_returns.mean() * 252
 
-        return portfolio_annual_return - (risk_free_rate + beta * (market_annual_return - risk_free_rate))
+        return portfolio_annual_return - (
+            risk_free_rate + beta * (market_annual_return - risk_free_rate)
+        )
     except Exception as e:
         logger.error(f"Alpha 計算錯誤: {e}")
         return 0.0
@@ -314,7 +300,7 @@ def calculate_alpha(
 def calculate_comprehensive_metrics(
     portfolio_returns: pd.Series,
     benchmark_returns: Optional[pd.Series] = None,
-    risk_free_rate: float = 0.02
+    risk_free_rate: float = 0.02,
 ) -> Dict[str, float]:
     """計算綜合績效指標
 
@@ -334,37 +320,45 @@ def calculate_comprehensive_metrics(
     try:
         # 基本指標
         cumulative_returns = (1 + portfolio_returns).cumprod()
-        metrics['total_return'] = cumulative_returns.iloc[-1] - 1
-        metrics['annual_return'] = portfolio_returns.mean() * 252
-        metrics['annual_volatility'] = portfolio_returns.std() * np.sqrt(252)
-        metrics['sharpe_ratio'] = (
-            (metrics['annual_return'] - risk_free_rate) / metrics['annual_volatility']
-            if metrics['annual_volatility'] > 0 else 0
+        metrics["total_return"] = cumulative_returns.iloc[-1] - 1
+        metrics["annual_return"] = portfolio_returns.mean() * 252
+        metrics["annual_volatility"] = portfolio_returns.std() * np.sqrt(252)
+        metrics["sharpe_ratio"] = (
+            (metrics["annual_return"] - risk_free_rate) / metrics["annual_volatility"]
+            if metrics["annual_volatility"] > 0
+            else 0
         )
 
         # 風險指標
-        metrics['max_drawdown'] = (cumulative_returns / cumulative_returns.cummax() - 1).min()
-        metrics['var_5'] = calculate_var(portfolio_returns, 0.05)
-        metrics['cvar_5'] = calculate_cvar(portfolio_returns, 0.05)
-        metrics['sortino_ratio'] = calculate_sortino_ratio(portfolio_returns, risk_free_rate)
-        metrics['calmar_ratio'] = calculate_calmar_ratio(portfolio_returns)
+        metrics["max_drawdown"] = (
+            cumulative_returns / cumulative_returns.cummax() - 1
+        ).min()
+        metrics["var_5"] = calculate_var(portfolio_returns, 0.05)
+        metrics["cvar_5"] = calculate_cvar(portfolio_returns, 0.05)
+        metrics["sortino_ratio"] = calculate_sortino_ratio(
+            portfolio_returns, risk_free_rate
+        )
+        metrics["calmar_ratio"] = calculate_calmar_ratio(portfolio_returns)
 
         # 如果有基準，計算相對指標
         if benchmark_returns is not None and not benchmark_returns.empty:
-            metrics['beta'] = calculate_beta(portfolio_returns, benchmark_returns)
-            metrics['alpha'] = calculate_alpha(portfolio_returns, benchmark_returns, risk_free_rate)
-            metrics['information_ratio'] = calculate_information_ratio(portfolio_returns, benchmark_returns)
+            metrics["beta"] = calculate_beta(portfolio_returns, benchmark_returns)
+            metrics["alpha"] = calculate_alpha(
+                portfolio_returns, benchmark_returns, risk_free_rate
+            )
+            metrics["information_ratio"] = calculate_information_ratio(
+                portfolio_returns, benchmark_returns
+            )
 
             # 相對表現
-            aligned_data = pd.DataFrame({
-                'portfolio': portfolio_returns,
-                'benchmark': benchmark_returns
-            }).dropna()
+            aligned_data = pd.DataFrame(
+                {"portfolio": portfolio_returns, "benchmark": benchmark_returns}
+            ).dropna()
 
             if not aligned_data.empty:
-                excess_returns = aligned_data['portfolio'] - aligned_data['benchmark']
-                metrics['excess_return'] = excess_returns.mean() * 252
-                metrics['tracking_error'] = excess_returns.std() * np.sqrt(252)
+                excess_returns = aligned_data["portfolio"] - aligned_data["benchmark"]
+                metrics["excess_return"] = excess_returns.mean() * 252
+                metrics["tracking_error"] = excess_returns.std() * np.sqrt(252)
 
     except Exception as e:
         logger.error(f"綜合指標計算錯誤: {e}")
@@ -373,8 +367,7 @@ def calculate_comprehensive_metrics(
 
 
 def plot_portfolio_performance(
-    performance: Dict[str, Any],
-    show_plot: bool = True
+    performance: Dict[str, Any], show_plot: bool = True
 ) -> None:
     """繪製投資組合表現圖
 
@@ -387,7 +380,11 @@ def plot_portfolio_performance(
         return
 
     # 若 returns 為空則直接 return
-    if not performance or performance.get("returns") is None or performance["returns"].empty:
+    if (
+        not performance
+        or performance.get("returns") is None
+        or performance["returns"].empty
+    ):
         logger.warning("沒有可繪製的績效資料")
         return
 

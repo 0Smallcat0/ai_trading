@@ -26,11 +26,7 @@
 """
 
 # 導入基礎類別和異常
-from .base import (
-    Portfolio,
-    PortfolioOptimizationError,
-    DependencyError
-)
+from .base import Portfolio, PortfolioOptimizationError, DependencyError
 
 # 導入投資組合策略
 from .strategies import (
@@ -38,7 +34,7 @@ from .strategies import (
     MeanVariancePortfolio,
     RiskParityPortfolio,
     MaxSharpePortfolio,
-    MinVariancePortfolio
+    MinVariancePortfolio,
 )
 
 # 導入最佳化函數
@@ -49,7 +45,7 @@ from .optimization import (
     mean_variance_optimization,
     minimum_variance_optimization,
     maximum_sharpe_optimization,
-    risk_parity_optimization
+    risk_parity_optimization,
 )
 
 # 導入評估函數
@@ -63,7 +59,7 @@ from .evaluation import (
     calculate_beta,
     calculate_alpha,
     calculate_comprehensive_metrics,
-    plot_portfolio_performance
+    plot_portfolio_performance,
 )
 
 # 導入工具函數
@@ -76,16 +72,17 @@ from .utils import (
     calculate_portfolio_metrics_summary,
     rank_portfolios,
     convert_weights_to_dataframe,
-    simulate_portfolios_comparison
+    simulate_portfolios_comparison,
 )
 
 # 導入投資組合服務（向後相容性）
 try:
     import sys
     import os
+
     # 添加 services 路徑
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    services_dir = os.path.join(os.path.dirname(current_dir), 'services')
+    services_dir = os.path.join(os.path.dirname(current_dir), "services")
     if services_dir not in sys.path:
         sys.path.insert(0, services_dir)
 
@@ -97,9 +94,10 @@ except ImportError:
     except ImportError:
         # 如果無法導入，提供一個警告但不中斷
         import warnings
+
         warnings.warn(
             "無法導入 PortfolioService，請確認 services.portfolio_service 模組存在",
-            ImportWarning
+            ImportWarning,
         )
         PortfolioService = None
 
@@ -113,7 +111,7 @@ def simulate_portfolios(
     start_date=None,
     end_date=None,
     rebalance_freq="M",
-    show_plot=True
+    show_plot=True,
 ):
     """模擬並比較不同投資組合策略的表現（向後相容函數）
 
@@ -136,7 +134,7 @@ def simulate_portfolios(
             "mean_variance",
             "risk_parity",
             "max_sharpe",
-            "min_variance"
+            "min_variance",
         ]
 
     # 創建投資組合實例
@@ -144,15 +142,25 @@ def simulate_portfolios(
 
     for portfolio_type in portfolio_types:
         if portfolio_type == "equal_weight":
-            portfolios[portfolio_type] = EqualWeightPortfolio(initial_capital=initial_capital)
+            portfolios[portfolio_type] = EqualWeightPortfolio(
+                initial_capital=initial_capital
+            )
         elif portfolio_type == "mean_variance":
-            portfolios[portfolio_type] = MeanVariancePortfolio(initial_capital=initial_capital)
+            portfolios[portfolio_type] = MeanVariancePortfolio(
+                initial_capital=initial_capital
+            )
         elif portfolio_type == "risk_parity":
-            portfolios[portfolio_type] = RiskParityPortfolio(initial_capital=initial_capital)
+            portfolios[portfolio_type] = RiskParityPortfolio(
+                initial_capital=initial_capital
+            )
         elif portfolio_type == "max_sharpe":
-            portfolios[portfolio_type] = MaxSharpePortfolio(initial_capital=initial_capital)
+            portfolios[portfolio_type] = MaxSharpePortfolio(
+                initial_capital=initial_capital
+            )
         elif portfolio_type == "min_variance":
-            portfolios[portfolio_type] = MinVariancePortfolio(initial_capital=initial_capital)
+            portfolios[portfolio_type] = MinVariancePortfolio(
+                initial_capital=initial_capital
+            )
 
     # 模擬每個投資組合
     results = {}
@@ -163,7 +171,7 @@ def simulate_portfolios(
                 price_df=prices,
                 start_date=start_date,
                 end_date=end_date,
-                rebalance_freq=rebalance_freq
+                rebalance_freq=rebalance_freq,
             )
             results[name] = result
         except Exception as e:
@@ -178,8 +186,8 @@ def simulate_portfolios(
             plt.figure(figsize=(12, 8))
 
             for name, result in results.items():
-                if 'performance' in result and 'equity_curve' in result['performance']:
-                    equity_curve = result['performance']['equity_curve']
+                if "performance" in result and "equity_curve" in result["performance"]:
+                    equity_curve = result["performance"]["equity_curve"]
                     plt.plot(equity_curve.index, equity_curve.values, label=name)
 
             plt.title("投資組合績效比較")
@@ -213,14 +221,12 @@ __all__ = [
     "Portfolio",
     "PortfolioOptimizationError",
     "DependencyError",
-
     # 策略類別
     "EqualWeightPortfolio",
     "MeanVariancePortfolio",
     "RiskParityPortfolio",
     "MaxSharpePortfolio",
     "MinVariancePortfolio",
-
     # 最佳化函數
     "equal_weight",
     "kelly_weight",
@@ -229,7 +235,6 @@ __all__ = [
     "minimum_variance_optimization",
     "maximum_sharpe_optimization",
     "risk_parity_optimization",
-
     # 評估函數
     "calculate_portfolio_returns",
     "calculate_var",
@@ -241,7 +246,6 @@ __all__ = [
     "calculate_alpha",
     "calculate_comprehensive_metrics",
     "plot_portfolio_performance",
-
     # 工具函數
     "normalize_weights",
     "validate_weights",
@@ -252,11 +256,9 @@ __all__ = [
     "rank_portfolios",
     "convert_weights_to_dataframe",
     "simulate_portfolios_comparison",
-
     # 向後相容函數
     "simulate_portfolios",
     "evaluate_portfolio",
-
     # 服務類別
-    "PortfolioService"
+    "PortfolioService",
 ]

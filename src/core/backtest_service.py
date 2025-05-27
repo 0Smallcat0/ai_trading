@@ -18,7 +18,7 @@ from .backtest_module import (
     validate_backtest_config,
     BacktestDatabaseManager,
     BacktestResultsManager,
-    generate_report
+    generate_report,
 )
 
 # 導入新的模組化組件
@@ -26,7 +26,9 @@ from .backtest_module.backtest_data_manager import BacktestDataManager
 from .backtest_module.backtest_status_manager import BacktestStatusManager
 from .backtest_module.backtest_query_manager import BacktestQueryManager
 from .backtest_module.mock_backtest_engine import MockBacktest
-from .backtest_module.backtest_performance_calculator import BacktestPerformanceCalculator
+from .backtest_module.backtest_performance_calculator import (
+    BacktestPerformanceCalculator,
+)
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -34,6 +36,7 @@ logger = logging.getLogger(__name__)
 # 導入回測引擎
 try:
     import backtrader as bt
+
     BACKTRADER_AVAILABLE = True
 except ImportError as e:
     logger.warning("Backtrader 未安裝: %s", e)
@@ -585,7 +588,7 @@ class BacktestService:
                 results,
                 report_format,
                 include_charts,
-                include_transactions
+                include_transactions,
             )
 
         except Exception as e:

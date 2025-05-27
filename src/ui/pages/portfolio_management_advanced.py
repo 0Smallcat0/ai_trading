@@ -50,6 +50,7 @@ from src.ui.components.portfolio.performance_attribution import (
     PerformanceAttributionComponent,
 )
 from src.ui.components.portfolio.rebalancing import RebalancingComponent
+
 # from src.ui.utils.portfolio_analytics import PortfolioAnalytics  # TODO: 實現分析功能
 
 logger = logging.getLogger(__name__)
@@ -280,7 +281,13 @@ def load_portfolio_data(portfolio_name: str, period: str) -> Dict[str, Any]:
     np.random.seed(hash(portfolio_name) % 2**32)
 
     # 根據期間調整數據範圍（目前為模擬實現）
-    period_multiplier = {"1個月": 0.8, "3個月": 1.0, "6個月": 1.2, "1年": 1.5, "2年": 2.0}.get(period, 1.0)
+    period_multiplier = {
+        "1個月": 0.8,
+        "3個月": 1.0,
+        "6個月": 1.2,
+        "1年": 1.5,
+        "2年": 2.0,
+    }.get(period, 1.0)
 
     return {
         "name": portfolio_name,

@@ -9,7 +9,11 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from .base_signal_generator import BaseSignalGenerator, LOG_MSGS, MODEL_INTEGRATION_AVAILABLE
+from .base_signal_generator import (
+    BaseSignalGenerator,
+    LOG_MSGS,
+    MODEL_INTEGRATION_AVAILABLE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +83,7 @@ class AIModelSignalGenerator(BaseSignalGenerator):
             logger.warning(LOG_MSGS["no_model"])
             return False
 
-        if not self.validate_data('price'):
+        if not self.validate_data("price"):
             logger.warning(LOG_MSGS["no_price"], "AI模型")
             return False
 
@@ -90,7 +94,7 @@ class AIModelSignalGenerator(BaseSignalGenerator):
         predictions: np.ndarray,
         features: pd.DataFrame,
         confidence_threshold: float,
-        model_name: str
+        model_name: str,
     ) -> pd.DataFrame:
         """從預測結果創建訊號
 
@@ -175,7 +179,7 @@ class AIModelSignalGenerator(BaseSignalGenerator):
 
                 # 獲取模型性能作為權重
                 model_performance = self.model_manager.get_model_performance(model_name)
-                all_confidences[model_name] = model_performance.get('accuracy', 0.5)
+                all_confidences[model_name] = model_performance.get("accuracy", 0.5)
 
             except Exception as e:
                 logger.warning("模型 %s 預測失敗: %s", model_name, e)
@@ -246,8 +250,9 @@ class AIModelSignalGenerator(BaseSignalGenerator):
             # 每隔一定期間重新計算權重
             if not i % rebalance_frequency and i > lookback_period:
                 model_weights = self._update_model_weights(
-                    model_names, features.iloc[max(0, i-lookback_period):i],
-                    signals.iloc[max(0, i-lookback_period):i]
+                    model_names,
+                    features.iloc[max(0, i - lookback_period) : i],
+                    signals.iloc[max(0, i - lookback_period) : i],
                 )
 
             # 使用當前權重進行預測
@@ -320,7 +325,9 @@ class AIModelSignalGenerator(BaseSignalGenerator):
         # 情緒特徵
         if self.sent_indicators is not None:
             try:
-                features["news_sentiment"] = self.sent_indicators.calculate_news_sentiment()
+                features["news_sentiment"] = (
+                    self.sent_indicators.calculate_news_sentiment()
+                )
             except Exception as e:
                 logger.warning("計算情緒特徵時發生錯誤: %s", e)
 
@@ -329,15 +336,21 @@ class AIModelSignalGenerator(BaseSignalGenerator):
 
         return features
 
-    def _majority_voting(self, predictions: Dict[str, np.ndarray], signals: pd.DataFrame) -> pd.DataFrame:
+    def _majority_voting(
+        self, predictions: Dict[str, np.ndarray], signals: pd.DataFrame
+    ) -> pd.DataFrame:
         """多數投票法"""
         # 獲取所有模型預測的最小長度
-        min_length = min(len(pred) for pred in predictions.values() if isinstance(pred, np.ndarray))
+        min_length = min(
+            len(pred) for pred in predictions.values() if isinstance(pred, np.ndarray)
+        )
 
         for i in range(min_length):
             votes = []
             for model_predictions in predictions.values():
-                if isinstance(model_predictions, np.ndarray) and i < len(model_predictions):
+                if isinstance(model_predictions, np.ndarray) and i < len(
+                    model_predictions
+                ):
                     pred = float(model_predictions[i])
                     if pred > 0.1:
                         votes.append(1)
@@ -353,17 +366,26 @@ class AIModelSignalGenerator(BaseSignalGenerator):
 
         return signals
 
-    def _weighted_voting(self, predictions: Dict[str, np.ndarray], weights: Dict[str, float], signals: pd.DataFrame) -> pd.DataFrame:
+    def _weighted_voting(
+        self,
+        predictions: Dict[str, np.ndarray],
+        weights: Dict[str, float],
+        signals: pd.DataFrame,
+    ) -> pd.DataFrame:
         """加權投票法"""
         # 獲取所有模型預測的最小長度
-        min_length = min(len(pred) for pred in predictions.values() if isinstance(pred, np.ndarray))
+        min_length = min(
+            len(pred) for pred in predictions.values() if isinstance(pred, np.ndarray)
+        )
 
         for i in range(min_length):
             weighted_sum = 0.0
             total_weight = 0.0
 
             for model_name, model_predictions in predictions.items():
-                if isinstance(model_predictions, np.ndarray) and i < len(model_predictions):
+                if isinstance(model_predictions, np.ndarray) and i < len(
+                    model_predictions
+                ):
                     pred = float(model_predictions[i])
                     conf = abs(pred)  # 使用絕對值作為信心度
                     weight = weights.get(model_name, 0.5)
@@ -382,17 +404,23 @@ class AIModelSignalGenerator(BaseSignalGenerator):
 
         return signals
 
-    def _average_voting(self, predictions: Dict[str, np.ndarray], signals: pd.DataFrame) -> pd.DataFrame:
+    def _average_voting(
+        self, predictions: Dict[str, np.ndarray], signals: pd.DataFrame
+    ) -> pd.DataFrame:
         """平均投票法"""
         # 獲取所有模型預測的最小長度
-        min_length = min(len(pred) for pred in predictions.values() if isinstance(pred, np.ndarray))
+        min_length = min(
+            len(pred) for pred in predictions.values() if isinstance(pred, np.ndarray)
+        )
 
         for i in range(min_length):
             pred_sum = 0.0
             count = 0
 
             for model_predictions in predictions.values():
-                if isinstance(model_predictions, np.ndarray) and i < len(model_predictions):
+                if isinstance(model_predictions, np.ndarray) and i < len(
+                    model_predictions
+                ):
                     pred = float(model_predictions[i])
                     pred_sum += pred
                     count += 1
@@ -413,7 +441,7 @@ class AIModelSignalGenerator(BaseSignalGenerator):
         self,
         model_names: List[str],
         features: pd.DataFrame,  # pylint: disable=unused-argument
-        historical_signals: pd.DataFrame  # pylint: disable=unused-argument
+        historical_signals: pd.DataFrame,  # pylint: disable=unused-argument
     ) -> Dict[str, float]:
         """更新模型權重"""
         # 簡化的權重更新邏輯
@@ -423,7 +451,7 @@ class AIModelSignalGenerator(BaseSignalGenerator):
             try:
                 # 獲取模型最近的表現
                 performance = self.model_manager.get_model_performance(model_name)
-                weights[model_name] = performance.get('accuracy', 0.5)
+                weights[model_name] = performance.get("accuracy", 0.5)
             except Exception:
                 weights[model_name] = 0.5
 

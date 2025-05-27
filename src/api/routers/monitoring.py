@@ -22,29 +22,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # 整合子模組路由
-router.include_router(
-    system_router,
-    prefix="/system",
-    tags=["系統資源監控"]
-)
+router.include_router(system_router, prefix="/system", tags=["系統資源監控"])
 
-router.include_router(
-    alerts_router,
-    prefix="/alerts",
-    tags=["警報管理"]
-)
+router.include_router(alerts_router, prefix="/alerts", tags=["警報管理"])
 
-router.include_router(
-    logs_router,
-    prefix="/logs",
-    tags=["日誌管理"]
-)
+router.include_router(logs_router, prefix="/logs", tags=["日誌管理"])
 
-router.include_router(
-    reports_router,
-    prefix="/reports",
-    tags=["監控報告"]
-)
+router.include_router(reports_router, prefix="/reports", tags=["監控報告"])
 
 
 @router.get("/health")

@@ -36,7 +36,7 @@ from .models import (
 __all__ = [
     "router",
     "OrderRequest",
-    "OrderUpdateRequest", 
+    "OrderUpdateRequest",
     "TradingModeRequest",
     "BatchOrderRequest",
     "OrderResponse",

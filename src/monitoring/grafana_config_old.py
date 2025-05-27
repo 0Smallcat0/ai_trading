@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 try:
     from grafana_api.grafana_face import GrafanaFace
+
     GRAFANA_API_AVAILABLE = True
 except ImportError:
     GRAFANA_API_AVAILABLE = False

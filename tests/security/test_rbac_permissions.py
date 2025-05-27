@@ -100,7 +100,11 @@ class TestRBACPermissions:
                 "/api/v1/portfolio/",
                 "/api/v1/admin/users",
             ],
-            "user": ["/api/v1/data/sources", "/api/v1/strategies/", "/api/v1/portfolio/"],
+            "user": [
+                "/api/v1/data/sources",
+                "/api/v1/strategies/",
+                "/api/v1/portfolio/",
+            ],
         }
 
         # 測試管理員權限
@@ -241,7 +245,9 @@ class TestRBACPermissions:
                 headers = {"Authorization": f"Bearer {access_token}"}
 
                 # 測試會話有效時的權限
-                response = security_test_client.get("/api/v1/data/sources", headers=headers)
+                response = security_test_client.get(
+                    "/api/v1/data/sources", headers=headers
+                )
                 assert response.status_code == 200, "有效會話應該允許訪問"
 
                 # 登出

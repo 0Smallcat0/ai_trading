@@ -362,7 +362,7 @@ class RiskManagementService:
             "cvar_99": -0.055,
             "beta": 1.15,
             "correlation": 0.75,
-            "liquidity_risk": 0.15
+            "liquidity_risk": 0.15,
         }
 
     def get_risk_control_status(self, control_name=None):
@@ -375,7 +375,7 @@ class RiskManagementService:
                 "status": "active",
                 "last_triggered": None,
                 "trigger_count": 0,
-                "description": f"{control_name} 風控機制"
+                "description": f"{control_name} 風控機制",
             }
         else:
             # 返回所有風控機制狀態列表
@@ -386,7 +386,7 @@ class RiskManagementService:
                     "status": "active",
                     "last_triggered": None,
                     "trigger_count": 0,
-                    "description": "停損機制"
+                    "description": "停損機制",
                 },
                 {
                     "control_name": "take_profit",
@@ -394,8 +394,8 @@ class RiskManagementService:
                     "status": "active",
                     "last_triggered": None,
                     "trigger_count": 0,
-                    "description": "停利機制"
-                }
+                    "description": "停利機制",
+                },
             ]
 
     def toggle_risk_control(self, control_name, enabled, reason=None):
@@ -404,7 +404,7 @@ class RiskManagementService:
             control_data = {
                 "control_name": control_name,
                 "enabled": enabled,
-                "config": {"reason": reason} if reason else None
+                "config": {"reason": reason} if reason else None,
             }
             success = self.update_control_status(control_data)
             message = f"風控機制 {control_name} {'啟用' if enabled else '停用'}成功"

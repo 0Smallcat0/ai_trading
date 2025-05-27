@@ -179,7 +179,10 @@ class CorrelationAnalyzer:
         }
 
     def find_diversification_candidates(
-        self, current_portfolio: List[str], candidates: List[str], max_correlation: float = 0.5
+        self,
+        current_portfolio: List[str],
+        candidates: List[str],
+        max_correlation: float = 0.5,
     ) -> List[str]:
         """
         尋找分散化候選股票
@@ -268,7 +271,9 @@ class CorrelationAnalyzer:
         else:
             logger.warning("股票 %s 不存在", symbol)
 
-    def get_portfolio_correlation_risk(self, portfolio_weights: Dict[str, float]) -> float:
+    def get_portfolio_correlation_risk(
+        self, portfolio_weights: Dict[str, float]
+    ) -> float:
         """
         計算投資組合相關性風險
 
@@ -292,7 +297,7 @@ class CorrelationAnalyzer:
                     weight1 = portfolio_weights[symbol1]
                     weight2 = portfolio_weights[symbol2]
                     correlation = abs(self.get_correlation(symbol1, symbol2))
-                    
+
                     if not pd.isna(correlation):
                         total_correlation += weight1 * weight2 * correlation
                         total_weight += weight1 * weight2

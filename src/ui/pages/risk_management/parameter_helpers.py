@@ -18,17 +18,17 @@ from .utils import validate_risk_parameters
 
 def show_var_monitoring_settings() -> None:
     """顯示 VaR 與監控設置區塊。
-    
+
     提供 VaR 計算參數、監控設定和警報設定的界面。
     包括不同 VaR 計算方法的選擇和相應的參數設定。
-    
+
     Returns:
         None
-        
+
     Side Effects:
         - 更新 st.session_state.risk_params 中的 VaR 和監控相關參數
         - 在 Streamlit 界面顯示 VaR 與監控設定表單
-        
+
     Note:
         此函數依賴於 st.session_state.risk_params 的存在，
         應在 show_risk_parameters() 函數中調用。
@@ -49,9 +49,7 @@ def show_var_monitoring_settings() -> None:
     params["var_holding_period"] = st.selectbox(
         "VaR 持有期間",
         [1, 5, 10, 22],
-        index=[1, 5, 10, 22].index(
-            params.get("var_holding_period", 1)
-        ),
+        index=[1, 5, 10, 22].index(params.get("var_holding_period", 1)),
     )
 
     params["var_method"] = st.selectbox(
@@ -109,22 +107,22 @@ def show_var_monitoring_settings() -> None:
 
 def show_save_controls(risk_service: Optional[Any]) -> None:
     """顯示保存控制按鈕區塊。
-    
+
     提供風險參數的保存、重置和匯出功能按鈕。
     包括參數驗證、保存確認和錯誤處理。
-    
+
     Args:
         risk_service (Optional[Any]): 風險管理服務實例，
             如果為 None 則使用本地保存。
-            
+
     Returns:
         None
-        
+
     Side Effects:
         - 可能更新風險管理服務中的參數
         - 可能重置 st.session_state.risk_params
         - 在 Streamlit 界面顯示操作結果訊息
-        
+
     Note:
         此函數會進行參數驗證，只有通過驗證的參數才會被保存。
     """
@@ -160,6 +158,7 @@ def show_save_controls(risk_service: Optional[Any]) -> None:
     with col_save2:
         if st.button("🔄 重置為預設", use_container_width=True):
             from .utils import get_default_risk_parameters
+
             st.session_state.risk_params = get_default_risk_parameters()
             st.success("已重置為預設設置！")
             st.rerun()
@@ -185,38 +184,48 @@ def show_save_controls(risk_service: Optional[Any]) -> None:
 
 def validate_and_format_parameters(params: Dict[str, Any]) -> Dict[str, Any]:
     """驗證和格式化風險參數。
-    
+
     對風險參數進行驗證和格式化處理，確保參數的有效性和一致性。
-    
+
     Args:
         params (Dict[str, Any]): 原始風險參數字典。
-        
+
     Returns:
         Dict[str, Any]: 驗證和格式化後的參數字典。
-        
+
     Raises:
         ValueError: 當參數驗證失敗時。
-        
+
     Example:
         >>> params = {"stop_loss_percent": "5.0", "max_position_size": 10}
         >>> validated = validate_and_format_parameters(params)
         >>> validated["stop_loss_percent"]
         5.0
-        
+
     Note:
         此函數會自動轉換數據類型並應用預設值。
     """
     formatted_params = params.copy()
-    
+
     # 數值類型轉換
     numeric_fields = [
-        "stop_loss_percent", "take_profit_percent", "trailing_stop_percent",
-        "max_portfolio_risk", "max_position_size", "max_daily_loss",
-        "max_drawdown", "max_sector_exposure", "max_single_stock",
-        "correlation_limit", "var_confidence", "var_lookback_days",
-        "alert_threshold_var", "alert_threshold_drawdown", "kelly_fraction"
+        "stop_loss_percent",
+        "take_profit_percent",
+        "trailing_stop_percent",
+        "max_portfolio_risk",
+        "max_position_size",
+        "max_daily_loss",
+        "max_drawdown",
+        "max_sector_exposure",
+        "max_single_stock",
+        "correlation_limit",
+        "var_confidence",
+        "var_lookback_days",
+        "alert_threshold_var",
+        "alert_threshold_drawdown",
+        "kelly_fraction",
     ]
-    
+
     for field in numeric_fields:
         if field in formatted_params:
             try:
@@ -231,10 +240,10 @@ def validate_and_format_parameters(params: Dict[str, Any]) -> Dict[str, Any]:
                 }
                 if field in default_values:
                     formatted_params[field] = default_values[field]
-    
+
     # 整數類型轉換
     integer_fields = ["max_positions", "var_holding_period"]
-    
+
     for field in integer_fields:
         if field in formatted_params:
             try:
@@ -246,37 +255,41 @@ def validate_and_format_parameters(params: Dict[str, Any]) -> Dict[str, Any]:
                 }
                 if field in default_values:
                     formatted_params[field] = default_values[field]
-    
+
     # 布林類型確保
     boolean_fields = [
-        "stop_loss_enabled", "take_profit_enabled", "trailing_stop_enabled",
-        "stress_test_enabled", "real_time_monitoring", "alert_email_enabled",
-        "alert_sms_enabled"
+        "stop_loss_enabled",
+        "take_profit_enabled",
+        "trailing_stop_enabled",
+        "stress_test_enabled",
+        "real_time_monitoring",
+        "alert_email_enabled",
+        "alert_sms_enabled",
     ]
-    
+
     for field in boolean_fields:
         if field in formatted_params:
             formatted_params[field] = bool(formatted_params[field])
-    
+
     # 驗證參數
     errors = validate_risk_parameters(formatted_params)
     if errors:
         raise ValueError(f"參數驗證失敗: {'; '.join(errors)}")
-    
+
     return formatted_params
 
 
 def get_parameter_summary(params: Dict[str, Any]) -> Dict[str, str]:
     """獲取參數摘要信息。
-    
+
     生成風險參數的摘要信息，用於顯示和確認。
-    
+
     Args:
         params (Dict[str, Any]): 風險參數字典。
-        
+
     Returns:
         Dict[str, str]: 參數摘要字典，鍵為類別，值為摘要文字。
-        
+
     Example:
         >>> params = {"stop_loss_enabled": True, "stop_loss_percent": 5.0}
         >>> summary = get_parameter_summary(params)
@@ -284,30 +297,32 @@ def get_parameter_summary(params: Dict[str, Any]) -> Dict[str, str]:
         '啟用 (5.0%)'
     """
     summary = {}
-    
+
     # 停損停利摘要
     if params.get("stop_loss_enabled"):
         summary["停損設定"] = f"啟用 ({params.get('stop_loss_percent', 0):.1f}%)"
     else:
         summary["停損設定"] = "停用"
-    
+
     if params.get("take_profit_enabled"):
         summary["停利設定"] = f"啟用 ({params.get('take_profit_percent', 0):.1f}%)"
     else:
         summary["停利設定"] = "停用"
-    
+
     # 部位管理摘要
     summary["最大部位"] = f"{params.get('max_position_size', 0):.1f}%"
     summary["最大持倉"] = f"{params.get('max_positions', 0)} 檔"
     summary["投資組合風險"] = f"{params.get('max_portfolio_risk', 0):.1f}%"
-    
+
     # VaR 設定摘要
-    summary["VaR 設定"] = f"{params.get('var_confidence', 0):.1f}% ({params.get('var_method', 'N/A')})"
-    
+    summary["VaR 設定"] = (
+        f"{params.get('var_confidence', 0):.1f}% ({params.get('var_method', 'N/A')})"
+    )
+
     # 監控設定摘要
     if params.get("real_time_monitoring"):
         summary["即時監控"] = "啟用"
     else:
         summary["即時監控"] = "停用"
-    
+
     return summary

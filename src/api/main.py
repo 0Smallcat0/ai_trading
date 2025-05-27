@@ -97,6 +97,7 @@ def _add_basic_routes(application: FastAPI) -> None:
     Note:
         添加根路由、健康檢查、API 資訊等基本端點
     """
+
     @application.get("/", response_model=APIResponse)
     async def root():
         """根端點"""
@@ -122,31 +123,33 @@ def _add_basic_routes(application: FastAPI) -> None:
         # 檢查是否為測試環境
         # pylint: disable=import-outside-toplevel,reimported
         import os as test_os
+
         if test_os.getenv("TESTING") == "true":
             # 測試環境返回簡化的健康狀態
             return {
                 "status": "healthy",
                 "environment": "test",
                 "message": "系統健康狀態良好",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         try:
             # 生產環境使用完整的健康檢查
             # pylint: disable=import-outside-toplevel
             from src.api.core.lifespan import health_check as lifespan_health_check
+
             health_status = await lifespan_health_check()
             return {
                 "status": "healthy",
                 "message": "系統健康狀態良好",
                 "data": health_status,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
             logger.error("健康檢查失敗: %s", e)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="系統健康檢查失敗"
+                detail="系統健康檢查失敗",
             ) from e
 
     @application.get("/api/info", response_model=APIResponse)
@@ -224,10 +227,12 @@ def run_server():
     uvicorn_config = get_uvicorn_config()
 
     logger.info("啟動 AI 交易系統 API 服務器...")
-    logger.info("服務器地址: http://%s:%d",
-                uvicorn_config["host"], uvicorn_config["port"])
-    logger.info("API 文檔: http://%s:%d/docs",
-                uvicorn_config["host"], uvicorn_config["port"])
+    logger.info(
+        "服務器地址: http://%s:%d", uvicorn_config["host"], uvicorn_config["port"]
+    )
+    logger.info(
+        "API 文檔: http://%s:%d/docs", uvicorn_config["host"], uvicorn_config["port"]
+    )
 
     uvicorn.run(
         "src.api.main:app",

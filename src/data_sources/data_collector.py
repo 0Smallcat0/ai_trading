@@ -70,7 +70,7 @@ class RetryStrategy:
             float: 延遲時間（秒）
         """
         delay = min(
-            self.initial_delay * (self.backoff_factor ** retry_count), self.max_delay
+            self.initial_delay * (self.backoff_factor**retry_count), self.max_delay
         )
         if self.jitter:
             # 添加 0-30% 的隨機抖動
@@ -186,9 +186,7 @@ class DataCollector(ABC):
         """
         identifier_dir = os.path.join(self.cache_dir, identifier.replace(".", "_"))
         os.makedirs(identifier_dir, exist_ok=True)
-        return os.path.join(
-            identifier_dir, f"{data_type}_{start_date}_{end_date}.csv"
-        )
+        return os.path.join(identifier_dir, f"{data_type}_{start_date}_{end_date}.csv")
 
     def _is_cache_valid(self, cache_path: str) -> bool:
         """
@@ -234,9 +232,7 @@ class DataCollector(ABC):
             return result
         except Exception as e:
             self.last_run_status = "error"
-            logger.error(
-                f"{self.name} 執行失敗: {e}\n{traceback.format_exc()}"
-            )
+            logger.error(f"{self.name} 執行失敗: {e}\n{traceback.format_exc()}")
             return None
 
     def validate_data(self, data: Any) -> bool:

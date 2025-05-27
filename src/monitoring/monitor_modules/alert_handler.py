@@ -40,7 +40,7 @@ class AlertHandler:
         title: str,
         description: str,
         details: Dict[str, Any],
-        severity: str = "warning"
+        severity: str = "warning",
     ) -> None:
         """創建系統警報
 
@@ -69,7 +69,7 @@ class AlertHandler:
         title: str,
         description: str,
         details: Dict[str, Any],
-        severity: str = "warning"
+        severity: str = "warning",
     ) -> None:
         """創建 API 警報
 
@@ -98,7 +98,7 @@ class AlertHandler:
         title: str,
         description: str,
         details: Dict[str, Any],
-        severity: str = "warning"
+        severity: str = "warning",
     ) -> None:
         """創建模型警報
 
@@ -127,7 +127,7 @@ class AlertHandler:
         title: str,
         description: str,
         details: Dict[str, Any],
-        severity: str = "warning"
+        severity: str = "warning",
     ) -> None:
         """創建交易警報
 
@@ -158,7 +158,7 @@ class AlertHandler:
         description: str,
         details: Dict[str, Any],
         severity: str = "warning",
-        source: str = "monitor_system"
+        source: str = "monitor_system",
     ) -> None:
         """創建自定義警報
 
@@ -191,14 +191,14 @@ class AlertHandler:
             Dict[str, Any]: 警報統計資訊
         """
         try:
-            if hasattr(self.alert_manager, 'get_alert_stats'):
+            if hasattr(self.alert_manager, "get_alert_stats"):
                 return self.alert_manager.get_alert_stats()
             else:
                 return {
                     "total_alerts": 0,
                     "active_alerts": 0,
                     "resolved_alerts": 0,
-                    "error": "警報管理器不支援統計功能"
+                    "error": "警報管理器不支援統計功能",
                 }
 
         except Exception as e:
@@ -207,7 +207,7 @@ class AlertHandler:
                 "total_alerts": 0,
                 "active_alerts": 0,
                 "resolved_alerts": 0,
-                "error": str(e)
+                "error": str(e),
             }
 
     def is_healthy(self) -> bool:
@@ -222,7 +222,7 @@ class AlertHandler:
                 return False
 
             # 檢查警報管理器是否有必要的方法
-            required_methods = ['create_alert']
+            required_methods = ["create_alert"]
             for method in required_methods:
                 if not hasattr(self.alert_manager, method):
                     return False

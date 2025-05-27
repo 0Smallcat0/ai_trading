@@ -103,7 +103,9 @@ async def get_orders(
     action: Optional[str] = Query(default=None, description="交易動作篩選"),
     order_type: Optional[str] = Query(default=None, description="訂單類型篩選"),
     portfolio_id: Optional[str] = Query(default=None, description="投資組合 ID 篩選"),
-    start_date: Optional[str] = Query(default=None, description="開始日期 (YYYY-MM-DD)"),
+    start_date: Optional[str] = Query(
+        default=None, description="開始日期 (YYYY-MM-DD)"
+    ),
     end_date: Optional[str] = Query(default=None, description="結束日期 (YYYY-MM-DD)"),
 ):
     """查詢訂單列表
@@ -130,8 +132,7 @@ async def get_orders(
     try:
         # 構建篩選條件
         filters = _build_order_filters(
-            order_status, symbol, action, order_type,
-            portfolio_id, start_date, end_date
+            order_status, symbol, action, order_type, portfolio_id, start_date, end_date
         )
 
         # 獲取訂單列表
@@ -141,14 +142,11 @@ async def get_orders(
 
         # 轉換為響應模型
         orders_list = [
-            _convert_to_order_response(order)
-            for order in orders_data.get("orders", [])
+            _convert_to_order_response(order) for order in orders_data.get("orders", [])
         ]
 
         return APIResponse(
-            success=True,
-            message=f"獲取到 {len(orders_list)} 個訂單",
-            data=orders_list
+            success=True, message=f"獲取到 {len(orders_list)} 個訂單", data=orders_list
         )
 
     except HTTPException:
@@ -188,18 +186,13 @@ async def get_order_details(order_id: str = Path(..., description="訂單 ID")):
 
         if not order_details:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"訂單 {order_id} 不存在"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"訂單 {order_id} 不存在"
             )
 
         # 轉換為響應模型
         response_data = _convert_to_order_response(order_details)
 
-        return APIResponse(
-            success=True,
-            message="訂單詳情獲取成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="訂單詳情獲取成功", data=response_data)
 
     except HTTPException:
         raise
@@ -219,8 +212,7 @@ async def get_order_details(order_id: str = Path(..., description="訂單 ID")):
     description="修改現有訂單的參數",
 )
 async def update_order(
-    order_id: str = Path(..., description="訂單 ID"),
-    request: OrderUpdateRequest = None
+    order_id: str = Path(..., description="訂單 ID"), request: OrderUpdateRequest = None
 ):
     """修改訂單
 
@@ -241,8 +233,7 @@ async def update_order(
         existing_order = trade_service.get_order_details(order_id)
         if not existing_order:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"訂單 {order_id} 不存在"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"訂單 {order_id} 不存在"
             )
 
         # 檢查訂單狀態是否可修改
@@ -257,8 +248,7 @@ async def update_order(
 
         if not update_data:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="沒有提供任何更新數據"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="沒有提供任何更新數據"
             )
 
         # 執行訂單修改
@@ -274,11 +264,7 @@ async def update_order(
         updated_order = trade_service.get_order_details(order_id)
         response_data = _convert_to_order_response(updated_order)
 
-        return APIResponse(
-            success=True,
-            message="訂單修改成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="訂單修改成功", data=response_data)
 
     except HTTPException:
         raise
@@ -322,7 +308,7 @@ def _build_order_filters(
     order_type: Optional[str],
     portfolio_id: Optional[str],
     start_date: Optional[str],
-    end_date: Optional[str]
+    end_date: Optional[str],
 ) -> dict:
     """構建訂單篩選條件
 
@@ -415,7 +401,8 @@ def _convert_to_order_response(order_details: dict) -> OrderResponse:
         action=order_details["action"],
         quantity=order_details["quantity"],
         filled_quantity=order_details.get("filled_quantity", 0),
-        remaining_quantity=order_details["quantity"] - order_details.get("filled_quantity", 0),
+        remaining_quantity=order_details["quantity"]
+        - order_details.get("filled_quantity", 0),
         order_type=order_details["order_type"],
         price=order_details.get("price"),
         stop_price=order_details.get("stop_price"),

@@ -163,27 +163,27 @@ class VolatilityCalculator:
 
         # 簡化的 GARCH(1,1) 實現
         returns_squared = portfolio_returns**2
-        
+
         # 初始化參數
         omega = 0.01  # 常數項
-        alpha = 0.1   # ARCH 項係數
-        beta = 0.8    # GARCH 項係數
-        
+        alpha = 0.1  # ARCH 項係數
+        beta = 0.8  # GARCH 項係數
+
         # 初始化條件方差
         conditional_variance = pd.Series(index=portfolio_returns.index, dtype=float)
         conditional_variance.iloc[0] = returns_squared.iloc[0]
-        
+
         # 計算條件方差
         for i in range(1, len(portfolio_returns)):
             conditional_variance.iloc[i] = (
-                omega + 
-                alpha * returns_squared.iloc[i-1] + 
-                beta * conditional_variance.iloc[i-1]
+                omega
+                + alpha * returns_squared.iloc[i - 1]
+                + beta * conditional_variance.iloc[i - 1]
             )
-        
+
         # 計算波動率（條件方差的平方根）
         garch_volatility = np.sqrt(conditional_variance)
-        
+
         # 年化
         garch_volatility = garch_volatility * np.sqrt(252)
 
@@ -217,7 +217,7 @@ class VolatilityCalculator:
             Dict[str, float]: 波動率指標字典
         """
         portfolio_returns = self._calculate_portfolio_returns()
-        
+
         return {
             "volatility": self.calculate_volatility(),
             "volatility_daily": self.calculate_volatility(annualize=False),

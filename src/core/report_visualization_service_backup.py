@@ -550,8 +550,12 @@ class ReportVisualizationService:
                 for i in range(len(pivot_table.index)):
                     for j in range(len(pivot_table.columns)):
                         ax.text(
-                            j, i, f"{pivot_table.iloc[i, j]:.0f}",
-                            ha="center", va="center", color="black"
+                            j,
+                            i,
+                            f"{pivot_table.iloc[i, j]:.0f}",
+                            ha="center",
+                            va="center",
+                            color="black",
                         )
 
                 # 添加顏色條
@@ -909,9 +913,7 @@ class ReportVisualizationService:
         """生成參數敏感度熱力圖"""
         try:
             # 從 param_results 中提取參數值，如果沒有則使用預設值
-            param1_values = param_results.get(
-                "param1_values", [10, 20, 30, 40, 50]
-            )
+            param1_values = param_results.get("param1_values", [10, 20, 30, 40, 50])
             param2_values = param_results.get(
                 "param2_values", [0.1, 0.2, 0.3, 0.4, 0.5]
             )
@@ -922,9 +924,7 @@ class ReportVisualizationService:
             else:
                 # 模擬數據
                 matrix_shape = (len(param1_values), len(param2_values))
-                performance_matrix = (
-                    np.random.randn(*matrix_shape) * 1000 + 5000
-                )
+                performance_matrix = np.random.randn(*matrix_shape) * 1000 + 5000
 
             if chart_type == "plotly":
                 fig = go.Figure(
@@ -967,8 +967,12 @@ class ReportVisualizationService:
                 for i in range(len(param1_values)):
                     for j in range(len(param2_values)):
                         ax.text(
-                            j, i, f"{performance_matrix[i, j]:.0f}",
-                            ha="center", va="center", color="black"
+                            j,
+                            i,
+                            f"{performance_matrix[i, j]:.0f}",
+                            ha="center",
+                            va="center",
+                            color="black",
                         )
 
                 # 添加顏色條
@@ -1183,9 +1187,7 @@ class ReportVisualizationService:
             data_table = ""
             if "data" in report_data and report_data["data"]:
                 df = pd.DataFrame(report_data["data"])
-                html_table = df.to_html(
-                    index=False, classes='data-table'
-                )
+                html_table = df.to_html(index=False, classes="data-table")
                 data_table = f"<h2>交易明細</h2>{html_table}"
 
             return html_template.format(

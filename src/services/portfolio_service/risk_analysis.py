@@ -41,7 +41,7 @@ class PortfolioRiskAnalysisService:
         portfolio_id: str,
         confidence_level: float = 0.05,
         time_horizon: int = 1,
-        method: str = "historical"
+        method: str = "historical",
     ) -> Dict[str, Any]:
         """計算投資組合 VaR
 
@@ -87,15 +87,17 @@ class PortfolioRiskAnalysisService:
                 return {"error": f"未知的 VaR 計算方法: {method}"}
 
             # 添加額外資訊
-            var_result.update({
-                "portfolio_id": portfolio_id,
-                "portfolio_name": portfolio.name,
-                "confidence_level": confidence_level,
-                "time_horizon": time_horizon,
-                "method": method,
-                "portfolio_value": portfolio.total_value,
-                "calculated_at": datetime.now().isoformat()
-            })
+            var_result.update(
+                {
+                    "portfolio_id": portfolio_id,
+                    "portfolio_name": portfolio.name,
+                    "confidence_level": confidence_level,
+                    "time_horizon": time_horizon,
+                    "method": method,
+                    "portfolio_value": portfolio.total_value,
+                    "calculated_at": datetime.now().isoformat(),
+                }
+            )
 
             return var_result
 
@@ -104,10 +106,7 @@ class PortfolioRiskAnalysisService:
             return {"error": f"VaR 計算失敗: {e}"}
 
     def _calculate_historical_var(
-        self,
-        returns: pd.Series,
-        confidence_level: float,
-        time_horizon: int
+        self, returns: pd.Series, confidence_level: float, time_horizon: int
     ) -> Dict[str, float]:
         """歷史模擬法計算 VaR"""
         # 調整時間範圍
@@ -123,14 +122,11 @@ class PortfolioRiskAnalysisService:
             "var": abs(var_value),
             "cvar": abs(cvar_value),
             "var_percentage": abs(var_value),
-            "cvar_percentage": abs(cvar_value)
+            "cvar_percentage": abs(cvar_value),
         }
 
     def _calculate_parametric_var(
-        self,
-        returns: pd.Series,
-        confidence_level: float,
-        time_horizon: int
+        self, returns: pd.Series, confidence_level: float, time_horizon: int
     ) -> Dict[str, float]:
         """參數法計算 VaR（假設正態分佈）"""
         from scipy import stats
@@ -148,13 +144,15 @@ class PortfolioRiskAnalysisService:
         var_value = -(adjusted_mean + z_score * adjusted_std)
 
         # 計算 CVaR（正態分佈下的解析解）
-        cvar_value = -(adjusted_mean - adjusted_std * stats.norm.pdf(z_score) / confidence_level)
+        cvar_value = -(
+            adjusted_mean - adjusted_std * stats.norm.pdf(z_score) / confidence_level
+        )
 
         return {
             "var": max(0, var_value),
             "cvar": max(0, cvar_value),
             "var_percentage": max(0, var_value),
-            "cvar_percentage": max(0, cvar_value)
+            "cvar_percentage": max(0, cvar_value),
         }
 
     def _calculate_monte_carlo_var(
@@ -163,7 +161,7 @@ class PortfolioRiskAnalysisService:
         weights: np.ndarray,
         confidence_level: float,
         time_horizon: int,
-        n_simulations: int = 10000
+        n_simulations: int = 10000,
     ) -> Dict[str, float]:
         """蒙地卡羅模擬法計算 VaR"""
         # 計算協方差矩陣
@@ -179,8 +177,7 @@ class PortfolioRiskAnalysisService:
         for _ in range(n_simulations):
             # 生成隨機收益率 - 使用加密安全的隨機數生成器
             random_returns = rng.multivariate_normal(
-                mean_returns * time_horizon,
-                cov_matrix * time_horizon
+                mean_returns * time_horizon, cov_matrix * time_horizon
             )
 
             # 計算投資組合收益率
@@ -198,13 +195,11 @@ class PortfolioRiskAnalysisService:
             "cvar": abs(cvar_value),
             "var_percentage": abs(var_value),
             "cvar_percentage": abs(cvar_value),
-            "n_simulations": n_simulations
+            "n_simulations": n_simulations,
         }
 
     def calculate_risk_metrics(
-        self,
-        portfolio_id: str,
-        benchmark_returns: pd.Series = None
+        self, portfolio_id: str, benchmark_returns: pd.Series = None
     ) -> Dict[str, Any]:
         """計算綜合風險指標
 
@@ -234,7 +229,7 @@ class PortfolioRiskAnalysisService:
             metrics = {
                 "portfolio_id": portfolio_id,
                 "portfolio_name": portfolio.name,
-                "calculated_at": datetime.now().isoformat()
+                "calculated_at": datetime.now().isoformat(),
             }
 
             # 波動率
@@ -260,7 +255,9 @@ class PortfolioRiskAnalysisService:
             negative_returns = portfolio_returns[portfolio_returns < 0]
             if len(negative_returns) > 0:
                 metrics["downside_deviation"] = negative_returns.std() * np.sqrt(252)
-                metrics["downside_frequency"] = len(negative_returns) / len(portfolio_returns)
+                metrics["downside_frequency"] = len(negative_returns) / len(
+                    portfolio_returns
+                )
             else:
                 metrics["downside_deviation"] = 0.0
                 metrics["downside_frequency"] = 0.0
@@ -268,23 +265,31 @@ class PortfolioRiskAnalysisService:
             # 如果有基準，計算相對風險指標
             if benchmark_returns is not None and not benchmark_returns.empty:
                 # 對齊時間序列
-                aligned_data = pd.DataFrame({
-                    'portfolio': portfolio_returns,
-                    'benchmark': benchmark_returns
-                }).dropna()
+                aligned_data = pd.DataFrame(
+                    {"portfolio": portfolio_returns, "benchmark": benchmark_returns}
+                ).dropna()
 
                 if not aligned_data.empty:
-                    excess_returns = aligned_data['portfolio'] - aligned_data['benchmark']
+                    excess_returns = (
+                        aligned_data["portfolio"] - aligned_data["benchmark"]
+                    )
                     metrics["tracking_error"] = excess_returns.std() * np.sqrt(252)
                     metrics["information_ratio"] = (
                         excess_returns.mean() * 252 / metrics["tracking_error"]
-                        if metrics["tracking_error"] > 0 else 0
+                        if metrics["tracking_error"] > 0
+                        else 0
                     )
 
                     # Beta
-                    covariance = aligned_data['portfolio'].cov(aligned_data['benchmark'])
-                    benchmark_variance = aligned_data['benchmark'].var()
-                    metrics["beta"] = covariance / benchmark_variance if benchmark_variance > 0 else 1.0
+                    covariance = aligned_data["portfolio"].cov(
+                        aligned_data["benchmark"]
+                    )
+                    benchmark_variance = aligned_data["benchmark"].var()
+                    metrics["beta"] = (
+                        covariance / benchmark_variance
+                        if benchmark_variance > 0
+                        else 1.0
+                    )
 
             return metrics
 
@@ -293,9 +298,7 @@ class PortfolioRiskAnalysisService:
             return {"error": f"風險指標計算失敗: {e}"}
 
     def stress_test(
-        self,
-        portfolio_id: str,
-        scenarios: List[Dict[str, Any]] = None
+        self, portfolio_id: str, scenarios: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """投資組合壓力測試
 
@@ -314,10 +317,26 @@ class PortfolioRiskAnalysisService:
             if scenarios is None:
                 # 預設壓力測試情境
                 scenarios = [
-                    {"name": "市場崩盤", "market_shock": -0.20, "volatility_shock": 2.0},
-                    {"name": "溫和衰退", "market_shock": -0.10, "volatility_shock": 1.5},
-                    {"name": "通膨上升", "market_shock": -0.05, "volatility_shock": 1.2},
-                    {"name": "利率上升", "market_shock": -0.08, "volatility_shock": 1.3},
+                    {
+                        "name": "市場崩盤",
+                        "market_shock": -0.20,
+                        "volatility_shock": 2.0,
+                    },
+                    {
+                        "name": "溫和衰退",
+                        "market_shock": -0.10,
+                        "volatility_shock": 1.5,
+                    },
+                    {
+                        "name": "通膨上升",
+                        "market_shock": -0.05,
+                        "volatility_shock": 1.2,
+                    },
+                    {
+                        "name": "利率上升",
+                        "market_shock": -0.08,
+                        "volatility_shock": 1.3,
+                    },
                 ]
 
             # 獲取當前投資組合資料
@@ -349,19 +368,25 @@ class PortfolioRiskAnalysisService:
                 portfolio_returns = (shocked_returns * weights).sum(axis=1)
 
                 # 計算壓力測試指標
-                scenario_result.update({
-                    "portfolio_return": portfolio_returns.sum(),
-                    "portfolio_volatility": portfolio_returns.std() * np.sqrt(252),
-                    "max_drawdown": self._calculate_max_drawdown(portfolio_returns),
-                    "var_5_percent": abs(np.percentile(portfolio_returns, 5)),
-                    "worst_day": portfolio_returns.min(),
-                    "best_day": portfolio_returns.max(),
-                })
+                scenario_result.update(
+                    {
+                        "portfolio_return": portfolio_returns.sum(),
+                        "portfolio_volatility": portfolio_returns.std() * np.sqrt(252),
+                        "max_drawdown": self._calculate_max_drawdown(portfolio_returns),
+                        "var_5_percent": abs(np.percentile(portfolio_returns, 5)),
+                        "worst_day": portfolio_returns.min(),
+                        "best_day": portfolio_returns.max(),
+                    }
+                )
 
                 # 計算價值變化
-                portfolio_value_change = scenario_result["portfolio_return"] * portfolio.total_value
+                portfolio_value_change = (
+                    scenario_result["portfolio_return"] * portfolio.total_value
+                )
                 scenario_result["portfolio_value_change"] = portfolio_value_change
-                scenario_result["portfolio_value_after"] = portfolio.total_value + portfolio_value_change
+                scenario_result["portfolio_value_after"] = (
+                    portfolio.total_value + portfolio_value_change
+                )
 
                 stress_results.append(scenario_result)
 
@@ -370,14 +395,16 @@ class PortfolioRiskAnalysisService:
                 "portfolio_name": portfolio.name,
                 "current_value": portfolio.total_value,
                 "stress_test_date": datetime.now().isoformat(),
-                "scenarios": stress_results
+                "scenarios": stress_results,
             }
 
         except Exception as e:
             logger.error(f"壓力測試錯誤: {e}")
             return {"error": f"壓力測試失敗: {e}"}
 
-    def _get_portfolio_returns(self, symbols: List[str], days: int = 252) -> pd.DataFrame:
+    def _get_portfolio_returns(
+        self, symbols: List[str], days: int = 252
+    ) -> pd.DataFrame:
         """獲取投資組合收益率資料（模擬）"""
         # 這裡使用模擬資料，實際應用中應該從資料庫或API獲取真實資料
         returns_data = {}

@@ -34,27 +34,27 @@ from .trading_metrics import (
     calculate_sortino_ratio,
     calculate_calmar_ratio,
     calculate_annual_return,
-    calculate_total_return
+    calculate_total_return,
 )
 from .risk_metrics import (
     calculate_max_drawdown,
     calculate_volatility,
     calculate_var,
     calculate_cvar,
-    calculate_downside_risk
+    calculate_downside_risk,
 )
 from .statistical_metrics import (
     calculate_win_rate,
     calculate_pnl_ratio,
     calculate_expectancy,
     calculate_profit_factor,
-    calculate_recovery_factor
+    calculate_recovery_factor,
 )
 from .utils import (
     validate_performance_inputs,
     annualize_metric,
     create_performance_report,
-    plot_performance_comparison
+    plot_performance_comparison,
 )
 
 # 向後兼容的函數導入
@@ -63,33 +63,29 @@ from .legacy_interface import calculate_all_metrics
 __all__ = [
     # Trading metrics
     "calculate_sharpe_ratio",
-    "calculate_sortino_ratio", 
+    "calculate_sortino_ratio",
     "calculate_calmar_ratio",
     "calculate_annual_return",
     "calculate_total_return",
-    
     # Risk metrics
     "calculate_max_drawdown",
     "calculate_volatility",
     "calculate_var",
     "calculate_cvar",
     "calculate_downside_risk",
-    
     # Statistical metrics
     "calculate_win_rate",
     "calculate_pnl_ratio",
     "calculate_expectancy",
     "calculate_profit_factor",
     "calculate_recovery_factor",
-    
     # Utilities
     "validate_performance_inputs",
     "annualize_metric",
     "create_performance_report",
     "plot_performance_comparison",
-    
     # Legacy interface
-    "calculate_all_metrics"
+    "calculate_all_metrics",
 ]
 
 # 版本資訊

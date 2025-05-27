@@ -22,12 +22,12 @@ from .base import (
     StrategyError,
     ParameterError,
     ModelNotTrainedError,
-    DataValidationError
+    DataValidationError,
 )
 
 from .technical import (
     MovingAverageCrossStrategy as NewMovingAverageCrossStrategy,
-    RSIStrategy as NewRSIStrategy
+    RSIStrategy as NewRSIStrategy,
 )
 
 from .ml import MachineLearningStrategy as NewMachineLearningStrategy
@@ -38,7 +38,7 @@ from .utils import (
     triple_barrier,
     fixed_time_horizon,
     generate_signals,
-    numba_moving_average
+    numba_moving_average,
 )
 
 # 設定日誌
@@ -63,10 +63,10 @@ LOG_LANG = "zh_tw"
 class Strategy(NewStrategy):
     """
     策略基類（向後相容性）
-    
+
     注意：此類別已棄用，請使用 src.strategy.base.Strategy
     """
-    
+
     def __init__(self, name="BaseStrategy"):
         """
         初始化策略（向後相容性）
@@ -77,7 +77,7 @@ class Strategy(NewStrategy):
         warnings.warn(
             "此 Strategy 類別已棄用，請使用 src.strategy.base.Strategy",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         super().__init__(name=name)
 
@@ -85,10 +85,10 @@ class Strategy(NewStrategy):
 class MovingAverageCrossStrategy(NewMovingAverageCrossStrategy):
     """
     移動平均線交叉策略（向後相容性）
-    
+
     注意：此類別已棄用，請使用 src.strategy.technical.MovingAverageCrossStrategy
     """
-    
+
     def __init__(self, short_window=5, long_window=20):
         """
         初始化移動平均線交叉策略（向後相容性）
@@ -100,7 +100,7 @@ class MovingAverageCrossStrategy(NewMovingAverageCrossStrategy):
         warnings.warn(
             "此 MovingAverageCrossStrategy 類別已棄用，請使用 src.strategy.technical.MovingAverageCrossStrategy",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         super().__init__(short_window=short_window, long_window=long_window)
 
@@ -108,10 +108,10 @@ class MovingAverageCrossStrategy(NewMovingAverageCrossStrategy):
 class RSIStrategy(NewRSIStrategy):
     """
     RSI策略（向後相容性）
-    
+
     注意：此類別已棄用，請使用 src.strategy.technical.RSIStrategy
     """
-    
+
     def __init__(self, rsi_window=14, overbought=70, oversold=30):
         """
         初始化RSI策略（向後相容性）
@@ -124,18 +124,20 @@ class RSIStrategy(NewRSIStrategy):
         warnings.warn(
             "此 RSIStrategy 類別已棄用，請使用 src.strategy.technical.RSIStrategy",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
-        super().__init__(rsi_window=rsi_window, overbought=overbought, oversold=oversold)
+        super().__init__(
+            rsi_window=rsi_window, overbought=overbought, oversold=oversold
+        )
 
 
 class MachineLearningStrategy(NewMachineLearningStrategy):
     """
     機器學習策略（向後相容性）
-    
+
     注意：此類別已棄用，請使用 src.strategy.ml.MachineLearningStrategy
     """
-    
+
     def __init__(self, model_type="random_forest", **model_params):
         """
         初始化機器學習策略（向後相容性）
@@ -147,30 +149,32 @@ class MachineLearningStrategy(NewMachineLearningStrategy):
         warnings.warn(
             "此 MachineLearningStrategy 類別已棄用，請使用 src.strategy.ml.MachineLearningStrategy",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         super().__init__(model_type=model_type, **model_params)
 
 
 # 向後相容性函數定義
-def generate_signals_legacy(features, strategy_name="moving_average_cross", **strategy_params):
+def generate_signals_legacy(
+    features, strategy_name="moving_average_cross", **strategy_params
+):
     """
     生成交易訊號的統一介面函數（向後相容性）
-    
+
     注意：此函數已棄用，請使用 src.strategy.utils.generate_signals
-    
+
     Args:
         features: 特徵資料框架
         strategy_name: 策略名稱
         **strategy_params: 策略參數
-        
+
     Returns:
         包含交易訊號的資料框架
     """
     warnings.warn(
         "此 generate_signals_legacy 函數已棄用，請使用 src.strategy.utils.generate_signals",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     return generate_signals(features, strategy_name, **strategy_params)
 
@@ -179,25 +183,22 @@ def generate_signals_legacy(features, strategy_name="moving_average_cross", **st
 __all__ = [
     # 基礎類別（向後相容性）
     "Strategy",
-    "MovingAverageCrossStrategy", 
+    "MovingAverageCrossStrategy",
     "RSIStrategy",
     "MachineLearningStrategy",
-    
     # 工具函數
     "trade_point_decision",
     "continuous_trading_signal",
-    "triple_barrier", 
+    "triple_barrier",
     "fixed_time_horizon",
     "generate_signals",
     "generate_signals_legacy",
     "numba_moving_average",
-    
     # 異常類別
     "StrategyError",
     "ParameterError",
-    "ModelNotTrainedError", 
+    "ModelNotTrainedError",
     "DataValidationError",
-    
     # 常數
     "LOG_MSGS",
     "LOG_LANG",

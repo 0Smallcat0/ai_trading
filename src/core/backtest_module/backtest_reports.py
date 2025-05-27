@@ -27,7 +27,9 @@ def export_to_csv(results: Dict[str, Any]) -> bytes:
         # 寫入基本資訊
         csv_buffer.write("# 回測報告\n")
         csv_buffer.write(f"策略名稱,{results.get('strategy_name', 'N/A')}\n")
-        csv_buffer.write(f"回測期間,{results.get('start_date', 'N/A')} 至 {results.get('end_date', 'N/A')}\n")
+        csv_buffer.write(
+            f"回測期間,{results.get('start_date', 'N/A')} 至 {results.get('end_date', 'N/A')}\n"
+        )
         csv_buffer.write(f"初始資金,{results.get('initial_capital', 0):,.0f}\n\n")
 
         # 寫入績效指標
@@ -45,6 +47,7 @@ def export_to_csv(results: Dict[str, Any]) -> bytes:
         trades = results.get("trades", [])
         if trades:
             import pandas as pd
+
             trades_df = pd.DataFrame(trades)
             csv_buffer.write(trades_df.to_csv(index=False))
 
@@ -72,23 +75,24 @@ def export_to_excel(results: Dict[str, Any]) -> bytes:
 
         with pd.ExcelWriter(excel_buffer, engine="xlsxwriter") as writer:
             # 基本資訊
-            info_df = pd.DataFrame({
-                "項目": ["策略名稱", "回測期間", "初始資金"],
-                "值": [
-                    results.get("strategy_name", "N/A"),
-                    f"{results.get('start_date', 'N/A')} 至 {results.get('end_date', 'N/A')}",
-                    f"{results.get('initial_capital', 0):,.0f}",
-                ],
-            })
+            info_df = pd.DataFrame(
+                {
+                    "項目": ["策略名稱", "回測期間", "初始資金"],
+                    "值": [
+                        results.get("strategy_name", "N/A"),
+                        f"{results.get('start_date', 'N/A')} 至 {results.get('end_date', 'N/A')}",
+                        f"{results.get('initial_capital', 0):,.0f}",
+                    ],
+                }
+            )
             info_df.to_excel(writer, sheet_name="基本資訊", index=False)
 
             # 績效指標
             metrics = results.get("metrics", {})
             if metrics:
-                metrics_df = pd.DataFrame({
-                    "指標": list(metrics.keys()),
-                    "值": list(metrics.values())
-                })
+                metrics_df = pd.DataFrame(
+                    {"指標": list(metrics.keys()), "值": list(metrics.values())}
+                )
                 metrics_df.to_excel(writer, sheet_name="績效指標", index=False)
 
             # 交易記錄
@@ -101,10 +105,7 @@ def export_to_excel(results: Dict[str, Any]) -> bytes:
             equity_curve = results.get("equity_curve", [])
             dates = results.get("dates", [])
             if equity_curve and dates:
-                equity_df = pd.DataFrame({
-                    "日期": dates,
-                    "權益": equity_curve
-                })
+                equity_df = pd.DataFrame({"日期": dates, "權益": equity_curve})
                 equity_df.to_excel(writer, sheet_name="權益曲線", index=False)
 
         excel_buffer.seek(0)
@@ -264,7 +265,9 @@ def generate_report(
         return None
 
 
-def get_chart_data(backtest_id: str, results: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def get_chart_data(
+    backtest_id: str, results: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     """
     獲取圖表數據
 

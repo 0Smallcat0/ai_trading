@@ -262,15 +262,22 @@ class AITradingSystemUI:
                         if username and password:
                             # 從環境變數讀取認證資訊，提供開發環境預設值
                             import os
+
                             admin_user = os.getenv("ADMIN_USERNAME", "admin")
-                            admin_pass = os.getenv("ADMIN_PASSWORD", "admin123")  # 更安全的預設密碼
+                            admin_pass = os.getenv(
+                                "ADMIN_PASSWORD", "admin123"
+                            )  # 更安全的預設密碼
                             user_user = os.getenv("USER_USERNAME", "user")
-                            user_pass = os.getenv("USER_PASSWORD", "user123")  # 更安全的預設密碼
+                            user_pass = os.getenv(
+                                "USER_PASSWORD", "user123"
+                            )  # 更安全的預設密碼
 
                             # 檢查生產環境是否使用了不安全的預設密碼
                             if os.getenv("ENVIRONMENT") == "production":
                                 if admin_pass == "admin123" or user_pass == "user123":
-                                    st.error("⚠️ 生產環境檢測到不安全的預設密碼，請設定環境變數")
+                                    st.error(
+                                        "⚠️ 生產環境檢測到不安全的預設密碼，請設定環境變數"
+                                    )
                                     return
 
                             if username == admin_user and password == admin_pass:
@@ -303,6 +310,7 @@ class AITradingSystemUI:
                 # 顯示演示帳號資訊
                 with st.expander("演示帳號資訊"):
                     import os
+
                     admin_user = os.getenv("ADMIN_USERNAME", "admin")
                     user_user = os.getenv("USER_USERNAME", "user")
 

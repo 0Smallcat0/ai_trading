@@ -22,36 +22,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # 整合子模組路由
-router.include_router(
-    orders_router,
-    prefix="/orders",
-    tags=["訂單管理"]
-)
+router.include_router(orders_router, prefix="/orders", tags=["訂單管理"])
 
-router.include_router(
-    execution_router,
-    prefix="/execution",
-    tags=["交易執行"]
-)
+router.include_router(execution_router, prefix="/execution", tags=["交易執行"])
 
-router.include_router(
-    history_router,
-    prefix="/history",
-    tags=["交易歷史"]
-)
+router.include_router(history_router, prefix="/history", tags=["交易歷史"])
 
-router.include_router(
-    statistics_router,
-    prefix="/statistics",
-    tags=["交易統計"]
-)
+router.include_router(statistics_router, prefix="/statistics", tags=["交易統計"])
 
 
 @router.get("/health")
 async def health_check():
     """
     交易執行系統健康檢查端點
-    
+
     Returns:
         dict: 健康狀態資訊
     """

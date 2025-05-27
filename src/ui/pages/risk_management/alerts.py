@@ -20,13 +20,13 @@ from .utils import get_risk_management_service, get_mock_risk_events
 
 def show_risk_alerts() -> None:
     """顯示風險警報記錄
-    
+
     提供完整的風險警報管理界面，包括警報統計、事件篩選、
     詳情查看和匯出功能。
-    
+
     Returns:
         None
-        
+
     Side Effects:
         - 在 Streamlit 界面顯示風險警報管理面板
         - 載入和顯示風險事件數據
@@ -89,7 +89,7 @@ def _load_risk_events(risk_service: Any) -> pd.DataFrame:
             risk_events = get_mock_risk_events()
     else:
         risk_events = get_mock_risk_events()
-    
+
     return risk_events
 
 
@@ -165,17 +165,17 @@ def _show_event_list(risk_events: pd.DataFrame) -> None:
     # 應用篩選
     filters = st.session_state.get("event_filters", {})
     filtered_events = risk_events.copy()
-    
+
     if filters.get("event_type"):
         filtered_events = filtered_events[
             filtered_events["事件類型"].isin(filters["event_type"])
         ]
-    
+
     if filters.get("severity"):
         filtered_events = filtered_events[
             filtered_events["嚴重程度"].isin(filters["severity"])
         ]
-    
+
     if filters.get("status"):
         filtered_events = filtered_events[
             filtered_events["狀態"].isin(filters["status"])
@@ -283,17 +283,19 @@ def _show_export_functions() -> None:
 
 def get_alert_summary() -> Dict[str, Any]:
     """獲取警報摘要
-    
+
     Returns:
         Dict[str, Any]: 警報摘要數據
     """
     risk_events = get_mock_risk_events()
-    
+
     return {
         "total_alerts": len(risk_events),
         "high_severity": len(risk_events[risk_events["嚴重程度"].isin(["高", "嚴重"])]),
         "pending": len(risk_events[risk_events["狀態"] == "待處理"]),
-        "today": len(risk_events[
-            risk_events["時間"].str.contains(datetime.now().strftime("%Y-%m-%d"))
-        ]),
+        "today": len(
+            risk_events[
+                risk_events["時間"].str.contains(datetime.now().strftime("%Y-%m-%d"))
+            ]
+        ),
     }

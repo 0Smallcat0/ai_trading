@@ -88,9 +88,9 @@ class MomentumStrategy(Strategy):
         signals["momentum_ma"] = ma
 
         # 動量訊號：價格高於移動平均線時買入，低於時賣出
-        signals["signal"] = (
-            (price_series > ma).astype(int) - (price_series < ma).astype(int)
-        )
+        signals["signal"] = (price_series > ma).astype(int) - (
+            price_series < ma
+        ).astype(int)
 
         # 計算訊號變化
         signals["position_change"] = signals["signal"].diff()
@@ -117,6 +117,4 @@ class MomentumStrategy(Strategy):
         Returns:
             預設參數網格
         """
-        return {
-            "window": [10, 15, 20, 25, 30, 50]
-        }
+        return {"window": [10, 15, 20, 25, 30, 50]}

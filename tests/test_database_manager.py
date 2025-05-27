@@ -24,7 +24,7 @@ from src.database.database_manager import (
     DatabaseManager,
     DatabaseError,
     DatabaseConfigError,
-    DatabaseOperationError
+    DatabaseOperationError,
 )
 
 
@@ -48,7 +48,7 @@ def test_session():
             high=105.0,
             low=98.0,
             close=103.0,
-            volume=1000000
+            volume=1000000,
         ),
         MarketDaily(
             symbol="2330.TW",
@@ -58,8 +58,8 @@ def test_session():
             high=108.0,
             low=101.0,
             close=106.0,
-            volume=1200000
-        )
+            volume=1200000,
+        ),
     ]
 
     for data in test_data:
@@ -89,7 +89,9 @@ class TestDatabaseManagerExceptions:
         manager = DatabaseManager(test_session)
 
         # 模擬內部異常
-        with patch.object(manager.sharding_manager, 'get_shard_statistics') as mock_stats:
+        with patch.object(
+            manager.sharding_manager, "get_shard_statistics"
+        ) as mock_stats:
             mock_stats.side_effect = Exception("內部錯誤")
 
             with pytest.raises(DatabaseOperationError) as exc_info:
@@ -134,9 +136,7 @@ class TestDatabaseManagerIntegration:
         """測試維護任務"""
         # 測試不執行任何維護任務
         result = database_manager.perform_maintenance(
-            auto_shard=False,
-            auto_compress=False,
-            verify_integrity=False
+            auto_shard=False, auto_compress=False, verify_integrity=False
         )
 
         # 驗證維護結果結構
@@ -166,9 +166,7 @@ class TestDatabaseManagerIntegration:
     def test_query_performance_optimization(self, database_manager):
         """測試查詢效能優化"""
         optimization = database_manager.optimize_query_performance(
-            MarketDaily,
-            date(2024, 1, 1),
-            date(2024, 1, 31)
+            MarketDaily, date(2024, 1, 1), date(2024, 1, 31)
         )
 
         # 驗證優化結果結構
@@ -224,7 +222,7 @@ class TestDatabaseManagerPerformance:
                 start_date=date(2024, 1, 1) + timedelta(days=i),
                 end_date=date(2024, 1, 1) + timedelta(days=i),
                 row_count=1000,
-                file_size_bytes=1024000
+                file_size_bytes=1024000,
             )
             shards.append(shard)
 
@@ -248,9 +246,7 @@ class TestDatabaseManagerPerformance:
         start_time = time.time()
 
         result = database_manager.perform_maintenance(
-            auto_shard=False,
-            auto_compress=False,
-            verify_integrity=False
+            auto_shard=False, auto_compress=False, verify_integrity=False
         )
 
         end_time = time.time()
@@ -278,28 +274,26 @@ class TestDatabaseManagerWorkflow:
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
             is_compressed=False,
-            file_size_bytes=1024000
+            file_size_bytes=1024000,
         )
         test_session.add(shard)
         test_session.commit()
 
         # 3. 執行維護任務
         maintenance_result = database_manager.perform_maintenance(
-            auto_shard=False,
-            auto_compress=False,
-            verify_integrity=False
+            auto_shard=False, auto_compress=False, verify_integrity=False
         )
         assert "duration_seconds" in maintenance_result
 
         # 4. 配置排程維護
-        schedule_config = database_manager.start_scheduled_maintenance(interval_hours=12)
+        schedule_config = database_manager.start_scheduled_maintenance(
+            interval_hours=12
+        )
         assert schedule_config["interval_hours"] == 12
 
         # 5. 優化查詢效能
         optimization = database_manager.optimize_query_performance(
-            MarketDaily,
-            date(2024, 1, 1),
-            date(2024, 1, 15)
+            MarketDaily, date(2024, 1, 1), date(2024, 1, 15)
         )
         assert optimization["query_date_range_days"] == 14
 
@@ -318,14 +312,14 @@ class TestDatabaseManagerWorkflow:
             shard_key="date",
             shard_id="schema_integration_shard",
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31)
+            end_date=date(2024, 1, 31),
         )
 
         test_session.add(shard)
         test_session.commit()
 
         # 驗證 file_format 預設值
-        assert shard.file_format == 'parquet'
+        assert shard.file_format == "parquet"
 
         # 測試狀態報告功能
         status = database_manager.get_database_status()

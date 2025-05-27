@@ -26,9 +26,9 @@ trade_service = TradeExecutionService()
 
 class OrderStatistics(BaseModel):
     """訂單統計響應模型
-    
+
     此模型定義了訂單統計的詳細資訊。
-    
+
     Attributes:
         total_orders: 總訂單數
         pending_orders: 待處理訂單
@@ -44,6 +44,7 @@ class OrderStatistics(BaseModel):
         period_start: 統計期間開始
         period_end: 統計期間結束
     """
+
     total_orders: int = Field(..., description="總訂單數")
     pending_orders: int = Field(..., description="待處理訂單")
     filled_orders: int = Field(..., description="已成交訂單")
@@ -61,9 +62,9 @@ class OrderStatistics(BaseModel):
 
 class TradingStatusResponse(BaseModel):
     """交易狀態響應模型
-    
+
     此模型定義了交易系統的狀態資訊。
-    
+
     Attributes:
         is_simulation_mode: 是否為模擬交易模式
         broker_connected: 券商是否連接
@@ -77,6 +78,7 @@ class TradingStatusResponse(BaseModel):
         total_position_value: 總持倉價值
         last_update: 最後更新時間
     """
+
     is_simulation_mode: bool = Field(..., description="是否為模擬交易模式")
     broker_connected: bool = Field(..., description="券商是否連接")
     current_broker: str = Field(..., description="當前券商")
@@ -101,27 +103,29 @@ class TradingStatusResponse(BaseModel):
     description="獲取指定時間範圍內的訂單統計信息",
 )
 async def get_order_statistics(
-    start_date: Optional[str] = Query(default=None, description="開始日期 (YYYY-MM-DD)"),
+    start_date: Optional[str] = Query(
+        default=None, description="開始日期 (YYYY-MM-DD)"
+    ),
     end_date: Optional[str] = Query(default=None, description="結束日期 (YYYY-MM-DD)"),
     symbol: Optional[str] = Query(default=None, description="股票代碼篩選"),
     portfolio_id: Optional[str] = Query(default=None, description="投資組合 ID 篩選"),
 ):
     """獲取訂單統計
-    
+
     此端點用於獲取指定時間範圍內的訂單統計信息。
-    
+
     Args:
         start_date: 開始日期
         end_date: 結束日期
         symbol: 股票代碼篩選
         portfolio_id: 投資組合 ID 篩選
-        
+
     Returns:
         APIResponse[OrderStatistics]: 包含訂單統計的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取統計失敗時
-        
+
     Example:
         GET /api/trading/statistics?start_date=2024-01-01&end_date=2024-12-31
     """
@@ -149,11 +153,7 @@ async def get_order_statistics(
             period_end=statistics_data["period_end"],
         )
 
-        return APIResponse(
-            success=True,
-            message="訂單統計獲取成功",
-            data=response_data
-        )
+        return APIResponse(success=True, message="訂單統計獲取成功", data=response_data)
 
     except HTTPException:
         raise
@@ -173,22 +173,24 @@ async def get_order_statistics(
     description="獲取交易績效分析數據",
 )
 async def get_trading_performance(
-    start_date: Optional[str] = Query(default=None, description="開始日期 (YYYY-MM-DD)"),
+    start_date: Optional[str] = Query(
+        default=None, description="開始日期 (YYYY-MM-DD)"
+    ),
     end_date: Optional[str] = Query(default=None, description="結束日期 (YYYY-MM-DD)"),
     portfolio_id: Optional[str] = Query(default=None, description="投資組合 ID 篩選"),
 ):
     """獲取交易績效
-    
+
     此端點用於獲取交易績效分析數據，包括收益率、夏普比率等指標。
-    
+
     Args:
         start_date: 開始日期
         end_date: 結束日期
         portfolio_id: 投資組合 ID 篩選
-        
+
     Returns:
         APIResponse[dict]: 包含交易績效數據的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取績效失敗時
     """
@@ -200,9 +202,7 @@ async def get_trading_performance(
         performance_data = trade_service.get_trading_performance(filters)
 
         return APIResponse(
-            success=True,
-            message="交易績效獲取成功",
-            data=performance_data
+            success=True, message="交易績效獲取成功", data=performance_data
         )
 
     except Exception as e:
@@ -222,12 +222,12 @@ async def get_trading_performance(
 )
 async def get_trading_summary():
     """獲取交易摘要
-    
+
     此端點用於獲取當前交易活動的摘要信息。
-    
+
     Returns:
         APIResponse[dict]: 包含交易摘要的 API 回應
-        
+
     Raises:
         HTTPException: 當獲取摘要失敗時
     """
@@ -237,8 +237,10 @@ async def get_trading_summary():
 
         # 獲取今日統計
         today_filters = {
-            "start_date": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
-            "end_date": datetime.now()
+            "start_date": datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            ),
+            "end_date": datetime.now(),
         }
         today_statistics = trade_service.get_order_statistics(today_filters)
 
@@ -257,14 +259,10 @@ async def get_trading_summary():
                 "total_volume": today_statistics["total_volume"],
                 "total_amount": today_statistics["total_amount"],
                 "success_rate": today_statistics["success_rate"],
-            }
+            },
         }
 
-        return APIResponse(
-            success=True,
-            message="交易摘要獲取成功",
-            data=summary_data
-        )
+        return APIResponse(success=True, message="交易摘要獲取成功", data=summary_data)
 
     except Exception as e:
         logger.error("獲取交易摘要失敗: %s", e)
@@ -281,24 +279,24 @@ def _build_statistics_filters(
     start_date: Optional[str],
     end_date: Optional[str],
     symbol: Optional[str],
-    portfolio_id: Optional[str]
+    portfolio_id: Optional[str],
 ) -> dict:
     """構建統計篩選條件
-    
+
     Args:
         start_date: 開始日期
         end_date: 結束日期
         symbol: 股票代碼
         portfolio_id: 投資組合 ID
-        
+
     Returns:
         dict: 篩選條件字典
-        
+
     Raises:
         HTTPException: 當日期格式錯誤時
     """
     filters = {}
-    
+
     if start_date:
         try:
             filters["start_date"] = datetime.strptime(start_date, "%Y-%m-%d")
@@ -307,7 +305,7 @@ def _build_statistics_filters(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="開始日期格式錯誤，請使用 YYYY-MM-DD 格式",
             ) from e
-            
+
     if end_date:
         try:
             filters["end_date"] = datetime.strptime(end_date, "%Y-%m-%d")
@@ -316,10 +314,10 @@ def _build_statistics_filters(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="結束日期格式錯誤，請使用 YYYY-MM-DD 格式",
             ) from e
-            
+
     if symbol:
         filters["symbol"] = symbol
     if portfolio_id:
         filters["portfolio_id"] = portfolio_id
-        
+
     return filters

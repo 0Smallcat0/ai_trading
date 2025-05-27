@@ -38,9 +38,7 @@ except ImportError as e:
 
     # 創建空的 abstract 模組以避免錯誤
     class DummyAbstract:
-        """DummyAbstract
-
-        """
+        """DummyAbstract"""
 
         def __getattr__(self, name):
             """__getattr__
@@ -414,7 +412,7 @@ class FeatureCalculator:
 
         Returns:
             pandas.DataFrame: 包含技術指標的資料框架
-        """# 預設指標列表
+        """  # 預設指標列表
         if indicators is None:
             indicators = [
                 "RSI",  # 相對強弱指標
@@ -499,7 +497,7 @@ class FeatureCalculator:
 
         Returns:
             dict: OHLCV 資料字典
-        """# 準備 OHLCV 資料
+        """  # 準備 OHLCV 資料
         ohlcv_dict = {}
 
         # 處理中文欄位名稱
@@ -656,7 +654,7 @@ class FeatureCalculator:
 
         Returns:
             pandas.DataFrame: 技術指標資料框架
-        """# 將 OHLCV 資料轉換為 Dask DataFrame
+        """  # 將 OHLCV 資料轉換為 Dask DataFrame
         dask_dict = {}
         for k, v in ohlcv_dict.items():
             dask_dict[k] = dd.from_pandas(
@@ -672,7 +670,7 @@ class FeatureCalculator:
                 ohlcv_dict: OHLCV 資料字典
                 multipliers: 參數倍數列表
                 custom_params: 自定義參數
-            """# 將 Dask DataFrame 轉換為 pandas DataFrame
+            """  # 將 Dask DataFrame 轉換為 pandas DataFrame
             pandas_dict = {}
             for k, v in ohlcv_dict.items():
                 pandas_dict[k] = v.compute()
@@ -706,7 +704,7 @@ class FeatureCalculator:
 
         Returns:
             pandas.DataFrame: 包含基本面指標的資料框架
-        """# 檢查是否有必要的資料
+        """  # 檢查是否有必要的資料
         required_tables = ["income_sheet", "balance_sheet", "cash_flows"]
         for table in required_tables:
             if table not in self.data_dict:
@@ -753,7 +751,7 @@ class FeatureCalculator:
 
         Returns:
             pandas.DataFrame: 包含自定義特徵的資料框架
-        """# 這裡可以實現自定義的特徵計算邏輯
+        """  # 這裡可以實現自定義的特徵計算邏輯
         # 例如，計算價格動量、波動率等
 
         price_df = self.data_dict["price"]
@@ -1206,7 +1204,7 @@ def process_chunk(
 
     Returns:
         pandas.DataFrame: 處理後的特徵
-    """# 忽略未使用的參數警告（chunk 在此函數中不直接使用，但在調用者中有用）
+    """  # 忽略未使用的參數警告（chunk 在此函數中不直接使用，但在調用者中有用）
     _ = chunk
 
     # 計算特徵
@@ -1269,7 +1267,7 @@ def compute_features(
 
     Returns:
         pandas.DataFrame: 計算好的特徵資料框架
-    """# 載入資料
+    """  # 載入資料
     data_dict = load_data(start_date, end_date)
 
     # 創建特徵計算器
@@ -1410,7 +1408,7 @@ def _compute_features_with_dask(
 
             Args:
                 partition: 資料分區
-            """# 創建臨時資料字典
+            """  # 創建臨時資料字典
             temp_dict = calculator.data_dict.copy()
             temp_dict["price"] = partition
 

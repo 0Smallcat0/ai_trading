@@ -31,10 +31,10 @@ logger.setLevel(getattr(logging, LOG_LEVEL))
 class GridSearchOptimizer(HyperparameterTuner):
     """
     網格搜索優化器
-    
+
     使用 sklearn 的 GridSearchCV 進行窮舉式參數搜索，
     找出在給定參數網格中表現最佳的參數組合。
-    
+
     Example:
         >>> optimizer = GridSearchOptimizer(
         ...     model_type="random_forest",
@@ -44,15 +44,11 @@ class GridSearchOptimizer(HyperparameterTuner):
     """
 
     def optimize(
-        self, 
-        X: pd.DataFrame, 
-        y: pd.Series, 
-        log_to_mlflow: bool = True,
-        **kwargs: Any
+        self, X: pd.DataFrame, y: pd.Series, log_to_mlflow: bool = True, **kwargs: Any
     ) -> Dict[str, Any]:
         """
         執行網格搜索超參數調優
-        
+
         使用 sklearn 的 GridSearchCV 進行窮舉式參數搜索，
         找出在給定參數網格中表現最佳的參數組合。
 
@@ -68,11 +64,11 @@ class GridSearchOptimizer(HyperparameterTuner):
             - best_score: 最佳交叉驗證分數
             - results: 完整的調優結果 DataFrame
             - run_id: MLflow 運行 ID（如果啟用記錄）
-            
+
         Raises:
             ValueError: 當輸入資料格式不正確時
             RuntimeError: 當模型創建或訓練失敗時
-            
+
         Example:
             >>> results = optimizer.optimize(X_train, y_train)
             >>> print(f"Best params: {results['best_params']}")
@@ -81,7 +77,7 @@ class GridSearchOptimizer(HyperparameterTuner):
         # 驗證輸入資料
         if X.empty or y.empty:
             raise ValueError("輸入資料不能為空")
-            
+
         if len(X) != len(y):
             raise ValueError("特徵和目標變數的樣本數必須相同")
 
@@ -106,11 +102,11 @@ class GridSearchOptimizer(HyperparameterTuner):
                 mlflow.start_run()
                 self.run_id = mlflow.active_run().info.run_id
                 log_tuning_params(
-                    "grid_search", 
-                    self.model_type, 
-                    self.param_grid, 
-                    self.cv, 
-                    self.scoring
+                    "grid_search",
+                    self.model_type,
+                    self.param_grid,
+                    self.cv,
+                    self.scoring,
                 )
 
             # 執行網格搜索
@@ -128,7 +124,9 @@ class GridSearchOptimizer(HyperparameterTuner):
 
             # 記錄結果到 MLflow
             if log_to_mlflow:
-                save_results(self.results, self.best_params, self.best_score, "grid_search")
+                save_results(
+                    self.results, self.best_params, self.best_score, "grid_search"
+                )
                 plot_param_importance(self.results)
                 mlflow.end_run()
 
@@ -148,10 +146,10 @@ class GridSearchOptimizer(HyperparameterTuner):
     def get_param_combinations_count(self) -> int:
         """
         計算參數組合總數
-        
+
         Returns:
             參數組合的總數
-            
+
         Example:
             >>> count = optimizer.get_param_combinations_count()
             >>> print(f"Total combinations: {count}")
@@ -164,13 +162,13 @@ class GridSearchOptimizer(HyperparameterTuner):
     def estimate_runtime(self, base_time_per_fit: float = 1.0) -> float:
         """
         估算運行時間
-        
+
         Args:
             base_time_per_fit: 每次模型訓練的基礎時間（秒）
-            
+
         Returns:
             估算的總運行時間（秒）
-            
+
         Example:
             >>> estimated_time = optimizer.estimate_runtime(base_time_per_fit=2.0)
             >>> print(f"Estimated runtime: {estimated_time:.1f} seconds")

@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 try:
     from grafana_api.grafana_face import GrafanaFace
+
     GRAFANA_API_AVAILABLE = True
 except ImportError:
     GRAFANA_API_AVAILABLE = False
@@ -60,7 +61,7 @@ class GrafanaConfigManager:
         self,
         grafana_host: str = "http://localhost:3000",
         grafana_token: Optional[str] = None,
-        config_dir: Optional[Path] = None
+        config_dir: Optional[Path] = None,
     ):
         """初始化 Grafana 配置管理器
 
@@ -76,10 +77,7 @@ class GrafanaConfigManager:
             module_logger.warning("grafana-api 套件未安裝，部分功能將不可用")
             self.grafana_api = None
         else:
-            self.grafana_api = GrafanaFace(
-                auth=grafana_token,
-                host=grafana_host
-            )
+            self.grafana_api = GrafanaFace(auth=grafana_token, host=grafana_host)
 
         self.config_dir = config_dir or Path(CACHE_DIR) / "grafana_config"
         self.config_dir.mkdir(parents=True, exist_ok=True)
@@ -95,8 +93,7 @@ class GrafanaConfigManager:
             # 初始化儀表板管理器
             if DashboardManager is not None:
                 self.dashboard_manager = DashboardManager(
-                    self.grafana_api,
-                    self.config_dir
+                    self.grafana_api, self.config_dir
                 )
                 module_logger.info("儀表板管理器初始化成功")
             else:
@@ -105,8 +102,7 @@ class GrafanaConfigManager:
             # 初始化數據源管理器
             if DatasourceManager is not None:
                 self.datasource_manager = DatasourceManager(
-                    self.grafana_api,
-                    self.config_dir
+                    self.grafana_api, self.config_dir
                 )
                 module_logger.info("數據源管理器初始化成功")
             else:
@@ -133,7 +129,7 @@ class GrafanaConfigManager:
             "datasources": {},
             "dashboards": {},
             "timestamp": datetime.now().isoformat(),
-            "success": False
+            "success": False,
         }
 
         try:
@@ -165,10 +161,7 @@ class GrafanaConfigManager:
         return results
 
     def create_custom_dashboard(
-        self,
-        title: str,
-        tags: List[str],
-        panel_configs: List[Dict[str, Any]]
+        self, title: str, tags: List[str], panel_configs: List[Dict[str, Any]]
     ) -> Optional[str]:
         """創建自定義儀表板
 
@@ -219,7 +212,7 @@ class GrafanaConfigManager:
                 "template_generator": self.template_generator is not None,
             },
             "config_dir": str(self.config_dir),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # 測試 Grafana 連接
@@ -245,16 +238,13 @@ class GrafanaConfigManager:
         """
         try:
             if export_path is None:
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 export_path = self.config_dir / f"grafana_export_{timestamp}.json"
 
             export_data = {
                 "timestamp": datetime.now().isoformat(),
                 "system_status": self.get_system_status(),
-                "configuration": {
-                    "datasources": [],
-                    "dashboards": []
-                }
+                "configuration": {"datasources": [], "dashboards": []},
             }
 
             # 匯出數據源配置
@@ -281,11 +271,13 @@ class GrafanaConfigManager:
         """
         try:
             # 檢查基本組件
-            if not any([
-                self.dashboard_manager,
-                self.datasource_manager,
-                self.template_generator
-            ]):
+            if not any(
+                [
+                    self.dashboard_manager,
+                    self.datasource_manager,
+                    self.template_generator,
+                ]
+            ):
                 return False
 
             # 檢查 Grafana 連接（如果可用）

@@ -275,7 +275,9 @@ class BacktestQueryManager:
             logger.error("獲取圖表數據失敗: %s", e)
             return None
 
-    def export_results(self, backtest_id: str, export_format: str = "json") -> Optional[bytes]:
+    def export_results(
+        self, backtest_id: str, export_format: str = "json"
+    ) -> Optional[bytes]:
         """匯出回測結果
 
         Args:
