@@ -2016,6 +2016,191 @@ class UserSession(Base):
         return f"<UserSession(id={self.session_id}, user={self.username})>"
 
 
+class APIKey(Base):
+    """API 金鑰表"""
+
+    __tablename__ = "api_keys"
+
+    # 主鍵
+    key_id = Column(String(50), primary_key=True, comment="金鑰ID")
+
+    # 使用者資訊
+    user_id = Column(String(50), nullable=False, comment="使用者ID")
+
+    # 券商資訊
+    broker_name = Column(String(50), nullable=False, comment="券商名稱")
+    broker_account_id = Column(String(100), comment="券商帳戶ID")
+
+    # 加密的金鑰資料
+    encrypted_api_key = Column(Text, nullable=False, comment="加密的API金鑰")
+    encrypted_api_secret = Column(Text, nullable=False, comment="加密的API密鑰")
+    key_hash = Column(String(128), comment="金鑰雜湊值（用於驗證）")
+
+    # 權限和狀態
+    permissions = Column(JSON, comment="權限列表")
+    status = Column(String(20), default="active", comment="狀態")
+    description = Column(String(200), comment="描述")
+
+    # 時間資訊
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="更新時間",
+    )
+    expires_at = Column(DateTime, comment="過期時間")
+    last_used_at = Column(DateTime, comment="最後使用時間")
+    last_rotated_at = Column(DateTime, comment="最後輪換時間")
+
+    # 使用統計
+    usage_count = Column(Integer, default=0, comment="使用次數")
+    rotation_count = Column(Integer, default=0, comment="輪換次數")
+
+    # 安全資訊
+    created_ip = Column(String(45), comment="建立時的IP地址")
+    last_used_ip = Column(String(45), comment="最後使用的IP地址")
+
+    # 創建索引
+    __table_args__ = (
+        Index("ix_api_key_user", "user_id"),
+        Index("ix_api_key_broker", "broker_name"),
+        Index("ix_api_key_status", "status"),
+        Index("ix_api_key_expires", "expires_at"),
+        Index("ix_api_key_created", "created_at"),
+        {"comment": "API金鑰表，存儲加密的券商API金鑰"},
+    )
+
+    def __repr__(self):
+        return f"<APIKey(id={self.key_id}, user={self.user_id}, broker={self.broker_name})>"
+
+
+class APIKeyBackup(Base):
+    """API 金鑰備份表"""
+
+    __tablename__ = "api_key_backups"
+
+    # 主鍵
+    backup_id = Column(String(50), primary_key=True, comment="備份ID")
+
+    # 關聯的金鑰
+    key_id = Column(String(50), nullable=False, comment="原金鑰ID")
+
+    # 備份的加密資料
+    encrypted_api_key = Column(Text, nullable=False, comment="備份的加密API金鑰")
+    encrypted_api_secret = Column(Text, nullable=False, comment="備份的加密API密鑰")
+
+    # 備份資訊
+    backup_reason = Column(String(100), comment="備份原因")
+    rotated_at = Column(DateTime, comment="輪換時間")
+
+    # 時間資訊
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="建立時間"
+    )
+
+    # 創建索引
+    __table_args__ = (
+        Index("ix_api_key_backup_key", "key_id"),
+        Index("ix_api_key_backup_created", "created_at"),
+        {"comment": "API金鑰備份表，用於金鑰輪換時的備份"},
+    )
+
+    def __repr__(self):
+        return f"<APIKeyBackup(id={self.backup_id}, key={self.key_id})>"
+
+
+class APIKeyUsageLog(Base):
+    """API 金鑰使用日誌表"""
+
+    __tablename__ = "api_key_usage_logs"
+
+    # 主鍵
+    log_id = Column(String(50), primary_key=True, comment="日誌ID")
+
+    # 金鑰資訊
+    key_id = Column(String(50), nullable=False, comment="金鑰ID")
+    user_id = Column(String(50), nullable=False, comment="使用者ID")
+
+    # 使用資訊
+    operation = Column(String(50), comment="操作類型")
+    endpoint = Column(String(200), comment="API端點")
+    request_method = Column(String(10), comment="請求方法")
+
+    # 結果資訊
+    status_code = Column(Integer, comment="回應狀態碼")
+    response_time = Column(Float, comment="回應時間（毫秒）")
+    success = Column(Boolean, comment="是否成功")
+    error_message = Column(Text, comment="錯誤訊息")
+
+    # 網路資訊
+    ip_address = Column(String(45), comment="IP地址")
+    user_agent = Column(String(500), comment="使用者代理")
+
+    # 時間資訊
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="建立時間"
+    )
+
+    # 創建索引
+    __table_args__ = (
+        Index("ix_api_usage_key", "key_id"),
+        Index("ix_api_usage_user", "user_id"),
+        Index("ix_api_usage_created", "created_at"),
+        Index("ix_api_usage_operation", "operation"),
+        Index("ix_api_usage_success", "success"),
+        {"comment": "API金鑰使用日誌表，記錄所有API使用情況"},
+    )
+
+    def __repr__(self):
+        return f"<APIKeyUsageLog(id={self.log_id}, key={self.key_id}, operation={self.operation})>"
+
+
+class APIKeyPermission(Base):
+    """API 金鑰權限表"""
+
+    __tablename__ = "api_key_permissions"
+
+    # 主鍵
+    permission_id = Column(String(50), primary_key=True, comment="權限ID")
+
+    # 權限資訊
+    permission_code = Column(String(50), nullable=False, comment="權限代碼")
+    permission_name = Column(String(100), nullable=False, comment="權限名稱")
+    description = Column(String(200), comment="權限描述")
+
+    # 權限分類
+    category = Column(String(50), comment="權限分類")
+    level = Column(Integer, comment="權限等級")
+
+    # 是否啟用
+    is_active = Column(Boolean, default=True, comment="是否啟用")
+
+    # 時間資訊
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), comment="建立時間"
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        comment="更新時間",
+    )
+
+    # 創建索引
+    __table_args__ = (
+        Index("ix_api_permission_code", "permission_code"),
+        Index("ix_api_permission_category", "category"),
+        Index("ix_api_permission_level", "level"),
+        {"comment": "API金鑰權限表，定義可用的權限"},
+    )
+
+    def __repr__(self):
+        return f"<APIKeyPermission(id={self.permission_id}, code={self.permission_code})>"
+
+
 # 定義資料分片表
 class DataShard(Base):
     """

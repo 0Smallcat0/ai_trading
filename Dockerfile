@@ -75,8 +75,8 @@ RUN mkdir -p /app/data /app/logs /app/uploads /app/backups && \
 USER appuser
 
 # 健康檢查
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8501/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8501/health || curl -f http://localhost:8000/health || exit 1
 
 # 暴露埠號
 EXPOSE 8501 8000

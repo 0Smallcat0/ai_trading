@@ -1,0 +1,255 @@
+# AI 交易系統水平擴展配置
+# 版本: v1.0
+# 最後更新: 2024-12-25
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-trading-app-hpa
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-trading-app
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  # CPU 使用率指標
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # 記憶體使用率指標
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # 自定義指標：每秒請求數
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+  # 自定義指標：響應時間
+  - type: Pods
+    pods:
+      metric:
+        name: http_request_duration_seconds
+      target:
+        type: AverageValue
+        averageValue: "500m"  # 500ms
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5分鐘穩定期
+      policies:
+      - type: Percent
+        value: 10  # 每次最多縮減10%
+        periodSeconds: 60
+      - type: Pods
+        value: 1   # 每次最多縮減1個Pod
+        periodSeconds: 60
+      selectPolicy: Min  # 選擇最保守的策略
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1分鐘穩定期
+      policies:
+      - type: Percent
+        value: 50  # 每次最多擴展50%
+        periodSeconds: 60
+      - type: Pods
+        value: 2   # 每次最多擴展2個Pod
+        periodSeconds: 60
+      selectPolicy: Max  # 選擇最積極的策略
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: postgres-hpa
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: database
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: postgres
+  minReplicas: 1
+  maxReplicas: 3  # 資料庫通常不需要太多副本
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # 10分鐘穩定期（資料庫更保守）
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 300  # 5分鐘間隔
+    scaleUp:
+      stabilizationWindowSeconds: 300  # 5分鐘穩定期
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 180  # 3分鐘間隔
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: redis-hpa
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: cache
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: redis
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Redis 特定指標
+  - type: Pods
+    pods:
+      metric:
+        name: redis_connected_clients
+      target:
+        type: AverageValue
+        averageValue: "100"
+  - type: Pods
+    pods:
+      metric:
+        name: redis_memory_usage_ratio
+      target:
+        type: AverageValue
+        averageValue: "0.8"  # 80%
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 120
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+
+---
+# 垂直擴展配置（VPA）
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: ai-trading-app-vpa
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-trading-app
+  updatePolicy:
+    updateMode: "Auto"  # 自動更新資源請求
+  resourcePolicy:
+    containerPolicies:
+    - containerName: ai-trading-app
+      minAllowed:
+        cpu: 100m
+        memory: 256Mi
+      maxAllowed:
+        cpu: 2000m
+        memory: 4Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: postgres-vpa
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: database
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: postgres
+  updatePolicy:
+    updateMode: "Off"  # 僅建議，不自動更新（資料庫更謹慎）
+  resourcePolicy:
+    containerPolicies:
+    - containerName: postgres
+      minAllowed:
+        cpu: 250m
+        memory: 512Mi
+      maxAllowed:
+        cpu: 4000m
+        memory: 8Gi
+      controlledResources: ["cpu", "memory"]
+
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: redis-vpa
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: cache
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: redis
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: redis
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 1000m
+        memory: 2Gi
+      controlledResources: ["cpu", "memory"]

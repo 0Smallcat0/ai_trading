@@ -1,7 +1,44 @@
 {
     "folders": [
         {
+            "name": "AI Trading System",
             "path": "."
         }
-    ]
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "./.venv/Scripts/python.exe",
+        "python.terminal.activateEnvironment": true,
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/.pytest_cache": true,
+            "**/.mypy_cache": true,
+            "**/node_modules": true,
+            "**/.git": false,
+            "**/logs/*.log": true,
+            "**/data/cache": true
+        },
+        "search.exclude": {
+            "**/logs": true,
+            "**/data/cache": true,
+            "**/.venv": true,
+            "**/node_modules": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.flake8",
+            "ms-python.pylint",
+            "ms-python.black-formatter",
+            "ms-vscode.vscode-json",
+            "redhat.vscode-yaml",
+            "ms-vscode.vscode-docker"
+        ]
+    }
 }

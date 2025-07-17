@@ -12,11 +12,11 @@ Version: 1.0.0
 
 import streamlit as st
 
-from .utils import (
+from src.ui.pages.risk_management.utils import (
     get_risk_management_service,
     get_default_risk_parameters,
 )
-from .parameter_helpers import (
+from src.ui.pages.risk_management.parameter_helpers import (
     show_var_monitoring_settings,
     show_save_controls,
 )

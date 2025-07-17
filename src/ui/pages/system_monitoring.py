@@ -1,12 +1,20 @@
 """
-系統監控頁面
+系統監控頁面 (整合版)
 
-此模組實現了系統監控頁面，提供系統狀態、日誌和警報功能。
+此模組整合了基本版和增強版系統監控功能，提供完整的系統監控解決方案：
+- 系統狀態監控和性能指標
+- 實時數據監控和警報管理
+- 增強的監控儀表板 (整合功能)
+- 智能警報和通知系統 (整合功能)
+
+Version: v2.0 (整合版)
+Author: AI Trading System
 """
 
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import time
 from datetime import datetime, timedelta
 
 # 導入服務層
@@ -39,6 +47,44 @@ def get_system_monitoring_service():
 def show():
     """顯示系統監控頁面"""
     st.title("🖥️ 系統監控與日誌")
+
+    # 自動刷新控制
+    col_refresh1, col_refresh2, col_refresh3 = st.columns([2, 2, 4])
+
+    with col_refresh1:
+        auto_refresh = st.checkbox("🔄 自動刷新", value=False, key="system_monitoring_auto_refresh")
+
+    with col_refresh2:
+        if auto_refresh:
+            refresh_interval = st.selectbox(
+                "刷新間隔",
+                options=[5, 10, 15, 30, 60],
+                index=3,  # 默認30秒
+                format_func=lambda x: f"{x}秒",
+                key="system_monitoring_refresh_interval"
+            )
+        else:
+            refresh_interval = 30
+
+    with col_refresh3:
+        if st.button("🔄 立即刷新", type="primary"):
+            st.rerun()
+
+    # 自動刷新邏輯
+    if auto_refresh:
+        if "last_system_monitoring_refresh" not in st.session_state:
+            st.session_state.last_system_monitoring_refresh = time.time()
+
+        current_time = time.time()
+        time_since_refresh = current_time - st.session_state.last_system_monitoring_refresh
+
+        if time_since_refresh >= refresh_interval:
+            st.session_state.last_system_monitoring_refresh = current_time
+            st.rerun()
+        else:
+            # 顯示倒計時
+            remaining_time = refresh_interval - time_since_refresh
+            st.info(f"⏱️ 下次自動刷新: {remaining_time:.0f}秒後")
 
     # 獲取系統監控服務
     monitoring_service = get_system_monitoring_service()
@@ -111,6 +157,66 @@ def show_system_status(monitoring_service):
                 st.rerun()
             else:
                 st.error(message)
+
+    st.divider()
+
+    # 實時系統指標
+    st.subheader("📊 實時系統指標")
+
+    # 獲取實時系統指標
+    try:
+        import psutil
+
+        # 獲取實時數據
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        network = psutil.net_io_counters()
+
+        # 顯示實時指標
+        col_metric1, col_metric2, col_metric3, col_metric4 = st.columns(4)
+
+        with col_metric1:
+            cpu_color = "🟢" if cpu_percent < 70 else "🟡" if cpu_percent < 90 else "🔴"
+            st.metric(
+                f"{cpu_color} CPU 使用率",
+                f"{cpu_percent:.1f}%",
+                delta=None
+            )
+
+        with col_metric2:
+            memory_color = "🟢" if memory.percent < 70 else "🟡" if memory.percent < 90 else "🔴"
+            st.metric(
+                f"{memory_color} 內存使用率",
+                f"{memory.percent:.1f}%",
+                delta=f"可用: {memory.available / (1024**3):.1f}GB"
+            )
+
+        with col_metric3:
+            disk_percent = (disk.used / disk.total) * 100
+            disk_color = "🟢" if disk_percent < 70 else "🟡" if disk_percent < 90 else "🔴"
+            st.metric(
+                f"{disk_color} 磁盤使用率",
+                f"{disk_percent:.1f}%",
+                delta=f"可用: {disk.free / (1024**3):.1f}GB"
+            )
+
+        with col_metric4:
+            network_mb_sent = network.bytes_sent / (1024**2)
+            network_mb_recv = network.bytes_recv / (1024**2)
+            st.metric(
+                "🌐 網絡流量",
+                f"↑{network_mb_sent:.1f}MB",
+                delta=f"↓{network_mb_recv:.1f}MB"
+            )
+
+        # 顯示更新時間
+        st.caption(f"📅 最後更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    except ImportError:
+        st.warning("⚠️ psutil 模組不可用，無法顯示實時系統指標")
+    except Exception as e:
+        st.error(f"❌ 獲取系統指標失敗: {e}")
 
     st.divider()
 

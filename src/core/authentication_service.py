@@ -5,7 +5,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 from src.api.middleware.auth import TokenManager, SessionManager, TokenBlacklist
 from src.api.middleware.logging import audit_logger
@@ -16,6 +16,7 @@ from src.api.auth import (
     verify_password,
     USERS_DB,
 )
+from src.core.two_factor_service import TwoFactorService
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,12 @@ logger = logging.getLogger(__name__)
 class AuthenticationService:
     """認證服務類"""
 
-    @staticmethod
+    def __init__(self):
+        """初始化認證服務"""
+        self.two_factor_service = TwoFactorService()
+
     def authenticate_user(
-        username: str, password: str, ip_address: str
+        self, username: str, password: str, ip_address: str
     ) -> Dict[str, Any]:
         """驗證用戶登入
 
@@ -194,6 +198,141 @@ class AuthenticationService:
             "token_type": "bearer",
             "expires_in": "86400",
         }
+
+    def setup_2fa_totp(self, user_id: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        設定 TOTP 兩步驗證
+
+        Args:
+            user_id: 使用者 ID
+
+        Returns:
+            Tuple[bool, str, Optional[Dict[str, Any]]]: (是否成功, 訊息, 設定資料)
+        """
+        try:
+            # 獲取使用者資訊
+            user = get_user_by_username(user_id)  # 簡化實作
+            if not user:
+                return False, "使用者不存在", None
+
+            user_email = user.get("email", f"{user_id}@example.com")
+
+            # 調用 2FA 服務設定 TOTP
+            setup_data = self.two_factor_service.setup_totp(user_id, user_email)
+
+            return True, "TOTP 設定成功", setup_data
+
+        except Exception as e:
+            logger.error(f"設定 TOTP 失敗: {e}")
+            return False, f"設定失敗: {str(e)}", None
+
+    def verify_2fa_totp(
+        self,
+        user_id: str,
+        totp_code: str,
+        temp_session_id: str = None
+    ) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        驗證 TOTP 兩步驗證
+
+        Args:
+            user_id: 使用者 ID
+            totp_code: TOTP 驗證碼
+            temp_session_id: 臨時會話 ID
+
+        Returns:
+            Tuple[bool, str, Optional[Dict[str, Any]]]: (是否成功, 訊息, 使用者資訊)
+        """
+        try:
+            # 驗證 TOTP 碼
+            success, message = self.two_factor_service.verify_totp(user_id, totp_code)
+
+            if success:
+                # 獲取使用者資訊
+                user = get_user_by_username(user_id)
+                if user:
+                    return True, "驗證成功", {"user_info": user}
+                else:
+                    return False, "使用者資訊錯誤", None
+            else:
+                return False, message, None
+
+        except Exception as e:
+            logger.error(f"驗證 TOTP 失敗: {e}")
+            return False, f"驗證失敗: {str(e)}", None
+
+    def verify_backup_code(
+        self,
+        user_id: str,
+        backup_code: str
+    ) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        驗證備用碼
+
+        Args:
+            user_id: 使用者 ID
+            backup_code: 備用碼
+
+        Returns:
+            Tuple[bool, str, Optional[Dict[str, Any]]]: (是否成功, 訊息, 使用者資訊)
+        """
+        try:
+            # 驗證備用碼
+            success, message = self.two_factor_service.verify_backup_code(user_id, backup_code)
+
+            if success:
+                # 獲取使用者資訊
+                user = get_user_by_username(user_id)
+                if user:
+                    return True, message, {"user_info": user}
+                else:
+                    return False, "使用者資訊錯誤", None
+            else:
+                return False, message, None
+
+        except Exception as e:
+            logger.error(f"驗證備用碼失敗: {e}")
+            return False, f"驗證失敗: {str(e)}", None
+
+    def disable_2fa(self, user_id: str, password: str) -> Tuple[bool, str]:
+        """
+        停用兩步驗證
+
+        Args:
+            user_id: 使用者 ID
+            password: 使用者密碼
+
+        Returns:
+            Tuple[bool, str]: (是否成功, 訊息)
+        """
+        try:
+            # 驗證密碼
+            user = get_user_by_username(user_id)
+            if not user or not verify_password(password, user.get("password", "")):
+                return False, "密碼錯誤"
+
+            # 停用 2FA
+            return self.two_factor_service.disable_2fa(user_id, password)
+
+        except Exception as e:
+            logger.error(f"停用 2FA 失敗: {e}")
+            return False, f"停用失敗: {str(e)}"
+
+    def get_2fa_status(self, user_id: str) -> Dict[str, Any]:
+        """
+        獲取 2FA 狀態
+
+        Args:
+            user_id: 使用者 ID
+
+        Returns:
+            Dict[str, Any]: 2FA 狀態資訊
+        """
+        try:
+            return self.two_factor_service.get_2fa_status(user_id)
+        except Exception as e:
+            logger.error(f"獲取 2FA 狀態失敗: {e}")
+            return {"enabled": False, "error": str(e)}
 
     @staticmethod
     def register_user(

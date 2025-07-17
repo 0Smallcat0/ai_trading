@@ -32,6 +32,8 @@ from src.database.checksum_manager import ChecksumManager
 from src.database.compression_manager import CompressionManager
 from src.database.sharding_manager import ShardingManager
 from src.database.schema import MarketDaily, MarketMinute, MarketTick
+from src.database.maintenance_operations import MaintenanceOperations
+from src.database.query_optimizer import QueryOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +66,9 @@ class DatabaseManager:
         sharding_manager: 分片管理器
         compression_manager: 壓縮管理器
         checksum_manager: 校驗碼管理器
+        maintenance_operations: 維護操作管理器
+        query_optimizer: 查詢優化器
         lock: 執行緒鎖
-        maintenance_running: 維護任務運行狀態
-        maintenance_thread: 維護任務執行緒
     """
 
     def __init__(self, session: Session) -> None:
@@ -89,12 +91,18 @@ class DatabaseManager:
             self.sharding_manager = ShardingManager(session)
             self.compression_manager = CompressionManager(session)
             self.checksum_manager = ChecksumManager(session)
+
+            # 初始化維護操作和查詢優化器
+            self.maintenance_operations = MaintenanceOperations(
+                session,
+                self.sharding_manager,
+                self.compression_manager,
+                self.checksum_manager
+            )
+            self.query_optimizer = QueryOptimizer(session, self.sharding_manager)
+
         except Exception as e:
             raise DatabaseConfigError(f"初始化子管理器失敗: {e}") from e
-
-        # 維護任務狀態
-        self.maintenance_running = False
-        self.maintenance_thread: Optional[threading.Thread] = None
 
         logger.info("資料庫管理器初始化完成")
 

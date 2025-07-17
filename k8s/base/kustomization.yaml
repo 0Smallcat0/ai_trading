@@ -24,34 +24,36 @@ commonAnnotations:
 
 # 資源檔案
 resources:
-- namespace.yaml
-- configmap.yaml
-- secret.yaml
-- rbac.yaml
-- pvc.yaml
-- deployment.yaml
-- service.yaml
-- ingress.yaml
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - rbac.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - servicemonitor.yaml
 
 # 映像檔案
 images:
-- name: ai-trading
-  newTag: latest
+  - name: ai-trading
+    newTag: latest
 
 # 配置生成器
 configMapGenerator:
-- name: ai-trading-runtime-config
-  literals:
-  - DEPLOYMENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  - KUSTOMIZE_VERSION=v1.0.0
-  - BUILD_ENV=base
+  - name: ai-trading-runtime-config
+    literals:
+      - DEPLOYMENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      - KUSTOMIZE_VERSION=v1.0.0
+      - BUILD_ENV=base
 
 # Secret 生成器 (用於自動生成的 secrets)
 secretGenerator:
-- name: ai-trading-generated-secrets
-  type: Opaque
-  literals:
-  - DEPLOYMENT_ID=$(uuidgen)
+  - name: ai-trading-generated-secrets
+    type: Opaque
+    literals:
+      - DEPLOYMENT_ID=$(uuidgen)
 
 # 資源修補
 patchesStrategicMerge: []

@@ -41,22 +41,8 @@ class ResponsiveCSS:
             - 多裝置媒體查詢
             - 無障礙和深色模式支援
         """
-        try:
-            from .css_components import CSSComponents
-            from .css_media_queries import CSSMediaQueries
-
-            return f"""
-            <style>
-            {CSSComponents.get_base_components()}
-            {CSSMediaQueries.get_mobile_styles()}
-            {CSSMediaQueries.get_tablet_styles()}
-            {CSSMediaQueries.get_desktop_styles()}
-            {CSSMediaQueries.get_accessibility_styles()}
-            </style>
-            """
-        except ImportError:
-            # 備用實作
-            return ResponsiveCSS._get_fallback_styles()
+        # 使用備用實作（原本的子模組不存在）
+        return ResponsiveCSS._get_fallback_styles()
 
     @staticmethod
     def get_streamlit_overrides() -> str:
@@ -68,13 +54,8 @@ class ResponsiveCSS:
         Returns:
             str: Streamlit 組件的響應式覆蓋 CSS 樣式字串
         """
-        try:
-            from .css_streamlit import CSSStreamlit
-
-            return CSSStreamlit.get_streamlit_overrides()
-        except ImportError:
-            # 備用實作
-            return ResponsiveCSS._get_fallback_streamlit_styles()
+        # 使用備用實作（原本的子模組不存在）
+        return ResponsiveCSS._get_fallback_streamlit_styles()
 
     @staticmethod
     def _get_fallback_styles() -> str:

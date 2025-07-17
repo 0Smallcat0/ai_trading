@@ -2,17 +2,20 @@
 效能優化模組
 
 提供頁面載入優化、資源壓縮、延遲載入等效能優化功能。
+支援 <2 秒頁面加載時間目標和智能狀態管理。
 """
 
 import time
 import gzip
 import io
 import threading
-from typing import Any, Dict, List, Optional, Callable
+import asyncio
+from typing import Any, Dict, List, Optional, Callable, Union
 from functools import wraps
 import streamlit as st
 import pandas as pd
 import logging
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +24,7 @@ class PerformanceOptimizer:
     """效能優化器類別
 
     提供各種效能優化功能，包括資源壓縮、延遲載入、批次處理等。
+    目標：頁面加載時間 <2 秒，優化狀態管理和組件懶加載。
     """
 
     def __init__(self):
@@ -30,8 +34,14 @@ class PerformanceOptimizer:
             "query_times": [],
             "render_times": [],
             "memory_usage": [],
+            "component_load_times": [],
+            "state_update_times": [],
         }
         self._lock = threading.Lock()
+        self.lazy_load_registry = {}
+        self.component_cache = {}
+        self.state_optimization_enabled = True
+        self.target_load_time = 2.0  # 2 秒目標
 
     def measure_time(self, operation_type: str = "general"):
         """測量執行時間的裝飾器
@@ -126,22 +136,44 @@ class PerformanceOptimizer:
         return optimized_df
 
     def lazy_load_component(self, component_func: Callable, *args, **kwargs):
-        """延遲載入組件
+        """智能延遲載入組件
+
+        支援組件快取和條件載入，提升性能。
 
         Args:
             component_func: 組件函數
             *args: 位置參數
             **kwargs: 關鍵字參數
         """
-        if "lazy_load_key" not in st.session_state:
-            st.session_state.lazy_load_key = set()
+        start_time = time.time()
+
+        if "lazy_load_registry" not in st.session_state:
+            st.session_state.lazy_load_registry = {}
 
         component_key = f"{component_func.__name__}_{hash(str(args) + str(kwargs))}"
 
-        if component_key not in st.session_state.lazy_load_key:
+        # 檢查是否已快取
+        if component_key in self.component_cache:
+            cached_result = self.component_cache[component_key]
+            if cached_result.get("expires_at", 0) > time.time():
+                return cached_result["data"]
+
+        # 檢查是否需要載入
+        if component_key not in st.session_state.lazy_load_registry:
             with st.spinner("載入中..."):
                 result = component_func(*args, **kwargs)
-                st.session_state.lazy_load_key.add(component_key)
+                st.session_state.lazy_load_registry[component_key] = True
+
+                # 快取結果（5分鐘）
+                self.component_cache[component_key] = {
+                    "data": result,
+                    "expires_at": time.time() + 300
+                }
+
+                load_time = time.time() - start_time
+                with self._lock:
+                    self.performance_metrics["component_load_times"].append(load_time)
+
                 return result
         else:
             return component_func(*args, **kwargs)
@@ -185,23 +217,81 @@ class PerformanceOptimizer:
 
         return results
 
+    def optimize_session_state(self) -> None:
+        """優化 session state 管理
+
+        清理過期的狀態和不必要的數據，減少重新渲染。
+        """
+        if not self.state_optimization_enabled:
+            return
+
+        start_time = time.time()
+
+        # 清理過期的懶加載註冊
+        if hasattr(st.session_state, 'lazy_load_registry'):
+            # 保留最近使用的組件
+            current_time = time.time()
+            expired_keys = []
+
+            for key in list(self.component_cache.keys()):
+                if self.component_cache[key].get("expires_at", 0) < current_time:
+                    expired_keys.append(key)
+
+            for key in expired_keys:
+                del self.component_cache[key]
+                if key in st.session_state.lazy_load_registry:
+                    del st.session_state.lazy_load_registry[key]
+
+        # 清理大型臨時數據
+        temp_keys = [key for key in st.session_state.keys() if key.startswith('temp_')]
+        for key in temp_keys:
+            if hasattr(st.session_state[key], '__len__'):
+                # 如果是大型對象（>1MB），清理它
+                try:
+                    import sys
+                    if sys.getsizeof(st.session_state[key]) > 1024 * 1024:
+                        del st.session_state[key]
+                except:
+                    pass
+
+        optimization_time = time.time() - start_time
+        with self._lock:
+            self.performance_metrics["state_update_times"].append(optimization_time)
+
+        logger.debug(f"Session state 優化完成，耗時 {optimization_time:.3f}秒")
+
+    def preload_critical_components(self, component_list: List[str]) -> None:
+        """預載入關鍵組件
+
+        Args:
+            component_list: 要預載入的組件名稱列表
+        """
+        for component_name in component_list:
+            if component_name not in self.lazy_load_registry:
+                self.lazy_load_registry[component_name] = {
+                    "preloaded": True,
+                    "timestamp": time.time()
+                }
+
     def get_performance_metrics(self) -> Dict[str, Any]:
         """獲取效能指標
 
         Returns:
-            效能指標字典
+            效能指標字典，包含性能分析和建議
         """
         with self._lock:
             metrics = {}
 
             for metric_type, times in self.performance_metrics.items():
                 if times:
+                    avg_time = sum(times) / len(times)
                     metrics[metric_type] = {
                         "count": len(times),
-                        "avg": sum(times) / len(times),
+                        "avg": avg_time,
                         "min": min(times),
                         "max": max(times),
                         "total": sum(times),
+                        "meets_target": avg_time < self.target_load_time if metric_type == "page_load_times" else True
                     }
                 else:
                     metrics[metric_type] = {
@@ -210,9 +300,52 @@ class PerformanceOptimizer:
                         "min": 0,
                         "max": 0,
                         "total": 0,
+                        "meets_target": True
                     }
 
+            # 添加性能分析
+            metrics["performance_analysis"] = self._analyze_performance()
+            metrics["cache_efficiency"] = {
+                "component_cache_size": len(self.component_cache),
+                "lazy_load_registry_size": len(self.lazy_load_registry)
+            }
+
             return metrics
+
+    def _analyze_performance(self) -> Dict[str, Any]:
+        """分析性能並提供建議
+
+        Returns:
+            性能分析結果和建議
+        """
+        analysis = {
+            "overall_status": "good",
+            "recommendations": [],
+            "warnings": []
+        }
+
+        # 檢查頁面加載時間
+        if self.performance_metrics["page_load_times"]:
+            avg_load_time = sum(self.performance_metrics["page_load_times"]) / len(self.performance_metrics["page_load_times"])
+            if avg_load_time > self.target_load_time:
+                analysis["overall_status"] = "needs_improvement"
+                analysis["warnings"].append(f"平均頁面加載時間 {avg_load_time:.2f}s 超過目標 {self.target_load_time}s")
+                analysis["recommendations"].append("考慮啟用更多組件懶加載")
+                analysis["recommendations"].append("優化大型數據集的處理")
+
+        # 檢查組件加載時間
+        if self.performance_metrics["component_load_times"]:
+            avg_component_time = sum(self.performance_metrics["component_load_times"]) / len(self.performance_metrics["component_load_times"])
+            if avg_component_time > 1.0:
+                analysis["warnings"].append(f"組件平均加載時間 {avg_component_time:.2f}s 較長")
+                analysis["recommendations"].append("考慮組件預載入或快取優化")
+
+        # 檢查快取效率
+        if len(self.component_cache) > 100:
+            analysis["warnings"].append("組件快取項目過多，可能影響記憶體使用")
+            analysis["recommendations"].append("定期清理過期快取")
+
+        return analysis
 
     def clear_metrics(self):
         """清空效能指標"""
@@ -285,18 +418,31 @@ def optimize_render(func: Callable) -> Callable:
 
 
 def create_performance_dashboard():
-    """創建效能監控儀表板"""
+    """創建增強的效能監控儀表板"""
     st.subheader("🚀 效能監控儀表板")
 
     metrics = performance_optimizer.get_performance_metrics()
+    analysis = metrics.get("performance_analysis", {})
 
+    # 總體狀態指示器
+    status = analysis.get("overall_status", "unknown")
+    status_colors = {
+        "good": "🟢",
+        "needs_improvement": "🟡",
+        "poor": "🔴"
+    }
+    st.info(f"{status_colors.get(status, '⚪')} 總體性能狀態: {status}")
+
+    # 主要指標
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+        load_time = metrics['page_load_times']['avg']
+        target_met = "✅" if metrics['page_load_times']['meets_target'] else "❌"
         st.metric(
             "平均頁面載入時間",
-            f"{metrics['page_load_times']['avg']:.3f}s",
-            f"共 {metrics['page_load_times']['count']} 次",
+            f"{load_time:.3f}s {target_met}",
+            f"目標: <{performance_optimizer.target_load_time}s",
         )
 
     with col2:
@@ -308,18 +454,52 @@ def create_performance_dashboard():
 
     with col3:
         st.metric(
-            "平均渲染時間",
-            f"{metrics['render_times']['avg']:.3f}s",
-            f"共 {metrics['render_times']['count']} 次",
+            "組件載入時間",
+            f"{metrics['component_load_times']['avg']:.3f}s",
+            f"共 {metrics['component_load_times']['count']} 次",
         )
 
     with col4:
-        if st.button("清空指標"):
+        cache_info = metrics.get("cache_efficiency", {})
+        st.metric(
+            "快取效率",
+            f"{cache_info.get('component_cache_size', 0)} 項目",
+            f"註冊: {cache_info.get('lazy_load_registry_size', 0)}",
+        )
+
+    # 性能建議
+    if analysis.get("warnings") or analysis.get("recommendations"):
+        st.subheader("📊 性能分析與建議")
+
+        if analysis.get("warnings"):
+            st.warning("⚠️ 性能警告:")
+            for warning in analysis["warnings"]:
+                st.write(f"• {warning}")
+
+        if analysis.get("recommendations"):
+            st.info("💡 優化建議:")
+            for rec in analysis["recommendations"]:
+                st.write(f"• {rec}")
+
+    # 控制面板
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🧹 清空指標"):
             performance_optimizer.clear_metrics()
             st.rerun()
 
-    # 顯示詳細指標
-    if st.expander("詳細效能指標"):
+    with col2:
+        if st.button("🔧 優化 Session State"):
+            performance_optimizer.optimize_session_state()
+            st.success("Session State 已優化")
+
+    with col3:
+        if st.button("📈 啟用性能優化"):
+            enable_performance_optimizations()
+            st.success("性能優化已啟用")
+
+    # 詳細指標（可摺疊）
+    with st.expander("📋 詳細效能指標"):
         st.json(metrics)
 
 
@@ -333,4 +513,106 @@ def enable_performance_optimizations():
         st.cache_data.clear()
         st.cache_resource.clear()
 
+        # 初始化性能優化狀態
+        st.session_state.lazy_load_enabled = True
+        st.session_state.component_cache_enabled = True
+        st.session_state.auto_optimization = True
+
         logger.info("效能優化已啟用")
+
+
+class SmartStateManager:
+    """智能狀態管理器
+
+    提供智能的 session state 管理，減少不必要的重新渲染。
+    """
+
+    def __init__(self):
+        """初始化智能狀態管理器"""
+        self.state_history = {}
+        self.change_tracking = {}
+        self.optimization_rules = {}
+
+    def smart_update(self, key: str, value: Any, force_update: bool = False) -> bool:
+        """智能更新狀態
+
+        只在值真正改變時才更新，避免不必要的重新渲染。
+
+        Args:
+            key: 狀態鍵
+            value: 新值
+            force_update: 是否強制更新
+
+        Returns:
+            bool: 是否實際更新了狀態
+        """
+        current_value = st.session_state.get(key)
+
+        # 檢查值是否真的改變了
+        if not force_update and current_value == value:
+            return False
+
+        # 記錄變更歷史
+        if key not in self.state_history:
+            self.state_history[key] = []
+
+        self.state_history[key].append({
+            "old_value": current_value,
+            "new_value": value,
+            "timestamp": datetime.now(),
+        })
+
+        # 限制歷史記錄數量
+        if len(self.state_history[key]) > 10:
+            self.state_history[key] = self.state_history[key][-10:]
+
+        # 更新狀態
+        st.session_state[key] = value
+
+        # 記錄變更統計
+        if key not in self.change_tracking:
+            self.change_tracking[key] = 0
+        self.change_tracking[key] += 1
+
+        return True
+
+    def batch_update(self, updates: Dict[str, Any]) -> List[str]:
+        """批量更新狀態
+
+        Args:
+            updates: 要更新的狀態字典
+
+        Returns:
+            List[str]: 實際更新的鍵列表
+        """
+        updated_keys = []
+
+        for key, value in updates.items():
+            if self.smart_update(key, value):
+                updated_keys.append(key)
+
+        return updated_keys
+
+    def get_change_summary(self) -> Dict[str, Any]:
+        """獲取狀態變更摘要
+
+        Returns:
+            Dict[str, Any]: 變更摘要
+        """
+        return {
+            "total_keys": len(self.change_tracking),
+            "total_changes": sum(self.change_tracking.values()),
+            "most_changed_keys": sorted(
+                self.change_tracking.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:5],
+            "recent_changes": {
+                key: history[-3:] for key, history in self.state_history.items()
+                if history
+            }
+        }
+
+
+# 全域智能狀態管理器
+smart_state_manager = SmartStateManager()

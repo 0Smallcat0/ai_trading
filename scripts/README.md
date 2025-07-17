@@ -25,6 +25,12 @@
 - **測試覆蓋**: `track_coverage.py`
 - **版本控制**: `setup_git_flow.py`
 
+### 🔧 維護工具腳本
+- **代碼修復**: `maintenance/fix_relative_imports.py` - 相對導入修復
+- **文件清理**: `maintenance/cleanup_web_ui_files.py` - Web UI文件管理
+- **數據庫維護**: `maintenance/fix_database_schema.py` - 數據庫架構修復
+- **環境修復**: `maintenance/fix_phase32_environment.py` - 環境配置修復
+
 ### 💻 PowerShell 腳本
 - **環境設置**: `powershell/setup_clean_env.ps1`
 - **安全審計**: `powershell/audit_security.ps1`

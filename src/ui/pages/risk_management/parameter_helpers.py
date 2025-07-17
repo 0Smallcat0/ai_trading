@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional
 import streamlit as st
 from datetime import datetime
 
-from .utils import validate_risk_parameters
+from src.ui.pages.risk_management.utils import validate_risk_parameters
 
 
 def show_var_monitoring_settings() -> None:
@@ -157,7 +157,7 @@ def show_save_controls(risk_service: Optional[Any]) -> None:
 
     with col_save2:
         if st.button("🔄 重置為預設", use_container_width=True):
-            from .utils import get_default_risk_parameters
+            from src.ui.pages.risk_management.utils import get_default_risk_parameters
 
             st.session_state.risk_params = get_default_risk_parameters()
             st.success("已重置為預設設置！")

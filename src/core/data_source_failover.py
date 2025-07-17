@@ -321,6 +321,11 @@ class DataSourceFailoverManager:
 
     def _health_check_loop(self):
         """健康檢查主循環"""
+        # 初始延遲，避免在系統啟動時立即執行健康檢查
+        initial_delay = min(60, self.health_check_interval)
+        logger.info(f"健康檢查將在 {initial_delay} 秒後開始")
+        time.sleep(initial_delay)
+
         while self.is_running:
             try:
                 self._perform_health_checks()

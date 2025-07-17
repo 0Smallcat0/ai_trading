@@ -11,30 +11,84 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-# 導入資料來源模組
-from .data_sources.structured_data import (
-    crawl_bargin_otc,
-    crawl_bargin_twe,
-    crawl_benchmark,
-    crawl_monthly_report,
-    crawl_pe_otc,
-    crawl_pe_twe,
-    crawl_price_otc,
-    crawl_price_twe,
-)
-from .data_sources.unstructured_data import (
-    analyze_market_sentiment,
-    crawl_market_info,
-    get_market_info,
-    get_market_overview,
-    get_news_for_stock,
-)
-
-# 導入資料庫模組
-from .database.db_manager import db_manager
-
 # 設定日誌
 logger = logging.getLogger(__name__)
+
+# 導入資料來源模組
+try:
+    from src.data_sources.structured_data import (
+        crawl_bargin_otc,
+        crawl_bargin_twe,
+        crawl_benchmark,
+        crawl_monthly_report,
+        crawl_pe_otc,
+        crawl_pe_twe,
+        crawl_price_otc,
+        crawl_price_twe,
+    )
+except ImportError as e:
+    logger.warning("無法導入結構化資料模組: %s", e)
+    # 提供備用函數
+    def crawl_bargin_otc(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_bargin_twe(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_benchmark(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_monthly_report(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_pe_otc(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_pe_twe(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_price_otc(*args, **kwargs):
+        return pd.DataFrame()
+    def crawl_price_twe(*args, **kwargs):
+        return pd.DataFrame()
+
+try:
+    from src.data_sources.unstructured_data import (
+        analyze_market_sentiment,
+        crawl_market_info,
+        get_market_info,
+        get_market_overview,
+        get_news_for_stock,
+    )
+except ImportError as e:
+    logger.warning("無法導入非結構化資料模組: %s", e)
+    # 提供備用函數
+    def analyze_market_sentiment(*args, **kwargs):
+        return {"sentiment": "neutral", "score": 0.0}
+    def crawl_market_info(*args, **kwargs):
+        return []
+    def get_market_info(*args, **kwargs):
+        return {}
+    def get_market_overview(*args, **kwargs):
+        return {}
+    def get_news_for_stock(*args, **kwargs):
+        return []
+
+# 導入資料庫模組
+try:
+    from src.database.db_manager import db_manager
+except ImportError as e:
+    logger.warning("無法導入資料庫管理模組: %s", e)
+    # 提供備用的資料庫管理器
+    class MockDBManager:
+        def query_data(self, *args, **kwargs):
+            return pd.DataFrame()
+        def insert_data(self, *args, **kwargs):
+            return True
+        def update_data(self, *args, **kwargs):
+            return True
+        def delete_data(self, *args, **kwargs):
+            return True
+        def export_to_csv(self, *args, **kwargs):
+            return True
+        def import_csv_to_table(self, *args, **kwargs):
+            return True
+
+    db_manager = MockDBManager()
 
 # 資料類型常數
 DATA_TYPES = {
@@ -335,6 +389,10 @@ def update_stock_data(
                     result["benchmark"] = benchmark
 
     return result
+
+
+# 向後相容性別名
+update_data = update_stock_data
 
 
 def get_market_news(

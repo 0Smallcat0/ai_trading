@@ -4,6 +4,15 @@ class TwseCrawler:
 
     提供從台灣證券交易所網站爬取各種資料的功能。
     """
+    pass
+
+
+class TWSECrawler(TwseCrawler):
+    """
+    台灣證券交易所爬蟲類別
+
+    提供從台灣證券交易所網站爬取各種資料的功能。
+    """
 
     @staticmethod
     def crawl_benchmark(date):

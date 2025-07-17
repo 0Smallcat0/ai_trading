@@ -1,14 +1,27 @@
 """
-報表查詢頁面
+報表查詢頁面 (整合版)
 
-此模組實現了報表查詢頁面，提供各種報表和視覺化功能。
+此模組整合了基本版和增強版報表功能，提供完整的報表查詢和視覺化功能：
+- 交易績效圖表和分析
+- 交易明細追蹤和查詢
+- 策略績效比較分析
+- 參數敏感度分析
+- 多格式報表匯出
+- 動態查詢建構器 (增強功能)
+- 互動式圖表生成 (增強功能)
+- 響應式設計支援 (增強功能)
+
+Version: v2.0 (整合版)
+Author: AI Trading System
 """
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
 import logging
+from typing import Dict, List, Optional, Any
 
 # 導入服務層
 try:
@@ -17,6 +30,34 @@ except ImportError as e:
     # 如果無法導入，使用備用方案
     logging.warning("無法導入報表視覺化服務: %s", e)
     ReportVisualizationService = None
+
+# 導入響應式設計組件 (增強功能)
+try:
+    from src.ui.responsive import (
+        ResponsiveUtils,
+        ResponsiveComponents,
+    )
+except ImportError:
+    # 備用實現
+    ResponsiveUtils = None
+    ResponsiveComponents = None
+
+# 可選的圖表依賴 (增強功能)
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
+
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
 
 
 def get_report_visualization_service():
@@ -35,41 +76,76 @@ def get_report_visualization_service():
 
 
 def show():
-    """顯示報表查詢頁面"""
-    st.title("📊 報表查詢與視覺化")
+    """顯示報表查詢頁面 (整合版)"""
+    # 檢查響應式組件是否可用
+    if ResponsiveUtils is None:
+        st.title("📊 報表查詢與視覺化 (整合版)")
+    else:
+        # 應用響應式頁面配置
+        try:
+            ResponsiveUtils.apply_responsive_page_config(
+                page_title="報表系統 - AI 交易系統", page_icon="📊"
+            )
+            st.markdown('<h1 class="title-responsive">📊 報表查詢與視覺化</h1>', unsafe_allow_html=True)
+        except Exception:
+            st.title("📊 報表查詢與視覺化 (整合版)")
+
+    # 初始化 session state
+    if "report_data" not in st.session_state:
+        st.session_state.report_data = pd.DataFrame()
+    if "chart_config" not in st.session_state:
+        st.session_state.chart_config = {}
 
     # 獲取報表視覺化服務
     report_service = get_report_visualization_service()
 
     if not report_service:
-        st.error("報表視覺化服務不可用，請檢查系統配置")
-        return
+        st.warning("⚠️ 報表視覺化服務不可用，使用基本功能")
 
-    # 頁面標籤
-    tabs = st.tabs(
-        [
+    # 檢查 ResponsiveComponents 是否可用
+    if ResponsiveComponents is None:
+        # 使用基本標籤頁 (整合版功能)
+        tabs = st.tabs([
             "📈 交易績效圖表",
             "📋 交易明細追蹤",
             "🔄 策略績效比較",
             "🎛️ 參數敏感度分析",
             "📤 報表匯出",
+            "🔍 動態查詢",
+            "📊 圖表生成",
+            "📤 數據匯出"
+        ])
+
+        with tabs[0]:
+            show_trading_performance_charts(report_service)
+        with tabs[1]:
+            show_trade_details_tracking(report_service)
+        with tabs[2]:
+            show_strategy_comparison(report_service)
+        with tabs[3]:
+            show_parameter_sensitivity(report_service)
+        with tabs[4]:
+            show_report_export(report_service)
+        with tabs[5]:
+            show_dynamic_query()
+        with tabs[6]:
+            show_chart_generation()
+        with tabs[7]:
+            show_data_export()
+    else:
+        # 響應式標籤頁 (整合版功能)
+        tabs_config = [
+            {"name": "📈 交易績效圖表", "content_func": lambda: show_trading_performance_charts(report_service)},
+            {"name": "📋 交易明細追蹤", "content_func": lambda: show_trade_details_tracking(report_service)},
+            {"name": "🔄 策略績效比較", "content_func": lambda: show_strategy_comparison(report_service)},
+            {"name": "🎛️ 參數敏感度分析", "content_func": lambda: show_parameter_sensitivity(report_service)},
+            {"name": "📤 報表匯出", "content_func": lambda: show_report_export(report_service)},
+            {"name": "🔍 動態查詢", "content_func": show_dynamic_query},
+            {"name": "📊 圖表生成", "content_func": show_chart_generation},
+            {"name": "📤 數據匯出", "content_func": show_data_export},
         ]
-    )
 
-    with tabs[0]:
-        show_trading_performance_charts(report_service)
-
-    with tabs[1]:
-        show_trade_details_tracking(report_service)
-
-    with tabs[2]:
-        show_strategy_comparison(report_service)
-
-    with tabs[3]:
-        show_parameter_sensitivity(report_service)
-
-    with tabs[4]:
-        show_report_export(report_service)
+        ResponsiveComponents.responsive_tabs(tabs_config)
 
 
 def show_trading_performance_charts(report_service):
@@ -746,3 +822,274 @@ def show_report_export(report_service):
 
     with col_cache2:
         st.info("定期清理快取可以釋放存儲空間並提升系統效能")
+
+
+# ==================== 整合的增強功能 ====================
+
+def show_dynamic_query():
+    """顯示動態查詢介面 (增強功能)"""
+    st.subheader("動態報表查詢")
+
+    # 可用數據源
+    data_sources = [
+        "交易記錄",
+        "投資組合數據",
+        "風險指標",
+        "市場數據",
+        "策略績效",
+        "系統日誌",
+    ]
+
+    selected_source = st.selectbox("選擇數據源", data_sources)
+
+    # 根據數據源獲取可用欄位
+    available_fields = get_available_fields(selected_source)
+
+    # 動態查詢建構器
+    with st.form(f"query_{selected_source}"):
+        st.markdown("### 查詢條件")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # 日期範圍
+            start_date = st.date_input("開始日期", value=datetime.now().date() - timedelta(days=30))
+            end_date = st.date_input("結束日期", value=datetime.now().date())
+
+        with col2:
+            # 股票代碼選擇
+            if selected_source in ["交易記錄", "投資組合數據", "市場數據"]:
+                symbols = st.multiselect(
+                    "股票代碼",
+                    ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"],
+                    default=["AAPL", "MSFT"]
+                )
+
+        # 其他條件
+        if selected_source == "交易記錄":
+            directions = st.multiselect("交易方向", ["買入", "賣出"], default=["買入", "賣出"])
+            amount_min = st.number_input("最小金額", value=0)
+            amount_max = st.number_input("最大金額", value=1000000)
+
+        submitted = st.form_submit_button("🔍 執行查詢", type="primary")
+
+        if submitted:
+            # 生成模擬數據
+            mock_data = generate_mock_query_data(selected_source, start_date, end_date)
+            st.session_state.report_data = mock_data
+            st.success(f"✅ 查詢完成！找到 {len(mock_data)} 筆記錄")
+
+            # 顯示數據預覽
+            if not mock_data.empty:
+                st.subheader("數據預覽")
+                st.dataframe(mock_data.head(10), use_container_width=True)
+
+                # 統計摘要
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("記錄數", len(mock_data))
+                with col2:
+                    st.metric("欄位數", len(mock_data.columns))
+                with col3:
+                    if selected_source == "交易記錄" and "amount" in mock_data.columns:
+                        st.metric("總金額", f"${mock_data['amount'].sum():,.0f}")
+
+
+def show_chart_generation():
+    """顯示圖表生成介面 (增強功能)"""
+    st.subheader("互動式圖表生成")
+
+    if st.session_state.report_data.empty:
+        st.info("請先在「動態查詢」頁面載入數據")
+        return
+
+    data = st.session_state.report_data
+
+    # 圖表配置
+    col1, col2 = st.columns(2)
+
+    with col1:
+        chart_type = st.selectbox(
+            "圖表類型",
+            ["line", "bar", "scatter", "histogram", "pie"],
+            format_func=lambda x: {
+                "line": "線圖",
+                "bar": "柱狀圖",
+                "scatter": "散點圖",
+                "histogram": "直方圖",
+                "pie": "圓餅圖"
+            }[x]
+        )
+
+    with col2:
+        numeric_columns = data.select_dtypes(include=[np.number]).columns.tolist()
+        categorical_columns = data.select_dtypes(include=['object']).columns.tolist()
+
+        if chart_type in ["line", "bar", "scatter"]:
+            x_column = st.selectbox("X軸欄位", data.columns)
+            y_column = st.selectbox("Y軸欄位", numeric_columns)
+        elif chart_type == "histogram":
+            x_column = st.selectbox("數值欄位", numeric_columns)
+            y_column = None
+        elif chart_type == "pie":
+            x_column = st.selectbox("分類欄位", categorical_columns)
+            y_column = st.selectbox("數值欄位", numeric_columns)
+
+    # 生成圖表
+    if st.button("📊 生成圖表", type="primary"):
+        chart_config = {
+            "type": chart_type,
+            "x_column": x_column,
+            "y_column": y_column
+        }
+
+        if PLOTLY_AVAILABLE:
+            fig = generate_plotly_chart(data, chart_config)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True)
+                st.success("✅ 圖表生成成功！")
+        else:
+            st.error("❌ Plotly 未安裝，無法生成互動式圖表")
+
+
+def show_data_export():
+    """顯示數據匯出介面 (增強功能)"""
+    st.subheader("多格式數據匯出")
+
+    if st.session_state.report_data.empty:
+        st.info("請先在「動態查詢」頁面載入數據")
+        return
+
+    data = st.session_state.report_data
+
+    # 匯出配置
+    col1, col2 = st.columns(2)
+
+    with col1:
+        export_format = st.selectbox("匯出格式", ["CSV", "JSON", "Excel", "PDF"])
+        filename_prefix = st.text_input("檔案名稱前綴", value="report")
+
+    with col2:
+        export_range = st.selectbox("匯出範圍", ["全部數據", "前100筆", "前1000筆"])
+        include_charts = st.checkbox("包含圖表", value=False)
+
+    # 數據統計
+    st.markdown("### 數據統計")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("記錄數", len(data))
+    with col2:
+        st.metric("欄位數", len(data.columns))
+    with col3:
+        # 估算檔案大小
+        estimated_size = len(data) * len(data.columns) * 10  # 粗略估算
+        st.metric("估算大小", f"{estimated_size/1024:.1f} KB")
+
+    # 匯出按鈕
+    cols = st.columns(4)
+
+    with cols[0]:
+        if st.button("📄 匯出 CSV", use_container_width=True):
+            csv = data.to_csv(index=False)
+            st.download_button(
+                label="下載 CSV",
+                data=csv,
+                file_name=f"{filename_prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+            )
+
+    with cols[1]:
+        if st.button("📋 匯出 JSON", use_container_width=True):
+            json_data = data.to_json(orient="records", date_format="iso")
+            st.download_button(
+                label="下載 JSON",
+                data=json_data,
+                file_name=f"{filename_prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+            )
+
+    with cols[2]:
+        if st.button("📊 匯出 Excel", use_container_width=True):
+            st.info("Excel 匯出功能需要安裝 openpyxl")
+
+    with cols[3]:
+        if st.button("📑 匯出 PDF", use_container_width=True):
+            st.info("PDF 匯出功能需要安裝 reportlab")
+
+
+# ==================== 輔助函數 ====================
+
+def get_available_fields(data_source: str) -> List[str]:
+    """獲取數據源的可用欄位"""
+    field_mapping = {
+        "交易記錄": ["date", "symbol", "direction", "quantity", "price", "amount"],
+        "投資組合數據": ["symbol", "quantity", "market_value", "weight", "return"],
+        "風險指標": ["date", "var", "cvar", "max_drawdown", "volatility"],
+        "市場數據": ["date", "symbol", "open", "high", "low", "close", "volume"],
+        "策略績效": ["strategy", "return", "sharpe_ratio", "max_drawdown", "win_rate"],
+        "系統日誌": ["timestamp", "level", "module", "message", "user_id"],
+    }
+    return field_mapping.get(data_source, [])
+
+
+def generate_mock_query_data(data_source: str, start_date, end_date) -> pd.DataFrame:
+    """生成模擬查詢數據"""
+    np.random.seed(42)
+
+    if data_source == "交易記錄":
+        n_records = np.random.randint(50, 200)
+        return pd.DataFrame({
+            "date": pd.date_range(start_date, end_date, periods=n_records),
+            "symbol": np.random.choice(["AAPL", "MSFT", "GOOGL", "TSLA"], n_records),
+            "direction": np.random.choice(["買入", "賣出"], n_records),
+            "quantity": np.random.randint(100, 1000, n_records),
+            "price": np.random.uniform(100, 300, n_records),
+            "amount": np.random.uniform(10000, 100000, n_records)
+        })
+    elif data_source == "投資組合數據":
+        symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
+        return pd.DataFrame({
+            "symbol": symbols,
+            "quantity": np.random.randint(100, 1000, len(symbols)),
+            "market_value": np.random.uniform(50000, 200000, len(symbols)),
+            "weight": np.random.uniform(0.1, 0.3, len(symbols)),
+            "return": np.random.uniform(-0.1, 0.2, len(symbols))
+        })
+    else:
+        # 其他數據源的模擬數據
+        n_records = np.random.randint(20, 100)
+        return pd.DataFrame({
+            "date": pd.date_range(start_date, end_date, periods=n_records),
+            "value": np.random.uniform(0, 100, n_records),
+            "category": np.random.choice(["A", "B", "C"], n_records)
+        })
+
+
+def generate_plotly_chart(data: pd.DataFrame, config: Dict[str, Any]):
+    """生成 Plotly 圖表"""
+    if not PLOTLY_AVAILABLE:
+        return None
+
+    chart_type = config.get("type")
+    x_col = config.get("x_column")
+    y_col = config.get("y_column")
+
+    try:
+        if chart_type == "line":
+            fig = px.line(data, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+        elif chart_type == "bar":
+            fig = px.bar(data, x=x_col, y=y_col, title=f"{y_col} by {x_col}")
+        elif chart_type == "scatter":
+            fig = px.scatter(data, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+        elif chart_type == "histogram":
+            fig = px.histogram(data, x=x_col, title=f"Distribution of {x_col}")
+        elif chart_type == "pie":
+            fig = px.pie(data, names=x_col, values=y_col, title=f"{y_col} by {x_col}")
+        else:
+            return None
+
+        return fig
+    except Exception as e:
+        st.error(f"圖表生成失敗: {e}")
+        return None

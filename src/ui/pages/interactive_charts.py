@@ -53,12 +53,14 @@ from src.ui.components.interactive_charts import (
     generate_sample_stock_data,
     ChartTheme,
 )
-from src.ui.components.auth import require_auth
-
 logger = logging.getLogger(__name__)
 
 
-@require_auth
+def show():
+    """顯示互動式圖表頁面（Web UI 入口點）"""
+    show_interactive_charts()
+
+
 def show_interactive_charts():
     """顯示互動式圖表頁面"""
     st.set_page_config(

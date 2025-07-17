@@ -96,6 +96,16 @@ def get_data_source_status() -> Dict[str, Dict[str, Any]]:
             "update_frequency": "即時",
             "coverage": "美股、部分國際股票",
         },
+        "qstock": {
+            "status": "正常",
+            "type": "中國股市數據",
+            "last_update": "2024-01-15 09:25:00",
+            "api_status": "正常",
+            "data_quality": "優良",
+            "description": "提供中國A股、港股、美股等多市場數據",
+            "update_frequency": "即時",
+            "coverage": "A股、港股、美股、期貨、ETF",
+        },
         "FinMind": {
             "status": "正常",
             "type": "台股資料",

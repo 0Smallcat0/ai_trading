@@ -1,0 +1,990 @@
+#!/usr/bin/env python3
+"""
+AI交易系統 - 重新設計的 Web UI (全新 UX/UI 設計)
+
+全面重新設計的用戶介面，專注於：
+- 直觀的儀表板設計
+- 零基礎用戶友好
+- 即時交易狀況展示
+- 整合式功能模組
+- 響應式設計
+
+版本: v3.0 Redesigned
+狀態: 🎨 全新設計
+最後更新: 2025-01-16
+
+使用方式:
+    python -m streamlit run src/ui/web_ui_redesigned.py --server.address=127.0.0.1 --server.port=8501
+"""
+
+import os
+import sys
+import logging
+import importlib.util
+from typing import Dict, Any, Optional, List
+from datetime import datetime, timedelta
+
+# 添加專案根目錄到Python路徑
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'src'))
+
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+import numpy as np
+
+# 設定日誌
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def setup_page_config():
+    """設定頁面配置"""
+    st.set_page_config(
+        page_title="AI Trading System - 智能交易平台",
+        page_icon="🚀",
+        layout="wide",
+        initial_sidebar_state="collapsed"  # 預設收合側邊欄
+    )
+
+def apply_custom_css():
+    """應用自定義 CSS 樣式"""
+    st.markdown("""
+    <style>
+    /* 主要容器樣式 */
+    .main-container {
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    /* 卡片樣式 */
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    /* 功能模組卡片 */
+    .function-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 0.5rem;
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    
+    .function-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    
+    /* 狀態指示器 */
+    .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .status-active { background-color: #4CAF50; }
+    .status-warning { background-color: #FF9800; }
+    .status-error { background-color: #F44336; }
+    .status-inactive { background-color: #9E9E9E; }
+    
+    /* 導航按鈕 */
+    .nav-button {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        margin: 0.2rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .nav-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    /* 新手提示 */
+    .beginner-tip {
+        background: #E3F2FD;
+        border-left: 4px solid #2196F3;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0 5px 5px 0;
+    }
+    
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+        .metric-card {
+            padding: 1rem;
+        }
+        .function-card {
+            margin: 0.25rem;
+            padding: 0.75rem;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+def show_welcome_header():
+    """顯示歡迎標題區域"""
+    current_time = datetime.now()
+    
+    # 主標題區域
+    st.markdown("""
+    <div class="main-container">
+        <h1 style="color: white; margin: 0; font-size: 2.5rem;">
+            🚀 AI智能交易平台
+        </h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 1.1rem;">
+            歡迎回來！讓我們一起探索智能交易的世界
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 快速狀態欄
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown("""
+        <div class="metric-card">
+            <div style="display: flex; align-items: center;">
+                <span class="status-indicator status-active"></span>
+                <strong>系統狀態</strong>
+            </div>
+            <div style="font-size: 1.2rem; color: #4CAF50; margin-top: 0.5rem;">
+                ✅ 運行正常
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display: flex; align-items: center;">
+                <span class="status-indicator status-active"></span>
+                <strong>市場狀態</strong>
+            </div>
+            <div style="font-size: 1.2rem; color: #2196F3; margin-top: 0.5rem;">
+                📈 開盤中
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="metric-card">
+            <div style="display: flex; align-items: center;">
+                <span class="status-indicator status-warning"></span>
+                <strong>活躍策略</strong>
+            </div>
+            <div style="font-size: 1.2rem; color: #FF9800; margin-top: 0.5rem;">
+                ⚡ 3 個運行中
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display: flex; align-items: center;">
+                <span class="status-indicator status-active"></span>
+                <strong>當前時間</strong>
+            </div>
+            <div style="font-size: 1.2rem; color: #666; margin-top: 0.5rem;">
+                🕐 {current_time.strftime('%H:%M:%S')}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+def show_portfolio_overview():
+    """顯示投資組合概覽"""
+    st.markdown("## 💼 投資組合概覽")
+    
+    # 模擬投資組合數據
+    portfolio_value = 1250000
+    daily_change = 15600
+    daily_change_pct = 1.26
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            label="總資產價值",
+            value=f"${portfolio_value:,}",
+            delta=f"${daily_change:,}"
+        )
+    
+    with col2:
+        st.metric(
+            label="今日收益率",
+            value=f"{daily_change_pct:+.2f}%",
+            delta=f"{daily_change_pct:+.2f}%"
+        )
+    
+    with col3:
+        st.metric(
+            label="持倉數量",
+            value="8",
+            delta="0"
+        )
+    
+    with col4:
+        st.metric(
+            label="可用現金",
+            value="$125,000",
+            delta="-$5,000"
+        )
+    
+    # 投資組合分佈圖
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        # 創建投資組合價值趨勢圖
+        dates = pd.date_range(start=datetime.now() - timedelta(days=30), end=datetime.now(), freq='D')
+        values = np.cumsum(np.random.randn(len(dates)) * 5000) + 1200000
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=values,
+            mode='lines',
+            name='投資組合價值',
+            line=dict(color='#667eea', width=3)
+        ))
+        
+        fig.update_layout(
+            title="30天投資組合價值趨勢",
+            xaxis_title="日期",
+            yaxis_title="價值 ($)",
+            height=300,
+            showlegend=False
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # 資產分佈餅圖
+        holdings = {
+            'AAPL': 25,
+            'TSLA': 20,
+            'MSFT': 15,
+            'GOOGL': 12,
+            'NVDA': 10,
+            '其他': 18
+        }
+        
+        fig_pie = px.pie(
+            values=list(holdings.values()),
+            names=list(holdings.keys()),
+            title="資產分佈"
+        )
+        
+        fig_pie.update_layout(height=300)
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+def show_quick_actions():
+    """顯示快速操作區域"""
+    st.markdown("## ⚡ 快速操作")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("🎯 新建策略", use_container_width=True, type="primary"):
+            st.session_state.current_view = "strategy_management"
+            st.rerun()
+    
+    with col2:
+        if st.button("📊 查看回測", use_container_width=True):
+            st.session_state.current_view = "backtest"
+            st.rerun()
+    
+    with col3:
+        if st.button("⚠️ 風險監控", use_container_width=True):
+            st.session_state.current_view = "risk_management"
+            st.rerun()
+    
+    with col4:
+        if st.button("📈 市場分析", use_container_width=True):
+            st.session_state.current_view = "market_analysis"
+            st.rerun()
+
+def show_beginner_guide():
+    """顯示新手引導"""
+    if st.session_state.get("show_beginner_guide", True):
+        st.markdown("""
+        <div class="beginner-tip">
+            <h4>💡 新手提示</h4>
+            <p>歡迎使用AI智能交易平台！這裡是您的專屬交易助手。</p>
+            <ul>
+                <li><strong>投資組合概覽</strong>：查看您的資產狀況和收益表現</li>
+                <li><strong>快速操作</strong>：一鍵訪問常用功能</li>
+                <li><strong>功能模組</strong>：探索更多高級功能</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("我已了解，不再顯示", key="hide_beginner_guide"):
+            st.session_state.show_beginner_guide = False
+            st.rerun()
+
+def get_function_modules():
+    """獲取功能模組配置"""
+    return {
+        "core_functions": {
+            "title": "🎯 核心功能",
+            "modules": [
+                {
+                    "key": "strategy_management",
+                    "title": "策略管理",
+                    "icon": "🎯",
+                    "description": "創建、編輯和管理交易策略",
+                    "status": "active",
+                    "quick_actions": ["新建策略", "策略列表", "策略優化"]
+                },
+                {
+                    "key": "backtest",
+                    "title": "回測分析",
+                    "icon": "📊",
+                    "description": "測試策略歷史表現",
+                    "status": "active",
+                    "quick_actions": ["開始回測", "結果分析", "參數優化"]
+                },
+                {
+                    "key": "portfolio_management",
+                    "title": "投資組合",
+                    "icon": "💼",
+                    "description": "管理和優化投資組合",
+                    "status": "active",
+                    "quick_actions": ["資產配置", "風險分析", "再平衡"]
+                },
+                {
+                    "key": "risk_management",
+                    "title": "風險控制",
+                    "icon": "⚠️",
+                    "description": "監控和控制投資風險",
+                    "status": "warning",
+                    "quick_actions": ["風險監控", "警報設置", "緊急停損"]
+                }
+            ]
+        },
+        "advanced_functions": {
+            "title": "🤖 高級功能",
+            "modules": [
+                {
+                    "key": "ai_models",
+                    "title": "AI 模型",
+                    "icon": "🤖",
+                    "description": "機器學習模型訓練和預測",
+                    "status": "active",
+                    "quick_actions": ["模型訓練", "預測分析", "模型評估"]
+                },
+                {
+                    "key": "text_analysis",
+                    "title": "文本分析",
+                    "icon": "📝",
+                    "description": "新聞情感分析和市場情緒",
+                    "status": "active",
+                    "quick_actions": ["情感分析", "新聞監控", "市場情緒"]
+                },
+                {
+                    "key": "trade_execution",
+                    "title": "交易執行",
+                    "icon": "🚀",
+                    "description": "自動化交易執行",
+                    "status": "inactive",
+                    "quick_actions": ["手動交易", "自動執行", "訂單管理"]
+                },
+                {
+                    "key": "system_monitoring",
+                    "title": "系統監控",
+                    "icon": "📈",
+                    "description": "系統性能和狀態監控",
+                    "status": "active",
+                    "quick_actions": ["性能監控", "日誌查看", "警報管理"]
+                }
+            ]
+        },
+        "data_functions": {
+            "title": "📊 數據功能",
+            "modules": [
+                {
+                    "key": "data_management",
+                    "title": "數據管理",
+                    "icon": "📈",
+                    "description": "數據載入、清理和管理",
+                    "status": "active",
+                    "quick_actions": ["數據導入", "數據清理", "數據查看"]
+                },
+                {
+                    "key": "feature_engineering",
+                    "title": "特徵工程",
+                    "icon": "🔧",
+                    "description": "技術指標和特徵計算",
+                    "status": "active",
+                    "quick_actions": ["指標計算", "特徵選擇", "數據轉換"]
+                },
+                {
+                    "key": "reports",
+                    "title": "報告分析",
+                    "icon": "📋",
+                    "description": "生成交易報告和分析",
+                    "status": "active",
+                    "quick_actions": ["績效報告", "風險報告", "交易記錄"]
+                }
+            ]
+        }
+    }
+
+def show_function_modules():
+    """顯示功能模組"""
+    st.markdown("## 🔧 功能模組")
+
+    modules_config = get_function_modules()
+
+    for category_key, category in modules_config.items():
+        st.markdown(f"### {category['title']}")
+
+        # 使用列佈局顯示模組
+        cols = st.columns(len(category['modules']))
+
+        for i, module in enumerate(category['modules']):
+            with cols[i]:
+                # 狀態指示器
+                status_class = f"status-{module['status']}"
+                status_text = {
+                    "active": "運行中",
+                    "warning": "需注意",
+                    "error": "錯誤",
+                    "inactive": "未啟用"
+                }.get(module['status'], "未知")
+
+                # 模組卡片
+                st.markdown(f"""
+                <div class="function-card">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                            {module['icon']}
+                        </div>
+                        <h4 style="margin: 0.5rem 0;">{module['title']}</h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0.5rem 0;">
+                            {module['description']}
+                        </p>
+                        <div style="margin-top: 1rem;">
+                            <span class="status-indicator {status_class}"></span>
+                            <small>{status_text}</small>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # 快速操作按鈕
+                if st.button(f"進入 {module['title']}", key=f"enter_{module['key']}", use_container_width=True):
+                    st.session_state.current_view = module['key']
+                    st.rerun()
+
+                # 快速操作下拉選單
+                with st.expander(f"快速操作", expanded=False):
+                    for action in module['quick_actions']:
+                        if st.button(action, key=f"quick_{module['key']}_{action}", use_container_width=True):
+                            st.session_state.current_view = module['key']
+                            st.session_state.quick_action = action
+                            st.rerun()
+
+        st.markdown("---")
+
+def show_market_overview():
+    """顯示市場概況"""
+    st.markdown("## 📈 市場概況")
+
+    # 模擬市場數據
+    market_data = {
+        "上證指數": {"value": 3245.67, "change": +12.34, "change_pct": +0.38},
+        "深證成指": {"value": 12456.78, "change": -23.45, "change_pct": -0.19},
+        "創業板指": {"value": 2567.89, "change": +45.67, "change_pct": +1.81},
+        "恆生指數": {"value": 18234.56, "change": -67.89, "change_pct": -0.37}
+    }
+
+    cols = st.columns(len(market_data))
+
+    for i, (index_name, data) in enumerate(market_data.items()):
+        with cols[i]:
+            delta_color = "normal" if data["change"] >= 0 else "inverse"
+            st.metric(
+                label=index_name,
+                value=f"{data['value']:.2f}",
+                delta=f"{data['change']:+.2f} ({data['change_pct']:+.2f}%)",
+                delta_color=delta_color
+            )
+
+    # 市場熱點
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.markdown("### 📊 今日市場熱點")
+
+        # 創建熱點股票表格
+        hot_stocks = pd.DataFrame({
+            "股票代碼": ["000001", "000002", "600036", "600519", "000858"],
+            "股票名稱": ["平安銀行", "萬科A", "招商銀行", "貴州茅台", "五糧液"],
+            "現價": [12.34, 23.45, 45.67, 1890.12, 234.56],
+            "漲跌幅": ["+5.67%", "-2.34%", "+3.45%", "+1.23%", "+4.56%"],
+            "成交量": ["1.2億", "8900萬", "5600萬", "234萬", "3400萬"]
+        })
+
+        # 添加顏色標記
+        def color_change(val):
+            if val.startswith('+'):
+                return 'color: red'
+            elif val.startswith('-'):
+                return 'color: green'
+            return ''
+
+        styled_df = hot_stocks.style.applymap(color_change, subset=['漲跌幅'])
+        st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+    with col2:
+        st.markdown("### 📰 市場資訊")
+
+        news_items = [
+            {"time": "09:30", "title": "央行宣布降準0.25個百分點", "type": "重要"},
+            {"time": "10:15", "title": "科技股集體上漲", "type": "行業"},
+            {"time": "11:00", "title": "外資淨流入50億元", "type": "資金"},
+            {"time": "14:30", "title": "新能源板塊活躍", "type": "板塊"},
+            {"time": "15:00", "title": "A股收盤上漲1.2%", "type": "市場"}
+        ]
+
+        for news in news_items:
+            type_color = {
+                "重要": "🔴",
+                "行業": "🟡",
+                "資金": "🟢",
+                "板塊": "🔵",
+                "市場": "🟣"
+            }.get(news["type"], "⚪")
+
+            st.markdown(f"""
+            <div style="padding: 0.5rem; margin: 0.25rem 0; background: #f8f9fa; border-radius: 5px;">
+                <div style="font-size: 0.8rem; color: #666;">{news['time']} {type_color} {news['type']}</div>
+                <div style="font-weight: 500;">{news['title']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+def show_recent_activities():
+    """顯示最近活動"""
+    st.markdown("## 📋 最近活動")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### 🎯 策略動態")
+
+        activities = [
+            {"time": "2小時前", "action": "創建", "target": "動量策略 v2.1", "status": "成功"},
+            {"time": "4小時前", "action": "回測", "target": "均值回歸策略", "status": "完成"},
+            {"time": "6小時前", "action": "優化", "target": "多因子策略", "status": "進行中"},
+            {"time": "8小時前", "action": "部署", "target": "套利策略", "status": "成功"},
+            {"time": "1天前", "action": "更新", "target": "風險控制參數", "status": "成功"}
+        ]
+
+        for activity in activities:
+            status_icon = {
+                "成功": "✅",
+                "完成": "✅",
+                "進行中": "🔄",
+                "失敗": "❌",
+                "警告": "⚠️"
+            }.get(activity["status"], "ℹ️")
+
+            st.markdown(f"""
+            <div style="padding: 0.75rem; margin: 0.5rem 0; background: white; border-radius: 8px; border-left: 3px solid #667eea;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{activity['action']}</strong> {activity['target']}
+                    </div>
+                    <div>
+                        {status_icon} {activity['status']}
+                    </div>
+                </div>
+                <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+                    {activity['time']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("### 📊 系統狀態")
+
+        system_status = [
+            {"component": "數據服務", "status": "正常", "uptime": "99.9%"},
+            {"component": "交易引擎", "status": "正常", "uptime": "99.8%"},
+            {"component": "風控系統", "status": "正常", "uptime": "100%"},
+            {"component": "AI模型", "status": "更新中", "uptime": "98.5%"},
+            {"component": "監控系統", "status": "正常", "uptime": "99.7%"}
+        ]
+
+        for status in system_status:
+            status_color = {
+                "正常": "#4CAF50",
+                "警告": "#FF9800",
+                "錯誤": "#F44336",
+                "更新中": "#2196F3",
+                "維護中": "#9E9E9E"
+            }.get(status["status"], "#666")
+
+            st.markdown(f"""
+            <div style="padding: 0.75rem; margin: 0.5rem 0; background: white; border-radius: 8px; border-left: 3px solid {status_color};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{status['component']}</strong>
+                    </div>
+                    <div style="color: {status_color};">
+                        {status['status']}
+                    </div>
+                </div>
+                <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+                    運行時間: {status['uptime']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # 快速系統操作
+        st.markdown("### ⚡ 快速操作")
+
+        col_a, col_b = st.columns(2)
+
+        with col_a:
+            if st.button("🔄 刷新數據", use_container_width=True):
+                st.success("數據已刷新")
+                st.rerun()
+
+        with col_b:
+            if st.button("📊 系統報告", use_container_width=True):
+                st.session_state.current_view = "system_monitoring"
+                st.rerun()
+
+def load_page_module(module_name: str):
+    """動態載入頁面模組"""
+    try:
+        module_path = f"src.ui.pages.{module_name}"
+        spec = importlib.util.find_spec(module_path)
+
+        if spec is None:
+            return None
+
+        module = importlib.import_module(module_path)
+        return module
+
+    except Exception as e:
+        logger.error(f"載入模組 {module_name} 失敗: {e}")
+        return None
+
+def show_module_page(module_key: str):
+    """顯示模組頁面"""
+    # 頁面標題和導航
+    col1, col2 = st.columns([1, 4])
+
+    with col1:
+        if st.button("🏠 返回主頁", type="secondary", use_container_width=True):
+            st.session_state.current_view = "dashboard"
+            if "quick_action" in st.session_state:
+                del st.session_state.quick_action
+            st.rerun()
+
+    with col2:
+        # 麵包屑導航
+        st.markdown(f"**導航路徑:** 主頁 > {get_module_title(module_key)}")
+
+    st.markdown("---")
+
+    # 載入並顯示模組
+    module = load_page_module(module_key)
+
+    if module and hasattr(module, 'show'):
+        try:
+            # 顯示快速操作提示
+            if "quick_action" in st.session_state:
+                st.info(f"💡 您選擇了快速操作：{st.session_state.quick_action}")
+                del st.session_state.quick_action
+
+            # 執行模組的 show 函數
+            module.show()
+
+        except Exception as e:
+            logger.error(f"執行模組 {module_key} 失敗: {e}")
+            show_module_fallback(module_key, str(e))
+    else:
+        show_module_fallback(module_key, "模組載入失敗")
+
+def get_module_title(module_key: str) -> str:
+    """獲取模組標題"""
+    modules_config = get_function_modules()
+
+    for category in modules_config.values():
+        for module in category['modules']:
+            if module['key'] == module_key:
+                return module['title']
+
+    return module_key.replace('_', ' ').title()
+
+def show_module_fallback(module_key: str, error_msg: str = ""):
+    """顯示模組載入失敗的備用內容"""
+    module_title = get_module_title(module_key)
+
+    st.error(f"❌ 無法載入 {module_title} 模組")
+
+    if error_msg:
+        with st.expander("錯誤詳情"):
+            st.code(error_msg)
+
+    st.markdown(f"""
+    ### 📋 {module_title} 功能說明
+
+    此模組提供以下功能：
+    """)
+
+    # 根據模組類型顯示不同的備用內容
+    if module_key == "strategy_management":
+        st.markdown("""
+        - 📝 創建和編輯交易策略
+        - 📊 策略績效分析
+        - 🔧 參數優化
+        - 📋 策略版本管理
+        """)
+
+        st.info("💡 提示：您可以在策略管理中創建自定義交易策略，並通過回測驗證其效果。")
+
+    elif module_key == "backtest":
+        st.markdown("""
+        - 📈 歷史數據回測
+        - 📊 績效指標分析
+        - 🎯 參數敏感性分析
+        - 📋 回測報告生成
+        """)
+
+        st.info("💡 提示：回測可以幫助您評估策略在歷史數據上的表現。")
+
+    elif module_key == "portfolio_management":
+        st.markdown("""
+        - 💼 投資組合構建
+        - ⚖️ 資產配置優化
+        - 📊 風險收益分析
+        - 🔄 再平衡策略
+        """)
+
+        st.info("💡 提示：良好的投資組合管理是成功投資的關鍵。")
+
+    elif module_key == "risk_management":
+        st.markdown("""
+        - ⚠️ 實時風險監控
+        - 🚨 風險警報設置
+        - 📊 風險指標計算
+        - 🛡️ 風險控制措施
+        """)
+
+        st.warning("⚠️ 重要：風險管理是投資中最重要的環節，請務必重視。")
+
+    else:
+        st.markdown(f"""
+        - 🔧 {module_title} 核心功能
+        - 📊 數據分析和處理
+        - 📋 結果展示和報告
+        - ⚙️ 參數配置和優化
+        """)
+
+    # 相關功能推薦
+    st.markdown("### 🔗 相關功能推薦")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("📊 查看儀表板", use_container_width=True):
+            st.session_state.current_view = "dashboard"
+            st.rerun()
+
+    with col2:
+        if st.button("🎓 新手指南", use_container_width=True):
+            st.session_state.current_view = "beginner_hub"
+            st.rerun()
+
+    with col3:
+        if st.button("📋 系統報告", use_container_width=True):
+            st.session_state.current_view = "reports"
+            st.rerun()
+
+def setup_auto_refresh():
+    """設置自動刷新功能"""
+    # 側邊欄設置
+    with st.sidebar:
+        st.markdown("### ⚙️ 系統設置")
+
+        # 自動刷新設置
+        auto_refresh = st.checkbox("自動刷新數據", value=True, key="auto_refresh")
+
+        if auto_refresh:
+            refresh_interval = st.slider(
+                "刷新間隔 (秒)",
+                min_value=5,
+                max_value=60,
+                value=30,
+                step=5,
+                key="refresh_interval"
+            )
+
+            # 顯示下次刷新時間
+            if "last_refresh" not in st.session_state:
+                st.session_state.last_refresh = datetime.now()
+
+            next_refresh = st.session_state.last_refresh + timedelta(seconds=refresh_interval)
+            time_until_refresh = (next_refresh - datetime.now()).total_seconds()
+
+            if time_until_refresh <= 0:
+                st.session_state.last_refresh = datetime.now()
+                st.rerun()
+            else:
+                st.info(f"下次刷新: {int(time_until_refresh)}秒後")
+
+        # 顯示設置
+        st.markdown("### 🎨 顯示設置")
+
+        # 主題設置
+        theme = st.selectbox(
+            "選擇主題",
+            ["自動", "淺色", "深色"],
+            index=0,
+            key="theme_setting"
+        )
+
+        # 佈局設置
+        layout_mode = st.selectbox(
+            "佈局模式",
+            ["標準", "緊湊", "寬鬆"],
+            index=0,
+            key="layout_mode"
+        )
+
+        # 新手模式
+        beginner_mode = st.checkbox(
+            "新手模式",
+            value=st.session_state.get("show_beginner_guide", True),
+            key="beginner_mode"
+        )
+
+        if beginner_mode != st.session_state.get("show_beginner_guide", True):
+            st.session_state.show_beginner_guide = beginner_mode
+
+        # 系統信息
+        st.markdown("### 📊 系統信息")
+        st.info(f"當前時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        st.info(f"當前頁面: {st.session_state.get('current_view', 'dashboard')}")
+
+        # 快速導航
+        st.markdown("### 🚀 快速導航")
+
+        quick_nav_options = [
+            ("🏠 主頁", "dashboard"),
+            ("🎯 策略管理", "strategy_management"),
+            ("📊 回測分析", "backtest"),
+            ("💼 投資組合", "portfolio_management"),
+            ("⚠️ 風險控制", "risk_management"),
+            ("🤖 AI 模型", "ai_models"),
+            ("📈 系統監控", "system_monitoring")
+        ]
+
+        for label, view_key in quick_nav_options:
+            if st.button(label, key=f"quick_nav_{view_key}", use_container_width=True):
+                st.session_state.current_view = view_key
+                st.rerun()
+
+def main():
+    """主函數"""
+    try:
+        # 設定頁面配置
+        setup_page_config()
+
+        # 應用自定義樣式
+        apply_custom_css()
+
+        # 初始化 session state
+        if "current_view" not in st.session_state:
+            st.session_state.current_view = "dashboard"
+
+        # 設置自動刷新和側邊欄
+        setup_auto_refresh()
+
+        # 顯示歡迎標題
+        show_welcome_header()
+
+        # 顯示新手引導
+        if st.session_state.get("beginner_mode", True):
+            show_beginner_guide()
+
+        # 主要內容區域
+        if st.session_state.current_view == "dashboard":
+            # 顯示投資組合概覽
+            show_portfolio_overview()
+
+            # 顯示快速操作
+            show_quick_actions()
+
+            # 顯示市場概況
+            show_market_overview()
+
+            # 顯示功能模組
+            show_function_modules()
+
+            # 顯示最近活動
+            show_recent_activities()
+
+            # 頁腳信息
+            st.markdown("---")
+            st.markdown("""
+            <div style="text-align: center; color: #666; padding: 2rem;">
+                <p>🚀 AI智能交易平台 v3.0 | 專為量化交易而設計</p>
+                <p>💡 提示：使用側邊欄快速導航到不同功能模組</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        else:
+            # 顯示其他頁面
+            show_module_page(st.session_state.current_view)
+
+    except Exception as e:
+        logger.error(f"Web UI 執行失敗: {e}")
+        st.error(f"❌ 系統錯誤: {e}")
+        st.info("請重新整理頁面或聯繫技術支援")
+
+        # 錯誤恢復選項
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            if st.button("🏠 返回主頁", type="primary"):
+                st.session_state.current_view = "dashboard"
+                st.rerun()
+
+        with col2:
+            if st.button("🔄 重新載入", type="secondary"):
+                st.rerun()
+
+        with col3:
+            if st.button("🧹 清除緩存", type="secondary"):
+                for key in list(st.session_state.keys()):
+                    if key not in ["current_view"]:
+                        del st.session_state[key]
+                st.rerun()
+
+if __name__ == "__main__":
+    main()

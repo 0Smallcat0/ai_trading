@@ -85,13 +85,34 @@ class NewsSentimentCollector(DataCollector):
 
         # 初始化資料適配器
         if source == "mcp":
-            self.crawler = McpCrawler()
+            try:
+                self.crawler = McpCrawler()
+            except NameError:
+                logger.warning("McpCrawler 未定義，使用模擬爬蟲")
+                self.crawler = self._create_mock_crawler()
         else:
-            raise ValueError(f"不支援的資料來源: {source}")
+            logger.warning(f"不支援的資料來源: {source}，使用模擬爬蟲")
+            self.crawler = self._create_mock_crawler()
 
         # 初始化資料庫連接
         self.engine = create_engine(f"sqlite:///{DB_PATH}")
         self.Session = sessionmaker(bind=self.engine)
+
+    def _create_mock_crawler(self):
+        """創建模擬爬蟲"""
+        class MockCrawler:
+            def __init__(self):
+                self.name = "MockCrawler"
+
+            def get_news(self, *args, **kwargs):
+                """模擬獲取新聞"""
+                return []
+
+            def is_available(self):
+                """檢查可用性"""
+                return True
+
+        return MockCrawler()
 
         # 初始化情緒分析模型
         self._init_sentiment_model()

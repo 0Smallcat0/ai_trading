@@ -70,6 +70,9 @@ class AIModelManagementService:
         self.training = ModelTraining(self.db_path, self.models_dir)
         self.inference = ModelInference(self.db_path, self.models_dir)
 
+        # 初始化示例數據
+        self._init_sample_data()
+
         logger.info("AI模型管理服務初始化完成")
 
     def _init_database(self):
@@ -178,6 +181,63 @@ class AIModelManagementService:
             logger.error("初始化AI模型資料庫時發生錯誤: %s", e)
             raise ModelManagementError("資料庫初始化失敗") from e
 
+    def _init_sample_data(self):
+        """初始化示例模型數據"""
+        try:
+            # 檢查是否已有模型數據
+            existing_models = self.list_models()
+            if existing_models:
+                return  # 已有數據，不需要初始化
+
+            # 創建示例模型
+            sample_models = [
+                {
+                    "name": "股價預測LSTM模型",
+                    "model_type": "時間序列模型",
+                    "sub_type": "LSTM",
+                    "description": "基於LSTM神經網路的股價預測模型，能夠分析歷史價格數據並預測未來趨勢",
+                    "author": "AI交易系統",
+                    "parameters": {"epochs": 100, "batch_size": 32, "learning_rate": 0.001},
+                    "features": ["開盤價", "收盤價", "最高價", "最低價", "成交量"],
+                    "target": "下一日收盤價"
+                },
+                {
+                    "name": "情感分析模型",
+                    "model_type": "自然語言處理",
+                    "sub_type": "情感分析",
+                    "description": "分析財經新聞和社交媒體情感，輔助投資決策",
+                    "author": "AI交易系統",
+                    "parameters": {"model_type": "BERT", "max_length": 512},
+                    "features": ["新聞標題", "新聞內容", "發布時間"],
+                    "target": "情感分數"
+                },
+                {
+                    "name": "風險評估模型",
+                    "model_type": "機器學習模型",
+                    "sub_type": "隨機森林",
+                    "description": "評估投資組合風險，提供風險等級建議",
+                    "author": "AI交易系統",
+                    "parameters": {"n_estimators": 100, "max_depth": 10},
+                    "features": ["波動率", "夏普比率", "最大回撤", "相關性"],
+                    "target": "風險等級"
+                }
+            ]
+
+            for model_data in sample_models:
+                try:
+                    model_id = self.create_model(model_data)
+                    # 設置一些模型為已訓練狀態
+                    if "LSTM" in model_data["name"]:
+                        self.update_model_status(model_id, "trained")
+                    elif "情感分析" in model_data["name"]:
+                        self.update_model_status(model_id, "deployed")
+                    logger.info("創建示例模型: %s", model_data["name"])
+                except Exception as e:
+                    logger.warning("創建示例模型失敗: %s - %s", model_data["name"], e)
+
+        except Exception as e:
+            logger.warning("初始化示例數據失敗: %s", e)
+
     # CRUD 操作方法
     def create_model(self, model_data: Dict) -> str:
         """創建新模型
@@ -211,6 +271,53 @@ class AIModelManagementService:
             List[Dict]: 模型列表
         """
         return self.crud.list_models(filters)
+
+    def get_models(self) -> List[Dict]:
+        """獲取所有模型（向後相容方法）
+
+        Returns:
+            List[Dict]: 模型列表
+        """
+        return self.list_models()
+
+    def get_model_types(self) -> Dict[str, List[str]]:
+        """獲取支援的模型類型
+
+        Returns:
+            Dict[str, List[str]]: 模型類型字典，鍵為主類型，值為子類型列表
+        """
+        return {
+            "機器學習模型": [
+                "線性回歸",
+                "邏輯回歸",
+                "決策樹",
+                "隨機森林",
+                "支持向量機",
+                "神經網路",
+                "深度學習"
+            ],
+            "時間序列模型": [
+                "ARIMA",
+                "LSTM",
+                "GRU",
+                "Transformer",
+                "Prophet"
+            ],
+            "強化學習模型": [
+                "Q-Learning",
+                "DQN",
+                "PPO",
+                "A3C",
+                "DDPG"
+            ],
+            "自然語言處理": [
+                "BERT",
+                "GPT",
+                "Word2Vec",
+                "情感分析",
+                "文本分類"
+            ]
+        }
 
     def delete_model(self, model_id: str) -> bool:
         """刪除模型

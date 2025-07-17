@@ -120,7 +120,8 @@ class PageLayout:
         Args:
             navigation_config: 導航配置
         """
-        with st.sidebar:
+        # 修復：移除 st.sidebar，改為主頁面顯示
+        with st.expander("🤖 AI 交易系統", expanded=False):
             # 系統標題
             st.markdown("## 🤖 AI 交易系統")
             st.markdown("---")

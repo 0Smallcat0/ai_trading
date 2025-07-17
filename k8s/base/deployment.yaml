@@ -36,110 +36,161 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - name: ai-trading-app
-        image: ai-trading:latest
-        imagePullPolicy: Always
-        ports:
-        - name: http-ui
-          containerPort: 8501
-          protocol: TCP
-        - name: http-api
-          containerPort: 8000
-          protocol: TCP
-        - name: metrics
-          containerPort: 9091
-          protocol: TCP
-        env:
-        - name: ENVIRONMENT
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: ENVIRONMENT
-        - name: LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: LOG_LEVEL
-        - name: DATABASE_URL
-          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)"
-        - name: POSTGRES_USER
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: POSTGRES_USER
-        - name: POSTGRES_DB
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: POSTGRES_DB
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ai-trading-secrets
-              key: POSTGRES_PASSWORD
-        - name: REDIS_URL
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: REDIS_URL
-        - name: JWT_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ai-trading-secrets
-              key: JWT_SECRET_KEY
-        envFrom:
-        - configMapRef:
-            name: ai-trading-config
-        - secretRef:
-            name: ai-trading-api-keys
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8501
-          initialDelaySeconds: 60
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8501
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        volumeMounts:
-        - name: app-data
-          mountPath: /app/data
-        - name: app-logs
-          mountPath: /app/logs
-        - name: app-uploads
-          mountPath: /app/uploads
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
-          capabilities:
-            drop:
-            - ALL
+        - name: ai-trading-app
+          image: ai-trading:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http-ui
+              containerPort: 8501
+              protocol: TCP
+            - name: http-api
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9091
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: ENVIRONMENT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: LOG_LEVEL
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)"
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ai-trading-secrets
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: REDIS_URL
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-trading-secrets
+                  key: JWT_SECRET_KEY
+          envFrom:
+            - configMapRef:
+                name: ai-trading-config
+            - secretRef:
+                name: ai-trading-api-keys
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8501
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8501
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/data
+            - name: app-logs
+              mountPath: /app/logs
+            - name: app-uploads
+              mountPath: /app/uploads
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: prometheus-tmp
+              mountPath: /tmp/prometheus
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
       volumes:
-      - name: app-data
-        persistentVolumeClaim:
-          claimName: ai-trading-data-pvc
-      - name: app-logs
-        persistentVolumeClaim:
-          claimName: ai-trading-logs-pvc
-      - name: app-uploads
-        persistentVolumeClaim:
-          claimName: ai-trading-uploads-pvc
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: ai-trading-data-pvc
+        - name: app-logs
+          persistentVolumeClaim:
+            claimName: ai-trading-logs-pvc
+        - name: app-uploads
+          persistentVolumeClaim:
+            claimName: ai-trading-uploads-pvc
+        - name: tmp-volume
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: prometheus-tmp
+          emptyDir:
+            sizeLimit: 100Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - ai-trading-system
+                    - key: component
+                      operator: In
+                      values:
+                        - app
+                topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: node-type
+                    operator: In
+                    values:
+                      - application
+      tolerations:
+        - key: "ai-trading"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 300
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 300
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
 
 ---
 apiVersion: apps/v1
@@ -165,71 +216,71 @@ spec:
         component: database
     spec:
       containers:
-      - name: postgres
-        image: postgres:15-alpine
-        ports:
         - name: postgres
-          containerPort: 5432
-          protocol: TCP
-        env:
-        - name: POSTGRES_DB
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: POSTGRES_DB
-        - name: POSTGRES_USER
-          valueFrom:
-            configMapKeyRef:
-              name: ai-trading-config
-              key: POSTGRES_USER
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ai-trading-secrets
-              key: POSTGRES_PASSWORD
-        - name: POSTGRES_INITDB_ARGS
-          value: "--encoding=UTF8 --locale=C"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          exec:
-            command:
-            - pg_isready
-            - -U
-            - $(POSTGRES_USER)
-            - -d
-            - $(POSTGRES_DB)
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          exec:
-            command:
-            - pg_isready
-            - -U
-            - $(POSTGRES_USER)
-            - -d
-            - $(POSTGRES_DB)
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: postgres-data
-          mountPath: /var/lib/postgresql/data
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
+          image: postgres:15-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-trading-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ai-trading-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_INITDB_ARGS
+              value: "--encoding=UTF8 --locale=C"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+                - -d
+                - $(POSTGRES_DB)
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+                - -d
+                - $(POSTGRES_DB)
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
       volumes:
-      - name: postgres-data
-        persistentVolumeClaim:
-          claimName: postgres-data-pvc
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data-pvc
 
 ---
 apiVersion: apps/v1
@@ -253,56 +304,56 @@ spec:
         component: cache
     spec:
       containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
         - name: redis
-          containerPort: 6379
-          protocol: TCP
-        command:
-        - redis-server
-        - --appendonly
-        - "yes"
-        - --requirepass
-        - $(REDIS_PASSWORD)
-        env:
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ai-trading-secrets
-              key: REDIS_PASSWORD
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "250m"
-        livenessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: redis-data
-          mountPath: /data
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
+          image: redis:7-alpine
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          command:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --requirepass
+            - $(REDIS_PASSWORD)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ai-trading-secrets
+                  key: REDIS_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
       volumes:
-      - name: redis-data
-        persistentVolumeClaim:
-          claimName: redis-data-pvc
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-data-pvc

@@ -1,641 +1,407 @@
-"""風險管理器模組
+"""
+風險管理器模組
 
-此模組實現了風險管理器，整合了各種風險管理策略和機制。
+此模組提供統一的風險管理介面，整合各種風險控制機制。
+
+主要功能：
+- 統一風險管理介面
+- 風險參數管理
+- 風險評估和控制
+- 風險事件處理
+
+Example:
+    >>> risk_manager = RiskManager()
+    >>> risk_assessment = risk_manager.assess_trade_risk(symbol="2330", quantity=1000)
 """
 
-import json
-import os
-import threading
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-
+import logging
 import pandas as pd
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Union, Tuple
+from dataclasses import dataclass
+import numpy as np
 
-from src.core.event_monitor import Event, EventSeverity, EventSource, EventType
-from src.core.logger import logger
+# 導入現有的風險控制模組
+try:
+    from .live.unified_risk_controller import UnifiedRiskController
+    from .live.position_limiter import PositionLimiter
+    from .live.stop_loss_monitor import StopLossMonitor
+    from .live.fund_monitor import FundMonitor
+    from .live.emergency_risk_control import EmergencyRiskControl
+except ImportError:
+    # 如果導入失敗，使用模擬實現
+    UnifiedRiskController = None
+    PositionLimiter = None
+    StopLossMonitor = None
+    FundMonitor = None
+    EmergencyRiskControl = None
 
-from .circuit_breakers import CircuitBreaker
-from .portfolio_risk import PortfolioRiskManager
-from .position_sizing import PositionSizingStrategy
-from .risk_metrics import RiskMetricsCalculator
-from .stop_loss import StopLossStrategy
-from .take_profit import TakeProfitStrategy
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class RiskAssessment:
+    """風險評估結果"""
+    symbol: str
+    risk_level: str  # "low", "medium", "high", "critical"
+    risk_score: float  # 0-100
+    max_position_size: float
+    recommended_stop_loss: float
+    recommended_take_profit: float
+    warnings: List[str]
+    restrictions: List[str]
+    timestamp: datetime
+
+
+@dataclass
+class TradeRiskParams:
+    """交易風險參數"""
+    symbol: str
+    quantity: int
+    price: float
+    direction: str  # "buy" or "sell"
+    portfolio_value: float
+    current_positions: Dict[str, Any]
 
 
 class RiskManager:
     """風險管理器
-
-    整合各種風險管理策略和機制，提供全面的風險管理功能。
+    
+    提供統一的風險管理介面，整合各種風險控制機制，
+    包括部位限制、停損監控、資金管理等。
     """
-
-    _instance = None
-    _lock = threading.Lock()
-
-    def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
-        """實現單例模式"""
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = super(RiskManager, cls).__new__(cls)
-                cls._instance._initialized = False
-            return cls._instance
-
-    def __init__(self, config_path: Optional[str] = None):
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """初始化風險管理器
-
+        
         Args:
-            config_path: 配置文件路徑
+            config: 風險管理配置
         """
-        # 避免重複初始化
-        if self._initialized:
-            return
-
-        # 加載配置
-        self.config = self._load_config(config_path)
-
-        # 停損策略
-        self.stop_loss_strategies: Dict[str, StopLossStrategy] = {}
-
-        # 停利策略
-        self.take_profit_strategies: Dict[str, TakeProfitStrategy] = {}
-
-        # 倉位大小策略
-        self.position_sizing_strategies: Dict[str, PositionSizingStrategy] = {}
-
-        # 投資組合風險管理器
-        self.portfolio_risk_manager = PortfolioRiskManager(
-            max_position_percent=self.config.get("max_position_percent", 0.2),
-            max_sector_percent=self.config.get("max_sector_percent", 0.4),
-        )
-
-        # 熔斷機制
-        self.circuit_breakers: Dict[str, CircuitBreaker] = {}
-
-        # 交易狀態
-        self.trading_enabled = True
-
-        # 風險事件
-        self.risk_events: List[Dict[str, Any]] = []
-
-        # 風險指標
-        self.risk_metrics = {}
-
-        # 監控線程
-        self.monitoring_thread = None
-        self.running = False
-
-        # 標記為已初始化
-        self._initialized = True
-
-        logger.info("風險管理器已初始化")
-
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
-        """加載配置
-
-        Args:
-            config_path: 配置文件路徑
-
-        Returns:
-            Dict[str, Any]: 配置字典
-        """
-        default_config = {
-            "max_position_percent": 0.2,
-            "max_sector_percent": 0.4,
-            "max_drawdown": 0.2,
-            "max_daily_loss": 0.02,
-            "max_weekly_loss": 0.05,
-            "max_monthly_loss": 0.1,
-            "monitoring_interval": 60,
-            "log_level": "INFO",
+        self.config = config or self._get_default_config()
+        self.controllers = {}
+        
+        # 初始化風險控制器
+        self._initialize_controllers()
+        
+        # 風險參數
+        self.risk_params = self._get_default_risk_params()
+        
+    def _get_default_config(self) -> Dict[str, Any]:
+        """獲取預設配置"""
+        return {
+            "max_portfolio_risk": 2.0,  # 最大投資組合風險 (%)
+            "max_position_size": 10.0,  # 最大單一部位 (%)
+            "max_daily_loss": 5.0,      # 最大日損失 (%)
+            "max_drawdown": 15.0,       # 最大回撤 (%)
+            "var_confidence": 95.0,     # VaR 信心水準 (%)
+            "stop_loss_enabled": True,
+            "take_profit_enabled": True,
+            "real_time_monitoring": True
         }
-
-        if config_path and os.path.exists(config_path):
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                    # 合併默認配置
-                    return {**default_config, **config}
-            except Exception as e:
-                logger.error("加載配置文件時發生錯誤: %s", e)
-
-        return default_config
-
-    def register_stop_loss_strategy(
-        self, name: str, strategy: StopLossStrategy
-    ) -> bool:
-        """註冊停損策略
-
-        Args:
-            name: 策略名稱
-            strategy: 停損策略
-
-        Returns:
-            bool: 是否成功註冊
-        """
-        if name in self.stop_loss_strategies:
-            logger.warning("停損策略 '%s' 已存在", name)
-            return False
-
-        self.stop_loss_strategies[name] = strategy
-        logger.info("已註冊停損策略: %s", name)
-        return True
-
-    def register_take_profit_strategy(
-        self, name: str, strategy: TakeProfitStrategy
-    ) -> bool:
-        """
-        註冊停利策略
-
-        Args:
-            name: 策略名稱
-            strategy: 停利策略
-
-        Returns:
-            bool: 是否成功註冊
-        """
-        if name in self.take_profit_strategies:
-            logger.warning("停利策略 '%s' 已存在", name)
-            return False
-
-        self.take_profit_strategies[name] = strategy
-        logger.info("已註冊停利策略: %s", name)
-        return True
-
-    def register_position_sizing_strategy(
-        self, name: str, strategy: PositionSizingStrategy
-    ) -> bool:
-        """
-        註冊倉位大小策略
-
-        Args:
-            name: 策略名稱
-            strategy: 倉位大小策略
-
-        Returns:
-            bool: 是否成功註冊
-        """
-        if name in self.position_sizing_strategies:
-            logger.warning("倉位大小策略 '%sname' 已存在")
-            return False
-
-        self.position_sizing_strategies[name] = strategy
-        logger.info("已註冊倉位大小策略: %sname")
-        return True
-
-    def register_circuit_breaker(self, name: str, breaker: CircuitBreaker) -> bool:
-        """
-        註冊熔斷機制
-
-        Args:
-            name: 熔斷機制名稱
-            breaker: 熔斷機制
-
-        Returns:
-            bool: 是否成功註冊
-        """
-        if name in self.circuit_breakers:
-            logger.warning("熔斷機制 '%sname' 已存在")
-            return False
-
-        self.circuit_breakers[name] = breaker
-        logger.info("已註冊熔斷機制: %sname")
-        return True
-
-    def check_stop_loss(
-        self, strategy_name: str, entry_price: float, current_price: float, **kwargs
-    ) -> bool:
-        """
-        檢查停損
-
-        Args:
-            strategy_name: 策略名稱
-            entry_price: 進場價格
-            current_price: 當前價格
-            **kwargs: 其他參數
-
-        Returns:
-            bool: 是否應該停損
-        """
-        if strategy_name not in self.stop_loss_strategies:
-            logger.warning("停損策略 '%sstrategy_name' 不存在")
-            return False
-
-        strategy = self.stop_loss_strategies[strategy_name]
-
-        # 更新策略
-        strategy.update(current_price, **kwargs)
-
-        # 檢查是否應該停損
-        should_stop = strategy.should_stop_out(entry_price, current_price, **kwargs)
-
-        if should_stop:
-            logger.info(
-                f"觸發停損策略 '{strategy_name}': 進場價格 {entry_price}, 當前價格 {current_price}"
-            )
-
-            # 記錄風險事件
-            self._record_risk_event(
-                event_type="stop_loss",
-                strategy_name=strategy_name,
-                entry_price=entry_price,
-                current_price=current_price,
-                **kwargs,
-            )
-
-        return should_stop
-
-    def check_take_profit(
-        self, strategy_name: str, entry_price: float, current_price: float, **kwargs
-    ) -> bool:
-        """
-        檢查停利
-
-        Args:
-            strategy_name: 策略名稱
-            entry_price: 進場價格
-            current_price: 當前價格
-            **kwargs: 其他參數
-
-        Returns:
-            bool: 是否應該停利
-        """
-        if strategy_name not in self.take_profit_strategies:
-            logger.warning("停利策略 '%sstrategy_name' 不存在")
-            return False
-
-        strategy = self.take_profit_strategies[strategy_name]
-
-        # 更新策略
-        strategy.update(current_price, **kwargs)
-
-        # 檢查是否應該停利
-        should_take_profit = strategy.should_take_profit(
-            entry_price, current_price, **kwargs
-        )
-
-        if should_take_profit:
-            logger.info(
-                f"觸發停利策略 '{strategy_name}': 進場價格 {entry_price}, 當前價格 {current_price}"
-            )
-
-            # 記錄風險事件
-            self._record_risk_event(
-                event_type="take_profit",
-                strategy_name=strategy_name,
-                entry_price=entry_price,
-                current_price=current_price,
-                **kwargs,
-            )
-
-        return should_take_profit
-
-    def calculate_position_size(
-        self, strategy_name: str, portfolio_value: float, **kwargs
-    ) -> float:
-        """
-        計算倉位大小
-
-        Args:
-            strategy_name: 策略名稱
-            portfolio_value: 投資組合價值
-            **kwargs: 其他參數
-
-        Returns:
-            float: 倉位大小（金額）
-        """
-        if strategy_name not in self.position_sizing_strategies:
-            logger.warning("倉位大小策略 '%sstrategy_name' 不存在")
-            return 0.0
-
-        strategy = self.position_sizing_strategies[strategy_name]
-
-        # 計算倉位大小
-        position_size = strategy.calculate_position_size(portfolio_value, **kwargs)
-
-        logger.info(
-            f"計算倉位大小: 策略 '{strategy_name}', 投資組合價值 {portfolio_value}, 倉位大小 {position_size}"
-        )
-
-        return position_size
-
-    def calculate_shares(
-        self, strategy_name: str, portfolio_value: float, price: float, **kwargs
-    ) -> int:
-        """
-        計算股數
-
-        Args:
-            strategy_name: 策略名稱
-            portfolio_value: 投資組合價值
-            price: 股票價格
-            **kwargs: 其他參數
-
-        Returns:
-            int: 股數
-        """
-        if strategy_name not in self.position_sizing_strategies:
-            logger.warning("倉位大小策略 '%sstrategy_name' 不存在")
-            return 0
-
-        strategy = self.position_sizing_strategies[strategy_name]
-
-        # 計算股數
-        shares = strategy.calculate_shares(portfolio_value, price, **kwargs)
-
-        logger.info(
-            f"計算股數: 策略 '{strategy_name}', 投資組合價值 {portfolio_value}, 價格 {price}, 股數 {shares}"
-        )
-
-        return shares
-
-    def check_portfolio_limits(
-        self, symbol: str, value: float, sector: Optional[str] = None
-    ) -> bool:
-        """
-        檢查投資組合限制
-
+    
+    def _get_default_risk_params(self) -> Dict[str, Any]:
+        """獲取預設風險參數"""
+        return {
+            "stop_loss_type": "百分比停損",
+            "stop_loss_percent": 5.0,
+            "take_profit_type": "百分比停利",
+            "take_profit_percent": 15.0,
+            "position_sizing_method": "固定比例",
+            "max_positions": 10,
+            "correlation_limit": 0.7,
+            "var_method": "歷史模擬法",
+            "var_holding_period": 1,
+            "var_lookback_days": 252
+        }
+    
+    def _initialize_controllers(self):
+        """初始化風險控制器"""
+        try:
+            if UnifiedRiskController:
+                self.controllers['unified'] = UnifiedRiskController()
+            if PositionLimiter:
+                self.controllers['position'] = PositionLimiter()
+            if StopLossMonitor:
+                self.controllers['stop_loss'] = StopLossMonitor()
+            if FundMonitor:
+                self.controllers['fund'] = FundMonitor()
+            if EmergencyRiskControl:
+                self.controllers['emergency'] = EmergencyRiskControl()
+        except Exception as e:
+            logger.warning(f"初始化風險控制器失敗: {e}")
+    
+    def assess_trade_risk(
+        self,
+        symbol: str,
+        quantity: int,
+        price: float,
+        direction: str = "buy",
+        portfolio_value: float = 1000000.0,
+        current_positions: Optional[Dict[str, Any]] = None
+    ) -> RiskAssessment:
+        """評估交易風險
+        
         Args:
             symbol: 股票代碼
-            value: 倉位價值
-            sector: 行業分類
-
+            quantity: 交易數量
+            price: 交易價格
+            direction: 交易方向 ("buy" or "sell")
+            portfolio_value: 投資組合總值
+            current_positions: 當前持倉
+            
         Returns:
-            bool: 是否符合限制
+            RiskAssessment: 風險評估結果
         """
-        # 檢查所有限制
-        result = self.portfolio_risk_manager.check_all_limits(symbol, value, sector)
-
-        if not result:
-            logger.warning("倉位 %ssymbol 不符合投資組合限制")
-
-            # 記錄風險事件
-            self._record_risk_event(
-                event_type="portfolio_limit", symbol=symbol, value=value, sector=sector
+        try:
+            current_positions = current_positions or {}
+            
+            # 計算交易金額
+            trade_value = quantity * price
+            position_ratio = (trade_value / portfolio_value) * 100
+            
+            # 風險評估
+            risk_score = 0.0
+            risk_level = "low"
+            warnings = []
+            restrictions = []
+            
+            # 部位大小檢查
+            if position_ratio > self.config["max_position_size"]:
+                risk_score += 30
+                warnings.append(f"部位過大: {position_ratio:.1f}% > {self.config['max_position_size']}%")
+                
+            # 投資組合風險檢查
+            total_exposure = sum(pos.get('value', 0) for pos in current_positions.values())
+            portfolio_risk = ((total_exposure + trade_value) / portfolio_value) * 100
+            
+            if portfolio_risk > self.config["max_portfolio_risk"] * 10:  # 假設10倍槓桿
+                risk_score += 25
+                warnings.append(f"投資組合風險過高: {portfolio_risk:.1f}%")
+            
+            # 集中度風險檢查
+            if symbol in current_positions:
+                existing_value = current_positions[symbol].get('value', 0)
+                total_symbol_value = existing_value + trade_value
+                concentration = (total_symbol_value / portfolio_value) * 100
+                
+                if concentration > self.config["max_position_size"] * 1.5:
+                    risk_score += 20
+                    warnings.append(f"單一股票集中度過高: {concentration:.1f}%")
+            
+            # 確定風險等級
+            if risk_score >= 70:
+                risk_level = "critical"
+                restrictions.append("建議暫停交易")
+            elif risk_score >= 50:
+                risk_level = "high"
+                restrictions.append("建議減少部位")
+            elif risk_score >= 30:
+                risk_level = "medium"
+                warnings.append("建議謹慎操作")
+            else:
+                risk_level = "low"
+            
+            # 計算建議停損停利
+            stop_loss_percent = self.risk_params["stop_loss_percent"]
+            take_profit_percent = self.risk_params["take_profit_percent"]
+            
+            if direction == "buy":
+                recommended_stop_loss = price * (1 - stop_loss_percent / 100)
+                recommended_take_profit = price * (1 + take_profit_percent / 100)
+            else:
+                recommended_stop_loss = price * (1 + stop_loss_percent / 100)
+                recommended_take_profit = price * (1 - take_profit_percent / 100)
+            
+            # 計算最大建議部位
+            max_position_size = min(
+                self.config["max_position_size"] / 100 * portfolio_value / price,
+                quantity * 2  # 不超過請求數量的2倍
             )
-
-        return result
-
-    def check_circuit_breakers(self, **kwargs) -> bool:
-        """
-        檢查熔斷機制
-
+            
+            return RiskAssessment(
+                symbol=symbol,
+                risk_level=risk_level,
+                risk_score=risk_score,
+                max_position_size=max_position_size,
+                recommended_stop_loss=recommended_stop_loss,
+                recommended_take_profit=recommended_take_profit,
+                warnings=warnings,
+                restrictions=restrictions,
+                timestamp=datetime.now()
+            )
+            
+        except Exception as e:
+            logger.error(f"風險評估失敗: {e}")
+            return RiskAssessment(
+                symbol=symbol,
+                risk_level="critical",
+                risk_score=100.0,
+                max_position_size=0.0,
+                recommended_stop_loss=price * 0.95,
+                recommended_take_profit=price * 1.05,
+                warnings=[f"風險評估錯誤: {str(e)}"],
+                restrictions=["暫停交易"],
+                timestamp=datetime.now()
+            )
+    
+    def check_portfolio_risk(
+        self,
+        portfolio_value: float,
+        positions: Dict[str, Any],
+        market_data: Optional[Dict[str, float]] = None
+    ) -> Dict[str, Any]:
+        """檢查投資組合風險
+        
         Args:
-            **kwargs: 其他參數
-
+            portfolio_value: 投資組合總值
+            positions: 持倉資訊
+            market_data: 市場數據
+            
         Returns:
-            bool: 是否觸發熔斷
+            Dict[str, Any]: 投資組合風險報告
         """
-        # 如果交易已停止，則直接返回 True
-        if not self.trading_enabled:
+        try:
+            market_data = market_data or {}
+            
+            # 計算總曝險
+            total_exposure = sum(pos.get('value', 0) for pos in positions.values())
+            exposure_ratio = (total_exposure / portfolio_value) * 100
+            
+            # 計算集中度
+            concentrations = {}
+            for symbol, position in positions.items():
+                value = position.get('value', 0)
+                concentrations[symbol] = (value / portfolio_value) * 100
+            
+            # 風險指標
+            max_concentration = max(concentrations.values()) if concentrations else 0
+            num_positions = len(positions)
+            
+            # 風險評估
+            risk_alerts = []
+            if exposure_ratio > self.config["max_portfolio_risk"] * 10:
+                risk_alerts.append(f"總曝險過高: {exposure_ratio:.1f}%")
+            
+            if max_concentration > self.config["max_position_size"]:
+                risk_alerts.append(f"單一部位過大: {max_concentration:.1f}%")
+            
+            if num_positions > self.risk_params["max_positions"]:
+                risk_alerts.append(f"持倉數量過多: {num_positions}")
+            
+            return {
+                "portfolio_value": portfolio_value,
+                "total_exposure": total_exposure,
+                "exposure_ratio": exposure_ratio,
+                "max_concentration": max_concentration,
+                "num_positions": num_positions,
+                "concentrations": concentrations,
+                "risk_alerts": risk_alerts,
+                "risk_level": "high" if risk_alerts else "normal",
+                "timestamp": datetime.now()
+            }
+            
+        except Exception as e:
+            logger.error(f"投資組合風險檢查失敗: {e}")
+            return {
+                "error": str(e),
+                "risk_level": "unknown",
+                "timestamp": datetime.now()
+            }
+    
+    def calculate_var(
+        self,
+        portfolio_returns: pd.Series,
+        confidence_level: float = 0.95,
+        holding_period: int = 1
+    ) -> Dict[str, float]:
+        """計算風險價值 (VaR)
+        
+        Args:
+            portfolio_returns: 投資組合報酬率序列
+            confidence_level: 信心水準
+            holding_period: 持有期間
+            
+        Returns:
+            Dict[str, float]: VaR 計算結果
+        """
+        try:
+            if len(portfolio_returns) < 30:
+                logger.warning("數據不足，無法計算可靠的 VaR")
+                return {"var": 0.0, "cvar": 0.0, "method": "insufficient_data"}
+            
+            # 歷史模擬法
+            sorted_returns = portfolio_returns.sort_values()
+            var_index = int((1 - confidence_level) * len(sorted_returns))
+            var = sorted_returns.iloc[var_index] * np.sqrt(holding_period)
+            
+            # 條件風險價值 (CVaR)
+            cvar = sorted_returns.iloc[:var_index].mean() * np.sqrt(holding_period)
+            
+            return {
+                "var": abs(var) * 100,  # 轉換為百分比
+                "cvar": abs(cvar) * 100,
+                "confidence_level": confidence_level,
+                "holding_period": holding_period,
+                "method": "historical_simulation",
+                "sample_size": len(portfolio_returns)
+            }
+            
+        except Exception as e:
+            logger.error(f"VaR 計算失敗: {e}")
+            return {"var": 0.0, "cvar": 0.0, "error": str(e)}
+    
+    def update_risk_parameters(self, params: Dict[str, Any]) -> bool:
+        """更新風險參數
+        
+        Args:
+            params: 新的風險參數
+            
+        Returns:
+            bool: 更新是否成功
+        """
+        try:
+            self.risk_params.update(params)
+            logger.info("風險參數已更新")
             return True
-
-        # 檢查所有熔斷機制
-        for name, breaker in self.circuit_breakers.items():
-            try:
-                if breaker.check(**kwargs):
-                    logger.warning("熔斷機制 '%sname' 已觸發")
-
-                    # 停止交易
-                    self.stop_trading(
-                        f"熔斷機制 '{name}' 已觸發: {breaker.trigger_reason}"
-                    )
-
-                    # 記錄風險事件
-                    self._record_risk_event(
-                        event_type="circuit_breaker",
-                        breaker_name=name,
-                        trigger_reason=breaker.trigger_reason,
-                    )
-
-                    return True
-            except Exception as e:
-                logger.error("檢查熔斷機制 '%sname' 時發生錯誤: %se")
-
-        return False
-
-    def stop_trading(self, reason: str) -> None:
+        except Exception as e:
+            logger.error(f"更新風險參數失敗: {e}")
+            return False
+    
+    def get_risk_parameters(self) -> Dict[str, Any]:
+        """獲取當前風險參數
+        
+        Returns:
+            Dict[str, Any]: 當前風險參數
         """
-        停止交易
-
+        return self.risk_params.copy()
+    
+    def emergency_stop(self, reason: str = "手動觸發") -> bool:
+        """緊急停止所有交易
+        
         Args:
             reason: 停止原因
+            
+        Returns:
+            bool: 操作是否成功
         """
-        self.trading_enabled = False
-        logger.warning("交易已停止: %sreason")
-
-        # 記錄風險事件
-        self._record_risk_event(event_type="trading_stopped", reason=reason)
-
-        # 發送事件
         try:
-            from src.core.event_monitor import event_bus
-
-            event = Event(
-                event_type=EventType.RISK,
-                source=EventSource.RISK_MANAGER,
-                subject="trading_stopped",
-                severity=EventSeverity.ERROR,
-                message=f"交易已停止: {reason}",
-                data={"reason": reason},
-                tags=["risk", "trading_stopped"],
-            )
-
-            event_bus.publish(event)
+            if 'emergency' in self.controllers:
+                return self.controllers['emergency'].emergency_stop(reason)
+            else:
+                logger.warning("緊急風險控制器不可用")
+                return False
         except Exception as e:
-            logger.error("發送事件時發生錯誤: %se")
-
-    def resume_trading(self, reason: str) -> None:
-        """
-        恢復交易
-
-        Args:
-            reason: 恢復原因
-        """
-        self.trading_enabled = True
-        logger.info("交易已恢復: %sreason")
-
-        # 重置所有熔斷機制
-        for breaker in self.circuit_breakers.values():
-            breaker.reset()
-
-        # 記錄風險事件
-        self._record_risk_event(event_type="trading_resumed", reason=reason)
-
-        # 發送事件
-        try:
-            from src.core.event_monitor import event_bus
-
-            event = Event(
-                event_type=EventType.RISK,
-                source=EventSource.RISK_MANAGER,
-                subject="trading_resumed",
-                severity=EventSeverity.INFO,
-                message=f"交易已恢復: {reason}",
-                data={"reason": reason},
-                tags=["risk", "trading_resumed"],
-            )
-
-            event_bus.publish(event)
-        except Exception as e:
-            logger.error("發送事件時發生錯誤: %se")
-
-    def is_trading_enabled(self) -> bool:
-        """
-        檢查交易是否啟用
-
-        Returns:
-            bool: 交易是否啟用
-        """
-        return self.trading_enabled
-
-    def update_risk_metrics(
-        self, returns: pd.Series, risk_free_rate: float = 0.0
-    ) -> Dict[str, float]:
-        """
-        更新風險指標
-
-        Args:
-            returns: 收益率序列
-            risk_free_rate: 無風險利率
-
-        Returns:
-            Dict[str, float]: 風險指標
-        """
-        # 創建風險指標計算器
-        calculator = RiskMetricsCalculator(returns, risk_free_rate)
-
-        # 計算所有風險指標
-        self.risk_metrics = calculator.calculate_all_metrics()
-
-        logger.info("更新風險指標: %sself.risk_metrics")
-
-        return self.risk_metrics
-
-    def get_risk_metrics(self) -> Dict[str, float]:
-        """
-        獲取風險指標
-
-        Returns:
-            Dict[str, float]: 風險指標
-        """
-        return self.risk_metrics
-
-    def _record_risk_event(self, event_type: str, **kwargs) -> None:
-        """
-        記錄風險事件
-
-        Args:
-            event_type: 事件類型
-            **kwargs: 其他參數
-        """
-        event = {
-            "type": event_type,
-            "timestamp": datetime.now().isoformat(),
-            "data": kwargs,
-        }
-
-        self.risk_events.append(event)
-
-        # 發送事件
-        try:
-            from src.core.event_monitor import event_bus
-
-            severity = (
-                EventSeverity.ERROR
-                if event_type in ["circuit_breaker", "trading_stopped"]
-                else EventSeverity.WARNING
-            )
-
-            event_obj = Event(
-                event_type=EventType.RISK,
-                source=EventSource.RISK_MANAGER,
-                subject=event_type,
-                severity=severity,
-                message=f"風險事件: {event_type}",
-                data=kwargs,
-                tags=["risk", event_type],
-            )
-
-            event_bus.publish(event_obj)
-        except Exception as e:
-            logger.error("發送事件時發生錯誤: %se")
-
-    def get_risk_events(
-        self, event_type: Optional[str] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
-        """
-        獲取風險事件
-
-        Args:
-            event_type: 事件類型，如果為 None 則獲取所有事件
-            limit: 最大事件數量
-
-        Returns:
-            List[Dict[str, Any]]: 風險事件列表
-        """
-        if event_type:
-            events = [
-                event for event in self.risk_events if event["type"] == event_type
-            ]
-        else:
-            events = self.risk_events.copy()
-
-        # 按時間降序排序
-        events.sort(key=lambda x: x["timestamp"], reverse=True)
-
-        # 限制數量
-        return events[:limit]
-
-    def start_monitoring(self) -> bool:
-        """
-        啟動監控
-
-        Returns:
-            bool: 是否成功啟動
-        """
-        if self.running:
-            logger.warning("風險監控已經在運行中")
+            logger.error(f"緊急停止失敗: {e}")
             return False
 
-        self.running = True
-        self.monitoring_thread = threading.Thread(target=self._monitoring_loop)
-        self.monitoring_thread.daemon = True
-        self.monitoring_thread.start()
 
-        logger.info("風險監控已啟動")
-        return True
-
-    def stop_monitoring(self) -> bool:
-        """
-        停止監控
-
-        Returns:
-            bool: 是否成功停止
-        """
-        if not self.running:
-            logger.warning("風險監控未運行")
-            return False
-
-        self.running = False
-        if self.monitoring_thread:
-            self.monitoring_thread.join(timeout=10)
-
-        logger.info("風險監控已停止")
-        return True
-
-    def _monitoring_loop(self) -> None:
-        """監控循環"""
-        while self.running:
-            try:
-                # 檢查熔斷機制
-                self.check_circuit_breakers()
-
-                # 等待下一個監控間隔
-                time.sleep(self.config.get("monitoring_interval", 60))
-            except Exception as e:
-                logger.error("風險監控循環發生錯誤: %se")
-                time.sleep(10)  # 發生錯誤時等待較長時間
-
-
-# 創建全局風險管理器實例
+# 創建全局實例
 risk_manager = RiskManager()
+
+
+__all__ = [
+    'RiskManager',
+    'RiskAssessment',
+    'TradeRiskParams',
+    'risk_manager'
+]

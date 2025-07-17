@@ -102,30 +102,62 @@ def show_update_progress(task_status: Dict[str, Any]):
         st.warning(f"⚠️ 未知狀態: {status}")
 
 
-def show_data_quality_metrics(quality_data: Dict[str, Dict[str, Any]]):
-    """顯示資料品質指標"""
+def show_data_quality_metrics(quality_data):
+    """顯示資料品質指標
+
+    Args:
+        quality_data: 品質數據，可以是字典或列表格式
+    """
     if not quality_data:
         st.warning("無資料品質資訊")
         return
 
-    # 準備資料
-    metrics_df = pd.DataFrame(
-        {
-            "資料類型": list(quality_data.keys()),
-            "完整性": [
-                float(v.get("completeness", "0%").rstrip("%"))
-                for v in quality_data.values()
-            ],
-            "準確性": [
-                float(v.get("accuracy", "0%").rstrip("%"))
-                for v in quality_data.values()
-            ],
-            "時效性": [
-                float(v.get("timeliness", "0%").rstrip("%"))
-                for v in quality_data.values()
-            ],
+    # 處理不同的數據格式
+    if isinstance(quality_data, list):
+        # 如果是列表格式，轉換為適合顯示的格式
+        if not quality_data:
+            st.warning("無資料品質資訊")
+            return
+
+        # 準備資料（列表格式）
+        metrics_df = pd.DataFrame(quality_data)
+
+        # 重命名列以符合顯示需求
+        column_mapping = {
+            'data_type': '資料類型',
+            'completeness': '完整性',
+            'accuracy': '準確性',
+            'timeliness': '時效性',
+            'consistency': '一致性'
         }
-    )
+
+        # 重命名存在的列
+        for old_col, new_col in column_mapping.items():
+            if old_col in metrics_df.columns:
+                metrics_df = metrics_df.rename(columns={old_col: new_col})
+
+    elif isinstance(quality_data, dict):
+        # 如果是字典格式，使用原有邏輯
+        metrics_df = pd.DataFrame(
+            {
+                "資料類型": list(quality_data.keys()),
+                "完整性": [
+                    float(str(v.get("completeness", "0")).rstrip("%"))
+                    for v in quality_data.values()
+                ],
+                "準確性": [
+                    float(str(v.get("accuracy", "0")).rstrip("%"))
+                    for v in quality_data.values()
+                ],
+                "時效性": [
+                    float(str(v.get("timeliness", "0")).rstrip("%"))
+                    for v in quality_data.values()
+                ],
+            }
+        )
+    else:
+        st.error("不支援的資料格式")
+        return
 
     # 顯示指標卡片
     st.subheader("資料品質概覽")

@@ -75,6 +75,15 @@ class PerformanceAttributionComponent:
         with tab4:
             self._render_time_series_attribution()
 
+    def render_performance_attribution(self, portfolio_data: Dict[str, Any]) -> None:
+        """渲染績效歸因分析 (別名方法，與 render_attribution_analysis 相同)
+
+        Args:
+            portfolio_data: 投資組合數據，包含持倉、權重、報酬等信息
+        """
+        # 調用主要的歸因分析方法
+        self.render_attribution_analysis(portfolio_data)
+
     def _render_brinson_attribution(self) -> None:
         """渲染 Brinson 歸因分析"""
         st.write("### 🎯 Brinson 績效歸因")

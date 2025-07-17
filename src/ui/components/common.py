@@ -280,7 +280,7 @@ class UIComponents:
         Returns:
             str: 選中的頁面鍵
         """
-        st.sidebar.markdown("### 📊 系統導航")
+        st.markdown("### 📊 系統導航")
 
         selected_page = current_page
 
@@ -304,7 +304,7 @@ class UIComponents:
             """
             )
 
-            if st.sidebar.button(
+            if st.button(
                 f"{page.get('icon', '')} {page['name']}",
                 key=f"{key}_{page['key']}",
                 help=page.get("description", ""),

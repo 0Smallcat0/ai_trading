@@ -1,7 +1,18 @@
 """
-投資組合管理頁面
+投資組合管理頁面 (整合版)
 
-此模組實現了投資組合管理頁面，提供組合配置、調整和監控功能。
+此模組整合了基本版和進階版投資組合管理功能，提供完整的投資組合管理系統：
+- 投資組合清單和概覽
+- 持倉調整和資產配置
+- 績效比較和分析
+- 風險分析儀表板 (進階功能)
+- 資產配置優化器 (進階功能)
+- 績效歸因分析 (進階功能)
+- 再平衡建議系統 (進階功能)
+- 整合分析報告 (進階功能)
+
+Version: v2.0 (整合版)
+Author: AI Trading System
 """
 
 import streamlit as st
@@ -10,6 +21,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional
 from typing import Dict, List, Optional
 import sys
 import os
@@ -37,6 +49,21 @@ except ImportError:
     EqualWeightPortfolio = MeanVariancePortfolio = None
     RiskParityPortfolio = MaxSharpePortfolio = None
     MinVariancePortfolio = simulate_portfolios = None
+
+# 導入進階功能組件 (整合版新增)
+try:
+    from src.ui.components.portfolio.risk_analysis import RiskAnalysisComponent
+    from src.ui.components.portfolio.asset_allocation import AssetAllocationComponent
+    from src.ui.components.portfolio.performance_attribution import (
+        PerformanceAttributionComponent,
+    )
+    from src.ui.components.portfolio.rebalancing import RebalancingComponent
+except ImportError:
+    # 備用實現
+    RiskAnalysisComponent = None
+    AssetAllocationComponent = None
+    PerformanceAttributionComponent = None
+    RebalancingComponent = None
 
 
 def get_mock_portfolio_data():
@@ -235,20 +262,54 @@ def show():
     """顯示投資組合管理頁面"""
     st.title("📊 投資組合管理")
 
-    # 頁面標籤
-    tabs = st.tabs(["組合清單", "持倉調整", "資產配置", "績效比較"])
+    # 檢查是否有進階組件可用
+    has_advanced_components = all([
+        RiskAnalysisComponent, AssetAllocationComponent,
+        PerformanceAttributionComponent, RebalancingComponent
+    ])
 
-    with tabs[0]:
-        show_portfolio_list()
+    if has_advanced_components:
+        # 整合版標籤頁 (包含進階功能)
+        tabs = st.tabs([
+            "📋 組合清單",
+            "⚖️ 持倉調整",
+            "🎯 資產配置",
+            "📈 績效比較",
+            "🛡️ 風險分析",
+            "🔧 配置優化",
+            "📊 績效歸因",
+            "⚖️ 再平衡"
+        ])
 
-    with tabs[1]:
-        show_position_adjustment()
+        with tabs[0]:
+            show_portfolio_list()
+        with tabs[1]:
+            show_position_adjustment()
+        with tabs[2]:
+            show_asset_allocation()
+        with tabs[3]:
+            show_performance_comparison()
+        with tabs[4]:
+            show_risk_analysis_dashboard()
+        with tabs[5]:
+            show_asset_allocation_optimizer()
+        with tabs[6]:
+            show_performance_attribution()
+        with tabs[7]:
+            show_rebalancing_system()
+    else:
+        # 基本版標籤頁
+        st.info("⚠️ 進階組件不可用，使用基本功能")
+        tabs = st.tabs(["📋 組合清單", "⚖️ 持倉調整", "🎯 資產配置", "📈 績效比較"])
 
-    with tabs[2]:
-        show_asset_allocation()
-
-    with tabs[3]:
-        show_performance_comparison()
+        with tabs[0]:
+            show_portfolio_list()
+        with tabs[1]:
+            show_position_adjustment()
+        with tabs[2]:
+            show_asset_allocation()
+        with tabs[3]:
+            show_performance_comparison()
 
 
 def show_portfolio_list():
@@ -922,6 +983,148 @@ def show_performance_comparison():
 
         else:
             st.warning("請選擇至少一個投資組合進行比較")
+
+
+# ==================== 整合的進階功能 ====================
+
+def show_risk_analysis_dashboard():
+    """顯示風險分析儀表板 (進階功能)"""
+    st.subheader("🛡️ 風險分析儀表板")
+
+    if RiskAnalysisComponent is None:
+        st.error("❌ 風險分析組件不可用")
+        return
+
+    # 選擇投資組合
+    portfolios_df = get_mock_portfolio_data()
+    selected_portfolio = st.selectbox(
+        "選擇投資組合進行風險分析",
+        portfolios_df["組合名稱"].tolist(),
+        key="risk_analysis_portfolio"
+    )
+
+    if selected_portfolio:
+        # 載入投資組合數據
+        portfolio_data = load_portfolio_data_for_analysis(selected_portfolio)
+
+        # 渲染風險分析儀表板
+        risk_component = RiskAnalysisComponent()
+        risk_component.render_risk_dashboard(portfolio_data)
+
+
+def show_asset_allocation_optimizer():
+    """顯示資產配置優化器 (進階功能)"""
+    st.subheader("🔧 資產配置優化器")
+
+    if AssetAllocationComponent is None:
+        st.error("❌ 資產配置組件不可用")
+        return
+
+    # 選擇投資組合
+    portfolios_df = get_mock_portfolio_data()
+    selected_portfolio = st.selectbox(
+        "選擇投資組合進行配置優化",
+        portfolios_df["組合名稱"].tolist(),
+        key="allocation_optimizer_portfolio"
+    )
+
+    if selected_portfolio:
+        # 載入投資組合數據
+        portfolio_data = load_portfolio_data_for_analysis(selected_portfolio)
+
+        # 渲染資產配置優化器
+        allocation_component = AssetAllocationComponent()
+        allocation_component.render_allocation_optimizer(portfolio_data)
+
+
+def show_performance_attribution():
+    """顯示績效歸因分析 (進階功能)"""
+    st.subheader("📊 績效歸因分析")
+
+    if PerformanceAttributionComponent is None:
+        st.error("❌ 績效歸因組件不可用")
+        return
+
+    # 選擇投資組合
+    portfolios_df = get_mock_portfolio_data()
+    selected_portfolio = st.selectbox(
+        "選擇投資組合進行績效歸因",
+        portfolios_df["組合名稱"].tolist(),
+        key="performance_attribution_portfolio"
+    )
+
+    if selected_portfolio:
+        # 載入投資組合數據
+        portfolio_data = load_portfolio_data_for_analysis(selected_portfolio)
+
+        # 渲染績效歸因分析
+        attribution_component = PerformanceAttributionComponent()
+        attribution_component.render_performance_attribution(portfolio_data)
+
+
+def show_rebalancing_system():
+    """顯示再平衡建議系統 (進階功能)"""
+    st.subheader("⚖️ 再平衡建議系統")
+
+    if RebalancingComponent is None:
+        st.error("❌ 再平衡組件不可用")
+        return
+
+    # 選擇投資組合
+    portfolios_df = get_mock_portfolio_data()
+    selected_portfolio = st.selectbox(
+        "選擇投資組合進行再平衡分析",
+        portfolios_df["組合名稱"].tolist(),
+        key="rebalancing_portfolio"
+    )
+
+    if selected_portfolio:
+        # 載入投資組合數據
+        portfolio_data = load_portfolio_data_for_analysis(selected_portfolio)
+
+        # 渲染再平衡建議系統
+        rebalancing_component = RebalancingComponent()
+        rebalancing_component.render_rebalancing_system(portfolio_data)
+
+
+def load_portfolio_data_for_analysis(portfolio_name: str) -> Dict[str, Any]:
+    """載入投資組合數據用於進階分析
+
+    Args:
+        portfolio_name: 投資組合名稱
+
+    Returns:
+        包含分析所需數據的字典
+    """
+    # 生成模擬數據用於進階分析
+    holdings_df = get_mock_holdings_data(portfolio_name)
+    performance_df = get_mock_performance_data(portfolio_name, 252)  # 一年數據
+
+    # 計算基本指標
+    total_value = holdings_df["市值"].sum()
+    total_return = performance_df["累積收益率"].iloc[-1]
+    annual_volatility = performance_df["日收益率"].std() * np.sqrt(252)
+    sharpe_ratio = (performance_df["日收益率"].mean() * 252) / annual_volatility
+    max_drawdown = ((performance_df["組合價值"] / performance_df["組合價值"].cummax()) - 1).min()
+
+    return {
+        "name": portfolio_name,
+        "total_value": total_value,
+        "daily_change": np.random.uniform(-5000, 5000),
+        "annual_return": total_return,
+        "return_vs_benchmark": np.random.uniform(-0.05, 0.05),
+        "annual_volatility": annual_volatility,
+        "sharpe_ratio": sharpe_ratio,
+        "max_drawdown": max_drawdown,
+        "holdings": holdings_df,
+        "performance": performance_df,
+        "risk_metrics": {
+            "var_95": np.random.uniform(0.02, 0.05),
+            "cvar_95": np.random.uniform(0.03, 0.07),
+            "beta": np.random.uniform(0.8, 1.2),
+            "alpha": np.random.uniform(-0.02, 0.02)
+        }
+    }
 
 
 if __name__ == "__main__":

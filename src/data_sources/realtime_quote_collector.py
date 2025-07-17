@@ -380,4 +380,3 @@ class RealtimeQuoteCollector(DataCollector):
         except Exception as e:
             logger.error(f"啟動即時報價收集時發生錯誤: {e}")
             return False
-"""

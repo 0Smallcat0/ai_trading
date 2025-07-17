@@ -22,13 +22,21 @@ async def verify_token(
     """驗證 JWT Token
 
     Args:
-        credentials: HTTP Bearer 認證憑證
+        credentials (HTTPAuthorizationCredentials): HTTP Bearer 認證憑證
 
     Returns:
-        Dict[str, Any]: Token 載荷資料
+        Dict[str, Any]: Token 載荷資料，包含用戶ID、用戶名等資訊
 
     Raises:
-        HTTPException: Token 無效或過期
+        HTTPException: 當 Token 無效、過期或已被列入黑名單時
+
+    Example:
+        >>> credentials = HTTPAuthorizationCredentials(
+        ...     scheme="Bearer", credentials="token"
+        ... )
+        >>> payload = await verify_token(credentials)
+        >>> print(payload["user_id"])
+        user123
     """
     try:
         token = credentials.credentials
@@ -47,7 +55,7 @@ async def verify_token(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Token 驗證錯誤: %s", e)
+        logger.error("Token 驗證錯誤: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 驗證失敗"
         ) from e
@@ -59,10 +67,16 @@ async def get_current_user(
     """獲取當前用戶資訊
 
     Args:
-        token_payload: Token 載荷資料
+        token_payload (Dict[str, Any]): Token 載荷資料，包含用戶身份資訊
 
     Returns:
-        Dict[str, Any]: 用戶資訊
+        Dict[str, Any]: 用戶資訊字典，包含 user_id、username、role 等欄位
+
+    Example:
+        >>> token_payload = {"user_id": "123", "username": "admin", "role": "admin"}
+        >>> user = await get_current_user(token_payload)
+        >>> print(user["username"])
+        admin
     """
     return {
         "user_id": token_payload.get("user_id"),
@@ -77,13 +91,19 @@ async def get_current_active_user(
     """獲取當前活躍用戶
 
     Args:
-        current_user: 當前用戶資訊
+        current_user (Dict[str, Any]): 當前用戶資訊字典
 
     Returns:
-        Dict[str, Any]: 活躍用戶資訊
+        Dict[str, Any]: 活躍用戶資訊，確認用戶處於啟用狀態
 
     Raises:
-        HTTPException: 用戶未啟用
+        HTTPException: 當用戶未認證或帳戶被停用時
+
+    Example:
+        >>> user = {"user_id": "123", "username": "admin", "role": "admin"}
+        >>> active_user = await get_current_active_user(user)
+        >>> print(active_user["user_id"])
+        123
     """
     # 這裡應該從資料庫檢查用戶狀態
     # 簡化實現，假設所有用戶都是活躍的

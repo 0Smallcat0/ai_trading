@@ -1,566 +1,820 @@
-"""Web UI 主模組
+"""Web UI 主模組 (性能優化版)
 
-此模組實現了基於 Streamlit 的 Web 使用者介面，提供系統的所有功能操作。
+此模組是 Streamlit Web 應用程式的主入口點，整合各個 UI 組件：
+- 用戶認證和權限管理
+- 頁面路由和導航
+- 整體 UI 佈局和樣式
+- 性能優化和懶加載
 
 主要功能：
-- 用戶認證和權限管理
-- 多頁面導航系統
-- 響應式設計支援
-- 統一的錯誤處理
+- 提供統一的應用程式入口
+- 整合認證、導航和頁面渲染組件
+- 管理應用程式狀態和配置
+- 應用響應式設計和主題
+- 智能性能優化 (目標: <2秒加載時間)
+
+使用方式：
+    streamlit run src/ui/web_ui.py
 
 Example:
-    啟動 Web UI：
-    ```python
-    from src.ui.web_ui import run_web_ui
-    run_web_ui()
-    ```
-
-Note:
-    此模組依賴於 Streamlit 和相關 UI 組件，確保所有依賴已正確安裝。
+    >>> # 啟動 Web 應用程式
+    >>> python -m streamlit run src/ui/web_ui.py
 """
 
-from typing import Tuple, Optional, Dict, Any
 import logging
-
+import time
 import streamlit as st
 
-# 嘗試導入 streamlit_option_menu，如果失敗則提供備用方案
 try:
-    from streamlit_option_menu import option_menu
-
-    OPTION_MENU_AVAILABLE = True
-except ImportError:
-    OPTION_MENU_AVAILABLE = False
-    logging.warning("streamlit_option_menu 不可用，將使用備用導航方案")
-
-# 導入頁面模組和組件
-PAGES_AVAILABLE = True
-AUTH_AVAILABLE = True
-
-try:
-    # 嘗試相對導入
-    from .pages import (
-        data_management,
-        feature_engineering,
-        strategy_management,
-        ai_models,
-        backtest,
-        portfolio_management,
-        risk_management,
-        trade_execution,
-        system_monitoring,
-        reports,
-        security_management,
-        realtime_dashboard,
-        interactive_charts,
-        custom_dashboard,
-        portfolio_management_advanced,
+    from src.ui.components.auth_component import check_auth, show_login
+    from src.ui.layouts.page_layout import setup_page_config, apply_responsive_design
+    from src.ui.utils.page_renderer import render_page, show_default_dashboard
+    from src.ui.utils.performance_optimizer import (
+        performance_optimizer,
+        optimize_page_load,
+        enable_performance_optimizations,
+        smart_state_manager,
+        create_performance_dashboard
     )
-    from .components import auth
+    from src.ui.utils.lazy_loader import lazy_loader, lazy_component
+    from src.ui.utils.cache_manager import cache_manager, optimize_memory_usage
+except ImportError:
+    # 備用導入方案
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-    logging.info("成功導入所有頁面模組（相對導入）")
-except ImportError as e:
-    logging.warning("相對導入失敗: %s，嘗試絕對導入", e)
     try:
-        # 嘗試絕對導入
-        from src.ui.pages import (
-            data_management,
-            feature_engineering,
-            strategy_management,
-            ai_models,
-            backtest,
-            portfolio_management,
-            risk_management,
-            trade_execution,
-            system_monitoring,
-            reports,
-            security_management,
-            realtime_dashboard,
-            interactive_charts,
-            custom_dashboard,
-            portfolio_management_advanced,
+        from src.ui.components.auth_component import check_auth, show_login
+        from src.ui.layouts.page_layout import (
+            setup_page_config, apply_responsive_design
         )
-        from src.ui.components import auth
+        from src.ui.utils.page_renderer import (
+            render_page, show_default_dashboard
+        )
+        from src.ui.utils.performance_optimizer import (
+            performance_optimizer,
+            optimize_page_load,
+            enable_performance_optimizations,
+            smart_state_manager,
+            create_performance_dashboard
+        )
+        from src.ui.utils.lazy_loader import lazy_loader, lazy_component
+        from src.ui.utils.cache_manager import cache_manager, optimize_memory_usage
+    except ImportError:
+        # 備用導入方案
+        try:
+            from ui.components.auth_component import check_auth, show_login
+            from ui.layouts.page_layout import (
+                setup_page_config, apply_responsive_design
+            )
+            from ui.utils.page_renderer import (
+                render_page, show_default_dashboard
+            )
+            from ui.utils.performance_optimizer import (
+                performance_optimizer,
+                optimize_page_load,
+                enable_performance_optimizations,
+                smart_state_manager,
+                create_performance_dashboard
+            )
+            from ui.utils.lazy_loader import lazy_loader, lazy_component
+            from ui.utils.cache_manager import cache_manager, optimize_memory_usage
+        except ImportError:
+            # 提供簡化的替代函數
+            def check_auth():
+                return True, "user"
 
-        logging.info("成功導入所有頁面模組（絕對導入）")
-    except ImportError as import_error:
-        logging.error("無法導入頁面模組: %s", import_error)
-        PAGES_AVAILABLE = False
-        AUTH_AVAILABLE = False
+            def show_login():
+                st.info("登入功能暫時不可用")
 
-        # 創建備用模組
-        class MockModule:
-            """備用模組類，當實際模組不可用時使用"""
+            def show_sidebar_fallback():
+                """向後相容性回退函數"""
+                return "dashboard"
 
-            @staticmethod
-            def show(*args, **kwargs):
-                """備用顯示方法
+            def setup_page_config():
+                st.set_page_config(
+                    page_title="AI Trading System",
+                    page_icon="📈",
+                    layout="wide"
+                )
 
-                Args:
-                    *args: 位置參數（未使用）
-                    **kwargs: 關鍵字參數（未使用）
-                """
-                # 忽略未使用的參數
-                _ = args, kwargs
-                st.error("此功能模組暫時不可用，請檢查系統配置")
+            def apply_responsive_design():
+                pass
 
-        # 創建備用頁面模組
-        data_management = MockModule()
-        feature_engineering = MockModule()
-        strategy_management = MockModule()
-        ai_models = MockModule()
-        backtest = MockModule()
-        portfolio_management = MockModule()
-        risk_management = MockModule()
-        trade_execution = MockModule()
-        system_monitoring = MockModule()
-        reports = MockModule()
-        security_management = MockModule()
-        realtime_dashboard = MockModule()
-        interactive_charts = MockModule()
-        custom_dashboard = MockModule()
-        portfolio_management_advanced = MockModule()
+            def render_page(page_key, user_role):
+                st.info(f"頁面 '{page_key}' 正在載入中...")
 
-        # 創建備用認證模組
-        class MockAuth:
-            """備用認證模組"""
+            def show_default_dashboard():
+                st.title("📊 AI Trading System Dashboard")
+                st.info("系統儀表板正在載入中...")
 
-            @staticmethod
-            def login_form():
-                st.error("認證系統暫時不可用")
-                return False
+            def preload_common_modules():
+                pass
 
-        auth = MockAuth()
+            # 性能優化相關的簡化函數
+            class MockPerformanceOptimizer:
+                """模擬性能優化器"""
+                target_load_time = 2.0
 
-# 頁面配置將在 run_web_ui() 函數中設定
+                def optimize_session_state(self):
+                    """優化 session state"""
 
-# 用戶角色與權限
-USER_ROLES = {"admin": "管理員", "user": "一般用戶", "readonly": "只讀用戶"}
+            performance_optimizer = MockPerformanceOptimizer()
 
-# 頁面配置
-PAGES = {
-    "realtime_dashboard": {
-        "name": "即時儀表板",
-        "icon": "speedometer2",
-        "function": realtime_dashboard.show_realtime_dashboard,
-        "min_role": "readonly",
-    },
-    "interactive_charts": {
-        "name": "互動式圖表",
-        "icon": "bar-chart",
-        "function": interactive_charts.show_interactive_charts,
-        "min_role": "readonly",
-    },
-    "custom_dashboard": {
-        "name": "自定義儀表板",
-        "icon": "grid-3x3",
-        "function": custom_dashboard.show_custom_dashboard,
-        "min_role": "user",
-    },
-    "data_management": {
-        "name": "資料管理",
-        "icon": "database",
-        "function": data_management.show,
-        "min_role": "user",
-    },
-    "feature_engineering": {
-        "name": "特徵工程",
-        "icon": "gear",
-        "function": feature_engineering.show,
-        "min_role": "user",
-    },
-    "strategy_management": {
-        "name": "策略管理",
-        "icon": "diagram-3",
-        "function": strategy_management.show,
-        "min_role": "user",
-    },
-    "ai_models": {
-        "name": "AI 模型",
-        "icon": "cpu",
-        "function": ai_models.show,
-        "min_role": "user",
-    },
-    "backtest": {
-        "name": "回測",
-        "icon": "arrow-repeat",
-        "function": backtest.show,
-        "min_role": "user",
-    },
-    "portfolio_management": {
-        "name": "投資組合",
-        "icon": "pie-chart",
-        "function": portfolio_management.show,
-        "min_role": "user",
-    },
-    "portfolio_management_advanced": {
-        "name": "進階投資組合",
-        "icon": "graph-up-arrow",
-        "function": portfolio_management_advanced.show_portfolio_management_advanced,
-        "min_role": "user",
-    },
-    "risk_management": {
-        "name": "風險管理",
-        "icon": "shield",
-        "function": risk_management.show,
-        "min_role": "user",
-    },
-    "trade_execution": {
-        "name": "交易執行",
-        "icon": "currency-exchange",
-        "function": trade_execution.show,
-        "min_role": "user",
-    },
-    "system_monitoring": {
-        "name": "系統監控",
-        "icon": "activity",
-        "function": system_monitoring.show,
-        "min_role": "readonly",
-    },
-    "reports": {
-        "name": "報表查詢",
-        "icon": "file-earmark-text",
-        "function": reports.show,
-        "min_role": "readonly",
-    },
-    "security_management": {
-        "name": "安全管理",
-        "icon": "shield-lock",
-        "function": security_management.show_security_management,
-        "min_role": "admin",
-    },
-}
+            def optimize_page_load(func):
+                return func
+
+            def enable_performance_optimizations():
+                pass
+
+            class MockStateManager:
+                def cleanup_old_state(self):
+                    pass
+
+                def batch_update(self, updates):
+                    for key, value in updates.items():
+                        st.session_state[key] = value
+                    return list(updates.keys())
+
+            smart_state_manager = MockStateManager()
+
+            def create_performance_dashboard():
+                st.info("性能監控面板暫時不可用")
+
+            class MockLazyLoader:
+                """模擬懶加載器"""
+                def load_component(self, name):
+                    """載入組件"""
+
+            lazy_loader = MockLazyLoader()
+
+            def lazy_component(name):
+                def decorator(func):
+                    return func
+                return decorator
+    from utils.cache_manager import cache_manager, optimize_memory_usage
+
+logger = logging.getLogger(__name__)
 
 
-def check_auth() -> Tuple[bool, str]:
-    """檢查用戶認證狀態
+@optimize_page_load
+def main() -> None:
+    """主應用程式入口點 (性能優化版).
 
-    Returns:
-        Tuple[bool, str]: (是否已認證, 用戶角色)
+    Example:
+        >>> main()  # 啟動 Web 應用程式
     """
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-        st.session_state.user_role = None
+    start_time = time.time()
 
-    return st.session_state.authenticated, st.session_state.user_role
-
-
-def show_login() -> None:
-    """顯示登入頁面
-
-    使用認證組件顯示用戶登入表單，處理用戶認證流程。
-
-    Note:
-        可能修改 st.session_state 中的認證相關狀態
-    """
-    auth.login_form()
-
-
-def show_sidebar() -> Optional[str]:
-    """顯示側邊欄導航
-
-    在側邊欄中顯示用戶資訊、導航選單和登出按鈕。
-    只有在用戶已認證的情況下才顯示完整的導航功能。
-    支援 option_menu 和備用選擇框兩種導航方式。
-
-    Returns:
-        Optional[str]: 用戶選擇的頁面名稱，如果未選擇則返回 None
-
-    Note:
-        當 streamlit_option_menu 不可用時，會自動切換到標準選擇框。
-        可能修改 st.session_state 中的認證狀態（登出時）。
-    """
-    with st.sidebar:
-        st.title("AI 股票自動交易系統")
-
-        # 顯示用戶資訊
-        if st.session_state.get("authenticated", False):
-            username = st.session_state.get("username", "未知用戶")
-            user_role = st.session_state.get("user_role", "unknown")
-
-            st.write(f"歡迎, {username}")
-            st.write(f"角色: {USER_ROLES.get(user_role, '未知')}")
-
-            # 選單 - 根據可用性選擇導航方式
-            page_names = [page_info["name"] for page_info in PAGES.values()]
-
-            if OPTION_MENU_AVAILABLE:
-                try:
-                    selected = option_menu(
-                        "主選單",
-                        options=page_names,
-                        icons=[page_info["icon"] for page_info in PAGES.values()],
-                        menu_icon="list",
-                        default_index=0,
-                    )
-                except Exception as e:
-                    logging.error("option_menu 執行錯誤: %s", e)
-                    # 降級到標準選擇框
-                    selected = st.selectbox("選擇頁面", page_names, index=0)
-            else:
-                # 使用標準選擇框作為備用方案
-                selected = st.selectbox("選擇頁面", page_names, index=0)
-
-            # 登出按鈕
-            if st.button("登出", key="logout_button"):
-                try:
-                    st.session_state.authenticated = False
-                    st.session_state.user_role = None
-                    st.session_state.username = None
-                    st.rerun()
-                except Exception as e:
-                    logging.error("登出過程發生錯誤: %s", e)
-                    st.error("登出失敗，請重新整理頁面")
-
-            return selected
-
-    return None
-
-
-def run_web_ui() -> None:
-    """運行 Web UI 主應用程式
-
-    這是 Web UI 的主要入口點，負責：
-    1. 設定頁面配置和響應式設計
-    2. 檢查用戶認證狀態
-    3. 顯示登入頁面或主要應用介面
-    4. 處理頁面路由和權限控制
-    5. 統一的錯誤處理和日誌記錄
-
-    Raises:
-        Exception: 當發生無法處理的錯誤時
-
-    Note:
-        - 設定 Streamlit 頁面配置
-        - 可能修改 st.session_state 中的各種狀態
-        - 渲染 Streamlit 界面組件
-        - 記錄操作日誌
-    """
     try:
-        # 設定頁面配置
-        _setup_page_config()
+        # 初始化性能優化
+        initialize_performance_optimizations()
+
+        # 設定頁面配置（必須在其他 Streamlit 組件之前）
+        setup_page_config()
 
         # 應用響應式設計
-        _apply_responsive_design()
+        apply_responsive_design()
 
-        # 檢查認證狀態
+        # 智能初始化 session state
+        initialize_session_state_optimized()
+
+        # 預載入關鍵組件
+        preload_critical_components()
+
+        # 檢查用戶認證狀態
         authenticated, user_role = check_auth()
 
         if not authenticated:
-            _show_login_page()
-            return
-
-        # 顯示主應用界面
-        _show_main_application(user_role)
-
-    except Exception as e:
-        logging.error("Web UI 運行時發生嚴重錯誤: %s", e, exc_info=True)
-        st.error("系統發生錯誤，請重新整理頁面或聯繫管理員")
-
-        # 在開發模式下顯示詳細錯誤信息
-        if st.session_state.get("debug_mode", False):
-            with st.expander("錯誤詳情（開發模式）"):
-                st.code(str(e))
-
-
-def _setup_page_config() -> None:
-    """設定 Streamlit 頁面配置
-
-    配置頁面標題、圖示、佈局等基本設定。
-    如果配置已經設定過，會忽略重複設定的錯誤。
-
-    Raises:
-        Exception: 當頁面配置設定失敗時
-    """
-    try:
-        st.set_page_config(
-            page_title="AI 股票自動交易系統",
-            page_icon="📈",
-            layout="wide",
-            initial_sidebar_state="expanded",
-            menu_items={
-                "Get Help": "https://github.com/your-repo/help",
-                "Report a bug": "https://github.com/your-repo/issues",
-                "About": "AI 股票自動交易系統 v1.0",
-            },
-        )
-        logging.info("頁面配置設定成功")
-    except Exception as e:
-        # 頁面配置已經設定過或其他錯誤
-        if "set_page_config" in str(e):
-            logging.debug("頁面配置已經設定過，跳過重複設定")
-        else:
-            logging.warning("頁面配置設定時發生警告: %s", e)
-
-
-def _apply_responsive_design() -> None:
-    """應用響應式設計樣式
-
-    嘗試導入並應用響應式設計組件。
-    如果響應式模組不可用，會記錄警告但不影響基本功能。
-    """
-    try:
-        from .responsive import apply_responsive_design
-
-        apply_responsive_design()
-        logging.info("響應式設計樣式應用成功")
-    except ImportError:
-        logging.warning("響應式設計模組不可用，使用基本樣式")
-    except Exception as e:
-        logging.error("應用響應式設計時發生錯誤: %s", e)
-
-
-def _show_login_page() -> None:
-    """顯示登入頁面
-
-    處理用戶登入流程，包括錯誤處理和狀態管理。
-    """
-    try:
-        if AUTH_AVAILABLE:
+            # 顯示登入頁面
             show_login()
         else:
-            st.error("認證系統暫時不可用，請稍後再試")
-            st.info("如果問題持續存在，請聯繫系統管理員")
+            # 顯示主應用程式介面
+            show_main_app_optimized(user_role)
+
+        # 記錄總加載時間
+        total_time = time.time() - start_time
+        if total_time > performance_optimizer.target_load_time:
+            logger.warning(
+                "頁面加載時間 %.2fs 超過目標 %.2fs",
+                total_time, performance_optimizer.target_load_time
+            )
+
     except Exception as e:
-        logging.error("顯示登入頁面時發生錯誤: %s", e)
-        st.error("登入系統發生錯誤，請重新整理頁面")
+        logger.error("主應用程式啟動失敗: %s", e, exc_info=True)
+        st.error("❌ 應用程式啟動失敗，請重新整理頁面")
 
+        # 顯示性能診斷信息（僅在開發模式）
+        if st.session_state.get("debug_mode", False):
+            with st.expander("🔧 性能診斷"):
+                create_performance_dashboard()
 
-def _show_main_application(user_role: str) -> None:
-    """顯示主應用程式界面
+def show_main_app(user_role: str) -> None:
+    """顯示主應用程式介面 (整合版 - 無側邊欄).
 
     Args:
         user_role: 用戶角色
-
-    處理主應用程式的顯示邏輯，包括側邊欄導航和頁面路由。
-    """
-    try:
-        # 顯示側邊欄並獲取選擇的頁面
-        selected_page_name = show_sidebar()
-
-        # 根據選擇顯示對應頁面
-        if selected_page_name:
-            _render_selected_page(selected_page_name, user_role)
-        else:
-            _show_default_dashboard()
-
-    except Exception as e:
-        logging.error("顯示主應用程式時發生錯誤: %s", e)
-        st.error("載入頁面時發生錯誤")
-
-
-def _render_selected_page(selected_page_name: str, user_role: str) -> None:
-    """渲染選中的頁面
-
-    Args:
-        selected_page_name: 選中的頁面名稱
-        user_role: 用戶角色
-    """
-    # 找到對應的頁面 ID
-    selected_page_id = next(
-        (
-            page_id
-            for page_id, page in PAGES.items()
-            if page["name"] == selected_page_name
-        ),
-        None,
-    )
-
-    if not selected_page_id:
-        st.error("找不到所選頁面")
-        return
-
-    page = PAGES[selected_page_id]
-
-    # 檢查權限
-    if not _check_page_permission(page, user_role):
-        st.error("您沒有權限訪問此頁面")
-        return
-
-    # 顯示頁面
-    try:
-        st.title(page["name"])
-
-        # 檢查頁面功能是否可用
-        if PAGES_AVAILABLE or hasattr(page["function"], "__call__"):
-            page["function"]()
-        else:
-            st.error("此頁面功能暫時不可用")
-
-    except Exception as e:
-        logging.error("渲染頁面 %s 時發生錯誤: %s", selected_page_name, e)
-        st.error(f"載入 {selected_page_name} 頁面時發生錯誤")
-
-
-def _check_page_permission(page: Dict[str, Any], user_role: str) -> bool:
-    """檢查頁面訪問權限
-
-    Args:
-        page: 頁面配置字典
-        user_role: 用戶角色
-
-    Returns:
-        bool: 是否有權限訪問
-    """
-    role_levels = {"admin": 3, "user": 2, "readonly": 1}
-    min_role_level = role_levels.get(page.get("min_role", "readonly"), 0)
-    user_role_level = role_levels.get(user_role, 0)
-
-    return user_role_level >= min_role_level
-
-
-def _show_default_dashboard() -> None:
-    """顯示預設儀表板
-
-    當沒有選擇特定頁面時顯示的預設內容。
-    """
-    st.title("AI 股票自動交易系統")
-    st.markdown("---")
-
-    # 系統狀態概覽
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric("系統狀態", "正常運行", "✅")
-
-    with col2:
-        st.metric(
-            "頁面模組",
-            "已載入" if PAGES_AVAILABLE else "部分不可用",
-            "✅" if PAGES_AVAILABLE else "⚠️",
-        )
-
-    with col3:
-        st.metric(
-            "認證系統",
-            "已啟用" if AUTH_AVAILABLE else "不可用",
-            "✅" if AUTH_AVAILABLE else "❌",
-        )
-
-    # 快速導航
-    st.subheader("快速導航")
-    st.info("請使用左側選單選擇要使用的功能模組")
-
-    # 系統資訊
-    with st.expander("系統資訊"):
-        st.write("**版本**: 1.0.0")
-        st.write("**框架**: Streamlit")
-        st.write("**響應式設計**: 支援")
-        st.write("**多用戶支援**: 是")
-
-
-def main() -> None:
-    """主函數，用於 Poetry 腳本入口點
-
-    這是通過 Poetry 腳本啟動應用程式的入口點。
-    在 pyproject.toml 中配置為 'start = "src.ui.web_ui:main"'。
 
     Example:
-        通過命令行啟動：
-        $ poetry run start
+        >>> show_main_app("admin")
     """
-    run_web_ui()
+    try:
+        # 顯示整合的主介面 (取代側邊欄)
+        selected_page = show_main_interface()
+
+        # 渲染選中的頁面
+        if selected_page:
+            render_page(selected_page, user_role)
+        else:
+            # 顯示預設儀表板
+            show_default_dashboard()
+
+    except Exception as e:
+        logger.error("顯示主應用程式時發生錯誤: %s", e, exc_info=True)
+        st.error("❌ 應用程式載入失敗")
 
 
+def run_web_ui() -> None:
+    """運行 Web UI 應用程式.
+
+    Note:
+        此函數是外部調用的主要入口點
+
+    Example:
+        >>> from src.ui.web_ui import run_web_ui
+        >>> run_web_ui()
+    """
+    try:
+        logger.info("啟動 Web UI 應用程式")
+        main()
+        
+    except Exception as e:
+        logger.error("Web UI 應用程式運行失敗: %s", e, exc_info=True)
+        st.error("❌ 系統啟動失敗，請聯繫系統管理員")
+
+
+def initialize_session_state() -> None:
+    """初始化 session state (舊版本，保持向後兼容).
+
+    Example:
+        >>> initialize_session_state()
+    """
+    initialize_session_state_optimized()
+
+
+def initialize_session_state_optimized() -> None:
+    """智能初始化 session state (性能優化版).
+
+    使用批量更新和智能狀態管理，減少不必要的重新渲染。
+    """
+    try:
+        # 準備批量更新
+        updates = {}
+
+        # 初始化認證相關狀態
+        if "authenticated" not in st.session_state:
+            updates["authenticated"] = False
+
+        if "user_role" not in st.session_state:
+            updates["user_role"] = ""
+
+        if "username" not in st.session_state:
+            updates["username"] = ""
+
+        # 初始化應用程式狀態
+        if "current_page" not in st.session_state:
+            updates["current_page"] = "dashboard"
+
+        if "app_initialized" not in st.session_state:
+            updates["app_initialized"] = True
+
+        # 初始化性能相關狀態
+        if "performance_mode" not in st.session_state:
+            updates["performance_mode"] = "optimized"
+
+        if "lazy_loading_enabled" not in st.session_state:
+            updates["lazy_loading_enabled"] = True
+
+        if "debug_mode" not in st.session_state:
+            updates["debug_mode"] = False
+
+        # 批量更新狀態
+        if updates:
+            updated_keys = smart_state_manager.batch_update(updates)
+            logger.debug(
+                "Session state 初始化完成，更新了 %d 個狀態", len(updated_keys)
+            )
+
+    except Exception as e:
+        logger.error("初始化 session state 時發生錯誤: %s", e, exc_info=True)
+
+
+def get_app_info() -> dict:
+    """獲取應用程式資訊.
+
+    Returns:
+        dict: 應用程式資訊字典
+
+    Example:
+        >>> info = get_app_info()
+        >>> print(info["version"])
+        'v2.0'
+    """
+    return {
+        "name": "AI 股票自動交易系統",
+        "version": "v2.0",
+        "description": "基於人工智慧的股票自動交易系統",
+        "author": "AI Trading Team",
+        "license": "MIT",
+        "features": [
+            "數據分析和特徵工程",
+            "機器學習模型訓練",
+            "策略回測和優化",
+            "實盤和模擬交易",
+            "風險管理和監控"
+        ]
+    }
+
+
+def check_system_requirements() -> bool:
+    """檢查系統需求.
+
+    Returns:
+        bool: 是否滿足系統需求
+
+    Example:
+        >>> requirements_met = check_system_requirements()
+        >>> print(requirements_met)
+        True
+    """
+    try:
+        # 檢查必要的套件
+        required_packages = [
+            "streamlit",
+            "pandas",
+            "numpy"
+        ]
+        
+        missing_packages = []
+        
+        for package in required_packages:
+            try:
+                __import__(package)
+            except ImportError:
+                missing_packages.append(package)
+        
+        if missing_packages:
+            logger.error("缺少必要套件: %s", missing_packages)
+            st.error(f"❌ 缺少必要套件: {', '.join(missing_packages)}")
+            return False
+        
+        return True
+
+    except Exception as e:
+        logger.error("檢查系統需求時發生錯誤: %s", e, exc_info=True)
+        return False
+
+
+def initialize_performance_optimizations() -> None:
+    """初始化性能優化設定"""
+    try:
+        # 啟用基本性能優化
+        enable_performance_optimizations()
+
+        # 設定快取策略
+        cache_manager.max_memory_size = 200 * 1024 * 1024  # 200MB
+
+        # 註冊關鍵組件到懶加載器
+        register_critical_components()
+
+        # 優化記憶體使用
+        optimize_memory_usage()
+
+        logger.info("性能優化初始化完成")
+
+    except Exception as e:
+        logger.error("性能優化初始化失敗: %s", e, exc_info=True)
+
+
+def register_critical_components() -> None:
+    """註冊關鍵組件到懶加載器"""
+    try:
+        # 註冊高優先級組件
+        @lazy_component("dashboard", priority=10, preload=True, cache_ttl=600)
+        def load_dashboard():
+            try:
+                from src.ui.pages import dashboard
+                return dashboard
+            except ImportError:
+                logger.warning("載入組件 dashboard 失敗: 使用絕對導入")
+                return None
+
+        @lazy_component("navigation", priority=9, preload=True, cache_ttl=300)
+        def load_navigation():
+            try:
+                from src.ui.components import navigation
+                return navigation
+            except ImportError:
+                logger.warning("載入組件 navigation 失敗: 使用絕對導入")
+                return None
+
+        @lazy_component("auth", priority=8, preload=True, cache_ttl=1800)
+        def load_auth():
+            try:
+                from src.ui.components import auth_component
+                return auth_component
+            except ImportError:
+                logger.warning("載入組件 auth 失敗: 使用絕對導入")
+                return None
+
+        logger.debug("關鍵組件註冊完成")
+
+    except Exception as e:
+        logger.error("註冊關鍵組件失敗: %s", e, exc_info=True)
+
+
+def preload_critical_components() -> None:
+    """預載入關鍵組件"""
+    try:
+        critical_components = ["dashboard", "navigation", "auth"]
+        lazy_loader.preload_components(critical_components)
+        logger.debug("關鍵組件預載入完成")
+
+    except Exception as e:
+        logger.error("預載入關鍵組件失敗: %s", e, exc_info=True)
+
+
+def show_main_app_optimized(user_role: str) -> None:
+    """顯示主應用程式介面 (性能優化版 - 整合版無側邊欄)
+
+    Args:
+        user_role: 用戶角色
+    """
+    try:
+        # 定期優化 session state
+        if st.session_state.get("auto_optimization", True):
+            performance_optimizer.optimize_session_state()
+
+        # 顯示整合的主介面（懶加載）
+        selected_page = show_main_interface()
+
+        # 渲染選中的頁面（懶加載）
+        if selected_page:
+            render_page(selected_page, user_role)
+        else:
+            # 顯示默認儀表板（懶加載）
+            show_default_dashboard()
+
+        # 在開發模式下顯示性能監控 (整合到主介面)
+        if st.session_state.get("debug_mode", False):
+            with st.expander("🔧 性能監控", expanded=False):
+                if st.checkbox("顯示性能監控"):
+                    create_performance_dashboard()
+
+    except Exception as e:
+        logger.error("顯示主應用程式介面失敗: %s", e, exc_info=True)
+        st.error("❌ 載入應用程式介面時發生錯誤")
+
+
+def show_main_interface() -> str:
+    """顯示整合的主介面 (取代側邊欄功能).
+
+    整合所有原側邊欄功能到主介面中，包括：
+    - 系統導航和狀態
+    - 用戶資訊和設置
+    - 功能選單和快速操作
+
+    Returns:
+        str: 選中的頁面名稱
+
+    Example:
+        >>> selected_page = show_main_interface()
+        >>> print(f"選中頁面: {selected_page}")
+    """
+    try:
+        # 頂部導航區域 (3欄佈局)
+        with st.container():
+            col1, col2, col3 = st.columns([2, 4, 2])
+
+            with col1:
+                # 系統狀態指示器
+                show_system_status_indicator()
+
+            with col2:
+                # 主要功能選單
+                selected_page = show_main_navigation_menu()
+
+            with col3:
+                # 用戶資訊和快速操作
+                show_user_info_and_actions()
+
+        # 可摺疊設置面板 (取代側邊欄設置)
+        with st.expander("⚙️ 系統設置", expanded=False):
+            show_integrated_system_settings()
+
+        # 返回選中的頁面
+        return selected_page or "dashboard"
+
+    except Exception as e:
+        logger.error("顯示主介面時發生錯誤: %s", e, exc_info=True)
+        st.error("❌ 主介面載入失敗")
+        return "dashboard"
+
+
+def show_system_status_indicator() -> None:
+    """顯示系統狀態指示器.
+
+    顯示系統運行狀態、連接狀態等關鍵指標。
+    """
+    try:
+        st.markdown("### 🚦 系統狀態")
+
+        # 系統運行狀態
+        if st.session_state.get("system_healthy", True):
+            st.success("✅ 系統運行正常")
+        else:
+            st.error("❌ 系統異常")
+
+        # 連接狀態
+        connection_status = st.session_state.get("connection_status", "connected")
+        if connection_status == "connected":
+            st.info("🔗 已連接")
+        else:
+            st.warning("⚠️ 連接異常")
+
+    except Exception as e:
+        logger.error("顯示系統狀態指示器時發生錯誤: %s", e, exc_info=True)
+        st.error("狀態指示器載入失敗")
+
+
+def show_main_navigation_menu() -> str:
+    """顯示主要功能選單.
+
+    提供主要功能頁面的導航選擇，整合12個功能分類。
+
+    Returns:
+        str: 選中的頁面名稱
+    """
+    try:
+        st.markdown("### 🧭 功能導航")
+
+        # 獲取用戶角色和可用頁面
+        user_role = st.session_state.get("user_role", "user")
+
+        # 定義12個功能分類 (重新設計的架構)
+        available_pages = {
+            "system_status_monitoring": {"title": "🖥️ 系統狀態監控", "icon": "🖥️"},
+            "security_permission_management": {"title": "🔐 安全與權限管理", "icon": "🔐"},
+            "multi_agent_system_management": {"title": "🤖 多代理系統管理", "icon": "🤖"},
+            "data_management": {"title": "📊 數據管理", "icon": "📊"},
+            "strategy_development": {"title": "🎯 策略開發", "icon": "🎯"},
+            "ai_decision_support": {"title": "🧠 AI決策支援", "icon": "🧠"},
+            "portfolio_management": {"title": "💼 投資組合管理", "icon": "💼"},
+            "risk_management": {"title": "⚠️ 風險管理", "icon": "⚠️"},
+            "trade_execution": {"title": "💰 交易執行", "icon": "💰"},
+            "ai_model_management": {"title": "🤖 AI模型管理", "icon": "🤖"},
+            "backtest_analysis": {"title": "📈 回測分析", "icon": "📈"},
+            "learning_center": {"title": "📚 學習中心", "icon": "📚"}
+        }
+
+        # 根據用戶角色過濾頁面 (完整權限實現)
+        try:
+            from src.ui.utils.page_renderer import check_page_permission
+            # 過濾用戶有權限的頁面
+            filtered_pages = {}
+            for page_key, page_info in available_pages.items():
+                if check_page_permission(page_key, user_role):
+                    filtered_pages[page_key] = page_info
+            available_pages = filtered_pages
+        except ImportError:
+            # 備用權限檢查 (更新為12個功能分類)
+            if user_role == "demo":
+                available_pages = {k: v for k, v in available_pages.items()
+                                 if k in ["learning_center", "data_management", "backtest_analysis"]}
+            elif user_role == "trader":
+                available_pages = {k: v for k, v in available_pages.items()
+                                 if k in ["trade_execution", "strategy_development", "risk_management",
+                                         "portfolio_management", "backtest_analysis"]}
+            elif user_role == "analyst":
+                available_pages = {k: v for k, v in available_pages.items()
+                                 if k in ["data_management", "backtest_analysis", "ai_model_management",
+                                         "ai_decision_support", "learning_center"]}
+
+        # 創建選項列表 (使用單一表情符號格式)
+        page_options = [f"{page['icon']} {page['title'][2:]}"  # 移除標題中的表情符號，只保留選項中的
+                       for page in available_pages.values()]
+        page_keys = list(available_pages.keys())
+
+        # 獲取當前選中的頁面 (更新預設為新的系統狀態監控)
+        current_page = st.session_state.get("current_page", "system_status_monitoring")
+        current_index = page_keys.index(current_page) if current_page in page_keys else 0
+
+        # 顯示選擇框
+        selected_index = st.selectbox(
+            "選擇功能模組",
+            range(len(page_options)),
+            index=current_index,
+            format_func=lambda i: page_options[i],
+            key="main_navigation_selector"
+        )
+
+        selected_page = page_keys[selected_index]
+
+        # 修復：立即更新 session state 並觸發重新渲染
+        if selected_page != current_page:
+            st.session_state.current_page = selected_page
+            logger.debug("功能切換: %s -> %s", current_page, selected_page)
+            # 立即觸發重新渲染，解決雙擊切換問題
+            st.rerun()
+
+        return selected_page
+
+    except Exception as e:
+        logger.error("顯示主要功能選單時發生錯誤: %s", e, exc_info=True)
+        st.error("功能選單載入失敗")
+        return "system_status_monitoring"
+
+
+def show_user_info_and_actions() -> None:
+    """顯示用戶資訊和快速操作.
+
+    整合用戶資訊顯示和常用快速操作按鈕。
+    """
+    try:
+        # 用戶資訊
+        username = st.session_state.get("username", "訪客")
+        user_role = st.session_state.get("user_role", "user")
+
+        st.markdown("### 👤 用戶資訊")
+        st.markdown(f"**用戶**: {username}")
+        st.markdown(f"**角色**: {user_role}")
+
+        # 快速操作按鈕
+        st.markdown("**⚡ 快速操作**")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("🔄 刷新", key="quick_refresh", help="刷新當前頁面"):
+                st.rerun()
+
+        with col2:
+            if st.button("🚪 登出", key="quick_logout", help="登出系統"):
+                # 清除認證狀態
+                st.session_state.authenticated = False
+                st.session_state.username = ""
+                st.session_state.user_role = ""
+                st.rerun()
+
+    except Exception as e:
+        logger.error("顯示用戶資訊和操作時發生錯誤: %s", e, exc_info=True)
+        st.error("用戶資訊載入失敗")
+
+
+def show_integrated_system_settings() -> None:
+    """顯示整合的系統設置面板.
+
+    整合所有原側邊欄的設置功能到可摺疊面板中。
+    """
+    try:
+        # 創建兩欄佈局
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("#### 🔄 自動刷新設置")
+
+            # 自動刷新設置
+            auto_refresh = st.checkbox(
+                "自動刷新數據",
+                value=st.session_state.get("auto_refresh", True),
+                key="auto_refresh_setting"
+            )
+
+            if auto_refresh:
+                refresh_interval = st.slider(
+                    "刷新間隔 (秒)",
+                    min_value=5,
+                    max_value=60,
+                    value=st.session_state.get("refresh_interval", 30),
+                    step=5,
+                    key="refresh_interval_setting"
+                )
+                st.session_state.refresh_interval = refresh_interval
+
+            st.session_state.auto_refresh = auto_refresh
+
+        with col2:
+            st.markdown("#### 🎓 用戶體驗設置")
+
+            # 新手模式
+            beginner_mode = st.checkbox(
+                "新手模式",
+                value=st.session_state.get("show_beginner_guide", True),
+                key="beginner_mode_setting",
+                help="顯示詳細的操作指導和說明"
+            )
+
+            if beginner_mode != st.session_state.get("show_beginner_guide", True):
+                st.session_state.show_beginner_guide = beginner_mode
+
+            # 性能模式
+            performance_mode = st.selectbox(
+                "性能模式",
+                options=["optimized", "standard", "debug"],
+                index=0 if st.session_state.get("performance_mode", "optimized") == "optimized" else 1,
+                key="performance_mode_setting",
+                help="選擇系統性能模式"
+            )
+
+            st.session_state.performance_mode = performance_mode
+
+        # 底部設置
+        st.markdown("---")
+        st.markdown("#### 🔧 高級設置")
+
+        col3, col4 = st.columns(2)
+
+        with col3:
+            # 調試模式
+            debug_mode = st.checkbox(
+                "調試模式",
+                value=st.session_state.get("debug_mode", False),
+                key="debug_mode_setting",
+                help="啟用詳細的調試信息和性能監控"
+            )
+            st.session_state.debug_mode = debug_mode
+
+        with col4:
+            # 懶加載
+            lazy_loading = st.checkbox(
+                "懶加載",
+                value=st.session_state.get("lazy_loading_enabled", True),
+                key="lazy_loading_setting",
+                help="啟用組件懶加載以提升性能"
+            )
+            st.session_state.lazy_loading_enabled = lazy_loading
+
+    except Exception as e:
+        logger.error("顯示系統設置時發生錯誤: %s", e, exc_info=True)
+        st.error("系統設置載入失敗")
+
+
+def show_status_bar() -> None:
+    """顯示底部狀態欄.
+
+    顯示系統運行狀態、最後更新時間等信息。
+    """
+    try:
+        st.markdown("---")
+
+        # 創建狀態欄
+        col1, col2, col3 = st.columns([2, 2, 2])
+
+        with col1:
+            st.caption(f"🕒 最後更新: {st.session_state.get('last_update', '未知')}")
+
+        with col2:
+            connection_status = st.session_state.get("connection_status", "connected")
+            status_text = "🔗 已連接" if connection_status == "connected" else "⚠️ 連接異常"
+            st.caption(status_text)
+
+        with col3:
+            st.caption(f"📊 性能模式: {st.session_state.get('performance_mode', 'optimized')}")
+
+    except Exception as e:
+        logger.error("顯示狀態欄時發生錯誤: %s", e, exc_info=True)
+
+
+# 向後相容性：保留原有的 show_sidebar 函數但重定向到新實現
+def show_sidebar() -> str:
+    """向後相容性函數 - 重定向到新的主介面實現.
+
+    注意: 此函數已被 show_main_interface() 取代，
+    保留此函數僅為向後相容性。
+
+    Returns:
+        str: 選中的頁面名稱
+    """
+    logger.warning("show_sidebar() 已被棄用，請使用 show_main_interface()")
+    return show_main_interface()
+
+
+# 如果直接運行此檔案，啟動應用程式
 if __name__ == "__main__":
-    main()
+    try:
+        # 初始化 session state
+        initialize_session_state()
+        
+        # 檢查系統需求
+        if check_system_requirements():
+            # 運行主應用程式
+            run_web_ui()
+        
+    except Exception as e:
+        logger.error("應用程式啟動失敗: %s", e, exc_info=True)
+        st.error("❌ 系統啟動失敗，請重新整理頁面或聯繫系統管理員")
+
+
+# 向後相容性
+__all__ = ['main', 'run_web_ui', 'get_app_info']

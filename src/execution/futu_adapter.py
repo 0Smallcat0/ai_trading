@@ -26,6 +26,43 @@ try:
     FUTU_AVAILABLE = True
 except ImportError:
     FUTU_AVAILABLE = False
+    # 定義模擬類型以避免 NameError
+    RET_OK = 0
+
+    class ModifyOrderOp:
+        MODIFY = "MODIFY"
+        CANCEL = "CANCEL"
+
+    class FutuOrderType:
+        MARKET = "MARKET"
+        NORMAL = "NORMAL"
+        STOP = "STOP"
+        STOP_LIMIT = "STOP_LIMIT"
+
+    class FutuOrderStatus:
+        SUBMITTED = "SUBMITTED"
+        FILLED_ALL = "FILLED_ALL"
+        CANCELLED_ALL = "CANCELLED_ALL"
+
+    class TrdEnv:
+        SIMULATE = "SIMULATE"
+        REAL = "REAL"
+
+    class TrdSide:
+        BUY = "BUY"
+        SELL = "SELL"
+
+    class OpenCNTradeContext:
+        pass
+
+    class OpenHKTradeContext:
+        pass
+
+    class OpenQuoteContext:
+        pass
+
+    class OpenUSTradeContext:
+        pass
 
 from src.utils.utils import retry
 

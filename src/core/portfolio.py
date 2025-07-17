@@ -2430,3 +2430,7 @@ def plot_portfolio_performance(performance: dict, show_plot: bool = True):
             plt.show()
         except Exception as e:
             print(f"無法顯示圖表: {e}")
+
+
+# 向後相容性別名
+PortfolioOptimizer = MeanVariancePortfolio

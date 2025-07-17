@@ -347,4 +347,3 @@ class DataCollectionSystem:
         """
         self.symbols = symbols
         logger.info(f"已更新股票代碼列表，共 {len(symbols)} 檔股票")
-"""

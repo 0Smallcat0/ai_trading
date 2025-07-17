@@ -1,0 +1,322 @@
+# AI 交易系統服務監控配置
+# 版本: v1.0
+# 最後更新: 2024-12-25
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ai-trading-app-monitor
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+    monitoring: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ai-trading-system
+      component: app
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'go_.*'
+      action: drop
+    - sourceLabels: [__name__]
+      regex: 'promhttp_.*'
+      action: drop
+  namespaceSelector:
+    matchNames:
+    - ai-trading
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgres-monitor
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: database
+    monitoring: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ai-trading-system
+      component: database
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+    - ai-trading
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-monitor
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: cache
+    monitoring: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ai-trading-system
+      component: cache
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+    - ai-trading
+
+---
+# Prometheus 規則配置
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ai-trading-alerts
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    monitoring: prometheus
+spec:
+  groups:
+  - name: ai-trading.rules
+    interval: 30s
+    rules:
+    # 應用程式告警規則
+    - alert: AITradingAppDown
+      expr: up{job="ai-trading-app"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: ai-trading-app
+      annotations:
+        summary: "AI Trading App is down"
+        description: "AI Trading App has been down for more than 1 minute"
+    
+    - alert: AITradingAppHighCPU
+      expr: rate(container_cpu_usage_seconds_total{pod=~"ai-trading-app-.*"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        service: ai-trading-app
+      annotations:
+        summary: "AI Trading App high CPU usage"
+        description: "AI Trading App CPU usage is above 80% for more than 5 minutes"
+    
+    - alert: AITradingAppHighMemory
+      expr: container_memory_usage_bytes{pod=~"ai-trading-app-.*"} / container_spec_memory_limit_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        service: ai-trading-app
+      annotations:
+        summary: "AI Trading App high memory usage"
+        description: "AI Trading App memory usage is above 90% for more than 5 minutes"
+    
+    - alert: AITradingAppHighResponseTime
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ai-trading-app"}[5m])) > 2
+      for: 3m
+      labels:
+        severity: warning
+        service: ai-trading-app
+      annotations:
+        summary: "AI Trading App high response time"
+        description: "AI Trading App 95th percentile response time is above 2 seconds"
+    
+    - alert: AITradingAppHighErrorRate
+      expr: rate(http_requests_total{job="ai-trading-app",status=~"5.."}[5m]) / rate(http_requests_total{job="ai-trading-app"}[5m]) > 0.05
+      for: 3m
+      labels:
+        severity: critical
+        service: ai-trading-app
+      annotations:
+        summary: "AI Trading App high error rate"
+        description: "AI Trading App error rate is above 5% for more than 3 minutes"
+    
+    # 資料庫告警規則
+    - alert: PostgreSQLDown
+      expr: up{job="postgres"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: postgres
+      annotations:
+        summary: "PostgreSQL is down"
+        description: "PostgreSQL has been down for more than 1 minute"
+    
+    - alert: PostgreSQLHighConnections
+      expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        service: postgres
+      annotations:
+        summary: "PostgreSQL high connections"
+        description: "PostgreSQL connection usage is above 80%"
+    
+    - alert: PostgreSQLSlowQueries
+      expr: rate(pg_stat_database_tup_returned[5m]) / rate(pg_stat_database_tup_fetched[5m]) < 0.1
+      for: 5m
+      labels:
+        severity: warning
+        service: postgres
+      annotations:
+        summary: "PostgreSQL slow queries detected"
+        description: "PostgreSQL query efficiency is below 10%"
+    
+    # Redis 告警規則
+    - alert: RedisDown
+      expr: up{job="redis"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: redis
+      annotations:
+        summary: "Redis is down"
+        description: "Redis has been down for more than 1 minute"
+    
+    - alert: RedisHighMemoryUsage
+      expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        service: redis
+      annotations:
+        summary: "Redis high memory usage"
+        description: "Redis memory usage is above 90%"
+    
+    - alert: RedisHighConnections
+      expr: redis_connected_clients > 100
+      for: 5m
+      labels:
+        severity: warning
+        service: redis
+      annotations:
+        summary: "Redis high connections"
+        description: "Redis has more than 100 connected clients"
+    
+    # Kubernetes 集群告警規則
+    - alert: PodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod is crash looping"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+    
+    - alert: PodNotReady
+      expr: kube_pod_status_ready{condition="false"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod not ready"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is not ready"
+    
+    - alert: NodeNotReady
+      expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node not ready"
+        description: "Node {{ $labels.node }} is not ready"
+    
+    - alert: NodeHighCPU
+      expr: (1 - rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.9
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node high CPU usage"
+        description: "Node {{ $labels.instance }} CPU usage is above 90%"
+    
+    - alert: NodeHighMemory
+      expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.9
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node high memory usage"
+        description: "Node {{ $labels.instance }} memory usage is above 90%"
+    
+    - alert: NodeDiskSpaceLow
+      expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) > 0.9
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node disk space low"
+        description: "Node {{ $labels.instance }} disk space usage is above 90%"
+
+---
+# 網路策略配置
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-trading-network-policy
+  namespace: ai-trading
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-trading-system
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # 允許來自同一命名空間的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ai-trading
+  # 允許來自監控命名空間的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9091  # Metrics port
+  # 允許來自 Ingress 控制器的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8501  # UI port
+    - protocol: TCP
+      port: 8000  # API port
+  egress:
+  # 允許 DNS 查詢
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # 允許 HTTPS 出站流量（用於 API 調用）
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # 允許到同一命名空間的流量
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: ai-trading

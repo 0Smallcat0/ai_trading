@@ -27,12 +27,32 @@ from typing import Callable, Dict, List, Optional
 
 import feedparser
 import pandas as pd
-import psutil
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from FinMind.data import DataLoader
-from snownlp import SnowNLP
+
+# 可選依賴導入 - psutil
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
+
+# 可選依賴導入
+try:
+    from FinMind.data import DataLoader
+    FINMIND_AVAILABLE = True
+except ImportError:
+    FINMIND_AVAILABLE = False
+    DataLoader = None
+
+try:
+    from snownlp import SnowNLP
+    SNOWNLP_AVAILABLE = True
+except ImportError:
+    SNOWNLP_AVAILABLE = False
+    SnowNLP = None
 
 from .events.anomaly_detector import ValueAnomalyDetector
 
@@ -711,13 +731,16 @@ class EventMonitor:
             self.last_gc_time = current_time
 
             # 記錄記憶體使用情況
-            process = psutil.Process()
-            memory_info = process.memory_info()
-            logger.debug(
-                "記憶體使用: RSS=%d MB, VMS=%d MB",
-                memory_info.rss // 1024 // 1024,
-                memory_info.vms // 1024 // 1024,
-            )
+            if PSUTIL_AVAILABLE:
+                process = psutil.Process()
+                memory_info = process.memory_info()
+                logger.debug(
+                    "記憶體使用: RSS=%d MB, VMS=%d MB",
+                    memory_info.rss // 1024 // 1024,
+                    memory_info.vms // 1024 // 1024,
+                )
+            else:
+                logger.debug("psutil 不可用，跳過記憶體監控")
 
     def _check_price_anomaly(self):
         """檢查價格異常"""
@@ -1155,6 +1178,10 @@ class EventMonitor:
 
         # 方法一：使用 FinMind 獲取新聞
         try:
+            if not FINMIND_AVAILABLE:
+                logger.warning("FinMind 未安裝，跳過新聞獲取")
+                return []
+
             # 初始化 FinMind API
             api = DataLoader()
 
@@ -1244,6 +1271,10 @@ class EventMonitor:
             float: 情緒分數，範圍為 -1 到 1，負數表示負面情緒，正數表示正面情緒
         """
         try:
+            if not SNOWNLP_AVAILABLE:
+                logger.warning("SnowNLP 未安裝，返回中性情緒分數")
+                return 0.0
+
             # 使用 SnowNLP 進行情緒分析
             # SnowNLP 的情緒分數範圍是 0-1，0 表示負面，1 表示正面
             # 我們將其轉換為 -1 到 1 的範圍
@@ -1645,6 +1676,10 @@ def monitor_memory(threshold_gb=8):
     """
     監控記憶體使用量，超過閾值自動釋放快取並記錄狀態
     """
+    if not PSUTIL_AVAILABLE:
+        logger.warning("psutil 不可用，跳過記憶體監控")
+        return
+
     process = psutil.Process()
     mem_gb = process.memory_info().rss / (1024**3)
     if mem_gb > threshold_gb:

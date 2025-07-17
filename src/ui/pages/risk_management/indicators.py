@@ -15,7 +15,7 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-from .utils import (
+from src.ui.pages.risk_management.utils import (
     get_risk_management_service,
     get_mock_risk_metrics,
     format_currency,

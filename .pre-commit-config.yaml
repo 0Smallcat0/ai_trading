@@ -72,3 +72,56 @@ repos:
         args:
           - --rcfile=config/pylint.ini
           - --fail-under=8.5
+
+  # 安全檢查
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Bandit 安全檢查
+        args: [-r, src/, -f, txt]
+        exclude: tests/
+
+  # 檔案大小檢查
+  - repo: local
+    hooks:
+      - id: check-file-size
+        name: 檢查檔案大小 (≤300行)
+        entry: python
+        language: system
+        args:
+          - -c
+          - |
+            import os
+            import sys
+
+            max_lines = 300
+            violations = []
+
+            for root, dirs, files in os.walk('src/'):
+                for file in files:
+                    if file.endswith('.py'):
+                        filepath = os.path.join(root, file)
+                        try:
+                            with open(filepath, 'r', encoding='utf-8') as f:
+                                line_count = len(f.readlines())
+
+                            if line_count > max_lines:
+                                violations.append((filepath, line_count))
+                        except Exception as e:
+                            print(f"警告: 無法讀取檔案 {filepath}: {e}")
+
+            if violations:
+                print('❌ 發現超過 300 行的檔案:')
+                for filepath, line_count in violations:
+                    print(f'  {filepath}: {line_count} 行')
+                sys.exit(1)
+            else:
+                print('✅ 所有檔案都符合 ≤300 行標準')
+        files: ^src/.*\.py$
+        pass_filenames: false
+
+# 全域配置
+default_stages: [commit]
+fail_fast: false
+minimum_pre_commit_version: "3.0.0"

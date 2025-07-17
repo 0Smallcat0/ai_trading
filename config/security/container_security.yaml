@@ -1,0 +1,663 @@
+# AI 交易系統容器安全配置
+# 版本: v1.0
+# 最後更新: 2024-12-25
+
+# 容器安全基線配置
+container_security:
+  # 基礎安全設定
+  base_security:
+    # 禁用特權模式
+    privileged: false
+    
+    # 禁用新特權獲取
+    no_new_privileges: true
+    
+    # 只讀根文件系統
+    read_only_root_filesystem: true
+    
+    # 非 root 用戶運行
+    run_as_non_root: true
+    run_as_user: 1000
+    run_as_group: 1000
+    
+    # 文件系統組 ID
+    fs_group: 1000
+    
+    # 安全上下文
+    security_context:
+      # 禁用特權升級
+      allow_privilege_escalation: false
+      
+      # 能力控制
+      capabilities:
+        drop:
+          - ALL
+        add:
+          - NET_BIND_SERVICE  # 僅在需要綁定特權端口時添加
+      
+      # Seccomp 配置
+      seccomp_profile:
+        type: RuntimeDefault
+      
+      # SELinux 配置
+      selinux_options:
+        level: "s0:c123,c456"
+
+  # 網路安全配置
+  network_security:
+    # 網路策略
+    network_policies:
+      # 預設拒絕所有流量
+      default_deny_all: true
+      
+      # 允許的入站流量
+      ingress_rules:
+        - from:
+            - namespace_selector:
+                match_labels:
+                  name: ai-trading
+          ports:
+            - protocol: TCP
+              port: 8501  # Streamlit UI
+            - protocol: TCP
+              port: 8000  # FastAPI
+        
+        - from:
+            - namespace_selector:
+                match_labels:
+                  name: monitoring
+          ports:
+            - protocol: TCP
+              port: 9091  # Metrics endpoint
+      
+      # 允許的出站流量
+      egress_rules:
+        - to:
+            - namespace_selector:
+                match_labels:
+                  name: ai-trading
+          ports:
+            - protocol: TCP
+              port: 5432  # PostgreSQL
+            - protocol: TCP
+              port: 6379  # Redis
+        
+        - to: []  # 允許 DNS 查詢
+          ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+    
+    # 服務網格安全
+    service_mesh:
+      # mTLS 配置
+      mtls:
+        enabled: true
+        mode: STRICT
+      
+      # 流量加密
+      traffic_encryption:
+        enabled: true
+        tls_version: "1.3"
+
+  # 資源限制
+  resource_limits:
+    # CPU 限制
+    cpu:
+      requests: "0.25"
+      limits: "1.0"
+    
+    # 記憶體限制
+    memory:
+      requests: "512Mi"
+      limits: "2Gi"
+    
+    # 存儲限制
+    storage:
+      requests: "1Gi"
+      limits: "10Gi"
+    
+    # 進程限制
+    pid_limit: 1000
+    
+    # 文件描述符限制
+    file_descriptor_limit: 65536
+
+  # 映像安全
+  image_security:
+    # 映像掃描
+    vulnerability_scanning:
+      enabled: true
+      severity_threshold: "HIGH"
+      fail_on_critical: true
+    
+    # 映像簽名驗證
+    image_signing:
+      enabled: true
+      required_signatures: 1
+      trusted_keys:
+        - "ai-trading-signing-key"
+    
+    # 映像來源限制
+    image_policy:
+      allowed_registries:
+        - "docker.io/library"
+        - "gcr.io/ai-trading"
+        - "registry.internal.com"
+      
+      # 禁止使用 latest 標籤
+      disallow_latest_tag: true
+      
+      # 要求映像摘要
+      require_digest: true
+
+  # 秘密管理
+  secrets_management:
+    # 秘密存儲
+    secret_store:
+      type: "kubernetes"  # 或 "vault", "aws_secrets_manager"
+      encryption_at_rest: true
+      rotation_enabled: true
+      rotation_interval: "90d"
+    
+    # 環境變數安全
+    environment_variables:
+      # 禁止在環境變數中存儲秘密
+      disallow_secrets_in_env: true
+      
+      # 敏感變數列表
+      sensitive_vars:
+        - "PASSWORD"
+        - "SECRET"
+        - "TOKEN"
+        - "KEY"
+        - "API_KEY"
+    
+    # 文件掛載安全
+    volume_mounts:
+      # 只讀掛載
+      read_only_mounts:
+        - "/etc/ssl/certs"
+        - "/etc/passwd"
+        - "/etc/group"
+      
+      # 禁止掛載的路徑
+      forbidden_mounts:
+        - "/var/run/docker.sock"
+        - "/proc"
+        - "/sys"
+        - "/dev"
+
+  # 審計和監控
+  audit_monitoring:
+    # 容器審計
+    container_audit:
+      enabled: true
+      log_level: "INFO"
+      events:
+        - "container_start"
+        - "container_stop"
+        - "container_restart"
+        - "image_pull"
+        - "volume_mount"
+        - "network_access"
+    
+    # 運行時監控
+    runtime_monitoring:
+      enabled: true
+      
+      # 異常行為檢測
+      anomaly_detection:
+        - "unexpected_network_connections"
+        - "privilege_escalation_attempts"
+        - "suspicious_file_access"
+        - "abnormal_process_execution"
+      
+      # 合規性檢查
+      compliance_checks:
+        - "cis_docker_benchmark"
+        - "nist_container_security"
+        - "pci_dss_requirements"
+
+  # 備份和恢復安全
+  backup_security:
+    # 備份加密
+    backup_encryption:
+      enabled: true
+      encryption_algorithm: "AES-256-GCM"
+      key_rotation: true
+    
+    # 備份存取控制
+    backup_access_control:
+      rbac_enabled: true
+      minimum_permissions: true
+      audit_access: true
+
+# Pod 安全標準配置
+pod_security_standards:
+  # 安全級別
+  security_level: "restricted"  # baseline, restricted
+  
+  # Pod 安全策略
+  pod_security_policy:
+    # 特權容器
+    privileged: false
+    
+    # 主機網路
+    host_network: false
+    host_ipc: false
+    host_pid: false
+    
+    # 主機路徑掛載
+    host_path_volumes: false
+    
+    # 允許的卷類型
+    allowed_volume_types:
+      - "configMap"
+      - "emptyDir"
+      - "projected"
+      - "secret"
+      - "downwardAPI"
+      - "persistentVolumeClaim"
+    
+    # 用戶和組限制
+    run_as_user:
+      rule: "MustRunAsNonRoot"
+    
+    run_as_group:
+      rule: "MustRunAs"
+      ranges:
+        - min: 1000
+          max: 65535
+    
+    fs_group:
+      rule: "MustRunAs"
+      ranges:
+        - min: 1000
+          max: 65535
+    
+    # 補充組
+    supplemental_groups:
+      rule: "MustRunAs"
+      ranges:
+        - min: 1000
+          max: 65535
+
+# 容器運行時安全
+runtime_security:
+  # 運行時類別
+  runtime_class: "gvisor"  # 或 "kata-containers" 用於更強隔離
+  
+  # 系統調用過濾
+  syscall_filtering:
+    enabled: true
+    default_action: "SCMP_ACT_ERRNO"
+    allowed_syscalls:
+      - "read"
+      - "write"
+      - "open"
+      - "close"
+      - "stat"
+      - "fstat"
+      - "lstat"
+      - "poll"
+      - "lseek"
+      - "mmap"
+      - "mprotect"
+      - "munmap"
+      - "brk"
+      - "rt_sigaction"
+      - "rt_sigprocmask"
+      - "rt_sigreturn"
+      - "ioctl"
+      - "pread64"
+      - "pwrite64"
+      - "readv"
+      - "writev"
+      - "access"
+      - "pipe"
+      - "select"
+      - "sched_yield"
+      - "mremap"
+      - "msync"
+      - "mincore"
+      - "madvise"
+      - "shmget"
+      - "shmat"
+      - "shmctl"
+      - "dup"
+      - "dup2"
+      - "pause"
+      - "nanosleep"
+      - "getitimer"
+      - "alarm"
+      - "setitimer"
+      - "getpid"
+      - "sendfile"
+      - "socket"
+      - "connect"
+      - "accept"
+      - "sendto"
+      - "recvfrom"
+      - "sendmsg"
+      - "recvmsg"
+      - "shutdown"
+      - "bind"
+      - "listen"
+      - "getsockname"
+      - "getpeername"
+      - "socketpair"
+      - "setsockopt"
+      - "getsockopt"
+      - "clone"
+      - "fork"
+      - "vfork"
+      - "execve"
+      - "exit"
+      - "wait4"
+      - "kill"
+      - "uname"
+      - "semget"
+      - "semop"
+      - "semctl"
+      - "shmdt"
+      - "msgget"
+      - "msgsnd"
+      - "msgrcv"
+      - "msgctl"
+      - "fcntl"
+      - "flock"
+      - "fsync"
+      - "fdatasync"
+      - "truncate"
+      - "ftruncate"
+      - "getdents"
+      - "getcwd"
+      - "chdir"
+      - "fchdir"
+      - "rename"
+      - "mkdir"
+      - "rmdir"
+      - "creat"
+      - "link"
+      - "unlink"
+      - "symlink"
+      - "readlink"
+      - "chmod"
+      - "fchmod"
+      - "chown"
+      - "fchown"
+      - "lchown"
+      - "umask"
+      - "gettimeofday"
+      - "getrlimit"
+      - "getrusage"
+      - "sysinfo"
+      - "times"
+      - "ptrace"
+      - "getuid"
+      - "syslog"
+      - "getgid"
+      - "setuid"
+      - "setgid"
+      - "geteuid"
+      - "getegid"
+      - "setpgid"
+      - "getppid"
+      - "getpgrp"
+      - "setsid"
+      - "setreuid"
+      - "setregid"
+      - "getgroups"
+      - "setgroups"
+      - "setresuid"
+      - "getresuid"
+      - "setresgid"
+      - "getresgid"
+      - "getpgid"
+      - "setfsuid"
+      - "setfsgid"
+      - "getsid"
+      - "capget"
+      - "capset"
+      - "rt_sigpending"
+      - "rt_sigtimedwait"
+      - "rt_sigqueueinfo"
+      - "rt_sigsuspend"
+      - "sigaltstack"
+      - "utime"
+      - "mknod"
+      - "uselib"
+      - "personality"
+      - "ustat"
+      - "statfs"
+      - "fstatfs"
+      - "sysfs"
+      - "getpriority"
+      - "setpriority"
+      - "sched_setparam"
+      - "sched_getparam"
+      - "sched_setscheduler"
+      - "sched_getscheduler"
+      - "sched_get_priority_max"
+      - "sched_get_priority_min"
+      - "sched_rr_get_interval"
+      - "mlock"
+      - "munlock"
+      - "mlockall"
+      - "munlockall"
+      - "vhangup"
+      - "modify_ldt"
+      - "pivot_root"
+      - "_sysctl"
+      - "prctl"
+      - "arch_prctl"
+      - "adjtimex"
+      - "setrlimit"
+      - "chroot"
+      - "sync"
+      - "acct"
+      - "settimeofday"
+      - "mount"
+      - "umount2"
+      - "swapon"
+      - "swapoff"
+      - "reboot"
+      - "sethostname"
+      - "setdomainname"
+      - "iopl"
+      - "ioperm"
+      - "create_module"
+      - "init_module"
+      - "delete_module"
+      - "get_kernel_syms"
+      - "query_module"
+      - "quotactl"
+      - "nfsservctl"
+      - "getpmsg"
+      - "putpmsg"
+      - "afs_syscall"
+      - "tuxcall"
+      - "security"
+      - "gettid"
+      - "readahead"
+      - "setxattr"
+      - "lsetxattr"
+      - "fsetxattr"
+      - "getxattr"
+      - "lgetxattr"
+      - "fgetxattr"
+      - "listxattr"
+      - "llistxattr"
+      - "flistxattr"
+      - "removexattr"
+      - "lremovexattr"
+      - "fremovexattr"
+      - "tkill"
+      - "time"
+      - "futex"
+      - "sched_setaffinity"
+      - "sched_getaffinity"
+      - "set_thread_area"
+      - "io_setup"
+      - "io_destroy"
+      - "io_getevents"
+      - "io_submit"
+      - "io_cancel"
+      - "get_thread_area"
+      - "lookup_dcookie"
+      - "epoll_create"
+      - "epoll_ctl_old"
+      - "epoll_wait_old"
+      - "remap_file_pages"
+      - "getdents64"
+      - "set_tid_address"
+      - "restart_syscall"
+      - "semtimedop"
+      - "fadvise64"
+      - "timer_create"
+      - "timer_settime"
+      - "timer_gettime"
+      - "timer_getoverrun"
+      - "timer_delete"
+      - "clock_settime"
+      - "clock_gettime"
+      - "clock_getres"
+      - "clock_nanosleep"
+      - "exit_group"
+      - "epoll_wait"
+      - "epoll_ctl"
+      - "tgkill"
+      - "utimes"
+      - "vserver"
+      - "mbind"
+      - "set_mempolicy"
+      - "get_mempolicy"
+      - "mq_open"
+      - "mq_unlink"
+      - "mq_timedsend"
+      - "mq_timedreceive"
+      - "mq_notify"
+      - "mq_getsetattr"
+      - "kexec_load"
+      - "waitid"
+      - "add_key"
+      - "request_key"
+      - "keyctl"
+      - "ioprio_set"
+      - "ioprio_get"
+      - "inotify_init"
+      - "inotify_add_watch"
+      - "inotify_rm_watch"
+      - "migrate_pages"
+      - "openat"
+      - "mkdirat"
+      - "mknodat"
+      - "fchownat"
+      - "futimesat"
+      - "newfstatat"
+      - "unlinkat"
+      - "renameat"
+      - "linkat"
+      - "symlinkat"
+      - "readlinkat"
+      - "fchmodat"
+      - "faccessat"
+      - "pselect6"
+      - "ppoll"
+      - "unshare"
+      - "set_robust_list"
+      - "get_robust_list"
+      - "splice"
+      - "tee"
+      - "sync_file_range"
+      - "vmsplice"
+      - "move_pages"
+      - "utimensat"
+      - "epoll_pwait"
+      - "signalfd"
+      - "timerfd_create"
+      - "eventfd"
+      - "fallocate"
+      - "timerfd_settime"
+      - "timerfd_gettime"
+      - "accept4"
+      - "signalfd4"
+      - "eventfd2"
+      - "epoll_create1"
+      - "dup3"
+      - "pipe2"
+      - "inotify_init1"
+      - "preadv"
+      - "pwritev"
+      - "rt_tgsigqueueinfo"
+      - "perf_event_open"
+      - "recvmmsg"
+      - "fanotify_init"
+      - "fanotify_mark"
+      - "prlimit64"
+      - "name_to_handle_at"
+      - "open_by_handle_at"
+      - "clock_adjtime"
+      - "syncfs"
+      - "sendmmsg"
+      - "setns"
+      - "getcpu"
+      - "process_vm_readv"
+      - "process_vm_writev"
+      - "kcmp"
+      - "finit_module"
+
+# 合規性檢查
+compliance_checks:
+  # CIS Docker Benchmark
+  cis_docker:
+    enabled: true
+    version: "1.6.0"
+    
+  # NIST 容器安全指南
+  nist_container:
+    enabled: true
+    version: "SP 800-190"
+    
+  # PCI DSS 要求
+  pci_dss:
+    enabled: true
+    version: "4.0"
+
+# 安全掃描配置
+security_scanning:
+  # 映像漏洞掃描
+  image_scanning:
+    enabled: true
+    scanners:
+      - "trivy"
+      - "clair"
+      - "anchore"
+    
+    # 掃描排程
+    schedule: "0 2 * * *"  # 每日凌晨2點
+    
+    # 掃描策略
+    scan_policy:
+      fail_on_critical: true
+      fail_on_high: true
+      max_allowed_vulnerabilities:
+        critical: 0
+        high: 5
+        medium: 20
+  
+  # 運行時掃描
+  runtime_scanning:
+    enabled: true
+    tools:
+      - "falco"
+      - "sysdig"
+    
+    # 掃描規則
+    rules:
+      - "detect_crypto_miners"
+      - "detect_outbound_connections"
+      - "detect_privilege_escalation"
+      - "detect_sensitive_file_access"

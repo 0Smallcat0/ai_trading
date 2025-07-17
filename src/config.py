@@ -56,6 +56,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 # 資料庫設定
 DB_URL = os.getenv("DB_URL", f"sqlite:///{os.path.join(DATA_DIR, 'market_data.db')}")
+DB_PATH = os.path.join(DATA_DIR, "market_data.db")  # 向後相容性
 MARKET_INFO_DB = os.getenv("MARKET_INFO_DB", os.path.join(DATA_DIR, "market_info.db"))
 
 # API 設定

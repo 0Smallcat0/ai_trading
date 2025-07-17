@@ -13,11 +13,18 @@
 - 模擬交易 (Simulator)
 - 永豐證券 (Shioaji)
 - 富途證券 (Futu)
+- Interactive Brokers (IB)
 """
 
 from .broker_base import BrokerBase, OrderStatus, OrderType
 from .config import BrokerConfig
 from .futu_adapter import FutuAdapter
+# 更新導入：使用推薦的重構版本
+try:
+    from .ib_adapter_refactored import IBAdapterRefactored as IBAdapter
+except ImportError:
+    # 向後相容：如果重構版本不存在，使用原版本
+    from .ib_adapter import IBAdapter
 from .order_manager import OrderManager
 from .security import decrypt_api_key, encrypt_api_key
 from .shioaji_adapter import ShioajiAdapter
@@ -33,5 +40,6 @@ __all__ = [
     "SimulatorAdapter",
     "ShioajiAdapter",
     "FutuAdapter",
+    "IBAdapter",
     "BrokerConfig",
 ]

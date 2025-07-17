@@ -1,0 +1,274 @@
+name: Code Quality Check (Optimized)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每日自動檢查 (UTC 02:00 = 台北時間 10:00)
+    - cron: "0 2 * * *"
+
+env:
+  PYTHON_VERSION: "3.10"
+  CACHE_VERSION: v2
+
+jobs:
+  # 快速檢查 - 程式碼格式和基本語法
+  quick-checks:
+    name: Quick Checks (Format & Syntax)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+
+      - name: ⚡ Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort flake8 autoflake
+
+      - name: ⏱️ Start timing
+        run: echo "QUICK_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --with dev,test
+
+          # 安裝品質檢查工具
+          pip install pylint flake8 black isort mypy bandit safety pytest pytest-cov
+
+      - name: Code formatting check (Black)
+        run: |
+          echo "🎨 檢查程式碼格式..."
+          black --check --diff src/ tests/ || {
+            echo "❌ 程式碼格式不符合 Black 標準"
+            echo "💡 請執行: black src/ tests/"
+            exit 1
+          }
+
+      - name: Import sorting check (isort)
+        run: |
+          echo "📦 檢查導入排序..."
+          isort --check-only --diff src/ tests/ || {
+            echo "❌ 導入排序不符合標準"
+            echo "💡 請執行: isort src/ tests/"
+            exit 1
+          }
+
+      - name: Linting (Flake8)
+        run: |
+          echo "🔍 執行 Flake8 檢查..."
+          flake8 src/ tests/ --statistics --tee --output-file=flake8-report.txt || {
+            echo "❌ Flake8 檢查發現問題"
+            cat flake8-report.txt
+            exit 1
+          }
+
+      - name: Static analysis (Pylint)
+        run: |
+          echo "🔬 執行 Pylint 靜態分析..."
+
+          # 核心模組需要更高標準 (≥9.0)
+          echo "檢查核心模組..."
+          pylint src/risk_management/ --fail-under=9.0 --output-format=text --reports=yes > pylint-core-report.txt || {
+            echo "❌ 核心模組 Pylint 評分低於 9.0"
+            cat pylint-core-report.txt
+            exit 1
+          }
+
+          # 其他模組標準 (≥8.5)
+          echo "檢查其他模組..."
+          pylint src/api/ src/ui/ src/core/ --fail-under=8.5 --output-format=text --reports=yes > pylint-general-report.txt || {
+            echo "❌ 一般模組 Pylint 評分低於 8.5"
+            cat pylint-general-report.txt
+            exit 1
+          }
+
+      - name: Type checking (MyPy)
+        run: |
+          echo "🏷️ 執行型別檢查..."
+          mypy src/ --ignore-missing-imports --show-error-codes --pretty || {
+            echo "❌ MyPy 型別檢查發現問題"
+            exit 1
+          }
+
+      - name: Security scan (Bandit)
+        run: |
+          echo "🔒 執行安全掃描..."
+          bandit -r src/ -f json -o bandit-report.json || {
+            echo "❌ 發現安全問題"
+            bandit -r src/ -f txt
+            exit 1
+          }
+
+      - name: Dependency vulnerability check (Safety)
+        run: |
+          echo "🛡️ 檢查依賴漏洞..."
+          safety check --json --output safety-report.json || {
+            echo "❌ 發現依賴漏洞"
+            safety check
+            exit 1
+          }
+
+      - name: File size check
+        run: |
+          echo "📏 檢查檔案大小..."
+          python -c "
+          import os
+          import sys
+
+          max_lines = 300
+          violations = []
+
+          for root, dirs, files in os.walk('src/'):
+              for file in files:
+                  if file.endswith('.py'):
+                      filepath = os.path.join(root, file)
+                      with open(filepath, 'r', encoding='utf-8') as f:
+                          line_count = len(f.readlines())
+                      
+                      if line_count > max_lines:
+                          violations.append((filepath, line_count))
+
+          if violations:
+              print('❌ 發現超過 300 行的檔案:')
+              for filepath, line_count in violations:
+                  print(f'  {filepath}: {line_count} 行')
+              sys.exit(1)
+          else:
+              print('✅ 所有檔案都符合 ≤300 行標準')
+          "
+
+      - name: Run tests with coverage
+        run: |
+          echo "🧪 執行測試並生成覆蓋率報告..."
+          pytest tests/ --cov=src/ --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80 || {
+            echo "❌ 測試失敗或覆蓋率低於 80%"
+            exit 1
+          }
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.10'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Generate quality report
+        if: always()
+        run: |
+          echo "📊 生成品質報告..."
+          python scripts/generate_quality_report.py
+
+      - name: Upload quality reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-reports-${{ matrix.python-version }}
+          path: |
+            pylint-*.txt
+            flake8-report.txt
+            bandit-report.json
+            safety-report.json
+            coverage.xml
+            htmlcov/
+            quality-report.html
+
+      - name: Comment PR with quality results
+        if: github.event_name == 'pull_request' && matrix.python-version == '3.10'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            // 讀取品質報告
+            let comment = '## 🔍 程式碼品質檢查結果\n\n';
+
+            try {
+              // Pylint 結果
+              const pylintCore = fs.readFileSync('pylint-core-report.txt', 'utf8');
+              const pylintGeneral = fs.readFileSync('pylint-general-report.txt', 'utf8');
+              
+              // 提取評分
+              const coreScore = pylintCore.match(/Your code has been rated at ([\d.]+)\/10/);
+              const generalScore = pylintGeneral.match(/Your code has been rated at ([\d.]+)\/10/);
+              
+              comment += '### 📊 Pylint 評分\n';
+              comment += `- 核心模組: ${coreScore ? coreScore[1] : 'N/A'}/10 (要求 ≥9.0)\n`;
+              comment += `- 一般模組: ${generalScore ? generalScore[1] : 'N/A'}/10 (要求 ≥8.5)\n\n`;
+              
+              // 檔案大小檢查結果
+              comment += '### 📏 檔案大小檢查\n';
+              comment += '✅ 所有檔案都符合 ≤300 行標準\n\n';
+              
+              comment += '### 🧪 測試覆蓋率\n';
+              comment += '詳細覆蓋率報告請查看 Artifacts\n\n';
+              
+              comment += '### 🔒 安全檢查\n';
+              comment += '✅ 通過 Bandit 安全掃描\n';
+              comment += '✅ 通過 Safety 依賴檢查\n\n';
+              
+            } catch (error) {
+              comment += '❌ 無法讀取品質報告檔案\n\n';
+            }
+
+            comment += '---\n*此報告由自動化品質檢查系統生成*';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: quality-check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install --with dev,test
+          pip install pytest-benchmark
+
+      - name: Run performance tests
+        run: |
+          echo "⚡ 執行性能測試..."
+          pytest tests/performance/ --benchmark-only --benchmark-json=benchmark.json
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: benchmark.json

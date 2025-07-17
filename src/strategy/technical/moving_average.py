@@ -53,14 +53,16 @@ class MovingAverageCrossStrategy(Strategy):
         Raises:
             ParameterError: 當參數不符合要求時
         """
+        # 先設置屬性，再調用父類初始化
+        self.short_window = short_window
+        self.long_window = long_window
+
         super().__init__(
             name="MovingAverageCross",
             short_window=short_window,
             long_window=long_window,
             **kwargs,
         )
-        self.short_window = short_window
-        self.long_window = long_window
 
     def _validate_parameters(self) -> None:
         """

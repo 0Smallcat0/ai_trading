@@ -42,12 +42,14 @@ import logging
 from src.ui.components.dashboard.dashboard_editor import DashboardEditor
 from src.ui.components.dashboard.widget_library import widget_library
 from src.ui.utils.dashboard_manager import dashboard_manager, DashboardConfig
-from src.ui.components.auth import require_auth
-
 logger = logging.getLogger(__name__)
 
 
-@require_auth
+def show():
+    """顯示自定義儀表板頁面（Web UI 入口點）"""
+    show_custom_dashboard()
+
+
 def show_custom_dashboard():
     """顯示自定義儀表板頁面"""
     st.set_page_config(

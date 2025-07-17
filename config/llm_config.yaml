@@ -1,0 +1,257 @@
+# LLM配置文件
+# 此文件包含所有LLM相關的配置設定
+
+# LLM提供商配置
+providers:
+  openai:
+    enabled: true
+    api_key: ${OPENAI_API_KEY}  # 從環境變數讀取
+    base_url: "https://api.openai.com/v1"
+    timeout: 30
+    max_retries: 3
+    retry_delay: 1.0
+    models:
+      - name: "gpt-3.5-turbo"
+        max_tokens: 4096
+        cost_per_1k_tokens:
+          input: 0.0015
+          output: 0.002
+      - name: "gpt-4"
+        max_tokens: 8192
+        cost_per_1k_tokens:
+          input: 0.03
+          output: 0.06
+      - name: "gpt-4-turbo"
+        max_tokens: 128000
+        cost_per_1k_tokens:
+          input: 0.01
+          output: 0.03
+
+  claude:
+    enabled: false
+    api_key: ${CLAUDE_API_KEY}
+    base_url: "https://api.anthropic.com"
+    timeout: 30
+    max_retries: 3
+    retry_delay: 1.0
+    models:
+      - name: "claude-3-haiku"
+        max_tokens: 200000
+        cost_per_1k_tokens:
+          input: 0.00025
+          output: 0.00125
+      - name: "claude-3-sonnet"
+        max_tokens: 200000
+        cost_per_1k_tokens:
+          input: 0.003
+          output: 0.015
+      - name: "claude-3-opus"
+        max_tokens: 200000
+        cost_per_1k_tokens:
+          input: 0.015
+          output: 0.075
+
+  local:
+    enabled: false
+    api_key: "local"
+    base_url: "http://localhost:8000"
+    timeout: 60
+    max_retries: 2
+    retry_delay: 2.0
+    models:
+      - name: "qwen-7b"
+        max_tokens: 8192
+        cost_per_1k_tokens:
+          input: 0.0
+          output: 0.0
+      - name: "llama2-7b"
+        max_tokens: 4096
+        cost_per_1k_tokens:
+          input: 0.0
+          output: 0.0
+
+# 速率限制配置
+rate_limiting:
+  enabled: true
+  limits:
+    - type: "requests_per_minute"
+      value: 60
+      window_size: 60
+    - type: "requests_per_hour"
+      value: 1000
+      window_size: 3600
+    - type: "tokens_per_minute"
+      value: 100000
+      window_size: 60
+    - type: "cost_per_hour"
+      value: 10.0
+      window_size: 3600
+
+# 成本控制配置
+cost_control:
+  enabled: true
+  daily_budget: 50.0
+  monthly_budget: 1000.0
+  alert_threshold: 0.8
+  hard_limit_threshold: 0.95
+  cost_tracking:
+    enabled: true
+    log_file: "logs/llm_costs.log"
+    report_interval: 3600  # 每小時報告一次
+
+# 快取配置
+caching:
+  enabled: true
+  ttl: 300  # 5分鐘
+  max_size: 1000
+  storage_type: "memory"  # memory, redis, file
+  redis_config:
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: ${REDIS_PASSWORD}
+
+# 錯誤處理配置
+error_handling:
+  max_retries: 3
+  base_delay: 1.0
+  max_delay: 60.0
+  exponential_base: 2.0
+  jitter: true
+  retryable_errors:
+    - "network_error"
+    - "rate_limit_error"
+    - "timeout_error"
+    - "server_error"
+
+# 熔斷器配置
+circuit_breaker:
+  enabled: true
+  failure_threshold: 5
+  recovery_timeout: 60.0
+  success_threshold: 3
+  timeout: 30.0
+
+# 策略配置
+strategies:
+  finmem_llm:
+    enabled: true
+    provider: "openai"
+    model: "gpt-3.5-turbo"
+    confidence_threshold: 0.6
+    news_days: 5
+    enable_thinking: true
+    max_news_per_day: 30
+    temperature: 0.7
+    max_tokens: 2000
+
+  stock_chain:
+    enabled: true
+    provider: "openai"
+    model: "gpt-4"
+    confidence_threshold: 0.65
+    enable_web_search: true
+    search_topics:
+      - "股市行情"
+      - "經濟政策"
+      - "行業動態"
+    sentiment_weight: 0.4
+    technical_weight: 0.3
+    news_weight: 0.3
+    temperature: 0.7
+    max_tokens: 3000
+
+  news_analysis:
+    enabled: true
+    provider: "openai"
+    model: "gpt-3.5-turbo"
+    confidence_threshold: 0.65
+    sentiment_threshold: 0.6
+    importance_threshold: 0.7
+    time_decay_factor: 0.1
+    max_news_count: 20
+    temperature: 0.5
+    max_tokens: 2000
+
+# 策略整合配置
+integration:
+  strategy_weights:
+    llm_weight: 0.5
+    technical_weight: 0.3
+    fundamental_weight: 0.2
+  decision_threshold: 0.6
+  signal_aggregation:
+    method: "weighted_average"  # weighted_average, majority_vote, confidence_weighted
+    confidence_weighting: true
+    outlier_detection: true
+
+# 風險控制配置
+risk_control:
+  max_position_size: 0.1
+  stop_loss_threshold: 0.05
+  volatility_adjustment: true
+  risk_assessment:
+    volatility_threshold: 0.3
+    sentiment_threshold: 0.7
+
+# 決策服務配置
+decision_service:
+  cache_ttl: 300
+  max_history_size: 1000
+  data_lookback_days: 30
+  news_lookback_days: 7
+  batch_processing:
+    max_concurrent: 5
+    timeout: 300
+
+# 監控配置
+monitoring:
+  enabled: true
+  metrics:
+    - "request_count"
+    - "success_rate"
+    - "response_time"
+    - "cost_tracking"
+    - "error_rate"
+  alerts:
+    - metric: "error_rate"
+      threshold: 0.1
+      action: "email"
+    - metric: "daily_cost"
+      threshold: 40.0
+      action: "slack"
+  logging:
+    level: "INFO"
+    file: "logs/llm_service.log"
+    max_size: "100MB"
+    backup_count: 5
+
+# 安全配置
+security:
+  api_key_encryption: true
+  key_rotation_days: 90
+  audit_logging: true
+  access_control:
+    enabled: true
+    permissions:
+      - role: "admin"
+        actions: ["read", "write", "delete", "configure"]
+      - role: "trader"
+        actions: ["read", "write"]
+      - role: "viewer"
+        actions: ["read"]
+
+# 開發配置
+development:
+  debug_mode: false
+  mock_responses: false
+  test_mode: false
+  verbose_logging: false
+
+# 生產配置
+production:
+  high_availability: true
+  load_balancing: true
+  auto_scaling: true
+  backup_strategy: "daily"
+  disaster_recovery: true

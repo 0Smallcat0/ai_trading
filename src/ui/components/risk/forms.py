@@ -371,9 +371,8 @@ def form_help_sidebar(help_content: Dict[str, str]) -> None:
     Args:
         help_content: 幫助內容字典 {標題: 內容}
     """
-    with st.sidebar:
-        st.subheader("📖 表單說明")
-
+    # 修復：移除 st.sidebar，改為主頁面顯示
+    with st.expander("📖 表單說明", expanded=False):
         for title, content in help_content.items():
             with st.expander(title):
                 st.write(content)

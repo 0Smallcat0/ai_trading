@@ -328,3 +328,67 @@ class SimulatedBrokerAdapter(BrokerAdapter):
                 "volume": random.randint(1000, 10000),
                 "timestamp": datetime.now().isoformat(),
             }
+
+
+class MockBrokerAdapter(BrokerAdapter):
+    """模擬券商適配器 - 用於測試和開發"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.connected = False
+
+    def connect(self) -> bool:
+        """連接券商 API (模擬)"""
+        logger.info("模擬券商適配器連接成功")
+        self.connected = True
+        return True
+
+    def disconnect(self) -> bool:
+        """斷開券商 API 連接 (模擬)"""
+        logger.info("模擬券商適配器斷開連接")
+        self.connected = False
+        return True
+
+    def get_account_info(self) -> Dict[str, Any]:
+        """獲取帳戶資訊 (模擬)"""
+        return {
+            "account_id": "MOCK_ACCOUNT",
+            "cash": 1000000.0,
+            "total_value": 1200000.0,
+            "buying_power": 800000.0,
+            "currency": "TWD"
+        }
+
+    def get_positions(self) -> pd.DataFrame:
+        """獲取持倉資訊 (模擬)"""
+        return pd.DataFrame({
+            "symbol": ["2330", "2317"],
+            "shares": [1000, 500],
+            "avg_cost": [500.0, 80.0],
+            "market_value": [520000.0, 42000.0],
+            "unrealized_pnl": [20000.0, 2000.0]
+        })
+
+    def get_historical_trades(
+        self, start_date: Optional[str] = None, end_date: Optional[str] = None
+    ) -> pd.DataFrame:
+        """獲取歷史交易記錄 (模擬)"""
+        return pd.DataFrame({
+            "date": ["2024-01-01", "2024-01-02"],
+            "symbol": ["2330", "2317"],
+            "action": ["BUY", "BUY"],
+            "shares": [1000, 500],
+            "price": [500.0, 80.0],
+            "amount": [500000.0, 40000.0]
+        })
+
+    def get_quote(self, symbol: str) -> Dict[str, Any]:
+        """獲取即時報價 (模擬)"""
+        return {
+            "symbol": symbol,
+            "price": 520.0,
+            "bid": 519.0,
+            "ask": 521.0,
+            "volume": 1000,
+            "timestamp": datetime.now().isoformat()
+        }

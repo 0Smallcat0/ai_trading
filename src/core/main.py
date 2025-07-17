@@ -5,28 +5,54 @@
 實現完整的交易流程，從資料獲取到交易執行。
 
 主要功能：
-- 系統初始化
-- 模組協調
-- 主流程控制
+- 系統初始化和配置管理
+- 模式選擇和執行協調
+- 主流程控制和錯誤處理
+
+Example:
+    >>> from src.core.main import main
+    >>> main()  # 使用命令行參數執行
+    
+    或者直接調用：
+    >>> from src.core.main import run_trading_system
+    >>> run_trading_system(mode="backtest", start_date="2023-01-01")
 """
 
-import argparse
 import logging
-import time
-from datetime import datetime
+from typing import Dict, Any, Optional
 
 from dotenv import load_dotenv
 
 from . import logger as trade_logger
 from .backtest import run_backtest
-from .data_ingest import load_data, update_data
+# 更新導入：使用推薦的配置管理系統
+try:
+    from ..utils.config_manager import create_default_config_manager
+    from .config_validator import validate_config
+    # 為了向後相容，創建包裝函數
+    def parse_args():
+        """向後相容的參數解析函數"""
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--mode', default='backtest', help='運行模式')
+        return parser.parse_args()
+
+    def init_system(args):
+        """向後相容的系統初始化函數"""
+        config_manager = create_default_config_manager()
+        return {'mode': args.mode, 'config_manager': config_manager}
+
+except ImportError:
+    # 向後相容：如果新模組不存在，使用舊模組
+    from .config_manager import parse_args, init_system, validate_config
+from .data_ingest import load_data
 from .event_monitor import start as start_event_monitor
 from .executor import place_orders
 from .features import compute_features
-from .logger import record
+from .mode_handlers import run_backtest_mode, run_paper_mode, run_live_mode
 from .portfolio import optimize
 from .risk_control import filter_signals
-from .strategy import generate_signals
+from ..strategy.utils import generate_signals
 
 # 載入環境變數
 load_dotenv()
@@ -37,498 +63,183 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.FileHandler("main.log"), logging.StreamHandler()],
 )
-logger = logging.getLogger("main")
-
-# 導入各個模組
+logger = logging.getLogger(__name__)
 
 
-def parse_args():
-    """
-    解析命令行參數
+def run_trading_system(
+    mode: str = "backtest",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    **kwargs
+) -> Optional[Dict[str, Any]]:
+    """運行交易系統的主要函數.
+
+    Args:
+        mode: 交易模式，可選 'backtest', 'paper', 'live'
+        start_date: 開始日期，格式 YYYY-MM-DD
+        end_date: 結束日期，格式 YYYY-MM-DD
+        **kwargs: 其他配置參數
 
     Returns:
-        argparse.Namespace: 解析後的參數
+        Optional[Dict[str, Any]]: 回測模式返回結果，其他模式返回 None
+
+    Raises:
+        ValueError: 當配置參數不正確時
+        RuntimeError: 當系統執行失敗時
+
+    Example:
+        >>> result = run_trading_system(
+        ...     mode="backtest",
+        ...     start_date="2023-01-01",
+        ...     end_date="2023-12-31"
+        ... )
+        >>> print(f"總收益率: {result['report']['returns']['total_return']:.2%}")
     """
-    parser = argparse.ArgumentParser(description="自動交易系統")
+    logger.info("🚀 啟動 AI 交易系統 - 模式: %s", mode.upper())
 
-    # 模式參數
-    parser.add_argument(
-        "--mode",
-        type=str,
-        default="backtest",
-        choices=["backtest", "paper", "live"],
-        help="交易模式：backtest（回測）、paper（模擬交易）、live（實盤交易）",
-    )
+    try:
+        # 構建配置
+        config = {
+            "mode": mode,
+            "start_date": start_date,
+            "end_date": end_date,
+            **kwargs
+        }
 
-    # 資料參數
-    parser.add_argument(
-        "--start-date", type=str, default=None, help="開始日期，格式：YYYY-MM-DD"
-    )
-    parser.add_argument(
-        "--end-date", type=str, default=None, help="結束日期，格式：YYYY-MM-DD"
-    )
-    parser.add_argument("--update-data", action="store_true", help="是否更新資料")
+        # 驗證配置
+        if not _validate_basic_config(config):
+            raise ValueError("配置驗證失敗")
 
-    # 策略參數
-    parser.add_argument(
-        "--strategy",
-        type=str,
-        default="moving_average_cross",
-        choices=[
-            "moving_average_cross",
-            "rsi",
-            "machine_learning",
-            "trade_point_decision",
-            "continuous_trading_signal",
-            "triple_barrier",
-            "fixed_time_horizon",
-        ],
-        help="交易策略",
-    )
-    parser.add_argument("--short-window", type=int, default=5, help="短期窗口大小")
-    parser.add_argument("--long-window", type=int, default=20, help="長期窗口大小")
-    parser.add_argument("--rsi-window", type=int, default=14, help="RSI 窗口大小")
-    parser.add_argument("--rsi-overbought", type=int, default=70, help="RSI 超買閾值")
-    parser.add_argument("--rsi-oversold", type=int, default=30, help="RSI 超賣閾值")
+        # 根據模式執行
+        if mode == "backtest":
+            results, report = run_backtest_mode(config)
+            _print_backtest_results(report)
+            return {"results": results, "report": report}
+        
+        elif mode == "paper":
+            run_paper_mode(config)
+            return None
+        
+        elif mode == "live":
+            logger.warning("⚠️  即將啟動實盤交易模式！")
+            run_live_mode(config)
+            return None
+        
+        else:
+            raise ValueError(f"不支援的交易模式: {mode}")
 
-    # 投資組合參數
-    parser.add_argument(
-        "--portfolio",
-        type=str,
-        default="equal_weight",
-        choices=["equal_weight", "mean_variance", "risk_parity"],
-        help="投資組合策略",
-    )
-    parser.add_argument("--risk-aversion", type=float, default=1.0, help="風險厭惡係數")
-
-    # 風險控制參數
-    parser.add_argument(
-        "--max-position-size", type=float, default=0.1, help="最大部位大小"
-    )
-    parser.add_argument(
-        "--max-portfolio-risk", type=float, default=0.02, help="最大投資組合風險"
-    )
-    parser.add_argument("--stop-loss", type=float, default=0.05, help="停損百分比")
-    parser.add_argument("--stop-profit", type=float, default=0.1, help="停利百分比")
-
-    # 回測參數
-    parser.add_argument(
-        "--initial-capital", type=float, default=1000000, help="初始資金"
-    )
-    parser.add_argument(
-        "--transaction-cost", type=float, default=0.001425, help="交易成本"
-    )
-    parser.add_argument("--slippage", type=float, default=0.001, help="滑價")
-    parser.add_argument("--tax", type=float, default=0.003, help="交易稅")
-
-    # 執行參數
-    parser.add_argument("--interval", type=int, default=60, help="執行間隔（秒）")
-
-    return parser.parse_args()
+    except KeyboardInterrupt:
+        logger.info("收到中斷信號，系統正在安全關閉...")
+        return None
+    except Exception as e:
+        logger.error("交易系統執行失敗: %s", e, exc_info=True)
+        raise RuntimeError(f"系統執行失敗: {e}") from e
+    finally:
+        logger.info("交易系統已關閉")
 
 
-def init_system(args):
-    """
-    初始化系統
+def _validate_basic_config(config: Dict[str, Any]) -> bool:
+    """驗證基本配置.
 
     Args:
-        args (argparse.Namespace): 命令行參數
+        config: 配置字典
 
     Returns:
-        dict: 系統配置
+        bool: 配置是否有效
     """
-    # 解析日期
-    start_date = (
-        datetime.strptime(args.start_date, "%Y-%m-%d").date()
-        if args.start_date
-        else None
-    )
-    end_date = (
-        datetime.strptime(args.end_date, "%Y-%m-%d").date()
-        if args.end_date
-        else datetime.now().date()
-    )
-
-    # 系統配置
-    config = {
-        "mode": args.mode,
-        "start_date": start_date,
-        "end_date": end_date,
-        "update_data": args.update_data,
-        "strategy": {
-            "name": args.strategy,
-            "params": {
-                "short_window": args.short_window,
-                "long_window": args.long_window,
-                "rsi_window": args.rsi_window,
-                "rsi_overbought": args.rsi_overbought,
-                "rsi_oversold": args.rsi_oversold,
-            },
-        },
-        "portfolio": {
-            "name": args.portfolio,
-            "params": {"risk_aversion": args.risk_aversion},
-        },
-        "risk_control": {
-            "max_position_size": args.max_position_size,
-            "max_portfolio_risk": args.max_portfolio_risk,
-            "stop_loss": args.stop_loss,
-            "stop_profit": args.stop_profit,
-        },
-        "backtest": {
-            "initial_capital": args.initial_capital,
-            "transaction_cost": args.transaction_cost,
-            "slippage": args.slippage,
-            "tax": args.tax,
-        },
-        "execution": {"interval": args.interval},
-    }
-
-    return config
+    required_keys = ["mode"]
+    
+    for key in required_keys:
+        if key not in config:
+            logger.error("缺少必要配置項: %s", key)
+            return False
+    
+    if config["mode"] not in ["backtest", "paper", "live"]:
+        logger.error("不支援的交易模式: %s", config["mode"])
+        return False
+    
+    return True
 
 
-def run_backtest_mode(config):
-    """
-    執行回測模式
+def _print_backtest_results(report: Dict[str, Any]) -> None:
+    """打印回測結果.
 
     Args:
-        config (dict): 系統配置
+        report: 回測報告字典
+    """
+    try:
+        print("\n" + "="*50)
+        print("📊 回測結果摘要")
+        print("="*50)
+        
+        returns = report.get("returns", {})
+        risk = report.get("risk", {})
+        trade = report.get("trade", {})
+        
+        print(f"💰 總收益率: {returns.get('total_return', 0):.2%}")
+        print(f"📈 年化收益率: {returns.get('annual_return', 0):.2%}")
+        print(f"📊 夏普比率: {risk.get('sharpe_ratio', 0):.2f}")
+        print(f"📉 最大回撤: {risk.get('max_drawdown', 0):.2%}")
+        print(f"🎯 勝率: {trade.get('win_rate', 0):.2%}")
+        print(f"💡 盈虧比: {trade.get('profit_loss_ratio', 0):.2f}")
+        print("="*50 + "\n")
+        
+    except Exception as e:
+        logger.warning("打印回測結果時發生錯誤: %s", e)
+
+
+def main() -> int:
+    """主函數，處理命令行參數並執行交易系統.
 
     Returns:
-        dict: 回測結果
+        int: 退出碼，0 表示成功，1 表示失敗
+
+    Example:
+        >>> exit_code = main()
+        >>> print(f"程序退出碼: {exit_code}")
     """
-    logger.info("開始回測模式")
+    try:
+        # 解析命令行參數
+        args = parse_args()
+        logger.info("命令行參數解析完成")
 
-    # 載入資料
-    logger.info("載入資料")
-    load_data(config["start_date"], config["end_date"])
+        # 初始化系統配置
+        config = init_system(args)
+        logger.info("系統配置初始化完成")
 
-    # 更新資料
-    if config["update_data"]:
-        logger.info("更新資料")
-        update_data(config["start_date"], config["end_date"])
+        # 驗證配置
+        validate_config(config)
+        logger.info("配置驗證通過")
 
-    # 計算特徵
-    logger.info("計算特徵")
-    features = compute_features(config["start_date"], config["end_date"])
+        # 執行交易系統
+        result = None
+        if config["mode"] == "backtest":
+            results, report = run_backtest_mode(config)
+            _print_backtest_results(report)
+            result = {"results": results, "report": report}
+        
+        elif config["mode"] == "paper":
+            run_paper_mode(config)
+        
+        elif config["mode"] == "live":
+            logger.warning("⚠️  即將啟動實盤交易模式！")
+            run_live_mode(config)
+        
+        else:
+            logger.error("不支援的交易模式: %s", config["mode"])
+            return 1
 
-    # 生成訊號
-    logger.info("生成訊號")
-    signals = generate_signals(
-        features, config["strategy"]["name"], **config["strategy"]["params"]
-    )
+        logger.info("✅ 交易系統執行完成")
+        return 0
 
-    # 最佳化投資組合
-    logger.info("最佳化投資組合")
-    weights = optimize(
-        signals, config["portfolio"]["name"], **config["portfolio"]["params"]
-    )
-
-    # 執行回測
-    logger.info("執行回測")
-    results = run_backtest(
-        signals,
-        weights,
-        config["start_date"],
-        config["end_date"],
-        config["backtest"]["initial_capital"],
-        config["backtest"]["transaction_cost"],
-        config["backtest"]["slippage"],
-        config["backtest"]["tax"],
-    )
-
-    # 記錄結果
-    logger.info("記錄結果")
-    report = record(results)
-
-    logger.info("回測完成")
-
-    return results, report
-
-
-def run_paper_mode(config):
-    """
-    執行模擬交易模式
-
-    Args:
-        config (dict): 系統配置
-    """
-    logger.info("開始模擬交易模式")
-
-    # 載入資料
-    logger.info("載入資料")
-    load_data()
-
-    # 更新資料
-    logger.info("更新資料")
-    update_data()
-
-    # 啟動事件監控
-    logger.info("啟動事件監控")
-    event_monitor = start_event_monitor()
-
-    # 主循環
-    while True:
-        try:
-            # 計算特徵
-            logger.info("計算特徵")
-            features = compute_features()
-
-            # 生成訊號
-            logger.info("生成訊號")
-            signals = generate_signals(
-                features, config["strategy"]["name"], **config["strategy"]["params"]
-            )
-
-            # 最佳化投資組合
-            logger.info("最佳化投資組合")
-            weights = optimize(
-                signals, config["portfolio"]["name"], **config["portfolio"]["params"]
-            )
-
-            # 風險控制
-            logger.info("風險控制")
-            portfolio_value = config["backtest"][
-                "initial_capital"
-            ]  # 這裡簡化了，實際上應該從帳戶中獲取
-            filtered_signals = filter_signals(
-                signals,
-                portfolio_value,
-                max_position_size=config["risk_control"]["max_position_size"],
-                max_portfolio_risk=config["risk_control"]["max_portfolio_risk"],
-                stop_loss_pct=config["risk_control"]["stop_loss"],
-                stop_profit_pct=config["risk_control"]["stop_profit"],
-            )
-
-            # 生成訂單
-            logger.info("生成訂單")
-            orders = []
-            for (stock_id, date), row in filtered_signals.iterrows():
-                if row.get("buy_signal", 0) == 1:
-                    # 買入訂單
-                    orders.append(
-                        {
-                            "stock_id": stock_id,
-                            "action": "buy",
-                            "quantity": 1000,  # 這裡簡化了，實際上應該根據權重計算
-                            "order_type": "market",
-                        }
-                    )
-                elif row.get("sell_signal", 0) == 1:
-                    # 賣出訂單
-                    orders.append(
-                        {
-                            "stock_id": stock_id,
-                            "action": "sell",
-                            "quantity": 1000,  # 這裡簡化了，實際上應該根據持倉計算
-                            "order_type": "market",
-                        }
-                    )
-
-            # 執行訂單
-            if orders:
-                logger.info(f"執行 {len(orders)} 個訂單")
-                order_ids = place_orders(orders)
-                logger.info(f"訂單 ID: {order_ids}")
-
-            # 等待下一次執行
-            logger.info(f"等待 {config['execution']['interval']} 秒")
-            time.sleep(config["execution"]["interval"])
-
-        except KeyboardInterrupt:
-            logger.info("使用者中斷執行")
-            break
-        except Exception as e:
-            logger.error(f"執行過程中發生錯誤: {e}")
-            time.sleep(10)
-
-    # 停止事件監控
-    event_monitor.stop()
-
-    logger.info("模擬交易結束")
-
-
-def run_live_mode(config):
-    """
-    執行實盤交易模式
-
-    Args:
-        config (dict): 系統配置
-    """
-    logger.info("開始實盤交易模式")
-
-    # 載入資料
-    logger.info("載入資料")
-    load_data()
-
-    # 更新資料
-    logger.info("更新資料")
-    update_data()
-
-    # 啟動事件監控
-    logger.info("啟動事件監控")
-    event_monitor = start_event_monitor()
-
-    # 主循環
-    while True:
-        try:
-            # 計算特徵
-            logger.info("計算特徵")
-            features = compute_features()
-
-            # 生成訊號
-            logger.info("生成訊號")
-            signals = generate_signals(
-                features, config["strategy"]["name"], **config["strategy"]["params"]
-            )
-
-            # 最佳化投資組合
-            logger.info("最佳化投資組合")
-            weights = optimize(
-                signals, config["portfolio"]["name"], **config["portfolio"]["params"]
-            )
-
-            # 風險控制
-            logger.info("風險控制")
-            portfolio_value = config["backtest"][
-                "initial_capital"
-            ]  # 這裡簡化了，實際上應該從帳戶中獲取
-            filtered_signals = filter_signals(
-                signals,
-                portfolio_value,
-                max_position_size=config["risk_control"]["max_position_size"],
-                max_portfolio_risk=config["risk_control"]["max_portfolio_risk"],
-                stop_loss_pct=config["risk_control"]["stop_loss"],
-                stop_profit_pct=config["risk_control"]["stop_profit"],
-            )
-
-            # 生成訂單
-            logger.info("生成訂單")
-            orders = []
-            for (stock_id, date), row in filtered_signals.iterrows():
-                if row.get("buy_signal", 0) == 1:
-                    # 買入訂單
-                    orders.append(
-                        {
-                            "stock_id": stock_id,
-                            "action": "buy",
-                            "quantity": 1000,  # 這裡簡化了，實際上應該根據權重計算
-                            "order_type": "market",
-                        }
-                    )
-                elif row.get("sell_signal", 0) == 1:
-                    # 賣出訂單
-                    orders.append(
-                        {
-                            "stock_id": stock_id,
-                            "action": "sell",
-                            "quantity": 1000,  # 這裡簡化了，實際上應該根據持倉計算
-                            "order_type": "market",
-                        }
-                    )
-
-            # 執行訂單
-            if orders:
-                logger.info(f"執行 {len(orders)} 個訂單")
-                order_ids = place_orders(orders)
-                logger.info(f"訂單 ID: {order_ids}")
-
-            # 等待下一次執行
-            logger.info(f"等待 {config['execution']['interval']} 秒")
-            time.sleep(config["execution"]["interval"])
-
-        except KeyboardInterrupt:
-            logger.info("使用者中斷執行")
-            break
-        except Exception as e:
-            logger.error(f"執行過程中發生錯誤: {e}")
-            time.sleep(10)
-
-    # 停止事件監控
-    event_monitor.stop()
-
-    logger.info("實盤交易結束")
-
-
-def main():
-    """主函數"""
-    # 解析命令行參數
-    args = parse_args()
-
-    # 初始化系統
-    config = init_system(args)
-
-    # 根據模式執行不同的流程
-    if config["mode"] == "backtest":
-        results, report = run_backtest_mode(config)
-
-        # 輸出回測結果
-        print("\n===== 回測結果 =====")
-        print(f"總收益率: {report['returns']['total_return']:.2%}")
-        print(f"年化收益率: {report['returns']['annual_return']:.2%}")
-        print(f"夏普比率: {report['risk']['sharpe_ratio']:.2f}")
-        print(f"最大回撤: {report['risk']['max_drawdown']:.2%}")
-        print(f"勝率: {report['trade']['win_rate']:.2%}")
-        print(f"盈虧比: {report['trade']['profit_loss_ratio']:.2f}")
-        print("====================\n")
-
-    elif config["mode"] == "paper":
-        run_paper_mode(config)
-    elif config["mode"] == "live":
-        run_live_mode(config)
-    else:
-        logger.error(f"不支援的模式: {config['mode']}")
+    except KeyboardInterrupt:
+        logger.info("收到中斷信號，程序正在退出...")
+        return 0
+    except Exception as e:
+        logger.error("程序執行失敗: %s", e, exc_info=True)
+        return 1
 
 
 if __name__ == "__main__":
-    try:
-        logger.info("開始執行自動交易系統")
-
-        # 載入資料
-        logger.info("載入資料中...")
-        data = load_data()
-        logger.info("資料載入完成")
-
-        # 計算特徵
-        logger.info("計算特徵中...")
-        feats = compute_features(data)
-        logger.info("特徵計算完成")
-
-        # 生成交易訊號
-        logger.info("生成交易訊號中...")
-        signals = generate_signals(feats)
-        logger.info("交易訊號生成完成")
-
-        # 計算投資組合權重
-        logger.info("計算投資組合權重中...")
-        weights = optimize(signals)
-        logger.info("投資組合權重計算完成")
-
-        # 執行回測
-        logger.info("執行回測中...")
-        results = run_backtest(signals, weights, commission_rate=0.001, slippage=0.0005)
-        logger.info("回測完成")
-
-        # 風險控制
-        logger.info("執行風險控制中...")
-        orders = filter_signals(signals, results["equity_curve"][-1])
-        logger.info(f"風險控制完成，生成 {len(orders)} 個訂單")
-
-        # 執行訂單
-        logger.info("執行訂單中...")
-        place_orders(orders)
-        logger.info("訂單執行完成")
-
-        # 啟動事件監控
-        logger.info("啟動事件監控...")
-        start_event_monitor()
-        logger.info("事件監控已啟動")
-
-        # 分析績效
-        logger.info("分析交易績效中...")
-        trade_logger.analyze_performance(results, orders)
-        logger.info("績效分析完成")
-
-        logger.info("自動交易系統執行完成")
-    except Exception as e:
-        logger.error(f"執行過程中發生錯誤: {e}", exc_info=True)
+    exit_code = main()
+    exit(exit_code)

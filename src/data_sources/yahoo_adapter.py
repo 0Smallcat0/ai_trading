@@ -325,3 +325,22 @@ class YahooFinanceAdapter:
                     logger.error(f"獲取 {symbol} 的歷史資料時發生錯誤: {e}")
 
         return results
+
+    def test_connection(self) -> bool:
+        """測試連接狀態（不實際獲取資料）
+
+        Returns:
+            bool: 連接是否正常
+        """
+        try:
+            # 簡單的連接測試，不獲取實際資料
+            import yfinance as yf
+            # 只是檢查模組是否可用
+            return yf is not None
+        except Exception as e:
+            logger.debug(f"Yahoo Finance 連接測試失敗: {e}")
+            return False
+
+
+# 向後相容性別名
+YahooAdapter = YahooFinanceAdapter

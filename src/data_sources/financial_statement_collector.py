@@ -366,4 +366,3 @@ class FinancialStatementCollector(DataCollector):
             return self.collect_financial_ratios(symbols, **kwargs)
         else:
             raise ValueError(f"不支援的資料類型: {data_type}")
-"""

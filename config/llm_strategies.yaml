@@ -1,0 +1,315 @@
+# LLM策略配置文件
+# 此文件包含所有LLM交易策略的詳細配置
+
+# 策略全局設定
+global_settings:
+  default_provider: "openai"
+  default_model: "gpt-3.5-turbo"
+  default_confidence_threshold: 0.6
+  default_temperature: 0.7
+  default_max_tokens: 2000
+  enable_caching: true
+  enable_monitoring: true
+
+# FinMem-LLM策略配置
+finmem_llm:
+  # 基本設定
+  name: "FinMem-LLM策略"
+  description: "基於FinMem-LLM模型進行股票預測，結合過去5個交易日的新聞數據和歷史價格資訊"
+  enabled: true
+  priority: 1
+  
+  # LLM配置
+  llm_config:
+    provider: "openai"
+    model: "gpt-3.5-turbo"
+    temperature: 0.7
+    max_tokens: 2000
+    top_p: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+  
+  # 策略參數
+  parameters:
+    confidence_threshold: 0.6
+    news_days: 5
+    enable_thinking: true
+    max_news_per_day: 30
+    thinking_weight: 0.2
+    
+  # 數據處理配置
+  data_processing:
+    news_sources:
+      - "financial_news"
+      - "company_announcements"
+      - "market_reports"
+    news_filtering:
+      min_relevance_score: 0.3
+      exclude_keywords:
+        - "advertisement"
+        - "sponsored"
+      language: "zh-TW"
+    
+  # 提示詞模板
+  prompts:
+    system_prompt: |
+      你是一個專業的股票分析師，擅長分析新聞對股價的影響。
+      請根據提供的新聞數據，預測股票的漲跌趨勢。
+      
+    task_prompt: |
+      請根據過去五個交易日內關於該股票的新聞，預測下一個交易日該股票的漲跌。
+      如果預測下一個交易日該股票會漲，請輸出[上漲]，
+      如果預測下一個交易日該股票會跌，請輸出[下跌]
+      
+    thinking_prompt: |
+      <think>
+      請詳細分析新聞內容，考慮以下因素：
+      1. 新聞的正面/負面情緒
+      2. 新聞的重要性和影響範圍
+      3. 市場可能的反應
+      4. 歷史類似事件的影響
+      </think>
+
+# Stock-chain策略配置
+stock_chain:
+  # 基本設定
+  name: "Stock-chain策略"
+  description: "基於Stock-chain框架進行多維度分析，包括網路熱點話題搜索、新聞情緒分析、技術指標分析"
+  enabled: true
+  priority: 2
+  
+  # LLM配置
+  llm_config:
+    provider: "openai"
+    model: "gpt-4"
+    temperature: 0.7
+    max_tokens: 3000
+    top_p: 0.9
+    frequency_penalty: 0.1
+    presence_penalty: 0.1
+  
+  # 策略參數
+  parameters:
+    confidence_threshold: 0.65
+    enable_web_search: true
+    sentiment_weight: 0.4
+    technical_weight: 0.3
+    news_weight: 0.3
+    
+  # 搜索配置
+  search_config:
+    search_topics:
+      - "股市行情"
+      - "經濟政策"
+      - "行業動態"
+      - "公司財報"
+      - "市場分析"
+    max_results_per_topic: 10
+    search_time_range: 7  # 天數
+    
+  # 技術指標配置
+  technical_indicators:
+    - name: "MA5"
+      period: 5
+      weight: 0.2
+    - name: "MA20"
+      period: 20
+      weight: 0.2
+    - name: "RSI"
+      period: 14
+      weight: 0.3
+    - name: "MACD"
+      fast_period: 12
+      slow_period: 26
+      signal_period: 9
+      weight: 0.3
+      
+  # 提示詞模板
+  prompts:
+    system_prompt: |
+      你是一個資深的量化分析師，擅長整合多維度信息進行股票分析。
+      請基於提供的熱點話題、新聞分析和技術指標，給出綜合的投資建議。
+      
+    analysis_prompt: |
+      請基於以上多維度分析信息，對股票進行綜合評估：
+      1. 分析各個維度的影響因素
+      2. 評估整體市場情緒和技術面
+      3. 給出明確的投資建議：[買入]、[賣出]或[持有]
+      4. 提供決策的置信度評分（0-100分）
+      5. 說明主要的風險因素
+
+# 新聞分析策略配置
+news_analysis:
+  # 基本設定
+  name: "新聞分析策略"
+  description: "專注於新聞數據的深度分析，包括新聞情緒分析、事件重要性評估、時間衰減效應"
+  enabled: true
+  priority: 3
+  
+  # LLM配置
+  llm_config:
+    provider: "openai"
+    model: "gpt-3.5-turbo"
+    temperature: 0.5
+    max_tokens: 2000
+    top_p: 0.8
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+  
+  # 策略參數
+  parameters:
+    confidence_threshold: 0.65
+    sentiment_threshold: 0.6
+    importance_threshold: 0.7
+    time_decay_factor: 0.1
+    max_news_count: 20
+    
+  # 情緒分析配置
+  sentiment_analysis:
+    positive_keywords:
+      - "上漲"
+      - "增長"
+      - "利好"
+      - "突破"
+      - "創新"
+      - "合作"
+      - "收購"
+      - "擴張"
+      - "盈利"
+      - "成功"
+    negative_keywords:
+      - "下跌"
+      - "下降"
+      - "利空"
+      - "虧損"
+      - "風險"
+      - "警告"
+      - "調查"
+      - "處罰"
+      - "困難"
+      - "挑戰"
+    neutral_keywords:
+      - "持平"
+      - "穩定"
+      - "維持"
+      - "觀望"
+      
+  # 重要性評估配置
+  importance_assessment:
+    high_importance_keywords:
+      - "財報"
+      - "業績"
+      - "收購"
+      - "合併"
+      - "重組"
+      - "IPO"
+      - "分紅"
+      - "配股"
+    medium_importance_keywords:
+      - "合作"
+      - "協議"
+      - "投資"
+      - "擴張"
+      - "新產品"
+    low_importance_keywords:
+      - "會議"
+      - "訪問"
+      - "聲明"
+      
+  # 提示詞模板
+  prompts:
+    system_prompt: |
+      你是一個專業的新聞分析師，擅長從新聞中提取對股價有影響的關鍵信息。
+      請分析新聞的情緒傾向、重要性和對股價的潛在影響。
+      
+    analysis_prompt: |
+      請基於以上新聞分析結果，進行綜合評估：
+      1. 分析新聞對股價的潛在影響
+      2. 評估市場情緒的變化趨勢
+      3. 識別關鍵的風險和機會因素
+      4. 給出明確的交易建議：[買入]、[賣出]或[持有]
+      5. 提供決策置信度（0-100分）
+
+# 策略組合配置
+strategy_ensemble:
+  # 組合策略設定
+  name: "LLM策略組合"
+  description: "多個LLM策略的智能組合，通過加權平均或投票機制產生最終決策"
+  enabled: true
+  
+  # 組合方法
+  ensemble_method: "weighted_average"  # weighted_average, majority_vote, confidence_weighted
+  
+  # 策略權重
+  strategy_weights:
+    finmem_llm: 0.4
+    stock_chain: 0.4
+    news_analysis: 0.2
+    
+  # 動態權重調整
+  dynamic_weighting:
+    enabled: true
+    adjustment_period: 30  # 天數
+    performance_threshold: 0.6
+    max_weight_change: 0.1
+    
+  # 一致性檢查
+  consistency_check:
+    enabled: true
+    min_agreement_ratio: 0.6
+    conflict_resolution: "confidence_weighted"
+    
+  # 置信度聚合
+  confidence_aggregation:
+    method: "weighted_average"
+    min_confidence: 0.5
+    confidence_boost: 0.1  # 當策略一致時的置信度提升
+
+# 回測配置
+backtesting:
+  enabled: true
+  test_period: 90  # 天數
+  benchmark: "SPY"
+  metrics:
+    - "total_return"
+    - "sharpe_ratio"
+    - "max_drawdown"
+    - "win_rate"
+    - "profit_factor"
+  rebalance_frequency: "daily"
+  transaction_cost: 0.001
+  
+# 實時監控配置
+monitoring:
+  performance_tracking:
+    enabled: true
+    update_frequency: 3600  # 秒
+    metrics_retention: 30  # 天數
+    
+  alert_conditions:
+    - condition: "accuracy < 0.5"
+      action: "disable_strategy"
+      notification: true
+    - condition: "confidence < 0.3"
+      action: "reduce_weight"
+      notification: true
+    - condition: "error_rate > 0.1"
+      action: "restart_service"
+      notification: true
+      
+# 優化配置
+optimization:
+  auto_tuning:
+    enabled: false
+    optimization_period: 30  # 天數
+    parameters_to_optimize:
+      - "confidence_threshold"
+      - "temperature"
+      - "strategy_weights"
+    optimization_method: "bayesian"
+    
+  a_b_testing:
+    enabled: false
+    test_duration: 14  # 天數
+    traffic_split: 0.5
+    significance_level: 0.05

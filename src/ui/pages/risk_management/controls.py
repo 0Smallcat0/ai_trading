@@ -15,7 +15,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-from .utils import get_default_risk_parameters
+from src.ui.pages.risk_management.utils import get_default_risk_parameters
 
 
 def show_risk_controls() -> None:

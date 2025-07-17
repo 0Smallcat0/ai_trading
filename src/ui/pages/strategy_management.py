@@ -38,7 +38,7 @@ def get_mock_strategies():
     service = get_strategy_service()
 
     # 嘗試從服務獲取策略，如果沒有則創建一些示例策略
-    strategies = service.list_strategies()
+    strategies = service.list_strategies({})
 
     if not strategies:
         # 創建一些示例策略
@@ -71,12 +71,12 @@ def get_mock_strategies():
 
         for strategy_data in example_strategies:
             try:
-                service.create_strategy(**strategy_data)
+                service.create_strategy(strategy_data)
             except Exception as e:
                 st.error(f"創建示例策略失敗: {e}")
 
         # 重新獲取策略列表
-        strategies = service.list_strategies()
+        strategies = service.list_strategies({})
 
     return strategies
 
@@ -445,11 +445,16 @@ def show_strategy_list():
 
     # 獲取策略列表
     try:
-        strategies = service.list_strategies(
-            strategy_type=selected_type if selected_type != "所有類型" else None,
-            status=selected_status,
-            search_query=search_query if search_query else None,
-        )
+        # 構建過濾條件字典
+        filters = {}
+        if selected_type != "所有類型":
+            filters["strategy_type"] = selected_type
+        if selected_status:
+            filters["status"] = selected_status
+        if search_query:
+            filters["search_query"] = search_query
+
+        strategies = service.list_strategies(filters)
     except Exception as e:
         st.error(f"獲取策略列表失敗: {e}")
         strategies = []
@@ -525,15 +530,15 @@ def show_strategy_list():
                     if st.button("複製策略", key=f"copy_{strategy['id']}"):
                         try:
                             new_name = f"{strategy['name']}_副本"
-                            service.create_strategy(
-                                name=new_name,
-                                strategy_type=strategy["type"],
-                                description=f"複製自 {strategy['name']}",
-                                code=strategy.get("code", ""),
-                                parameters=strategy.get("parameters", {}),
-                                risk_parameters=strategy.get("risk_parameters", {}),
-                                author="使用者",
-                            )
+                            service.create_strategy({
+                                "name": new_name,
+                                "strategy_type": strategy["type"],
+                                "description": f"複製自 {strategy['name']}",
+                                "code": strategy.get("code", ""),
+                                "parameters": strategy.get("parameters", {}),
+                                "risk_parameters": strategy.get("risk_parameters", {}),
+                                "author": "使用者",
+                            })
                             st.success(f"策略已複製為: {new_name}")
                             st.experimental_rerun()
                         except Exception as e:
@@ -583,7 +588,7 @@ def show_strategy_version_control():
 
     # 獲取版本歷史
     try:
-        versions = service.get_strategy_versions(strategy["id"])
+        versions = service.get_versions(strategy["id"])
     except Exception as e:
         st.error(f"獲取版本歷史失敗: {e}")
         versions = []
@@ -651,8 +656,8 @@ def show_strategy_version_control():
         with col3:
             if st.button("恢復到此版本"):
                 try:
-                    service.rollback_strategy(
-                        strategy["id"], selected_version, author="使用者"
+                    service.rollback_version(
+                        strategy["id"], selected_version
                     )
                     st.success(f"已恢復到版本 {selected_version}")
                     st.experimental_rerun()
@@ -674,8 +679,8 @@ def show_strategy_version_control():
                 if st.button("確認創建"):
                     if change_log:
                         try:
-                            new_version = service.update_strategy(
-                                strategy["id"], change_log=change_log, author="使用者"
+                            new_version = service.create_version(
+                                strategy["id"], {"change_log": change_log, "author": "使用者"}
                             )
                             st.success(f"新版本 {new_version} 創建成功")
                             st.session_state.show_version_create = False
@@ -969,7 +974,7 @@ def show_strategy_comparison(strategy):
 
     # 獲取所有策略用於比較
     try:
-        all_strategies = service.list_strategies()
+        all_strategies = service.list_strategies({})
         strategy_options = [
             s["name"] for s in all_strategies if s["id"] != strategy["id"]
         ]
@@ -1294,12 +1299,14 @@ def show_strategy_parameter_optimization():
             # 應用最佳參數
             if st.button("應用最佳參數"):
                 try:
-                    # 更新策略參數
-                    service.update_strategy(
+                    # 創建新版本以保存優化後的參數
+                    service.create_version(
                         strategy["id"],
-                        parameters=best_result["parameters"],
-                        change_log=f"應用參數優化結果 - {optimization_target}: {best_result['score']:.4f}",
-                        author="系統優化",
+                        {
+                            "parameters": best_result["parameters"],
+                            "change_log": f"應用參數優化結果 - {optimization_target}: {best_result['score']:.4f}",
+                            "author": "系統優化",
+                        }
                     )
                     st.success("最佳參數已應用到策略中！")
                     st.experimental_rerun()
@@ -1420,15 +1427,15 @@ def show_strategy_editor():
         if st.button("💾 保存變更", type="primary"):
             try:
                 service = get_strategy_service()
-                service.update_strategy(
+                # 創建新版本以保存編輯後的策略
+                service.create_version(
                     strategy["id"],
-                    name=name,
-                    description=description,
-                    strategy_type=strategy_type,
-                    parameters=new_params,
-                    risk_parameters=new_risk_params,
-                    change_log="手動編輯策略",
-                    author="使用者",
+                    {
+                        "parameters": new_params,
+                        "risk_parameters": new_risk_params,
+                        "change_log": "手動編輯策略",
+                        "author": "使用者",
+                    }
                 )
                 st.success("策略已更新！")
                 st.experimental_rerun()

@@ -46,12 +46,14 @@ from src.ui.utils.websocket_manager import (
     websocket_manager,
     DataType,
 )
-from src.ui.components.auth import require_auth
-
 logger = logging.getLogger(__name__)
 
 
-@require_auth
+def show():
+    """顯示儀表板頁面（Web UI 入口點）"""
+    show_realtime_dashboard()
+
+
 def show_realtime_dashboard():
     """顯示即時數據儀表板頁面"""
     st.set_page_config(

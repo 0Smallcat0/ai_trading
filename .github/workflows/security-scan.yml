@@ -1,0 +1,433 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每日凌晨2點執行安全掃描
+    - cron: '0 2 * * *'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry safety bandit semgrep
+          poetry install
+      
+      - name: Create reports directory
+        run: mkdir -p security-reports
+      
+      - name: Run Safety dependency scan
+        run: |
+          echo "🔍 執行依賴漏洞掃描..."
+          poetry run safety check --json --output security-reports/safety-report.json || true
+          poetry run safety check --output security-reports/safety-report.txt || true
+        continue-on-error: true
+      
+      - name: Run pip-audit scan
+        run: |
+          echo "🔍 執行 pip-audit 掃描..."
+          pip install pip-audit
+          pip-audit --format=json --output=security-reports/pip-audit-report.json || true
+          pip-audit --format=cyclonedx-json --output=security-reports/pip-audit-sbom.json || true
+        continue-on-error: true
+      
+      - name: Upload dependency scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-scan-results
+          path: security-reports/
+          retention-days: 30
+
+  code-security-scan:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry bandit semgrep
+          poetry install
+      
+      - name: Create reports directory
+        run: mkdir -p security-reports
+      
+      - name: Run Bandit security scan
+        run: |
+          echo "🔍 執行 Bandit 代碼安全掃描..."
+          poetry run bandit -r src/ -f json -o security-reports/bandit-report.json --config .bandit || true
+          poetry run bandit -r src/ -f txt -o security-reports/bandit-report.txt --config .bandit || true
+        continue-on-error: true
+      
+      - name: Run Semgrep security scan
+        run: |
+          echo "🔍 執行 Semgrep 安全掃描..."
+          semgrep --config=auto --json --output=security-reports/semgrep-report.json src/ || true
+          semgrep --config=auto --output=security-reports/semgrep-report.txt src/ || true
+        continue-on-error: true
+      
+      - name: Run custom security checks
+        run: |
+          echo "🔍 執行自定義安全檢查..."
+          python scripts/security_checks.py --output security-reports/custom-security-report.json || true
+        continue-on-error: true
+      
+      - name: Upload code security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-security-scan-results
+          path: security-reports/
+          retention-days: 30
+
+  container-security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+      
+      - name: Build Docker image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Create reports directory
+        run: mkdir -p security-reports
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'sarif'
+          output: 'security-reports/trivy-results.sarif'
+        continue-on-error: true
+      
+      - name: Run Trivy JSON report
+        run: |
+          echo "🔍 執行 Trivy 容器安全掃描..."
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v $(pwd)/security-reports:/reports \
+            aquasec/trivy:latest image \
+            --format json --output /reports/trivy-report.json \
+            ${{ steps.meta.outputs.tags }} || true
+        continue-on-error: true
+      
+      - name: Run Grype vulnerability scanner
+        run: |
+          echo "🔍 執行 Grype 漏洞掃描..."
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype ${{ steps.meta.outputs.tags }} -o json --file security-reports/grype-report.json || true
+          grype ${{ steps.meta.outputs.tags }} -o table --file security-reports/grype-report.txt || true
+        continue-on-error: true
+      
+      - name: Run Syft SBOM generation
+        run: |
+          echo "🔍 生成軟體物料清單 (SBOM)..."
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft ${{ steps.meta.outputs.tags }} -o spdx-json --file security-reports/sbom.spdx.json || true
+          syft ${{ steps.meta.outputs.tags }} -o cyclonedx-json --file security-reports/sbom.cyclonedx.json || true
+        continue-on-error: true
+      
+      - name: Upload container security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: container-security-scan-results
+          path: security-reports/
+          retention-days: 30
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'security-reports/trivy-results.sarif'
+
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 獲取完整歷史以掃描所有提交
+      
+      - name: Create reports directory
+        run: mkdir -p security-reports
+      
+      - name: Run TruffleHog secrets scan
+        run: |
+          echo "🔍 執行 TruffleHog 秘密掃描..."
+          docker run --rm -v $(pwd):/pwd \
+            trufflesecurity/trufflehog:latest github \
+            --repo https://github.com/${{ github.repository }} \
+            --json > security-reports/trufflehog-report.json || true
+        continue-on-error: true
+      
+      - name: Run GitLeaks secrets scan
+        run: |
+          echo "🔍 執行 GitLeaks 秘密掃描..."
+          docker run --rm -v $(pwd):/path \
+            zricethezav/gitleaks:latest detect \
+            --source /path --report-format json \
+            --report-path /path/security-reports/gitleaks-report.json || true
+        continue-on-error: true
+      
+      - name: Run custom secrets detection
+        run: |
+          echo "🔍 執行自定義秘密檢測..."
+          python scripts/detect_secrets.py --output security-reports/custom-secrets-report.json || true
+        continue-on-error: true
+      
+      - name: Upload secrets scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: secrets-scan-results
+          path: security-reports/
+          retention-days: 30
+
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-security-scan, container-security-scan, secrets-scan]
+    if: always()
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jinja2 markdown
+      
+      - name: Download all scan results
+        uses: actions/download-artifact@v4
+        with:
+          path: all-security-reports/
+      
+      - name: Generate consolidated security report
+        run: |
+          echo "📊 生成綜合安全報告..."
+          python scripts/generate_security_report.py \
+            --input-dir all-security-reports/ \
+            --output-dir final-security-report/ \
+            --format html,json,markdown
+      
+      - name: Check security thresholds
+        id: security-check
+        run: |
+          echo "🔍 檢查安全閾值..."
+          python scripts/check_security_thresholds.py \
+            --report-dir final-security-report/ \
+            --config config/security/thresholds.yaml \
+            --output security-status.json
+          
+          # 設置輸出變數
+          if [ -f security-status.json ]; then
+            SECURITY_PASSED=$(jq -r '.passed' security-status.json)
+            CRITICAL_ISSUES=$(jq -r '.critical_issues' security-status.json)
+            echo "security_passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
+            echo "critical_issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Upload final security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-security-report
+          path: final-security-report/
+          retention-days: 90
+      
+      - name: Comment PR with security summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const securityStatus = JSON.parse(fs.readFileSync('security-status.json', 'utf8'));
+              const summary = fs.readFileSync('final-security-report/summary.md', 'utf8');
+              
+              const comment = `## 🔒 安全掃描結果
+              
+              **狀態**: ${securityStatus.passed ? '✅ 通過' : '❌ 失敗'}
+              **關鍵問題**: ${securityStatus.critical_issues}
+              **高風險問題**: ${securityStatus.high_issues || 0}
+              **中風險問題**: ${securityStatus.medium_issues || 0}
+              
+              ${summary}
+              
+              詳細報告請查看 [Security Report Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('無法生成安全摘要評論:', error);
+            }
+      
+      - name: Create security issue for critical vulnerabilities
+        if: steps.security-check.outputs.security_passed == 'false' && steps.security-check.outputs.critical_issues > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const securityStatus = JSON.parse(fs.readFileSync('security-status.json', 'utf8'));
+              
+              const issueBody = `## 🚨 發現關鍵安全漏洞
+              
+              **掃描時間**: ${new Date().toISOString()}
+              **分支**: ${{ github.ref_name }}
+              **提交**: ${{ github.sha }}
+              
+              **漏洞統計**:
+              - 關鍵: ${securityStatus.critical_issues}
+              - 高風險: ${securityStatus.high_issues || 0}
+              - 中風險: ${securityStatus.medium_issues || 0}
+              
+              **需要立即處理的關鍵漏洞**:
+              ${securityStatus.critical_vulnerabilities ? securityStatus.critical_vulnerabilities.map(v => `- ${v.title}: ${v.description}`).join('\n') : '請查看詳細報告'}
+              
+              **詳細報告**: [Security Scan Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              **處理建議**:
+              1. 立即停止部署到生產環境
+              2. 修復所有關鍵漏洞
+              3. 重新運行安全掃描確認修復
+              4. 更新依賴到安全版本
+              
+              /label security critical
+              /assign @security-team
+              `;
+              
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 關鍵安全漏洞 - ${new Date().toISOString().split('T')[0]}`,
+                body: issueBody,
+                labels: ['security', 'critical', 'vulnerability']
+              });
+            } catch (error) {
+              console.log('無法創建安全問題:', error);
+            }
+      
+      - name: Fail workflow if critical vulnerabilities found
+        if: steps.security-check.outputs.security_passed == 'false'
+        run: |
+          echo "❌ 發現關鍵安全漏洞，工作流失敗"
+          echo "關鍵問題數量: ${{ steps.security-check.outputs.critical_issues }}"
+          exit 1
+
+  notify-security-team:
+    name: Notify Security Team
+    runs-on: ubuntu-latest
+    needs: [security-report]
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Send security alert
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // 這裡可以整合 Slack、Teams 或其他通知系統
+            console.log('🚨 安全掃描失敗，已通知安全團隊');
+            
+            // 示例：發送到 Slack
+            // const webhook = '${{ secrets.SLACK_SECURITY_WEBHOOK }}';
+            // if (webhook) {
+            //   await fetch(webhook, {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({
+            //       text: `🚨 AI Trading System 安全掃描失敗\n分支: ${{ github.ref_name }}\n查看詳情: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            //     })
+            //   });
+            // }

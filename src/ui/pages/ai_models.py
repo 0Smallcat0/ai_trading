@@ -12,24 +12,65 @@ AI 模型管理頁面
 import json
 import time
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Union
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+
+
+def safe_strftime(date_obj: Union[datetime, pd.Timestamp, np.datetime64, str], format_str: str = "%Y-%m-%d %H:%M") -> str:
+    """安全的日期格式化函數"""
+    try:
+        if isinstance(date_obj, str):
+            date_obj = pd.to_datetime(date_obj)
+        elif isinstance(date_obj, np.datetime64):
+            date_obj = pd.to_datetime(date_obj)
+        elif isinstance(date_obj, pd.Timestamp):
+            pass
+        elif isinstance(date_obj, datetime):
+            pass
+        else:
+            date_obj = pd.to_datetime(date_obj)
+
+        if hasattr(date_obj, 'to_pydatetime'):
+            return date_obj.to_pydatetime().strftime(format_str)
+        else:
+            return date_obj.strftime(format_str)
+    except Exception:
+        return str(date_obj)
 import plotly.graph_objects as go
 
 # 導入服務層
-from ...core.ai_model_management_service import AIModelManagementService
+try:
+    from src.core.ai_model_management_service import AIModelManagementService
+except ImportError:
+    # 備用導入或創建模擬服務
+    class AIModelManagementService:
+        def __init__(self):
+            pass
+        def get_models(self):
+            return []
 
 # 導入組件
-from ..components.ai_model_components import (
-    show_model_card,
-    show_training_progress,
-    show_feature_importance,
-    show_model_explanation_analysis,
-)
+try:
+    from src.ui.components.ai_model_components import (
+        show_model_card,
+        show_training_progress,
+        show_feature_importance,
+        show_model_explanation_analysis,
+    )
+except ImportError:
+    # 備用函數
+    def show_model_card(*args, **kwargs):
+        st.info("模型卡片組件不可用")
+    def show_training_progress(*args, **kwargs):
+        st.info("訓練進度組件不可用")
+    def show_feature_importance(*args, **kwargs):
+        st.info("特徵重要性組件不可用")
+    def show_model_explanation_analysis(*args, **kwargs):
+        st.info("模型解釋分析組件不可用")
 
 
 # 初始化服務
@@ -86,6 +127,17 @@ def show():
         - 依賴於 AIModelManagementService 來執行實際的模型管理邏輯
     """
     st.header("🤖 AI 模型管理")
+
+    # 顯示系統狀態信息
+    try:
+        service = get_ai_model_service()
+        models = service.get_models()
+        if models:
+            st.success(f"✅ AI 模型管理系統已就緒，目前有 {len(models)} 個模型")
+        else:
+            st.info("ℹ️ AI 模型管理系統已就緒，可以開始創建和管理模型")
+    except Exception as e:
+        st.warning(f"⚠️ 系統初始化中，部分功能可能受限：{e}")
 
     # 初始化 session state
     if "selected_model" not in st.session_state:
@@ -1091,7 +1143,7 @@ def show_anomaly_detection():
                 severity_color = {"高": "🔴", "中等": "🟡", "低": "🟢"}
 
                 with st.expander(
-                    f"{severity_color[anomaly['嚴重程度']]} {anomaly['類型']} - {anomaly['時間'].strftime('%Y-%m-%d %H:%M')}"
+                    f"{severity_color[anomaly['嚴重程度']]} {anomaly['類型']} - {safe_strftime(anomaly['時間'], '%Y-%m-%d %H:%M')}"
                 ):
                     st.write(f"**嚴重程度**: {anomaly['嚴重程度']}")
                     st.write(f"**描述**: {anomaly['描述']}")

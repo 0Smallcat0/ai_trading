@@ -1,0 +1,162 @@
+{
+  "errors": [
+    {
+      "filename": "src/core\\strategy_management_service_old.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/data_sources\\cli.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/data_sources\\data_collection_system.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/data_sources\\financial_statement_collector.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/data_sources\\realtime_quote_collector.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/database\\data_versioning.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/maintenance\\self_healing.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\alpha101_factors.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\factor_mining.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\ml_models.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\rl_agent.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\rl_environment.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\rl_models.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\rl_training.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\sentiment_analysis.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/models\\text_analysis.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/portfolio\\portfolio_optimization.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/portfolio\\risk_management.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/risk_management\\risk_manager.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\adapters\\alpha101_adapter.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\adapters\\double_ma_adapter.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\adapters\\factor_backtester.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\adapters\\pyalgotrade_adapter.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\adapters\\talib_adapter.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\base_strategy.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\ml_strategy.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\rl_strategy.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/strategies\\technical_strategy.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/ui\\web_ui.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/utils\\config_manager.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/utils\\data_utils.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/utils\\logger.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/utils\\notification_service.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/utils\\performance_monitor.py",
+      "reason": "syntax error while parsing AST from file"
+    },
+    {
+      "filename": "src/utils\\visualization.py",
+      "reason": "syntax error while parsing AST from file"
+    }
+  ],
+  "generated_at": "2024-12-15T10:30:00Z",
+  "metrics": {
+    "_totals": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    }
+  },
+  "results": [],
+  "version": "1.7.5"
+}

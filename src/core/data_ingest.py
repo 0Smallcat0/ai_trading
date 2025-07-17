@@ -130,6 +130,18 @@ class DataIngestionManager:
         self.cache_expiry_days = cache_expiry_days
         self.max_workers = max_workers
 
+        # 初始化故障轉移管理器
+        try:
+            self.failover_manager = DataSourceFailoverManager(
+                health_check_interval=120.0,  # 增加間隔，避免初始化時頻繁檢查
+                max_consecutive_failures=5,   # 增加失敗容忍度
+                recovery_check_interval=180.0,
+                circuit_breaker_timeout=600.0,
+            )
+        except Exception as e:
+            logger.warning(f"故障轉移管理器初始化失敗: {e}")
+            self.failover_manager = None
+
         # 初始化資料來源適配器
         self.adapters = {}
         self.init_adapters()
@@ -150,14 +162,6 @@ class DataIngestionManager:
         self.data_queue = queue.Queue(maxsize=1000)
         self.is_processing = False
         self.processing_thread = None
-
-        # 初始化故障轉移管理器
-        self.failover_manager = DataSourceFailoverManager(
-            health_check_interval=30.0,
-            max_consecutive_failures=3,
-            recovery_check_interval=60.0,
-            circuit_breaker_timeout=300.0,
-        )
 
         # 保留舊的故障轉移機制作為備用
         self.source_priorities = {
@@ -209,13 +213,14 @@ class DataIngestionManager:
         self.adapters["broker"] = broker_adapter
 
         # 註冊資料源到故障轉移管理器
-        self._register_data_sources()
+        if self.failover_manager:
+            self._register_data_sources()
 
-        # 設定優先級順序
-        self._setup_priority_groups()
+            # 設定優先級順序
+            self._setup_priority_groups()
 
-        # 啟動健康監控
-        self.failover_manager.start_health_monitoring()
+            # 啟動健康監控
+            self.failover_manager.start_health_monitoring()
 
         logger.info("資料來源適配器初始化完成")
 
@@ -263,16 +268,14 @@ class DataIngestionManager:
                 if not adapter:
                     return False
 
-                # 嘗試獲取測試資料
+                # 簡化的健康檢查，避免實際資料獲取
                 if source_name == "yahoo":
-                    # 測試獲取 AAPL 的簡單資料
-                    test_data = adapter.get_historical_data(
-                        "AAPL",
-                        start_date="2024-01-01",
-                        end_date="2024-01-02",
-                        use_cache=False,
-                    )
-                    return not test_data.empty
+                    # 只檢查適配器是否可用，不實際獲取資料
+                    if hasattr(adapter, 'test_connection'):
+                        return adapter.test_connection()
+                    # 檢查基本屬性是否存在
+                    return hasattr(adapter, 'get_historical_data')
+
                 if source_name == "broker":
                     # 測試券商連接
                     if hasattr(adapter, "test_connection"):

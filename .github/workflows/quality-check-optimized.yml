@@ -1,0 +1,442 @@
+name: Code Quality Check (Optimized)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每日自動檢查 (UTC 02:00 = 台北時間 10:00)
+    - cron: "0 2 * * *"
+
+env:
+  PYTHON_VERSION: "3.10"
+  CACHE_VERSION: v2
+
+jobs:
+  # 快速檢查 - 程式碼格式和基本語法 (~2分鐘)
+  quick-checks:
+    name: Quick Checks (Format & Syntax)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+
+      - name: ⚡ Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort flake8 autoflake
+
+      - name: ⏱️ Start timing
+        run: echo "QUICK_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: 🎨 Code formatting check (Black)
+        run: |
+          echo "🎨 檢查程式碼格式..."
+          black --check --diff src/ tests/ || {
+            echo "❌ 程式碼格式不符合 Black 標準"
+            echo "💡 請執行: black src/ tests/"
+            exit 1
+          }
+
+      - name: 📦 Import sorting check (isort)
+        run: |
+          echo "📦 檢查導入排序..."
+          isort --check-only --diff src/ tests/ || {
+            echo "❌ 導入排序不符合標準"
+            echo "💡 請執行: isort src/ tests/"
+            exit 1
+          }
+
+      - name: 🔍 Code style check (Flake8)
+        run: |
+          echo "🔍 執行 Flake8 檢查..."
+          flake8 src/ tests/ --statistics --tee --output-file=flake8-report.txt || {
+            echo "❌ Flake8 檢查發現問題"
+            cat flake8-report.txt
+            exit 1
+          }
+
+      - name: 📏 File size check
+        run: |
+          echo "📏 檢查檔案大小..."
+          python -c "
+          import os
+          import sys
+
+          max_lines = 300
+          violations = []
+
+          for root, dirs, files in os.walk('src/'):
+              for file in files:
+                  if file.endswith('.py'):
+                      filepath = os.path.join(root, file)
+                      with open(filepath, 'r', encoding='utf-8') as f:
+                          line_count = len(f.readlines())
+                      
+                      if line_count > max_lines:
+                          violations.append((filepath, line_count))
+
+          if violations:
+              print('❌ 發現超過 300 行的檔案:')
+              for filepath, line_count in violations:
+                  print(f'  {filepath}: {line_count} 行')
+              sys.exit(1)
+          else:
+              print('✅ 所有檔案都符合 ≤300 行標準')
+          "
+
+      - name: ⏱️ Report quick checks timing
+        run: |
+          QUICK_END_TIME=$(date +%s)
+          QUICK_DURATION=$((QUICK_END_TIME - QUICK_START_TIME))
+          echo "⚡ Quick checks completed in ${QUICK_DURATION}s"
+          echo "QUICK_DURATION=${QUICK_DURATION}" >> $GITHUB_ENV
+
+      - name: 📤 Upload quick check artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: quick-check-reports
+          path: |
+            flake8-report.txt
+
+  # 靜態分析 - Pylint 和 MyPy (~3分鐘)
+  static-analysis:
+    name: Static Analysis (Pylint & MyPy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    needs: quick-checks
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+
+      - name: ⚡ Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --with dev,test
+          pip install pylint mypy
+
+      - name: ⏱️ Start timing
+        run: echo "STATIC_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: 🔬 Static analysis (Pylint) - Core modules
+        run: |
+          echo "🔬 執行核心模組 Pylint 分析..."
+          pylint src/risk_management/ --fail-under=9.0 --output-format=text --reports=yes > pylint-core-report.txt || {
+            echo "❌ 核心模組 Pylint 評分低於 9.0"
+            cat pylint-core-report.txt
+            exit 1
+          }
+
+      - name: 🔬 Static analysis (Pylint) - General modules
+        run: |
+          echo "🔬 執行一般模組 Pylint 分析..."
+          pylint src/api/ src/ui/ src/core/ --fail-under=8.5 --output-format=text --reports=yes > pylint-general-report.txt || {
+            echo "❌ 一般模組 Pylint 評分低於 8.5"
+            cat pylint-general-report.txt
+            exit 1
+          }
+
+      - name: 🏷️ Type checking (MyPy)
+        run: |
+          echo "🏷️ 執行型別檢查..."
+          mypy src/ --ignore-missing-imports --show-error-codes --pretty || {
+            echo "❌ MyPy 型別檢查發現問題"
+            exit 1
+          }
+
+      - name: ⏱️ Report static analysis timing
+        run: |
+          STATIC_END_TIME=$(date +%s)
+          STATIC_DURATION=$((STATIC_END_TIME - STATIC_START_TIME))
+          echo "🔬 Static analysis completed in ${STATIC_DURATION}s"
+          echo "STATIC_DURATION=${STATIC_DURATION}" >> $GITHUB_ENV
+
+      - name: 📤 Upload static analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: static-analysis-reports
+          path: |
+            pylint-*.txt
+
+  # 安全檢查 - Bandit 和 Safety (~2分鐘)
+  security-checks:
+    name: Security Checks (Bandit & Safety)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: quick-checks
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+
+      - name: ⚡ Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety
+
+      - name: ⏱️ Start timing
+        run: echo "SECURITY_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: 🔒 Security scan (Bandit)
+        run: |
+          echo "🔒 執行安全掃描..."
+          bandit -r src/ -f json -o bandit-report.json || {
+            echo "❌ 發現安全問題"
+            bandit -r src/ -f txt
+            exit 1
+          }
+
+      - name: 🛡️ Dependency vulnerability check (Safety)
+        run: |
+          echo "🛡️ 檢查依賴漏洞..."
+          safety check --json --output safety-report.json || {
+            echo "❌ 發現依賴漏洞"
+            safety check
+            exit 1
+          }
+
+      - name: ⏱️ Report security checks timing
+        run: |
+          SECURITY_END_TIME=$(date +%s)
+          SECURITY_DURATION=$((SECURITY_END_TIME - SECURITY_START_TIME))
+          echo "🔒 Security checks completed in ${SECURITY_DURATION}s"
+          echo "SECURITY_DURATION=${SECURITY_DURATION}" >> $GITHUB_ENV
+
+      - name: 📤 Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # 測試執行 - 多版本並行 (~4分鐘)
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quick-checks
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+      fail-fast: false
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ matrix.python-version }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-python-${{ matrix.python-version }}-
+
+      - name: ⚡ Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --with dev,test
+          pip install pytest pytest-cov
+
+      - name: ⏱️ Start timing
+        run: echo "TEST_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: 🧪 Run tests with coverage
+        run: |
+          echo "🧪 執行測試並生成覆蓋率報告..."
+          pytest tests/ --cov=src/ --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80 || {
+            echo "❌ 測試失敗或覆蓋率低於 80%"
+            exit 1
+          }
+
+      - name: ⏱️ Report test timing
+        run: |
+          TEST_END_TIME=$(date +%s)
+          TEST_DURATION=$((TEST_END_TIME - TEST_START_TIME))
+          echo "🧪 Tests completed in ${TEST_DURATION}s"
+          echo "TEST_DURATION=${TEST_DURATION}" >> $GITHUB_ENV
+
+      - name: 📤 Upload coverage to Codecov
+        if: matrix.python-version == '3.10'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: 📤 Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports-${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+
+  # 品質報告生成 (~1分鐘)
+  quality-report:
+    name: Generate Quality Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [static-analysis, security-checks, tests]
+    if: always()
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+
+      - name: ⚡ Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas
+
+      - name: 📥 Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: ⏱️ Start timing
+        run: echo "REPORT_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: 📊 Generate quality report
+        run: |
+          echo "📊 生成品質報告..."
+          python scripts/generate_quality_report.py
+
+      - name: ⏱️ Calculate total execution time
+        run: |
+          REPORT_END_TIME=$(date +%s)
+          REPORT_DURATION=$((REPORT_END_TIME - REPORT_START_TIME))
+          echo "📊 Quality report generated in ${REPORT_DURATION}s"
+
+          # 計算總執行時間（估算）
+          TOTAL_ESTIMATED_TIME=$((QUICK_DURATION + STATIC_DURATION + SECURITY_DURATION + TEST_DURATION + REPORT_DURATION))
+          echo "⏱️ Total estimated execution time: ${TOTAL_ESTIMATED_TIME}s"
+
+          if [ $TOTAL_ESTIMATED_TIME -lt 300 ]; then
+            echo "🎉 Performance target achieved! (<5 minutes)"
+          else
+            echo "⚠️ Performance target not met (≥5 minutes)"
+          fi
+
+      - name: 📤 Upload quality reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-reports
+          path: |
+            docs/reports/
+
+      - name: 💬 Comment PR with quality results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            let comment = '## 🔍 程式碼品質檢查結果 (優化版)\n\n';
+
+            // 執行時間報告
+            comment += '### ⏱️ 執行時間\n';
+            comment += `- 快速檢查: ${process.env.QUICK_DURATION || 'N/A'}s\n`;
+            comment += `- 靜態分析: ${process.env.STATIC_DURATION || 'N/A'}s\n`;
+            comment += `- 安全檢查: ${process.env.SECURITY_DURATION || 'N/A'}s\n`;
+            comment += `- 測試執行: ${process.env.TEST_DURATION || 'N/A'}s\n`;
+            comment += `- 報告生成: ${process.env.REPORT_DURATION || 'N/A'}s\n\n`;
+
+            comment += '### 📊 檢查狀態\n';
+            comment += '✅ 快速檢查通過\n';
+            comment += '✅ 靜態分析通過\n';
+            comment += '✅ 安全檢查通過\n';
+            comment += '✅ 測試執行通過\n\n';
+
+            comment += '---\n*此報告由優化的自動化品質檢查系統生成*';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

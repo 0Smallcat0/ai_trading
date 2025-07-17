@@ -257,3 +257,145 @@ def strategy_form():
     return create_form(
         "策略參數設置", fields, submit_label="保存策略", key="strategy_form"
     )
+
+
+def create_form_section(title, fields, columns=2, form_key=None, submit_label="提交"):
+    """
+    創建表單區段
+
+    此函數創建一個帶有標題的表單區段，支援多列布局和各種輸入類型。
+    適用於需要分段顯示表單內容的場景，如安裝嚮導、設定頁面等。
+
+    Args:
+        title (str): 區段標題
+        fields (list): 欄位列表，每個欄位是一個字典，包含 name, type, label, options 等
+        columns (int, optional): 列數，預設為 2
+        form_key (str, optional): 表單唯一標識，預設自動生成
+        submit_label (str, optional): 提交按鈕文字，預設為 "提交"
+
+    Returns:
+        dict or None: 如果表單提交則返回表單數據，否則返回 None
+
+    Example:
+        ```python
+        fields = [
+            {"name": "username", "type": "text", "label": "用戶名"},
+            {"name": "email", "type": "text", "label": "電子郵件"},
+            {"name": "age", "type": "number", "label": "年齡", "min": 18, "max": 100}
+        ]
+
+        data = create_form_section("用戶資訊", fields, columns=2)
+        if data:
+            st.write("提交的數據:", data)
+        ```
+    """
+    if form_key is None:
+        form_key = f"form_section_{id(fields)}"
+
+    st.markdown(f"### {title}")
+
+    form_data = {}
+
+    with st.form(form_key):
+        # 建立欄位網格
+        if columns > 1:
+            cols = st.columns(columns)
+        else:
+            cols = [st]  # 單列時直接使用 streamlit
+
+        for i, field in enumerate(fields):
+            # 選擇當前欄位所在的列
+            if columns > 1:
+                col = cols[i % columns]
+            else:
+                col = st
+
+            with col:
+                field_name = field["name"]
+                field_type = field.get("type", "text")
+                field_label = field.get("label", field_name)
+                field_help = field.get("help", None)
+                field_default = field.get("default", None)
+
+                # 根據欄位類型創建對應的輸入元件
+                if field_type == "text":
+                    form_data[field_name] = st.text_input(
+                        field_label,
+                        value=field_default or "",
+                        help=field_help
+                    )
+                elif field_type == "number":
+                    form_data[field_name] = st.number_input(
+                        field_label,
+                        value=field_default or 0,
+                        min_value=field.get("min", None),
+                        max_value=field.get("max", None),
+                        step=field.get("step", 1),
+                        help=field_help,
+                    )
+                elif field_type == "select":
+                    options = field.get("options", [])
+                    default_index = 0
+                    if field_default and field_default in options:
+                        default_index = options.index(field_default)
+                    form_data[field_name] = st.selectbox(
+                        field_label,
+                        options,
+                        index=default_index,
+                        help=field_help
+                    )
+                elif field_type == "multiselect":
+                    form_data[field_name] = st.multiselect(
+                        field_label,
+                        field.get("options", []),
+                        default=field_default or [],
+                        help=field_help,
+                    )
+                elif field_type == "checkbox":
+                    form_data[field_name] = st.checkbox(
+                        field_label,
+                        value=field_default or False,
+                        help=field_help
+                    )
+                elif field_type == "slider":
+                    form_data[field_name] = st.slider(
+                        field_label,
+                        min_value=field.get("min", 0),
+                        max_value=field.get("max", 100),
+                        value=field_default or field.get("min", 0),
+                        step=field.get("step", 1),
+                        help=field_help,
+                    )
+                elif field_type == "date":
+                    form_data[field_name] = st.date_input(
+                        field_label,
+                        value=field_default,
+                        help=field_help
+                    )
+                elif field_type == "time":
+                    form_data[field_name] = st.time_input(
+                        field_label,
+                        value=field_default,
+                        help=field_help
+                    )
+                elif field_type == "textarea":
+                    form_data[field_name] = st.text_area(
+                        field_label,
+                        value=field_default or "",
+                        height=field.get("height", 100),
+                        help=field_help,
+                    )
+                elif field_type == "file":
+                    form_data[field_name] = st.file_uploader(
+                        field_label,
+                        type=field.get("accept", None),
+                        help=field_help,
+                    )
+
+        # 提交按鈕
+        submitted = st.form_submit_button(submit_label, type="primary")
+
+        if submitted:
+            return form_data
+
+    return None

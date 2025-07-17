@@ -23,7 +23,14 @@ from pathlib import Path
 import ipaddress
 
 # 導入加密相關庫
-import bcrypt
+try:
+    import bcrypt
+    BCRYPT_AVAILABLE = True
+except ImportError:
+    BCRYPT_AVAILABLE = False
+    import hashlib
+    import secrets
+
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -127,13 +134,23 @@ class SecurityService:
             Tuple[str, str]: (雜湊值, 鹽值)
         """
         try:
-            # 生成鹽值
-            salt = bcrypt.gensalt()
-
-            # 生成雜湊值
-            password_hash = bcrypt.hashpw(password.encode("utf-8"), salt)
-
-            return password_hash.decode("utf-8"), salt.decode("utf-8")
+            if BCRYPT_AVAILABLE:
+                # 使用 bcrypt
+                salt = bcrypt.gensalt()
+                password_hash = bcrypt.hashpw(password.encode("utf-8"), salt)
+                return password_hash.decode("utf-8"), salt.decode("utf-8")
+            else:
+                # 使用 hashlib 作為後備方案
+                salt = secrets.token_hex(16)
+                password_hash = hashlib.pbkdf2_hmac(
+                    'sha256',
+                    password.encode('utf-8'),
+                    salt.encode('utf-8'),
+                    100000
+                )
+                # 格式: pbkdf2$salt$hash
+                combined_hash = f"pbkdf2${salt}${password_hash.hex()}"
+                return combined_hash, salt
 
         except Exception as e:
             logger.error(f"密碼雜湊處理失敗: {e}")
@@ -151,9 +168,40 @@ class SecurityService:
             bool: 密碼是否正確
         """
         try:
-            return bcrypt.checkpw(
-                password.encode("utf-8"), password_hash.encode("utf-8")
-            )
+            if BCRYPT_AVAILABLE and not password_hash.startswith("pbkdf2$"):
+                # 使用 bcrypt 驗證
+                return bcrypt.checkpw(
+                    password.encode("utf-8"), password_hash.encode("utf-8")
+                )
+            else:
+                # 使用 hashlib 後備方案驗證
+                if password_hash.startswith("pbkdf2$"):
+                    # 解析格式: pbkdf2$salt$hash
+                    parts = password_hash.split("$")
+                    if len(parts) != 3:
+                        return False
+
+                    salt = parts[1]
+                    stored_hash = parts[2]
+
+                    # 重新計算雜湊值
+                    computed_hash = hashlib.pbkdf2_hmac(
+                        'sha256',
+                        password.encode('utf-8'),
+                        salt.encode('utf-8'),
+                        100000
+                    ).hex()
+
+                    return computed_hash == stored_hash
+                else:
+                    # 嘗試 bcrypt 驗證（如果可用）
+                    if BCRYPT_AVAILABLE:
+                        return bcrypt.checkpw(
+                            password.encode("utf-8"), password_hash.encode("utf-8")
+                        )
+                    else:
+                        logger.warning("無法驗證密碼：不支援的雜湊格式")
+                        return False
 
         except Exception as e:
             logger.error(f"密碼驗證失敗: {e}")

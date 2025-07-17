@@ -1,7 +1,15 @@
 """
-風險管理頁面
+風險管理頁面 (整合版)
 
-此模組實現了風險管理頁面，提供風險參數設置、風險監控和警報管理功能。
+此模組整合了基本版和增強版風險管理功能，提供完整的風險管理系統：
+- 風險參數設置和配置
+- 實時風險監控儀表板
+- 風險控制機制和警報
+- 日誌與警報管理
+- 響應式設計支援 (增強功能)
+
+Version: v2.0 (整合版)
+Author: AI Trading System
 """
 
 import sys
@@ -24,6 +32,17 @@ try:
 except ImportError:
     # 如果無法導入，使用備用方案
     RiskManagementService = None
+
+# 導入響應式設計組件 (增強功能)
+try:
+    from src.ui.responsive import (
+        ResponsiveUtils,
+        ResponsiveComponents,
+    )
+except ImportError:
+    # 備用實現
+    ResponsiveUtils = None
+    ResponsiveComponents = None
 
 
 def get_risk_management_service() -> Optional[Any]:
@@ -109,8 +128,13 @@ def get_mock_risk_metrics() -> Dict[str, Any]:
     cash_ratio = 0.15
 
     # 模擬 VaR 計算
-    var_95 = np.percentile(returns, 5) * portfolio_value
-    cvar_95 = returns[returns <= np.percentile(returns, 5)].mean() * portfolio_value
+    try:
+        var_95 = np.percentile(returns, 5) * portfolio_value
+        cvar_95 = returns[returns <= np.percentile(returns, 5)].mean() * portfolio_value
+    except Exception as e:
+        logger.warning(f"VaR 計算失敗，使用默認值: {e}")
+        var_95 = -25000  # 默認 VaR 值
+        cvar_95 = -35000  # 默認 CVaR 值
 
     # 計算最大回撤
     cumulative_returns = np.cumprod(1 + returns)
@@ -184,29 +208,66 @@ def get_mock_risk_events() -> pd.DataFrame:
 
 
 def show() -> None:
-    """顯示風險管理頁面
+    """顯示風險管理頁面 (整合版)
 
     主要入口函數，顯示風險管理頁面的標籤頁界面。
+    整合了基本版和增強版功能，支援響應式設計。
 
     Returns:
         None
     """
-    st.title("🛡️ 風險管理")
+    # 檢查響應式組件是否可用
+    if ResponsiveUtils is None:
+        st.title("🛡️ 風險管理 (整合版)")
+    else:
+        # 應用響應式頁面配置
+        try:
+            ResponsiveUtils.apply_responsive_page_config(
+                page_title="風險管理系統 - AI 交易系統", page_icon="⚠️"
+            )
+            st.markdown('<h1 class="title-responsive">🛡️ 風險管理</h1>', unsafe_allow_html=True)
+        except Exception:
+            st.title("🛡️ 風險管理 (整合版)")
 
-    # 頁面標籤
-    tabs = st.tabs(["風險參數", "風險指標", "風控機制", "警報記錄"])
+    # 確保 session state 已初始化
+    if "risk_params" not in st.session_state:
+        st.session_state.risk_params = get_default_risk_parameters()
 
-    with tabs[0]:
-        show_risk_parameters()
+    if "risk_controls_status" not in st.session_state:
+        st.session_state.risk_controls_status = {
+            "stop_loss_active": True,
+            "take_profit_active": True,
+            "position_limit_active": True,
+            "sector_limit_active": True,
+            "var_monitoring_active": True,
+            "drawdown_protection_active": True,
+            "correlation_check_active": True,
+            "emergency_stop_active": False,
+        }
 
-    with tabs[1]:
-        show_risk_indicators()
+    # 檢查 ResponsiveComponents 是否可用
+    if ResponsiveComponents is None:
+        # 使用基本標籤頁
+        tabs = st.tabs(["風險參數", "風險指標", "風控機制", "警報記錄"])
 
-    with tabs[2]:
-        show_risk_controls()
+        with tabs[0]:
+            show_risk_parameters()
+        with tabs[1]:
+            show_risk_indicators()
+        with tabs[2]:
+            show_risk_controls()
+        with tabs[3]:
+            show_risk_alerts()
+    else:
+        # 響應式標籤頁
+        tabs_config = [
+            {"name": "風險參數", "content_func": show_risk_parameters},
+            {"name": "風險指標", "content_func": show_risk_indicators},
+            {"name": "風控機制", "content_func": show_risk_controls},
+            {"name": "警報記錄", "content_func": show_risk_alerts},
+        ]
 
-    with tabs[3]:
-        show_risk_alerts()
+        ResponsiveComponents.responsive_tabs(tabs_config)
 
 
 def show_risk_parameters() -> None:
@@ -551,8 +612,8 @@ def show_risk_indicators():
         try:
             # 嘗試從服務層獲取實際風險指標
             calculated_metrics = risk_service.calculate_risk_metrics()
-            if calculated_metrics:
-                # 將計算結果轉換為顯示格式
+            if calculated_metrics and isinstance(calculated_metrics, dict):
+                # 將計算結果轉換為顯示格式，確保鍵名一致
                 risk_metrics = {
                     "portfolio_value": 1000000,  # 這應該從投資組合服務獲取
                     "cash_amount": 150000,
@@ -560,8 +621,14 @@ def show_risk_indicators():
                     "current_positions": 8,
                     "daily_pnl": np.random.normal(1200, 8000),
                     "daily_pnl_percent": np.random.normal(0.12, 0.8),
-                    **calculated_metrics,
+                    # 安全地轉換鍵名以保持一致性
+                    "var_95_1day": abs(calculated_metrics.get("var_95", -0.025)) * 1000000,
+                    "cvar_95_1day": abs(calculated_metrics.get("cvar_95", -0.035)) * 1000000,
                 }
+                # 安全地合併其他指標
+                for key, value in calculated_metrics.items():
+                    if key not in risk_metrics and value is not None:
+                        risk_metrics[key] = value
             else:
                 risk_metrics = get_mock_risk_metrics()
         except Exception as e:

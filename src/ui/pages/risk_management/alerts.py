@@ -15,7 +15,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 
-from .utils import get_risk_management_service, get_mock_risk_events
+from src.ui.pages.risk_management.utils import get_risk_management_service, get_mock_risk_events
 
 
 def show_risk_alerts() -> None:

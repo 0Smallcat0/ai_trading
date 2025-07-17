@@ -35,13 +35,52 @@ class TradeExecutionBrokerManager:
         """初始化券商適配器"""
         try:
             from src.execution.simulator_adapter import SimulatorAdapter
+            from src.execution.shioaji_adapter import ShioajiAdapter
+            from src.execution.futu_adapter import FutuAdapter
+
+            # 更新導入：使用推薦的重構版本
+            try:
+                from src.execution.ib_adapter_refactored import IBAdapterRefactored as IBAdapter
+            except ImportError:
+                # 如果重構版本不存在，創建模擬實現
+                class IBAdapter:
+                    def __init__(self):
+                        pass
+
+            from src.execution.connection_monitor import ConnectionMonitor
+            from src.execution.order_tracker import OrderTracker
 
             # 初始化模擬交易適配器
             self.brokers["simulator"] = SimulatorAdapter()
 
-            # 這裡可以添加其他券商適配器
-            # self.brokers["futu"] = FutuAdapter()
-            # self.brokers["shioaji"] = ShioajiAdapter()
+            # 初始化真實券商適配器
+            try:
+                self.brokers["shioaji"] = ShioajiAdapter()
+                logger.info("永豐證券適配器初始化成功")
+            except Exception as e:
+                logger.warning(f"永豐證券適配器初始化失敗: {e}")
+
+            try:
+                self.brokers["futu"] = FutuAdapter()
+                logger.info("富途證券適配器初始化成功")
+            except Exception as e:
+                logger.warning(f"富途證券適配器初始化失敗: {e}")
+
+            try:
+                self.brokers["ib"] = IBAdapter()
+                logger.info("Interactive Brokers 適配器初始化成功")
+            except Exception as e:
+                logger.warning(f"Interactive Brokers 適配器初始化失敗: {e}")
+
+            # 初始化連接監控器
+            self.connection_monitor = ConnectionMonitor()
+            for name, adapter in self.brokers.items():
+                self.connection_monitor.add_adapter(name, adapter)
+            self.connection_monitor.start_monitoring()
+
+            # 初始化訂單追蹤器
+            self.order_tracker = OrderTracker()
+            self.order_tracker.start_tracking()
 
             # 預設使用模擬交易
             self.current_broker = self.brokers["simulator"]
@@ -364,3 +403,158 @@ class TradeExecutionBrokerManager:
         except Exception as e:
             logger.error("獲取持倉信息失敗: %s", e)
             return []
+
+    def get_all_brokers_status(self) -> Dict[str, Dict[str, Any]]:
+        """獲取所有券商狀態
+
+        Returns:
+            Dict[str, Dict[str, Any]]: 所有券商狀態資訊
+        """
+        try:
+            all_status = {}
+
+            for name, broker in self.brokers.items():
+                broker_status = {
+                    "name": name,
+                    "type": type(broker).__name__,
+                    "connected": getattr(broker, 'connected', False),
+                    "is_current": broker == self.current_broker,
+                }
+
+                # 添加連接監控資訊
+                if hasattr(self, 'connection_monitor'):
+                    connection_status = self.connection_monitor.get_status(name)
+                    connection_health = self.connection_monitor.get_health(name)
+                    broker_status.update({
+                        "connection_status": connection_status.value if connection_status else "unknown",
+                        "connection_health": connection_health.value if connection_health else "unknown",
+                    })
+
+                all_status[name] = broker_status
+
+            return all_status
+        except Exception as e:
+            logger.error("獲取所有券商狀態失敗: %s", e)
+            return {}
+
+    def switch_broker(self, broker_name: str) -> bool:
+        """切換券商
+
+        Args:
+            broker_name (str): 券商名稱
+
+        Returns:
+            bool: 是否切換成功
+        """
+        try:
+            if broker_name not in self.brokers:
+                logger.error(f"找不到券商: {broker_name}")
+                return False
+
+            new_broker = self.brokers[broker_name]
+
+            # 嘗試連接新券商
+            if hasattr(new_broker, 'connected') and not new_broker.connected:
+                if hasattr(new_broker, 'connect') and not new_broker.connect():
+                    logger.error(f"連接券商失敗: {broker_name}")
+                    return False
+
+            # 切換券商
+            old_broker = self.current_broker
+            self.current_broker = new_broker
+
+            # 更新模擬模式狀態
+            self.is_simulation_mode = (broker_name == "simulator")
+
+            old_name = type(old_broker).__name__ if old_broker else "None"
+            new_name = type(new_broker).__name__
+            logger.info(f"已切換券商: {old_name} -> {new_name}")
+            return True
+
+        except Exception as e:
+            logger.error(f"切換券商失敗: {e}")
+            return False
+
+    def connect_broker(self, broker_name: str) -> bool:
+        """連接指定券商
+
+        Args:
+            broker_name (str): 券商名稱
+
+        Returns:
+            bool: 是否連接成功
+        """
+        try:
+            if broker_name not in self.brokers:
+                logger.error(f"找不到券商: {broker_name}")
+                return False
+
+            broker = self.brokers[broker_name]
+            if hasattr(broker, 'connect'):
+                return broker.connect()
+            else:
+                logger.warning(f"券商 {broker_name} 不支援連接操作")
+                return True  # 模擬器等可能不需要連接
+
+        except Exception as e:
+            logger.error(f"連接券商失敗 ({broker_name}): {e}")
+            return False
+
+    def disconnect_broker(self, broker_name: str) -> bool:
+        """斷開指定券商連接
+
+        Args:
+            broker_name (str): 券商名稱
+
+        Returns:
+            bool: 是否斷開成功
+        """
+        try:
+            if broker_name not in self.brokers:
+                logger.error(f"找不到券商: {broker_name}")
+                return False
+
+            broker = self.brokers[broker_name]
+            if hasattr(broker, 'disconnect'):
+                return broker.disconnect()
+            else:
+                logger.warning(f"券商 {broker_name} 不支援斷開操作")
+                return True  # 模擬器等可能不需要斷開
+
+        except Exception as e:
+            logger.error(f"斷開券商連接失敗 ({broker_name}): {e}")
+            return False
+
+    def get_connection_monitor_status(self) -> Dict[str, Any]:
+        """獲取連接監控狀態
+
+        Returns:
+            Dict[str, Any]: 連接監控狀態
+        """
+        try:
+            if hasattr(self, 'connection_monitor'):
+                return self.connection_monitor.get_all_status()
+            else:
+                return {"error": "連接監控器未初始化"}
+        except Exception as e:
+            logger.error(f"獲取連接監控狀態失敗: {e}")
+            return {"error": str(e)}
+
+    def get_order_tracker_status(self) -> Dict[str, Any]:
+        """獲取訂單追蹤狀態
+
+        Returns:
+            Dict[str, Any]: 訂單追蹤狀態
+        """
+        try:
+            if hasattr(self, 'order_tracker'):
+                return {
+                    "statistics": self.order_tracker.get_statistics(),
+                    "active_orders": len(self.order_tracker.get_active_orders()),
+                    "completed_orders": len(self.order_tracker.get_completed_orders()),
+                }
+            else:
+                return {"error": "訂單追蹤器未初始化"}
+        except Exception as e:
+            logger.error(f"獲取訂單追蹤狀態失敗: {e}")
+            return {"error": str(e)}

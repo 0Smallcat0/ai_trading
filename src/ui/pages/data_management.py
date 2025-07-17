@@ -47,11 +47,11 @@ except ImportError as e:
 
 # 導入子模組功能
 try:
-    from .data_management.data_export import show_data_export_tools
-    from .data_management.data_quality import show_data_quality_monitoring
-    from .data_management.data_query import show_data_query_interface
-    from .data_management.data_sources import show_data_sources_management
-    from .data_management.data_update import show_data_update_management
+    from src.ui.pages.data_management.data_export import show_data_export_tools
+    from src.ui.pages.data_management.data_quality import show_data_quality_monitoring
+    from src.ui.pages.data_management.data_query import show_data_query_interface
+    from src.ui.pages.data_management.data_sources import show_data_sources_management
+    from src.ui.pages.data_management.data_update import show_data_update_management
 except ImportError as e:
     st.error(f"資料管理子模組導入失敗: {e}")
 

@@ -102,15 +102,15 @@ def get_responsive_utils():
     return ResponsiveUtils
 
 
-# 向後相容性別名
-responsive_manager = None
-ResponsiveComponents = None
-ResponsiveCSS = None
-ResponsiveUtils = None
+# 向後相容性別名 - 使用實際導入而不是 None
+responsive_manager = get_responsive_manager()
+ResponsiveComponents = get_responsive_components()
+ResponsiveCSS = get_responsive_css()
+ResponsiveUtils = get_responsive_utils()
 
 
 def __getattr__(name):
-    """動態屬性存取，實現延遲導入"""
+    """動態屬性存取，實現延遲導入（備用）"""
     if name == "responsive_manager":
         return get_responsive_manager()
     elif name == "ResponsiveComponents":
@@ -123,9 +123,22 @@ def __getattr__(name):
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
+def get_responsive_layout_manager():
+    """獲取響應式佈局管理器類"""
+    # pylint: disable=import-outside-toplevel
+    from .layout_manager import ResponsiveLayoutManager
+
+    return ResponsiveLayoutManager
+
+
+# 向後相容性別名
+ResponsiveLayoutManager = get_responsive_layout_manager()
+
+
 __all__ = [
     "ResponsiveBreakpoints",
     "ResponsiveUtils",
+    "ResponsiveLayoutManager",
     "apply_responsive_design",
     "get_responsive_columns",
     "is_mobile_device",

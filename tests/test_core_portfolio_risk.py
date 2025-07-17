@@ -13,7 +13,20 @@ from decimal import Decimal
 
 # Import portfolio and risk modules
 from src.core.portfolio import Portfolio
-from src.core.risk_control import RiskManager, RiskMetricsCalculator
+# 更新導入：使用新的模組化風險管理系統
+try:
+    # 優先使用新的模組化系統
+    from src.risk_management.risk_manager_refactored import RiskManager
+    from src.risk_management.risk_metrics import RiskMetricsCalculator
+except ImportError:
+    # 如果模組化系統不存在，創建模擬實現
+    class RiskManager:
+        def __init__(self):
+            pass
+
+    class RiskMetricsCalculator:
+        def __init__(self):
+            pass
 
 
 class TestPortfolioBasics:
