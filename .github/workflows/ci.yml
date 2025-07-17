@@ -43,7 +43,7 @@ jobs:
           poetry install
       - name: Run unit tests with coverage
         run: |
-          poetry run python -m src.scripts.run_tests --unit-tests --coverage --min-coverage 80
+          poetry run python scripts/run_tests.py --unit-tests --coverage --min-coverage 80
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -67,7 +67,7 @@ jobs:
           poetry install
       - name: Run integration tests
         run: |
-          poetry run python -m src.scripts.run_tests --integration-tests
+          poetry run python scripts/run_tests.py --integration-tests
 
   e2e-tests:
     name: End-to-End Tests
@@ -86,7 +86,7 @@ jobs:
           poetry install
       - name: Run end-to-end tests
         run: |
-          poetry run python -m src.scripts.run_tests --e2e-tests
+          poetry run python scripts/run_tests.py --e2e-tests
 
   security-tests:
     name: Security Tests
