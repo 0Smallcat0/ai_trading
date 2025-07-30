@@ -23,14 +23,15 @@ except ImportError:
     DB_PATH = "data/trading.db"
 
 try:
-    from src.data_sources.data_collector import DataCollector, RetryStrategy
+    from src.data_sources.data_collector import DataCollector
+    from src.utils.retry import ExponentialRetryStrategy
 except ImportError:
     # 如果無法導入，提供基本實現
     class DataCollector:
         def __init__(self, **kwargs):
             del kwargs  # 避免未使用參數警告
 
-    class RetryStrategy:
+    class ExponentialRetryStrategy:
         def __init__(self, **kwargs):
             del kwargs  # 避免未使用參數警告
 
@@ -61,7 +62,7 @@ class NewsSentimentCollector(DataCollector):
         use_cache: bool = True,
         cache_expiry_days: int = 1,
         *,
-        retry_strategy: Optional[RetryStrategy] = None,
+        retry_strategy: Optional[ExponentialRetryStrategy] = None,
         sentiment_model: str = "simple",  # 可選 'simple', 'nltk', 'transformers'
     ):
         """初始化新聞情緒收集器
@@ -84,14 +85,14 @@ class NewsSentimentCollector(DataCollector):
         self.sentiment_model = sentiment_model
 
         # 初始化資料適配器
-        if source == "mcp":
+        if source == "mcp" and McpCrawler is not None:
             try:
                 self.crawler = McpCrawler()
-            except NameError:
-                logger.warning("McpCrawler 未定義，使用模擬爬蟲")
+            except Exception as e:
+                logger.warning("McpCrawler 初始化失敗: %s，使用模擬爬蟲", e)
                 self.crawler = self._create_mock_crawler()
         else:
-            logger.warning(f"不支援的資料來源: {source}，使用模擬爬蟲")
+            logger.warning("不支援的資料來源: %s，使用模擬爬蟲", source)
             self.crawler = self._create_mock_crawler()
 
         # 初始化資料庫連接

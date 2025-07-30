@@ -273,7 +273,8 @@ def main():
     parser.add_argument('--threshold', type=int, default=300, help='檔案行數閾值')
     parser.add_argument('--output', type=str, help='輸出檔案路徑')
     parser.add_argument('--directory', type=str, default='.', help='要分析的目錄')
-    
+    parser.add_argument('--ci-mode', action='store_true', help='CI模式：如果有超大檔案則失敗')
+
     args = parser.parse_args()
     
     analyzer = FileAnalyzer(threshold=args.threshold)
@@ -326,7 +327,17 @@ def main():
         with open(args.output, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         print(f"\n💾 結果已保存到: {args.output}")
-    
+
+    # CI模式：如果有超大檔案則失敗
+    if args.ci_mode:
+        if results['oversized_files'] > 0:
+            print(f"\n❌ CI檢查失敗: 發現 {results['oversized_files']} 個超過 {args.threshold} 行的檔案")
+            print("請重構這些檔案後再提交代碼")
+            sys.exit(1)
+        else:
+            print(f"\n✅ CI檢查通過: 所有檔案都符合 ≤{args.threshold} 行的標準")
+            sys.exit(0)
+
     print(f"\n🎯 建議優先處理 {len(refactor_plan)} 個檔案")
     print("   使用 --output 參數保存詳細的重構計劃")
 

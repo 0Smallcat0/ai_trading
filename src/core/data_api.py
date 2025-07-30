@@ -1,9 +1,20 @@
 """
 統一資料存取 API 模組
 
+⚠️ 重要通知：此模組中的部分函數已棄用 ⚠️
+
+遷移指南：
+- clean_data() → 使用 DataManagementService.clean_data()
+- get_stock_data() → 使用 DataManagementService 的相應方法
+- export_data_to_csv() → 使用 DataManagementService 的相應方法
+
+新架構位置：src.core.data_management_service.DataManagementService
+
 此模組提供統一的資料存取介面，整合了結構化數據和非結構化數據的存取功能。
 所有其他模組都應該通過此模組獲取資料，而不是直接調用資料來源模組。
 """
+
+import warnings
 
 import datetime
 import logging
@@ -68,27 +79,32 @@ except ImportError as e:
     def get_news_for_stock(*args, **kwargs):
         return []
 
-# 導入資料庫模組
+# 導入真實數據整合服務
+try:
+    from src.core.real_data_integration import real_data_service
+    logger.info("成功導入真實數據整合服務")
+except ImportError as e:
+    logger.error("無法導入真實數據整合服務: %s", e)
+    # 提供基本的錯誤處理
+    class BasicDataService:
+        def get_stock_data(self, *args, **kwargs):
+            logger.error("真實數據服務不可用")
+            return pd.DataFrame()
+        def update_data(self, *args, **kwargs):
+            logger.error("真實數據服務不可用")
+            return {"success": False, "message": "數據服務不可用"}
+        def get_market_info(self, *args, **kwargs):
+            logger.error("真實數據服務不可用")
+            return {"status": "服務不可用"}
+
+    real_data_service = BasicDataService()
+
+# 導入資料庫模組（保持向後兼容）
 try:
     from src.database.db_manager import db_manager
 except ImportError as e:
     logger.warning("無法導入資料庫管理模組: %s", e)
-    # 提供備用的資料庫管理器
-    class MockDBManager:
-        def query_data(self, *args, **kwargs):
-            return pd.DataFrame()
-        def insert_data(self, *args, **kwargs):
-            return True
-        def update_data(self, *args, **kwargs):
-            return True
-        def delete_data(self, *args, **kwargs):
-            return True
-        def export_to_csv(self, *args, **kwargs):
-            return True
-        def import_csv_to_table(self, *args, **kwargs):
-            return True
-
-    db_manager = MockDBManager()
+    db_manager = None
 
 # 資料類型常數
 DATA_TYPES = {
@@ -157,6 +173,8 @@ def clean_data(df, method="ffill"):
     """
     清洗資料，包括缺值填補、日期格式統一、欄位標準化
 
+    ⚠️ 已棄用：請使用 DataManagementService.clean_data()
+
     Args:
         df (pandas.DataFrame): 要清洗的資料
         method (str): 缺值填補方法，'ffill' 為前向填補，'bfill' 為後向填補
@@ -164,6 +182,14 @@ def clean_data(df, method="ffill"):
     Returns:
         pandas.DataFrame: 清洗後的資料
     """
+    warnings.warn(
+        "clean_data() 已棄用，請使用新的 DataManagementService：\n"
+        "from src.core.data_management_service import DataManagementService\n"
+        "service = DataManagementService()\n"
+        "cleaned_df = service.clean_data(df, method)",
+        DeprecationWarning,
+        stacklevel=2
+    )
     if df.empty:
         return df
 
@@ -200,64 +226,88 @@ def get_stock_data(
     data_type: str = "price",
 ) -> pd.DataFrame:
     """
-    獲取股票資料
+    獲取股票資料 - 使用真實數據源
 
     Args:
         stock_id: 股票代號，如果為 None 則獲取所有股票
         start_date: 開始日期，格式為 'YYYY-MM-DD'
         end_date: 結束日期，格式為 'YYYY-MM-DD'
-        data_type: 資料類型，可選 'price', 'bargin', 'pe', 'monthly_report', 'finance', 'benchmark'
+        data_type: 資料類型，目前主要支援 'price'
 
     Returns:
         pandas.DataFrame: 股票資料
     """
-    # 檢查資料類型是否有效
-    if data_type not in DATA_TYPES:
-        logger.error(f"無效的資料類型: {data_type}")
+    try:
+        # 轉換日期格式
+        start_dt = None
+        end_dt = None
+
+        if start_date:
+            start_dt = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+        if end_date:
+            end_dt = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+        # 如果指定了股票代號，直接獲取該股票數據
+        if stock_id:
+            # 確保股票代號格式正確
+            symbol = stock_id if stock_id.endswith('.TW') else f"{stock_id}.TW"
+            df = real_data_service.get_stock_data(symbol, start_dt, end_dt)
+
+            if not df.empty:
+                # 重命名欄位以保持兼容性
+                df = df.rename(columns={
+                    'symbol': 'stock_id',
+                    'date': 'date',
+                    'open': 'open',
+                    'high': 'high',
+                    'low': 'low',
+                    'close': 'close',
+                    'volume': 'volume'
+                })
+                logger.info(f"✅ 獲取 {symbol} 真實數據: {len(df)} 筆記錄")
+            else:
+                logger.warning(f"⚠️ 未找到 {symbol} 的數據")
+
+            return df
+        else:
+            # 如果沒有指定股票，獲取所有可用股票的數據
+            available_symbols = real_data_service.get_available_symbols()
+            all_data = []
+
+            for symbol in available_symbols[:10]:  # 限制數量避免過載
+                df = real_data_service.get_stock_data(symbol, start_dt, end_dt)
+                if not df.empty:
+                    df = df.rename(columns={'symbol': 'stock_id'})
+                    all_data.append(df)
+
+            if all_data:
+                result_df = pd.concat(all_data, ignore_index=True)
+                logger.info(f"✅ 獲取多股票真實數據: {len(result_df)} 筆記錄")
+                return result_df
+            else:
+                logger.warning("⚠️ 未找到任何股票數據")
+                return pd.DataFrame()
+
+    except Exception as e:
+        logger.error(f"❌ 獲取股票數據失敗: {e}")
         return pd.DataFrame()
-
-    # 獲取資料表名稱
-    table_name = DATA_TYPES[data_type]
-
-    # 構建查詢條件
-    conditions = []
-    params = []
-
-    if stock_id:
-        conditions.append("stock_id = ?")
-        params.append(stock_id)
-
-    if start_date:
-        conditions.append("date >= ?")
-        params.append(start_date)
-
-    if end_date:
-        conditions.append("date <= ?")
-        params.append(end_date)
-
-    condition = " AND ".join(conditions) if conditions else None
-
-    # 從資料庫獲取資料
-    df = db_manager.get_table_as_dataframe(table_name, condition, tuple(params))
-
-    return df
 
 
 def update_stock_data(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     data_types: Optional[List[str]] = None,
-) -> Dict[str, pd.DataFrame]:
+) -> Dict[str, Any]:
     """
-    更新股票資料
+    更新股票資料 - 使用真實數據源
 
     Args:
         start_date: 開始日期，格式為 'YYYY-MM-DD'
         end_date: 結束日期，格式為 'YYYY-MM-DD'
-        data_types: 資料類型列表，如果為 None 則更新所有類型
+        data_types: 資料類型列表（保持兼容性，實際使用真實數據）
 
     Returns:
-        Dict[str, pd.DataFrame]: 更新後的資料字典
+        Dict[str, Any]: 更新結果
     """
     if start_date is None:
         start_date = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime(

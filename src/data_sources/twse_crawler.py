@@ -1,169 +1,196 @@
-class TwseCrawler:
-    """
-    台灣證券交易所爬蟲類別
+"""台灣證券交易所爬蟲模組
+
+此模組提供從台灣證券交易所網站爬取各種資料的功能，包括：
+- 股票價格資料 (上市/上櫃)
+- 大盤指數資料
+- 成交量資料
+- 本益比資料
+- 月營收資料
+- 財務報表資料
+
+Example:
+    >>> crawler = TWSECrawler()
+    >>> data = crawler.price_twe(datetime.date(2024, 1, 15))
+"""
+
+import logging
+from datetime import date
+from typing import Optional
+
+import pandas as pd
+
+from src.data_sources.twse_base_crawler import TwseBaseCrawler
+from src.data_sources.twse_financial_crawler import TwseFinancialCrawler
+from src.data_sources.twse_price_crawler import TwsePriceCrawler
+
+logger = logging.getLogger(__name__)
+
+
+class TwseCrawler(TwseBaseCrawler):
+    """台灣證券交易所爬蟲基礎類別
 
     提供從台灣證券交易所網站爬取各種資料的功能。
     """
-    pass
 
 
 class TWSECrawler(TwseCrawler):
-    """
-    台灣證券交易所爬蟲類別
+    """台灣證券交易所爬蟲類別
 
     提供從台灣證券交易所網站爬取各種資料的功能。
+    使用組合模式整合不同類型的爬蟲。
     """
 
-    @staticmethod
-    def crawl_benchmark(date):
-        """
-        crawl_benchmark
+    def __init__(self, delay: float = 1.0):
+        """初始化爬蟲
 
         Args:
-            date: 日期
+            delay: 請求間隔時間（秒）
         """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
+        super().__init__(delay)
+        self.price_crawler = TwsePriceCrawler(delay)
+        self.financial_crawler = TwseFinancialCrawler(delay)
 
-    @staticmethod
-    def price_twe(date):
-        """
-        price_twe
+    def crawl_benchmark(self, date_val: date) -> pd.DataFrame:
+        """爬取大盤指數資料
 
         Args:
-            date: 日期
-        """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
+            date_val: 查詢日期
 
-    @staticmethod
-    def price_otc(date):
+        Returns:
+            pd.DataFrame: 大盤指數資料
         """
-        price_otc
+        return self.price_crawler.get_benchmark_data(date_val)
 
-        Args:
-            date: 日期
-        """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
-
-    @staticmethod
-    def bargin_twe(date):
-        """
-        bargin_twe
+    def price_twe(self, date_val: date) -> pd.DataFrame:
+        """爬取上市股票價格資料
 
         Args:
-            date: 日期
-        """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
+            date_val: 查詢日期
 
-    @staticmethod
-    def bargin_otc(date):
+        Returns:
+            pd.DataFrame: 上市股票價格資料
         """
-        bargin_otc
+        return self.price_crawler.get_twe_prices(date_val)
 
-        Args:
-            date: 日期
-        """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
-
-    @staticmethod
-    def pe_twe(date):
-        """
-        pe_twe
+    def price_otc(self, date_val: date) -> pd.DataFrame:
+        """爬取上櫃股票價格資料
 
         Args:
-            date: 日期
-        """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
+            date_val: 查詢日期
 
-    @staticmethod
-    def pe_otc(date):
+        Returns:
+            pd.DataFrame: 上櫃股票價格資料
         """
-        pe_otc
+        return self.price_crawler.get_otc_prices(date_val)
 
-        Args:
-            date: 日期
-        """
-        # 忽略未使用的參數警告
-        _ = date
-        pass
-
-    @staticmethod
-    def month_revenue(*args, **kwargs):
-        """
-        month_revenue
+    def bargin_twe(self, date_val: date) -> pd.DataFrame:
+        """爬取上市成交量資料
 
         Args:
-            *args: 位置參數
-            **kwargs: 關鍵字參數
-        """
-        # 忽略未使用的參數警告
-        _ = args, kwargs
-        pass
+            date_val: 查詢日期
 
-    @staticmethod
-    def crawl_finance_statement(year, season):
+        Returns:
+            pd.DataFrame: 上市成交量資料
         """
-        crawl_finance_statement
+        return self.price_crawler.get_twe_volume(date_val)
+
+    def bargin_otc(self, date_val: date) -> pd.DataFrame:
+        """爬取上櫃成交量資料
+
+        Args:
+            date_val: 查詢日期
+
+        Returns:
+            pd.DataFrame: 上櫃成交量資料
+        """
+        return self.price_crawler.get_otc_volume(date_val)
+
+    def pe_twe(self, date_val: date) -> pd.DataFrame:
+        """爬取上市本益比資料
+
+        Args:
+            date_val: 查詢日期
+
+        Returns:
+            pd.DataFrame: 上市本益比資料
+        """
+        return self.price_crawler.get_twe_pe_ratio(date_val)
+
+    def pe_otc(self, date_val: date) -> pd.DataFrame:
+        """爬取上櫃本益比資料
+
+        Args:
+            date_val: 查詢日期
+
+        Returns:
+            pd.DataFrame: 上櫃本益比資料
+        """
+        return self.price_crawler.get_otc_pe_ratio(date_val)
+
+    def month_revenue(self, symbol: Optional[str], date_val: date) -> pd.DataFrame:
+        """爬取月營收資料
+
+        Args:
+            symbol: 股票代號（可選，如果為 None 則爬取所有股票）
+            date_val: 查詢日期
+
+        Returns:
+            pd.DataFrame: 月營收資料
+        """
+        return self.financial_crawler.get_monthly_revenue(date_val, symbol)
+
+    def crawl_finance_statement(self, year: int, season: int) -> pd.DataFrame:
+        """爬取財務報表資料
 
         Args:
             year: 年份
-            season: 季度
-        """
-        # 忽略未使用的參數警告
-        _ = year, season
-        pass
+            season: 季度 (1-4)
 
-    @staticmethod
-    def crawl_twse_divide_ratio():
+        Returns:
+            pd.DataFrame: 財務報表資料
         """
-        crawl_twse_divide_ratio
+        return self.financial_crawler.get_financial_statement(year, season)
 
-        """
-        pass
+    def crawl_twse_divide_ratio(self) -> pd.DataFrame:
+        """爬取上市除權息資料
 
-    @staticmethod
-    def crawl_twse_cap_reduction():
+        Returns:
+            pd.DataFrame: 上市除權息資料
         """
-        crawl_twse_cap_reduction
+        return self.financial_crawler.get_twse_dividend_data()
 
-        """
-        pass
+    def crawl_twse_cap_reduction(self) -> pd.DataFrame:
+        """爬取上市減資資料
 
-    @staticmethod
-    def crawl_otc_divide_ratio():
+        Returns:
+            pd.DataFrame: 上市減資資料
         """
-        crawl_otc_divide_ratio
+        return self.financial_crawler.get_twse_capital_reduction_data()
 
-        """
-        pass
+    def crawl_otc_divide_ratio(self) -> pd.DataFrame:
+        """爬取上櫃除權息資料
 
-    @staticmethod
-    def crawl_otc_cap_reduction():
+        Returns:
+            pd.DataFrame: 上櫃除權息資料
         """
-        crawl_otc_cap_reduction
+        return self.financial_crawler.get_otc_dividend_data()
 
-        """
-        pass
+    def crawl_otc_cap_reduction(self) -> pd.DataFrame:
+        """爬取上櫃減資資料
 
-    @staticmethod
-    def crawl_capital():
+        Returns:
+            pd.DataFrame: 上櫃減資資料
         """
-        crawl_capital
+        return self.financial_crawler.get_otc_capital_reduction_data()
 
+    def crawl_capital(self) -> pd.DataFrame:
+        """爬取股本資料
+
+        Returns:
+            pd.DataFrame: 股本資料
         """
-        pass
+        return self.financial_crawler.get_capital_data()
 
 
 # 創建全域實例
-twse_crawler = TwseCrawler()
+twse_crawler = TWSECrawler()

@@ -15,6 +15,9 @@ from typing import Dict, List, Any, Optional, Callable, Tuple
 import logging
 import json
 
+# 導入整合特徵計算器
+from src.core.integrated_feature_calculator import IntegratedFeatureCalculator
+
 logger = logging.getLogger(__name__)
 
 
@@ -865,3 +868,387 @@ def create_multi_timeframe_chart(
     )
 
     return fig
+
+
+def create_integrated_chart(
+    pricedf: pd.DataFrame,
+    indicators_df: pd.DataFrame,
+    multipliers: List[float] = [1.0],
+    drawings: Optional[List[Dict[str, Any]]] = None,
+    multi_chart: bool = False,
+    chart_id: str = "integrated_chart",
+    title: str = "整合股票圖表 (FinLab + TradingView風格)"
+) -> go.Figure:
+    """
+    創建整合股票圖表，支援進階縮放、互動元素、AI自學
+
+    基於AI股票自動交易系統顯示邏輯改進指南實現。
+
+    Args:
+        pricedf: 價格數據DataFrame
+        indicators_df: 技術指標數據DataFrame
+        multipliers: 參數倍數列表
+        drawings: 繪圖元素列表（趨勢線、訊號箭頭等）
+        multi_chart: 是否使用多圖表模式
+        chart_id: 圖表ID
+        title: 圖表標題
+
+    Returns:
+        Plotly圖表對象
+    """
+    theme = ChartTheme.get_theme(st.session_state.chart_config["theme"])
+
+    # 計算子圖數量
+    rows = 1 + len(multipliers) if not multi_chart else 2 + len(multipliers)
+
+    # 創建子圖
+    subplot_titles = [title]
+    if len(multipliers) > 1:
+        for i, m in enumerate(multipliers):
+            subplot_titles.append(f"技術指標 (倍數: {m})")
+    else:
+        subplot_titles.append("技術指標")
+
+    fig = make_subplots(
+        rows=rows,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.05,
+        subplot_titles=subplot_titles,
+        row_heights=[0.6] + [0.4/(rows-1)] * (rows-1) if rows > 1 else [1.0]
+    )
+
+    # 主K線圖
+    fig.add_trace(
+        go.Candlestick(
+            x=pricedf.index,
+            open=pricedf['open'],
+            high=pricedf['high'],
+            low=pricedf['low'],
+            close=pricedf['close'],
+            name='價格',
+            increasing_line_color=theme["success"],
+            decreasing_line_color=theme["danger"]
+        ),
+        row=1, col=1
+    )
+
+    # 添加移動平均線到主圖
+    if len(pricedf) >= 20:
+        ma20 = pricedf['close'].rolling(window=20).mean()
+        fig.add_trace(
+            go.Scatter(
+                x=pricedf.index,
+                y=ma20,
+                mode='lines',
+                name='MA20',
+                line=dict(color=theme["primary"], width=1),
+                opacity=0.7
+            ),
+            row=1, col=1
+        )
+
+    # 指標子圖與倍數比較（同步縮放）
+    for i, multiplier in enumerate(multipliers, start=2):
+        # RSI指標
+        rsi_col = f'RSI_{int(14 * multiplier)}'
+        if rsi_col in indicators_df.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=indicators_df.index,
+                    y=indicators_df[rsi_col],
+                    name=f'RSI ({multiplier}x)',
+                    mode='lines',
+                    line=dict(color=theme["warning"], width=2)
+                ),
+                row=i, col=1
+            )
+
+            # RSI超買超賣線
+            fig.add_hline(
+                y=70, line_dash="dash", line_color=theme["danger"],
+                opacity=0.5, row=i, col=1
+            )
+            fig.add_hline(
+                y=30, line_dash="dash", line_color=theme["success"],
+                opacity=0.5, row=i, col=1
+            )
+
+    # 互動元素：繪圖工具（趨勢線、箭頭標記）
+    if drawings:
+        for draw in drawings:
+            if draw['type'] == 'trend_line':
+                fig.add_shape(
+                    type="line",
+                    x0=draw['x0'], y0=draw['y0'],
+                    x1=draw['x1'], y1=draw['y1'],
+                    line=dict(color="red", width=2),
+                    row=1, col=1
+                )
+            elif draw['type'] == 'signal_arrow':
+                fig.add_annotation(
+                    x=draw['x'], y=draw['y'],
+                    text="買入訊號",
+                    showarrow=True,
+                    arrowhead=1,
+                    arrowcolor=theme["success"],
+                    arrowsize=2,
+                    row=1, col=1
+                )
+
+    # 進階縮放：模擬TradingView的滾輪/拖曳/按鈕
+    fig.update_layout(
+        title=title,
+        xaxis_rangeslider_visible=True,  # 時間滑桿
+        dragmode='zoom',  # 預設縮放模式
+        height=1000, width=1400,
+        hovermode='x unified',  # 統一工具提示
+        plot_bgcolor=theme["background"],
+        paper_bgcolor=theme["background"],
+        font_color=theme["text"],
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="left",
+                buttons=[
+                    dict(
+                        label="重置縮放",
+                        method="relayout",
+                        args=["xaxis", {"autorange": True}]
+                    ),
+                    dict(
+                        label="1年視圖",
+                        method="relayout",
+                        args=["xaxis", {
+                            "range": [
+                                (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'),
+                                datetime.now().strftime('%Y-%m-%d')
+                            ]
+                        }]
+                    ),
+                    dict(
+                        label="6個月視圖",
+                        method="relayout",
+                        args=["xaxis", {
+                            "range": [
+                                (datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d'),
+                                datetime.now().strftime('%Y-%m-%d')
+                            ]
+                        }]
+                    )
+                ],
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.01,
+                xanchor="left",
+                y=1.02,
+                yanchor="top"
+            )
+        ]
+    )
+
+    # 添加範圍選擇器
+    fig.update_xaxes(
+        rangeselector=dict(
+            buttons=[
+                dict(count=1, label='1M', step='month', stepmode='backward'),
+                dict(count=3, label='3M', step='month', stepmode='backward'),
+                dict(count=6, label='6M', step='month', stepmode='backward'),
+                dict(count=1, label='1Y', step='year', stepmode='backward'),
+                dict(step='all', label='All')
+            ]
+        ),
+        type='date'
+    )
+
+    # 更新軸格式
+    fig.update_xaxes(gridcolor=theme["grid"], showgrid=True, zeroline=False)
+    fig.update_yaxes(gridcolor=theme["grid"], showgrid=True, zeroline=False)
+
+    # 註冊圖表
+    chart_manager.register_chart(chart_id, "integrated", "stock_data")
+
+    return fig
+
+
+def generate_trading_signals(
+    pricedf: pd.DataFrame,
+    indicators_df: pd.DataFrame,
+    signal_types: List[str] = ['macd_crossover', 'rsi_oversold', 'rsi_overbought']
+) -> List[Dict[str, Any]]:
+    """
+    自動生成交易訊號
+
+    Args:
+        pricedf: 價格數據
+        indicators_df: 技術指標數據
+        signal_types: 訊號類型列表
+
+    Returns:
+        訊號列表，每個訊號包含類型、時間、價格、描述等資訊
+    """
+    signals = []
+
+    for signal_type in signal_types:
+        if signal_type == 'macd_crossover':
+            # MACD金叉訊號
+            macd_cols = [col for col in indicators_df.columns if col.startswith('MACD_') and not col.endswith('_Signal') and not col.endswith('_Hist')]
+            signal_cols = [col for col in indicators_df.columns if col.endswith('_Signal')]
+
+            if macd_cols and signal_cols:
+                macd_col = macd_cols[0]
+                signal_col = signal_cols[0]
+
+                macd_data = indicators_df[macd_col]
+                signal_data = indicators_df[signal_col]
+
+                # 檢測金叉（MACD線上穿信號線）
+                crossovers = (
+                    (macd_data > signal_data) &
+                    (macd_data.shift(1) <= signal_data.shift(1))
+                )
+
+                for idx in macd_data[crossovers].index:
+                    if idx in pricedf.index:
+                        signals.append({
+                            'type': 'signal_arrow',
+                            'x': idx,
+                            'y': pricedf.loc[idx, 'close'],
+                            'signal_type': 'buy',
+                            'description': 'MACD金叉買入訊號',
+                            'color': 'green'
+                        })
+
+        elif signal_type == 'rsi_oversold':
+            # RSI超賣訊號
+            rsi_cols = [col for col in indicators_df.columns if col.startswith('RSI_')]
+
+            if rsi_cols:
+                rsi_col = rsi_cols[0]
+                rsi_data = indicators_df[rsi_col]
+
+                # RSI從超賣區域（<30）回升
+                oversold_signals = (
+                    (rsi_data > 30) &
+                    (rsi_data.shift(1) <= 30) &
+                    (rsi_data.shift(2) <= 30)
+                )
+
+                for idx in rsi_data[oversold_signals].index:
+                    if idx in pricedf.index:
+                        signals.append({
+                            'type': 'signal_arrow',
+                            'x': idx,
+                            'y': pricedf.loc[idx, 'close'],
+                            'signal_type': 'buy',
+                            'description': 'RSI超賣反彈訊號',
+                            'color': 'blue'
+                        })
+
+        elif signal_type == 'rsi_overbought':
+            # RSI超買訊號
+            rsi_cols = [col for col in indicators_df.columns if col.startswith('RSI_')]
+
+            if rsi_cols:
+                rsi_col = rsi_cols[0]
+                rsi_data = indicators_df[rsi_col]
+
+                # RSI從超買區域（>70）回落
+                overbought_signals = (
+                    (rsi_data < 70) &
+                    (rsi_data.shift(1) >= 70) &
+                    (rsi_data.shift(2) >= 70)
+                )
+
+                for idx in rsi_data[overbought_signals].index:
+                    if idx in pricedf.index:
+                        signals.append({
+                            'type': 'signal_arrow',
+                            'x': idx,
+                            'y': pricedf.loc[idx, 'close'],
+                            'signal_type': 'sell',
+                            'description': 'RSI超買回落訊號',
+                            'color': 'red'
+                        })
+
+    return signals
+
+
+def agent_integrated_display(
+    stock_id: str,
+    data_dict: Optional[Dict[str, pd.DataFrame]] = None,
+    indicators: List[str] = ['RSI', 'MACD'],
+    multipliers: List[float] = [0.5, 1.0],
+    date_range: Optional[List[str]] = None,
+    enable_ai_signals: bool = True
+) -> go.Figure:
+    """
+    AI Agent主函數：整合顯示邏輯
+
+    整合資料載入、指標計算、訊號生成和圖表顯示的統一函數。
+
+    Args:
+        stock_id: 股票代號
+        data_dict: 數據字典
+        indicators: 技術指標列表
+        multipliers: 參數倍數列表
+        date_range: 日期範圍
+        enable_ai_signals: 是否啟用AI訊號生成
+
+    Returns:
+        整合的Plotly圖表對象
+    """
+    try:
+        # 初始化整合特徵計算器
+        calculator = IntegratedFeatureCalculator(data_dict)
+
+        # 設定預設日期範圍
+        if date_range is None:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+            date_range = [start_date, end_date]
+
+        # 計算技術指標
+        indicators_df = calculator.load_and_calculate(
+            stock_id=stock_id,
+            indicators=indicators,
+            multipliers=multipliers,
+            date_range=date_range,
+            seasonal=True
+        )
+
+        # 載入價格數據
+        pricedf = calculator._load_price_data(stock_id, date_range)
+
+        # 自動生成訊號
+        signals = []
+        if enable_ai_signals:
+            signals = generate_trading_signals(
+                pricedf,
+                indicators_df,
+                ['macd_crossover', 'rsi_oversold', 'rsi_overbought']
+            )
+
+        # 創建整合圖表
+        fig = create_integrated_chart(
+            pricedf=pricedf,
+            indicators_df=indicators_df,
+            multipliers=multipliers,
+            drawings=signals,
+            multi_chart=False,
+            title=f"{stock_id} 整合分析圖表"
+        )
+
+        # 記錄成功資訊
+        logger.info(f"成功生成 {stock_id} 的整合圖表，包含 {len(signals)} 個AI訊號")
+
+        return fig
+
+    except Exception as e:
+        logger.error(f"生成整合圖表時發生錯誤: {e}")
+        # 返回空圖表作為fallback
+        return go.Figure().add_annotation(
+            text=f"圖表生成失敗: {str(e)}",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False
+        )

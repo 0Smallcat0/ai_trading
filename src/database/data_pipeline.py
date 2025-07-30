@@ -17,8 +17,7 @@ from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from src.utils.database_utils import get_database_manager
 
 
 # 自定義 JSON 編碼器，處理日期、時間和 DataFrame 類型
@@ -49,7 +48,7 @@ from src.database.data_backup import DatabaseBackup
 from src.database.data_validation import DataValidator
 from src.database.data_versioning import DataVersionManager
 from src.database.parquet_utils import create_market_data_shard, load_from_shard
-from src.database.schema import DataChecksum, DataShard, init_db
+from src.database.schema import DataChecksum, DataShard
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -72,12 +71,10 @@ class DataPipeline:
         """
         self.db_url = db_url
 
-        # 創建資料庫引擎和會話
-        self.engine = create_engine(db_url)
-        self.Session = sessionmaker(bind=self.engine)
-
-        # 初始化資料庫
-        init_db(self.engine)
+        # 使用統一的資料庫連接管理器
+        self.db_manager = get_database_manager(db_url)
+        self.engine = self.db_manager.get_engine()
+        self.Session = self.db_manager.session_factory
 
         # 初始化資料驗證器、備份器和版本管理器
         self.session = self.Session()

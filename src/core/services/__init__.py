@@ -14,7 +14,7 @@
 - UIServiceClient: UI 服務客戶端
 """
 
-from .auth_service import AuthenticationService
+from ..authentication_service import AuthenticationService
 
 # 嘗試導入新的服務管理組件（如果存在）
 try:

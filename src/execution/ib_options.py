@@ -29,7 +29,7 @@ except ImportError:
             pass
 
 from .ib_contracts import IBContractManager, OptionRight
-from .ib_orders import IBOrderManager
+from .ib_orders import IBOrderCreator
 
 # 設定日誌
 logger = logging.getLogger("execution.ib.options")
@@ -95,7 +95,7 @@ class IBOptionsManager:
         """
         self.client = client
         self.contract_manager = IBContractManager()
-        self.order_manager = IBOrderManager()
+        self.order_creator = IBOrderCreator()
         self._option_data: Dict[str, OptionQuote] = {}
         self._req_id_counter = 5000
 
@@ -203,12 +203,12 @@ class IBOptionsManager:
 
             # 創建訂單
             if order_type.upper() == "MKT":
-                ib_order = self.order_manager.create_market_order(action, quantity, **kwargs)
+                ib_order = self.order_creator.create_market_order(action, quantity, **kwargs)
             elif order_type.upper() == "LMT":
                 if price is None:
                     logger.error("限價單需要指定價格")
                     return None
-                ib_order = self.order_manager.create_limit_order(action, quantity, price, **kwargs)
+                ib_order = self.order_creator.create_limit_order(action, quantity, price, **kwargs)
             else:
                 logger.error("不支援的訂單類型: %s", order_type)
                 return None

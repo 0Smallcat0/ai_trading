@@ -15,6 +15,7 @@ import numpy as np
 from sqlalchemy import and_, desc
 from sqlalchemy.orm import sessionmaker
 
+# 使用修復後的別名導入
 from src.database.schema import TradingOrder, TradeExecution
 
 logger = logging.getLogger(__name__)

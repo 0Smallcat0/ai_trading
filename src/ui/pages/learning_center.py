@@ -26,13 +26,9 @@ import numpy as np
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-# 導入學習系統組件
-try:
-    from src.education.interactive_learning import InteractiveLearningSystem
-    LEARNING_SYSTEM_AVAILABLE = True
-except ImportError:
-    LEARNING_SYSTEM_AVAILABLE = False
-    logging.warning("交互式學習系統不可用")
+# 學習系統在MVP版本中已移除，使用存根實現
+LEARNING_SYSTEM_AVAILABLE = False
+logging.info("學習系統在MVP版本中已簡化")
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -46,7 +42,23 @@ def show_learning_center():
         
         # 檢查學習系統可用性
         if not LEARNING_SYSTEM_AVAILABLE:
-            st.error("❌ 學習系統暫時不可用，請聯繫系統管理員")
+            st.info("📚 學習中心在MVP版本中已簡化")
+            st.markdown("""
+            ### 🎯 MVP版本功能說明
+
+            學習中心的完整功能將在正式版本中提供，包括：
+            - 📖 交互式量化交易教程
+            - 🎮 策略模擬器和練習環境
+            - 📊 個性化學習進度追蹤
+            - 🧠 AI輔助學習建議
+            - 💡 實戰案例分析
+
+            ### 🚀 當前可用功能
+            您可以通過以下方式開始學習：
+            - 使用**回測分析**頁面練習策略開發
+            - 在**風險管理**頁面了解風險控制
+            - 通過**數據管理**頁面熟悉數據處理
+            """)
             return
         
         # 初始化學習系統

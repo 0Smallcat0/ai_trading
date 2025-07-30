@@ -59,12 +59,25 @@ except ImportError:
     ALERT_CHECK_INTERVAL = 60
     ALERT_LOG_DIR = "logs/alerts"
     API_ENDPOINTS = []
-    EMAIL_CONFIG = {}
+    EMAIL_CONFIG = {
+        "from": "alerts@example.com",
+        "to": "admin@example.com",
+        "smtp_server": "localhost",
+        "smtp_port": 25,
+        "use_tls": False,
+        "username": "",
+        "password": "",
+    }
     GRAFANA_PORT = 3000
     PROMETHEUS_COLLECTION_INTERVAL = 15
     PROMETHEUS_PORT = 9090
     SLACK_WEBHOOK_URL = ""
-    SMS_CONFIG = {}
+    SMS_CONFIG = {
+        "provider": "",
+        "api_key": "",
+        "from": "",
+        "to": "",
+    }
     THRESHOLDS = {
         "system": {"cpu_usage": 80, "memory_usage": 80, "disk_usage": 85},
         "api": {"latency": 1.0, "error_rate": 0.05},

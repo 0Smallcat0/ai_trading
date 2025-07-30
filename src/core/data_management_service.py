@@ -29,6 +29,7 @@ import time
 from datetime import datetime, date
 from typing import Dict, List, Optional, Any, Tuple
 
+import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
@@ -810,3 +811,49 @@ class DataManagementService:
             "updated": len(symbols) * 15,
             "errors": 0,
         }
+
+    def clean_data(self, df: pd.DataFrame, method: str = "ffill") -> pd.DataFrame:
+        """清洗資料，包括缺值填補、日期格式統一、欄位標準化
+
+        Args:
+            df: 要清洗的資料
+            method: 缺值填補方法，'ffill' 為前向填補，'bfill' 為後向填補
+
+        Returns:
+            pd.DataFrame: 清洗後的資料
+
+        Example:
+            >>> service = DataManagementService()
+            >>> cleaned_df = service.clean_data(raw_df, method="ffill")
+
+        Note:
+            此方法會處理日期欄位、缺值填補和欄位名稱標準化。
+            從 data_api.py 遷移而來，避免功能重複。
+        """
+        if df.empty:
+            return df
+
+        # 複製資料，避免修改原始資料
+        df = df.copy()
+
+        # 處理日期欄位
+        date_columns = [
+            col for col in df.columns if "date" in col.lower() or "time" in col.lower()
+        ]
+        for col in date_columns:
+            if df[col].dtype == "object":
+                try:
+                    df[col] = pd.to_datetime(df[col])
+                except Exception:
+                    logger.warning("無法轉換日期欄位: %s", col)
+
+        # 處理缺值
+        if method == "ffill":
+            df = df.fillna(method="ffill")
+        elif method == "bfill":
+            df = df.fillna(method="bfill")
+
+        # 標準化欄位名稱
+        df.columns = df.columns.str.lower().str.replace(" ", "_")
+
+        return df

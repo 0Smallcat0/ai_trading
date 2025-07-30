@@ -210,16 +210,16 @@ def retry(
     retry_strategy.max_retries = max_retries
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        decorator
+
+        Args:
+            func: 要裝飾的函數
+
+        Returns:
+            Callable[...]: 裝飾後的函數
+        """
         # 獲取函數的完整限定名稱
-    """
-    decorator
-
-    Args:
-        func:
-
-    Returns:
-        Callable[...]:
-    """
         module_name = func.__module__
         qualname = f"{module_name}.{func.__qualname__}"
 
@@ -235,13 +235,12 @@ def retry(
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
-        """
-        wrapper
+            """
+            wrapper
 
-
-        Returns:
-            T:
-        """
+            Returns:
+                T: 函數執行結果
+            """
             last_exception = None
             for retry_count in range(retry_strategy.max_retries + 1):
                 try:

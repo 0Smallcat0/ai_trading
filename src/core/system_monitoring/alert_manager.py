@@ -14,7 +14,7 @@ class AlertManagerError(Exception):
     """警報管理異常類別"""
 
 
-class AlertManager:
+class SystemAlertManager:
     """警報管理器類別"""
 
     def __init__(self):

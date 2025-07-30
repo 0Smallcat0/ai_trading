@@ -420,7 +420,7 @@ class AuditLogger:
 audit_logger = AuditLogger()
 
 
-class MetricsCollector:
+class APIMetricsCollector:
     """指標收集器"""
 
     def __init__(self):
@@ -496,4 +496,4 @@ class MetricsCollector:
 
 
 # 全域指標收集器實例
-metrics_collector = MetricsCollector()
+metrics_collector = APIMetricsCollector()

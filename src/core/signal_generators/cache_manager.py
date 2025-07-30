@@ -16,7 +16,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-class CacheManager:
+class SignalCacheManager:
     """快取管理器
 
     提供 LRU 快取、時間戳快取和持久化快取功能。
@@ -246,7 +246,7 @@ class CacheManager:
 
 
 # 全域快取管理器實例
-_cache_manager = CacheManager()
+_cache_manager = SignalCacheManager()
 
 
 def cached(expire_hours: float = 24, persist: bool = True):
@@ -290,7 +290,7 @@ def cached(expire_hours: float = 24, persist: bool = True):
     return decorator
 
 
-def get_cache_manager() -> CacheManager:
+def get_cache_manager() -> SignalCacheManager:
     """獲取全域快取管理器
 
     Returns:

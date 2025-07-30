@@ -1,6 +1,12 @@
 """
 服務管理器模組
 
+服務管理器職責分工：
+- ServiceManager: 通用服務管理器 (本檔案)
+- PortfolioService: 投資組合服務管理 (src/services/portfolio_service/__init__.py)
+- MockBackendServices: 模擬後端服務管理 (src/ui/mock_backend_services.py)
+詳見：docs/開發者指南/服務管理器使用指南.md
+
 提供統一的服務管理功能，包括：
 - 服務生命週期管理
 - 服務健康監控

@@ -25,13 +25,9 @@ import pandas as pd
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-# 導入知識庫組件
-try:
-    from src.knowledge_base.knowledge_manager import KnowledgeManager
-    KNOWLEDGE_BASE_AVAILABLE = True
-except ImportError:
-    KNOWLEDGE_BASE_AVAILABLE = False
-    logging.warning("知識庫系統不可用")
+# 知識庫系統在MVP版本中已移除，使用存根實現
+KNOWLEDGE_BASE_AVAILABLE = False
+logging.info("知識庫系統在MVP版本中已簡化")
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -45,7 +41,24 @@ def show_knowledge_base():
         
         # 檢查知識庫系統可用性
         if not KNOWLEDGE_BASE_AVAILABLE:
-            st.error("❌ 知識庫系統暫時不可用，請聯繫系統管理員")
+            st.info("📚 知識庫在MVP版本中已簡化")
+            st.markdown("""
+            ### 🎯 MVP版本功能說明
+
+            知識庫的完整功能將在正式版本中提供，包括：
+            - 📖 完整的量化交易知識庫
+            - 🔍 智能搜索和推薦系統
+            - 📊 知識圖譜和關聯分析
+            - 💡 個性化學習路徑
+            - 📝 用戶筆記和收藏功能
+
+            ### 🚀 當前可用資源
+            您可以通過以下方式獲取知識：
+            - 查看**系統文檔** (docs/ 目錄)
+            - 使用**回測分析**了解策略評估
+            - 在**風險管理**頁面學習風險控制
+            - 通過**AI模型管理**了解模型應用
+            """)
             return
         
         # 初始化知識庫管理器

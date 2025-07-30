@@ -28,7 +28,7 @@ class ClosePositionMode(Enum):
     BY_PROFIT_LOSS = "by_profit_loss"  # 按盈虧平倉
 
 
-class PositionManager:
+class LivePositionManager:
     """持倉管理器"""
     
     def __init__(self, broker: BrokerBase):

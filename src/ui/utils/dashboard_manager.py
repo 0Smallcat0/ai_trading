@@ -230,7 +230,7 @@ class DashboardConfig:
         return len(errors) == 0, errors
 
 
-class DashboardManager:
+class UIDashboardManager:
     """儀表板管理器"""
 
     def __init__(self):
@@ -518,4 +518,4 @@ class DashboardManager:
 
 
 # 全域儀表板管理器實例
-dashboard_manager = DashboardManager()
+dashboard_manager = UIDashboardManager()

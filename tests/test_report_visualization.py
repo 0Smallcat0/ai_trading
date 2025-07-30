@@ -27,7 +27,7 @@ try:
         ChartConfig,
         ExportLog,
         ReportCache,
-        TradingOrder,
+        TradingOrder,  # 現在已修復的別名
         TradeExecution,
     )
 

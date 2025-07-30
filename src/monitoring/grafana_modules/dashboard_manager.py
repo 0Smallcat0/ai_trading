@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 module_logger = logging.getLogger(__name__)
 
 
-class DashboardManager:
+class GrafanaDashboardManager:
     """Grafana 儀表板管理器
 
     管理 Grafana 儀表板的創建、配置和部署。

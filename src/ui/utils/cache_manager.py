@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CacheManager:
+class UICacheManager:
     """快取管理器類別
 
     提供多層級快取機制，包括記憶體快取、會話快取和持久化快取。
@@ -191,7 +191,10 @@ class CacheManager:
 
 
 # 全域快取管理器實例
-cache_manager = CacheManager()
+cache_manager = UICacheManager()
+
+# 為了向後兼容性，提供 CacheManager 別名
+CacheManager = UICacheManager
 
 
 def cache_result(ttl: int = 3600, key_prefix: str = ""):

@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # WebSocket 連接管理
-class ConnectionManager:
+class WebSocketConnectionManager:
     """WebSocket 連接管理器"""
     
     def __init__(self):
@@ -111,7 +111,7 @@ class ConnectionManager:
                     break
 
 # 全域連接管理器
-manager = ConnectionManager()
+manager = WebSocketConnectionManager()
 
 # 通知歷史存儲
 _notification_history: Dict[str, List[Dict[str, Any]]] = {}

@@ -1,30 +1,24 @@
+# -*- coding: utf-8 -*-
 """
-金融自然語言處理模組 (Financial NLP Module)
+簡化NLP模組 - MVP版本
 
-此模組提供金融領域的自然語言處理功能，包括：
-- 市場情緒分析
-- 熱點話題報告生成
-- 新聞文本分析
-- 金融文檔處理
+此模組提供MVP版本所需的基本文本分析功能。
+複雜的NLP功能已移除以簡化系統。
 
 主要功能：
-- 基於大語言模型的金融分析報告生成
-- 網絡搜索和信息檢索
-- 文本情感分析
-- 主題建模和趨勢分析
+- 基本文本分析適配器
+- 新聞爬蟲存根
+- 新聞分類存根
+
+版本: MVP 1.0
 """
 
-from .report_generator import FinancialReportGenerator, ReportConfig
-from .sentiment_analyzer import SentimentAnalyzer, SentimentResult
-from .text_processor import TextProcessor
-
 __version__ = "1.0.0"
-__author__ = "AI Trading System Team"
+__author__ = "AI Trading System MVP Team"
 
+# 導出基本功能
 __all__ = [
-    "FinancialReportGenerator",
-    "ReportConfig", 
-    "SentimentAnalyzer",
-    "SentimentResult",
-    "TextProcessor",
+    "text_analysis_adapter",
+    "news_crawler", 
+    "news_classifier"
 ]

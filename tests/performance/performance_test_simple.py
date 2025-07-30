@@ -92,7 +92,7 @@ def test_grafana_config_performance():
     try:
         # 模擬依賴
         with patch("src.monitoring.grafana_config.GrafanaFace"), patch(
-            "src.monitoring.grafana_config.DashboardManager"
+            "src.monitoring.grafana_config.GrafanaDashboardManager"
         ), patch("src.monitoring.grafana_config.DatasourceManager"), patch(
             "src.monitoring.grafana_config.TemplateGenerator"
         ):

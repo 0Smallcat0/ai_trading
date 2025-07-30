@@ -41,6 +41,16 @@ from .realtime_quote_collector import RealtimeQuoteCollector
 from .financial_statement_collector import FinancialStatementCollector
 from .data_collection_system import DataCollectionSystem
 
+# 新建的模組化組件
+from .collection_config import CollectionConfigManager
+from .collector_manager import CollectorManager
+from .collection_executor import CollectionExecutor
+from .base_collector import BaseDataCollector
+from .scheduler_mixin import SchedulerMixin
+from .twse_base_crawler import TwseBaseCrawler
+from .twse_price_crawler import TwsePriceCrawler
+from .twse_financial_crawler import TwseFinancialCrawler
+
 # 整合自原始項目的數據源（將逐步實現）
 # from .legacy_sources import TushareSource, WindSource, BaoStockSource
 
@@ -60,6 +70,16 @@ __all__ = [
     'RealtimeQuoteCollector',
     'FinancialStatementCollector',
     'DataCollectionSystem',
+
+    # 新建的模組化組件
+    'CollectionConfigManager',
+    'CollectorManager',
+    'CollectionExecutor',
+    'BaseDataCollector',
+    'SchedulerMixin',
+    'TwseBaseCrawler',
+    'TwsePriceCrawler',
+    'TwseFinancialCrawler',
 
     # 整合組件（將逐步添加）
     # 'TushareSource',

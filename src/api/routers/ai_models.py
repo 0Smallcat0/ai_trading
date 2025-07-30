@@ -290,10 +290,10 @@ class PredictionResult(BaseModel):
 
 
 # 模擬 AI 模型服務
-class MockAIModelService:
-    """模擬 AI 模型管理服務
+class MockAIModelAPIService:
+    """模擬 AI 模型 API 服務
 
-    此類別提供模擬的 AI 模型管理功能，用於開發和測試階段。
+    此類別提供模擬的 AI 模型 API 服務功能，用於開發和測試階段。
     在生產環境中應該替換為真實的模型管理服務。
 
     Attributes:
@@ -306,7 +306,7 @@ class MockAIModelService:
     """
 
     def __init__(self):
-        """初始化模擬 AI 模型服務
+        """初始化模擬 AI 模型 API 服務
 
         設定預設的模型列表、訓練任務和版本資訊。
         """
@@ -565,7 +565,7 @@ class MockAIModelService:
 
 
 # 初始化服務
-ai_model_service = MockAIModelService()
+ai_model_service = MockAIModelAPIService()
 
 
 @router.get(

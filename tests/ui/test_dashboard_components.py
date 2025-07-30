@@ -18,7 +18,7 @@ project_root = os.path.dirname(
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.ui.utils.dashboard_manager import DashboardConfig, DashboardManager
+from src.ui.utils.dashboard_manager import DashboardConfig, UIDashboardManager
 from src.ui.components.dashboard.widget_library import WidgetLibrary
 from src.ui.components.dashboard.grid_layout import GridLayout, GridPosition
 from src.ui.components.dashboard.widgets.base_widget import (
@@ -169,7 +169,7 @@ class TestDashboardManager(unittest.TestCase):
         self.mock_session_state = {}
 
         with patch("streamlit.session_state", self.mock_session_state):
-            self.manager = DashboardManager()
+            self.manager = UIDashboardManager()
 
     def test_initialization(self):
         """測試初始化"""

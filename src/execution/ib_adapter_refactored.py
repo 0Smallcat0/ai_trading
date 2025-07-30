@@ -26,7 +26,7 @@ from src.execution.ib_adapter_orders import IBOrderManager
 from src.execution.ib_adapter_callbacks import IBCallbackHandler
 from src.execution.ib_wrapper import IBWrapper
 from src.execution.ib_contracts import IBContractManager
-from src.execution.ib_orders import IBOrderManager as IBOrderCreator
+from src.execution.ib_orders import IBOrderCreator
 from src.execution.ib_options import IBOptionsManager
 from src.execution.ib_market_data import IBMarketDataManager
 from src.execution.ib_utils import IBConstants

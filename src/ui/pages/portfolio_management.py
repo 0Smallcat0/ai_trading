@@ -66,8 +66,9 @@ except ImportError:
     RebalancingComponent = None
 
 
+@st.cache_data(ttl=600)  # Cache for 10 minutes
 def get_mock_portfolio_data():
-    """獲取模擬投資組合數據"""
+    """獲取模擬投資組合數據 (緩存版本)"""
     portfolios = [
         {
             "組合名稱": "主要投資組合",
@@ -109,8 +110,9 @@ def get_mock_portfolio_data():
     return pd.DataFrame(portfolios)
 
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_mock_holdings_data(portfolio_name: str):
-    """獲取模擬持倉數據"""
+    """獲取模擬持倉數據 (緩存版本)"""
     if portfolio_name == "主要投資組合":
         holdings = [
             {

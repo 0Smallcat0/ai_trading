@@ -52,8 +52,7 @@ if not os.path.exists(DEFAULT_MCP_SERVER_PATH):
             break
     else:
         print(f"警告: 無法找到MCP服務器路徑: {DEFAULT_MCP_SERVER_PATH}")
-        print(f"請確保路徑正確，或使用--mcp-server-path參數指定正確路徑")
-DEFAULT_MCP_SERVER_URL = "http://localhost:3000"
+        print("請確保路徑正確，或使用--mcp-server-path參數指定正確路徑")
 
 
 def parse_args():

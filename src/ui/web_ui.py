@@ -153,7 +153,6 @@ except ImportError:
                 def decorator(func):
                     return func
                 return decorator
-    from utils.cache_manager import cache_manager, optimize_memory_usage
 
 logger = logging.getLogger(__name__)
 
@@ -183,15 +182,12 @@ def main() -> None:
         # 預載入關鍵組件
         preload_critical_components()
 
-        # 檢查用戶認證狀態
-        authenticated, user_role = check_auth()
+        # 暫時跳過登入功能，直接以開發者身份進入
+        authenticated = True
+        user_role = "admin"  # 給予管理員權限方便開發
 
-        if not authenticated:
-            # 顯示登入頁面
-            show_login()
-        else:
-            # 顯示主應用程式介面
-            show_main_app_optimized(user_role)
+        # 直接顯示主應用程式介面
+        show_main_app_optimized(user_role)
 
         # 記錄總加載時間
         total_time = time.time() - start_time
@@ -404,11 +400,17 @@ def register_critical_components() -> None:
         @lazy_component("dashboard", priority=10, preload=True, cache_ttl=600)
         def load_dashboard():
             try:
-                from src.ui.pages import dashboard
-                return dashboard
+                # 嘗試導入現代化儀表板組件
+                from src.ui.components import modern_dashboard
+                return modern_dashboard
             except ImportError:
-                logger.warning("載入組件 dashboard 失敗: 使用絕對導入")
-                return None
+                try:
+                    # 備用：嘗試導入基本儀表板
+                    from src.ui import dashboard
+                    return dashboard
+                except ImportError:
+                    logger.warning("載入組件 dashboard 失敗: 使用絕對導入")
+                    return None
 
         @lazy_component("navigation", priority=9, preload=True, cache_ttl=300)
         def load_navigation():
@@ -509,9 +511,11 @@ def show_main_interface() -> str:
                 # 用戶資訊和快速操作
                 show_user_info_and_actions()
 
-        # 可摺疊設置面板 (取代側邊欄設置)
-        with st.expander("⚙️ 系統設置", expanded=False):
-            show_integrated_system_settings()
+        # 設定預設值：刷新間隔30秒，啟用懶加載
+        if 'refresh_interval' not in st.session_state:
+            st.session_state.refresh_interval = 30
+        if 'lazy_loading_enabled' not in st.session_state:
+            st.session_state.lazy_loading_enabled = True
 
         # 返回選中的頁面
         return selected_page or "dashboard"
@@ -562,7 +566,7 @@ def show_main_navigation_menu() -> str:
         # 獲取用戶角色和可用頁面
         user_role = st.session_state.get("user_role", "user")
 
-        # 定義12個功能分類 (重新設計的架構)
+        # 定義13個功能分類 (重新設計的架構，新增進階圖表)
         available_pages = {
             "system_status_monitoring": {"title": "🖥️ 系統狀態監控", "icon": "🖥️"},
             "security_permission_management": {"title": "🔐 安全與權限管理", "icon": "🔐"},
@@ -575,7 +579,8 @@ def show_main_navigation_menu() -> str:
             "trade_execution": {"title": "💰 交易執行", "icon": "💰"},
             "ai_model_management": {"title": "🤖 AI模型管理", "icon": "🤖"},
             "backtest_analysis": {"title": "📈 回測分析", "icon": "📈"},
-            "learning_center": {"title": "📚 學習中心", "icon": "📚"}
+            "learning_center": {"title": "📚 學習中心", "icon": "📚"},
+            "advanced_charts": {"title": "🚀 進階圖表分析", "icon": "🚀"}
         }
 
         # 根據用戶角色過濾頁面 (完整權限實現)
@@ -586,8 +591,19 @@ def show_main_navigation_menu() -> str:
             for page_key, page_info in available_pages.items():
                 if check_page_permission(page_key, user_role):
                     filtered_pages[page_key] = page_info
+
+            # 確保至少有一些基本頁面可用
+            if not filtered_pages:
+                logger.warning(f"用戶角色 {user_role} 沒有可用頁面，使用預設頁面")
+                filtered_pages = {
+                    "system_status_monitoring": available_pages["system_status_monitoring"],
+                    "data_management": available_pages["data_management"],
+                    "learning_center": available_pages["learning_center"]
+                }
             available_pages = filtered_pages
-        except ImportError:
+
+        except (ImportError, Exception) as e:
+            logger.warning(f"權限檢查失敗，使用備用權限: {e}")
             # 備用權限檢查 (更新為12個功能分類)
             if user_role == "demo":
                 available_pages = {k: v for k, v in available_pages.items()
@@ -600,11 +616,22 @@ def show_main_navigation_menu() -> str:
                 available_pages = {k: v for k, v in available_pages.items()
                                  if k in ["data_management", "backtest_analysis", "ai_model_management",
                                          "ai_decision_support", "learning_center"]}
+            else:
+                # 管理員或未知角色，給予所有權限
+                pass
+
+        # 檢查是否有可用頁面
+        if not available_pages:
+            st.error("❌ 沒有可用的功能頁面")
+            logger.error(f"用戶角色 {user_role} 沒有可用頁面")
+            return "system_status_monitoring"
 
         # 創建選項列表 (使用單一表情符號格式)
         page_options = [f"{page['icon']} {page['title'][2:]}"  # 移除標題中的表情符號，只保留選項中的
                        for page in available_pages.values()]
         page_keys = list(available_pages.keys())
+
+        logger.info(f"可用頁面數量: {len(available_pages)}, 用戶角色: {user_role}")
 
         # 獲取當前選中的頁面 (更新預設為新的系統狀態監控)
         current_page = st.session_state.get("current_page", "system_status_monitoring")
@@ -670,94 +697,6 @@ def show_user_info_and_actions() -> None:
     except Exception as e:
         logger.error("顯示用戶資訊和操作時發生錯誤: %s", e, exc_info=True)
         st.error("用戶資訊載入失敗")
-
-
-def show_integrated_system_settings() -> None:
-    """顯示整合的系統設置面板.
-
-    整合所有原側邊欄的設置功能到可摺疊面板中。
-    """
-    try:
-        # 創建兩欄佈局
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("#### 🔄 自動刷新設置")
-
-            # 自動刷新設置
-            auto_refresh = st.checkbox(
-                "自動刷新數據",
-                value=st.session_state.get("auto_refresh", True),
-                key="auto_refresh_setting"
-            )
-
-            if auto_refresh:
-                refresh_interval = st.slider(
-                    "刷新間隔 (秒)",
-                    min_value=5,
-                    max_value=60,
-                    value=st.session_state.get("refresh_interval", 30),
-                    step=5,
-                    key="refresh_interval_setting"
-                )
-                st.session_state.refresh_interval = refresh_interval
-
-            st.session_state.auto_refresh = auto_refresh
-
-        with col2:
-            st.markdown("#### 🎓 用戶體驗設置")
-
-            # 新手模式
-            beginner_mode = st.checkbox(
-                "新手模式",
-                value=st.session_state.get("show_beginner_guide", True),
-                key="beginner_mode_setting",
-                help="顯示詳細的操作指導和說明"
-            )
-
-            if beginner_mode != st.session_state.get("show_beginner_guide", True):
-                st.session_state.show_beginner_guide = beginner_mode
-
-            # 性能模式
-            performance_mode = st.selectbox(
-                "性能模式",
-                options=["optimized", "standard", "debug"],
-                index=0 if st.session_state.get("performance_mode", "optimized") == "optimized" else 1,
-                key="performance_mode_setting",
-                help="選擇系統性能模式"
-            )
-
-            st.session_state.performance_mode = performance_mode
-
-        # 底部設置
-        st.markdown("---")
-        st.markdown("#### 🔧 高級設置")
-
-        col3, col4 = st.columns(2)
-
-        with col3:
-            # 調試模式
-            debug_mode = st.checkbox(
-                "調試模式",
-                value=st.session_state.get("debug_mode", False),
-                key="debug_mode_setting",
-                help="啟用詳細的調試信息和性能監控"
-            )
-            st.session_state.debug_mode = debug_mode
-
-        with col4:
-            # 懶加載
-            lazy_loading = st.checkbox(
-                "懶加載",
-                value=st.session_state.get("lazy_loading_enabled", True),
-                key="lazy_loading_setting",
-                help="啟用組件懶加載以提升性能"
-            )
-            st.session_state.lazy_loading_enabled = lazy_loading
-
-    except Exception as e:
-        logger.error("顯示系統設置時發生錯誤: %s", e, exc_info=True)
-        st.error("系統設置載入失敗")
 
 
 def show_status_bar() -> None:

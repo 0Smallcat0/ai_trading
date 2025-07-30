@@ -6,7 +6,7 @@
   },
   "navigation": {
     "dashboard": "Dashboard",
-    "data_management": "Data Management",
+    "data_management": "數據管理",
     "feature_engineering": "Feature Engineering",
     "strategy_management": "Strategy Management",
     "ai_models": "AI Models",

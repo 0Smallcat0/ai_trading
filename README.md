@@ -3,10 +3,12 @@
 ![版本](https://img.shields.io/badge/版本-0.2.0-blue)
 ![Python](https://img.shields.io/badge/Python-3.10+-green)
 ![授權](https://img.shields.io/badge/授權-MIT-orange)
+![CI/CD](https://github.com/0Smallcat0/ai_trading/workflows/CI/badge.svg)
 ![品質](https://img.shields.io/badge/Pylint-9.0+-brightgreen)
 ![測試覆蓋率](https://img.shields.io/badge/覆蓋率-90%+-brightgreen)
-![CI/CD](https://img.shields.io/badge/CI/CD-GitHub%20Actions-blue)
+![檔案大小合規](https://img.shields.io/badge/檔案大小-≤300行-brightgreen)
 ![Poetry](https://img.shields.io/badge/依賴管理-Poetry-blue)
+![安全檢查](https://img.shields.io/badge/安全檢查-Bandit-green)
 
 AI 股票自動交易系統是一個整合人工智能技術的自動化交易平台，能夠分析多維度市場數據，生成智能交易決策，並執行自動化交易。系統專為台灣及全球股票市場設計，適合個人投資者和專業交易團隊使用。
 

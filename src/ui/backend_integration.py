@@ -93,14 +93,10 @@ class BackendIntegrationService:
     def _init_backtest_service(self):
         """初始化回測服務"""
         try:
-            from src.core.backtest_service import BacktestService
-            from src.core.backtest.service import BacktestService as BacktestServiceV2
+            from src.core.backtest.service import BacktestService
 
-            # 嘗試使用新版本的回測服務
-            try:
-                self.services['backtest'] = BacktestServiceV2()
-            except:
-                self.services['backtest'] = BacktestService()
+            # 使用統一的回測服務
+            self.services['backtest'] = BacktestService()
 
             logger.info("回測服務初始化成功")
         except ImportError as e:

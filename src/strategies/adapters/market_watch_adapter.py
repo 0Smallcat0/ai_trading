@@ -109,15 +109,15 @@ class MarketWatchConfig:
         logger.info(f"市場看盤配置初始化: {data_source}, 刷新間隔: {refresh_interval}秒")
 
 
-class RealtimeDataManager:
-    """實時數據管理器
-    
-    負責實時數據的獲取、處理和緩存管理。
+class MarketWatchDataManager:
+    """市場看盤數據管理器
+
+    負責市場看盤實時數據的獲取、處理和緩存管理。
     """
     
     def __init__(self, config: MarketWatchConfig):
-        """初始化實時數據管理器
-        
+        """初始化市場看盤數據管理器
+
         Args:
             config: 看盤配置
         """
@@ -133,7 +133,7 @@ class RealtimeDataManager:
         # 初始化數據源
         self._initialize_data_sources()
         
-        logger.info("實時數據管理器初始化完成")
+        logger.info("市場看盤數據管理器初始化完成")
     
     def _initialize_cache_manager(self):
         """初始化緩存管理器"""
@@ -407,7 +407,7 @@ class MarketWatchAdapter(LegacyStrategyAdapter):
         self.config = MarketWatchConfig(**(config or {}))
         
         # 初始化組件
-        self.data_manager = RealtimeDataManager(self.config)
+        self.data_manager = MarketWatchDataManager(self.config)
         self.monitoring_active = False
         self.monitoring_thread = None
         self.monitoring_callback = None

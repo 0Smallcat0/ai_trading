@@ -61,10 +61,10 @@ class TimeInForce(Enum):
     MARKET_ON_CLOSE = "MOC"
 
 
-class IBOrderManager:
-    """IB 訂單管理器
-    
-    提供創建和管理各種 IB 訂單的功能，包括基本訂單類型和高級訂單策略。
+class IBOrderCreator:
+    """IB 訂單創建器
+
+    提供創建各種 IB 訂單的功能，包括基本訂單類型和高級訂單策略。
     """
 
     def __init__(self):
@@ -93,8 +93,8 @@ class IBOrderManager:
             IBOrder: IB 市價單或 None
             
         Example:
-            >>> manager = IBOrderManager()
-            >>> order = manager.create_market_order("BUY", 100)
+            >>> creator = IBOrderCreator()
+            >>> order = creator.create_market_order("BUY", 100)
             >>> order.orderType
             'MKT'
         """

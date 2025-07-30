@@ -15,16 +15,14 @@ import threading
 from datetime import datetime
 from typing import Dict, Optional, Any
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from src.utils.database_utils import get_database_manager
 
 # 導入專案模組
 try:
     from src.config import DB_URL
-    from src.database.schema import (
+    from src.database.models.risk_management_models import (
         RiskParameter,
         RiskControlStatus,
-        init_db,
     )
 except ImportError as e:
     logging.warning("無法導入部分模組: %s", e)
@@ -61,10 +59,10 @@ class RiskManagementService:
     def _init_database(self):
         """初始化資料庫連接"""
         try:
-            self.engine = create_engine(DB_URL)
-            self.session_factory = sessionmaker(bind=self.engine)
-            # 初始化資料庫結構
-            init_db(self.engine)
+            # 使用統一的資料庫連接管理器
+            self.db_manager = get_database_manager(DB_URL)
+            self.engine = self.db_manager.get_engine()
+            self.session_factory = self.db_manager.session_factory
             logger.info("風險管理服務資料庫連接初始化成功")
         except Exception as e:
             logger.error("風險管理服務資料庫連接初始化失敗: %s", e)

@@ -40,12 +40,22 @@ try:
         show_simple_config_panel
     )
 
-    from src.education import (
-        show_trading_basics,
-        show_strategy_explainer,
-        show_risk_education,
-        show_error_prevention
-    )
+    # 教育模組已在MVP版本中移除，使用存根實現
+    def show_trading_basics():
+        st.info("📚 交易基礎教學功能在MVP版本中暫不可用")
+        st.markdown("此功能將在完整版本中提供完整的交易基礎教學內容。")
+
+    def show_strategy_explainer():
+        st.info("🎯 策略解釋器功能在MVP版本中暫不可用")
+        st.markdown("此功能將在完整版本中提供詳細的策略解釋和教學。")
+
+    def show_risk_education():
+        st.info("⚠️ 風險教育功能在MVP版本中暫不可用")
+        st.markdown("此功能將在完整版本中提供完整的風險管理教學。")
+
+    def show_error_prevention():
+        st.info("🛡️ 錯誤預防功能在MVP版本中暫不可用")
+        st.markdown("此功能將在完整版本中提供錯誤預防指導。")
 except ImportError:
     # 如果相對導入失敗，嘗試絕對導入
     from src.ui.onboarding import (

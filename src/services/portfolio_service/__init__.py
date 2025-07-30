@@ -1,5 +1,11 @@
 """投資組合服務模組
 
+服務管理器職責分工：
+- ServiceManager: 通用服務管理器 (src/core/services/service_manager.py)
+- PortfolioService: 投資組合服務管理 (本檔案)
+- MockBackendServices: 模擬後端服務管理 (src/ui/mock_backend_services.py)
+詳見：docs/開發者指南/服務管理器使用指南.md
+
 此模組提供完整的投資組合管理服務，包括：
 - 核心服務功能（CRUD 操作）
 - 投資組合最佳化服務

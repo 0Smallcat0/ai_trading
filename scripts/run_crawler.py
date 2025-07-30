@@ -4,9 +4,23 @@
 """
 每日股市資料爬蟲執行程式
 
+⚠️ 重要通知：此檔案中的爬蟲函數已棄用 ⚠️
+
+遷移指南：請使用新的模組化架構
+- 舊: crawl_price_twe(date)
+- 新: from src.data_sources import TWSECrawler; TWSECrawler().price_twe(date)
+- 舊: crawl_price_otc(date)
+- 新: from src.data_sources import TWSECrawler; TWSECrawler().price_otc(date)
+
+新架構優勢：
+- 更好的錯誤處理和重試機制
+- 統一的配置管理
+- 完整的測試覆蓋
+- 模組化設計，易於維護
+
 此程式用於手動執行每日股市資料爬蟲，包括：
-- 上市股價資料 (TWSE)
-- 上櫃股價資料 (OTC)
+- 上市股價資料 (TWSE) [已棄用，請使用新API]
+- 上櫃股價資料 (OTC) [已棄用，請使用新API]
 - 財務報表資料
 - 月營收資料
 
@@ -164,7 +178,18 @@ def save_to_csv(df, name):
 
 
 def crawl_price_twe(date):
-    """爬取台灣證券交易所的股票價格資料"""
+    """爬取台灣證券交易所的股票價格資料
+
+    ⚠️ 已棄用：請使用 src.data_sources.TWSECrawler().price_twe(date)
+    """
+    warnings.warn(
+        "crawl_price_twe() 已棄用，請使用新的模組化API：\n"
+        "from src.data_sources import TWSECrawler\n"
+        "crawler = TWSECrawler()\n"
+        "data = crawler.price_twe(date)",
+        DeprecationWarning,
+        stacklevel=2
+    )
     date_str = date.strftime("%Y%m%d")
     res = requests_get(
         "https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date="
@@ -191,7 +216,18 @@ def crawl_price_twe(date):
 
 
 def crawl_price_otc(date):
-    """爬取櫃買中心的股票價格資料"""
+    """爬取櫃買中心的股票價格資料
+
+    ⚠️ 已棄用：請使用 src.data_sources.TWSECrawler().price_otc(date)
+    """
+    warnings.warn(
+        "crawl_price_otc() 已棄用，請使用新的模組化API：\n"
+        "from src.data_sources import TWSECrawler\n"
+        "crawler = TWSECrawler()\n"
+        "data = crawler.price_otc(date)",
+        DeprecationWarning,
+        stacklevel=2
+    )
     datestr = otc_date_str(date)
 
     url = (

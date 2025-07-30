@@ -2,6 +2,12 @@
 """
 AI 交易系統模擬後端服務
 
+服務管理器職責分工：
+- ServiceManager: 通用服務管理器 (src/core/services/service_manager.py)
+- PortfolioService: 投資組合服務管理 (src/services/portfolio_service/__init__.py)
+- MockBackendServices: 模擬後端服務管理 (本檔案)
+詳見：docs/開發者指南/服務管理器使用指南.md
+
 當實際後端服務不可用時，提供模擬的服務響應，確保 UI 功能正常運行。
 
 Version: v1.0

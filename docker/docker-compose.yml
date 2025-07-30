@@ -1,0 +1,179 @@
+# AI Trading System - Multi-Container Architecture
+# Phase 3 Containerized Deployment Strategy
+# Memory-isolated containers with resource limits
+
+version: '3.8'
+
+services:
+  # UI Container - Streamlit Web Interface
+  ui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ui
+    container_name: ai-trading-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONPATH=/app
+      - STREAMLIT_SERVER_HEADLESS=true
+      - AI_SERVICE_URL=http://ai-processor:8502
+      - DATA_SERVICE_URL=http://data-manager:8503
+    volumes:
+      - ../logs:/app/logs
+      - ../data:/app/data:ro
+    depends_on:
+      - ai-processor
+      - data-manager
+      - redis
+    networks:
+      - ai-trading-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # AI Processing Container - Heavy AI Computations
+  ai-processor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ai
+    container_name: ai-trading-processor
+    ports:
+      - "8502:8502"
+    environment:
+      - PYTHONPATH=/app
+      - TF_CPP_MIN_LOG_LEVEL=2
+      - CUDA_VISIBLE_DEVICES=""
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ../logs:/app/logs
+      - ../models:/app/models
+      - ../data:/app/data:ro
+    depends_on:
+      - redis
+    networks:
+      - ai-trading-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8502/health')"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+
+  # Data Management Container - Database and Data Processing
+  data-manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.data
+    container_name: ai-trading-data
+    ports:
+      - "8503:8503"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///data/trading.db
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    depends_on:
+      - redis
+    networks:
+      - ai-trading-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8503/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis Cache - Distributed Caching
+  redis:
+    image: redis:7-alpine
+    container_name: ai-trading-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - ai-trading-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy - Load Balancing and SSL
+  nginx:
+    image: nginx:alpine
+    container_name: ai-trading-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ui
+      - ai-processor
+      - data-manager
+    networks:
+      - ai-trading-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.25'
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  ai-trading-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

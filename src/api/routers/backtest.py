@@ -15,7 +15,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 
 from src.api.models.responses import APIResponse, COMMON_RESPONSES
-from src.core.backtest_service import BacktestService, BacktestConfig
+from src.core.backtest.service import BacktestService
+from src.core.backtest.config import BacktestConfig
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

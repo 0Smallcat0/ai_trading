@@ -5,9 +5,9 @@ description = "AI Stock Automated Trading System - 智能股票自動交易系�
 authors = ["Cookie <noiroao@gmail.com>"]
 maintainers = ["Cookie <noiroao@gmail.com>"]
 readme = "README.md"
-homepage = "https://github.com/Cookieeeeeeeeeeeeeee/ai_trading"
-repository = "https://github.com/Cookieeeeeeeeeeeeeee/ai_trading"
-documentation = "https://github.com/Cookieeeeeeeeeeeeeee/ai_trading/tree/main/docs"
+homepage = "https://github.com/0Smallcat0/ai_trading"
+repository = "https://github.com/0Smallcat0/ai_trading"
+documentation = "https://github.com/0Smallcat0/ai_trading/tree/main/docs"
 keywords = ["trading", "ai", "stock", "finance", "automation", "quantitative"]
 classifiers = [
     "Development Status :: 4 - Beta",

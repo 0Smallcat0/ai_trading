@@ -316,12 +316,12 @@ def _load_and_render_component(page_key: str) -> bool:
         True
     """
     try:
-        # 定義組件映射 (更新為12個功能分類)
+        # 定義組件映射 (更新為13個功能分類，新增進階圖表)
         component_mapping = {
             "system_status_monitoring": "src.ui.components.system_status_monitoring",
             "security_permission_management": "src.ui.components.security_permission_management",
             "multi_agent_system_management": "src.ui.components.multi_agent_system_management",
-            "data_management": "src.ui.components.data_management",
+            "data_management": "src.ui.components.data_management_ui",
             "strategy_development": "src.ui.components.strategy_development",
             "ai_decision_support": "src.ui.components.ai_decision_support",
             "portfolio_management": "src.ui.components.portfolio_management",
@@ -329,7 +329,8 @@ def _load_and_render_component(page_key: str) -> bool:
             "trade_execution": "src.ui.components.trade_execution",
             "ai_model_management": "src.ui.components.ai_model_management",
             "backtest_analysis": "src.ui.components.backtest_analysis",
-            "learning_center": "src.ui.components.learning_center"
+            "learning_center": "src.ui.components.learning_center",
+            "advanced_charts": "src.ui.pages.advanced_charts"
         }
 
         # 檢查是否有對應的組件

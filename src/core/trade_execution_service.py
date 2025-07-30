@@ -17,8 +17,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from src.utils.database_utils import get_database_manager
 
 # 導入專案模組
 try:
@@ -82,11 +81,10 @@ class TradeExecutionService:
     def _init_database(self):
         """初始化資料庫連接"""
         try:
-            self.engine = create_engine(self.db_url, echo=False)
-            self.session_factory = sessionmaker(bind=self.engine)
-
-            # 初始化資料庫表
-            init_db(self.engine)
+            # 使用統一的資料庫連接管理器
+            self.db_manager = get_database_manager(self.db_url)
+            self.engine = self.db_manager.get_engine()
+            self.session_factory = self.db_manager.session_factory
 
             logger.info("交易執行服務資料庫連接初始化成功")
         except Exception as e:

@@ -13,7 +13,7 @@ AI 模型管理基礎模組
 import json
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Union
+from typing import Dict, Union, Tuple
 
 import streamlit as st
 import pandas as pd
@@ -72,8 +72,8 @@ def get_ai_model_service():
         return AIModelManagementService()
     except ImportError:
         # 備用導入或創建模擬服務
-        class MockAIModelManagementService:
-            """模擬 AI 模型管理服務"""
+        class MockAIModelPageService:
+            """模擬 AI 模型頁面服務"""
             
             def __init__(self):
                 self.models = []
@@ -119,7 +119,7 @@ def get_ai_model_service():
                 }
         
         st.warning("⚠️ 無法載入 AI 模型管理服務，使用模擬服務")
-        return MockAIModelManagementService()
+        return MockAIModelPageService()
 
 
 def show():

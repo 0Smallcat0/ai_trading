@@ -2,6 +2,17 @@
 """
 統一數據管理器
 
+⚠️ 重要通知：此模組已棄用 ⚠️
+
+遷移指南：
+- UnifiedDataManager → 使用 DataCollectionSystem
+- 智能資料源選擇 → 使用 CollectorManager.get_best_collector()
+- 性能統計 → 使用 CollectorManager.update_performance_stats()
+
+新架構位置：
+- src.data_sources.data_collection_system.DataCollectionSystem
+- src.data_sources.collector_manager.CollectorManager
+
 此模組提供統一的數據管理接口，整合現有項目和原始項目的數據處理能力。
 
 主要功能：
@@ -18,6 +29,8 @@
 - 提供統一的數據格式
 - 智能數據源選擇和切換
 """
+
+import warnings
 
 import logging
 import asyncio
@@ -109,10 +122,20 @@ class UnifiedDataManager:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         初始化統一數據管理器
-        
+
+        ⚠️ 已棄用：請使用新的模組化架構
+
         Args:
             config: 配置參數
         """
+        warnings.warn(
+            "UnifiedDataManager 已棄用，請使用新的模組化架構：\n"
+            "from src.data_sources import DataCollectionSystem\n"
+            "system = DataCollectionSystem()\n"
+            "詳見：docs/開發者指南/配置管理器使用指南.md",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.config = config or {}
         
         # 初始化數據源
@@ -120,8 +143,12 @@ class UnifiedDataManager:
         self._initialize_data_sources()
 
         # 初始化原始項目數據源管理器
-        legacy_config = self.config.get('legacy_sources', {})
-        self.legacy_manager = LegacyDataSourceManager(legacy_config)
+        try:
+            legacy_config = self.config.get('legacy_sources', {})
+            self.legacy_manager = LegacyDataSourceManager(legacy_config)
+        except Exception as e:
+            logger.warning(f"原始數據源管理器初始化失敗: {e}")
+            self.legacy_manager = None
 
         # 數據緩存
         self.cache = {}
@@ -245,6 +272,10 @@ class UnifiedDataManager:
     def _initialize_legacy_sources(self):
         """初始化原始項目數據源"""
         try:
+            if self.legacy_manager is None:
+                logger.warning("原始數據源管理器未初始化，跳過原始數據源初始化")
+                return
+
             available_legacy_sources = self.legacy_manager.get_available_sources()
             for source in available_legacy_sources:
                 if source == 'tushare':

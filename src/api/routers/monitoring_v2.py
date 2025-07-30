@@ -654,8 +654,8 @@ async def test_all_notification_channels(
 # ==================== WebSocket 即時數據推送 ====================
 
 
-class ConnectionManager:
-    """WebSocket 連接管理器"""
+class MonitoringWebSocketManager:
+    """監控 WebSocket 連接管理器"""
 
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -699,7 +699,7 @@ class ConnectionManager:
 
 
 # 全域連接管理器
-connection_manager = ConnectionManager()
+connection_manager = MonitoringWebSocketManager()
 
 
 @router.websocket("/ws/monitoring")

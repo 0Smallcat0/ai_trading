@@ -1,233 +1,412 @@
+#!/usr/bin/env python3
 """
-資料管理頁面 - 重構版本
+數據管理頁面 - 基礎版本
 
-此模組作為資料管理系統的主要入口點，整合各個子模組功能。
-已重構為模組化架構，將原本的大型檔案拆分為專門的功能模組。
+此頁面提供基本的數據管理功能，包括數據可視化和圖表功能。
 
-主要功能包括：
-- 資料來源狀態監控和管理 (data_sources.py)
-- 多種資料類型的更新和同步 (data_update.py)
-- 靈活的資料查詢和篩選 (data_query.py)
-- 資料品質監控和異常檢測 (data_quality.py)
-- 資料清理和匯出工具 (data_export.py)
-- 完整的更新日誌追蹤
-
-模組結構：
-    - data_sources.py: 資料來源管理功能
-    - data_update.py: 資料更新和同步邏輯
-    - data_query.py: 資料查詢和篩選功能
-    - data_quality.py: 資料品質監控和驗證
-    - data_export.py: 資料匯出和報告工具
-
-Example:
-    使用方式：
-    ```python
-    from src.ui.pages.data_management import show
-    show()  # 顯示資料管理主頁面
-    ```
-
-Note:
-    此模組依賴於 DataManagementService 來執行實際的資料管理邏輯。
-    所有資料操作都會記錄在更新日誌中以便追蹤。
-
-    重構後的模組化設計確保每個檔案不超過300行，
-    提高程式碼可維護性和可讀性。
+功能特點：
+- 基本股票數據顯示
+- 簡單的 Plotly 圖表（K線圖和成交量）
+- 基本技術指標（RSI、MACD、SMA）
+- 性能優化和緩存
+- 輕量化設計
 """
-
-from typing import Optional
 
 import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import logging
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
 
-# 導入資料處理模組
+# Setup logging
+logger = logging.getLogger(__name__)
+
+# Import memory optimizer (keep basic performance optimization)
 try:
-    from src.core.data_management_service import DataManagementService
-except ImportError as e:
-    st.error(f"無法導入必要的模組: {e}")
-    DataManagementService = None
+    from src.ui.utils.memory_optimizer import memory_optimizer, start_memory_monitoring
+    MEMORY_OPTIMIZER_AVAILABLE = True
+except ImportError:
+    MEMORY_OPTIMIZER_AVAILABLE = False
+    logger.warning("Memory optimizer not available")
 
-# 導入子模組功能
-try:
-    from src.ui.pages.data_management.data_export import show_data_export_tools
-    from src.ui.pages.data_management.data_quality import show_data_quality_monitoring
-    from src.ui.pages.data_management.data_query import show_data_query_interface
-    from src.ui.pages.data_management.data_sources import show_data_sources_management
-    from src.ui.pages.data_management.data_update import show_data_update_management
-except ImportError as e:
-    st.error(f"資料管理子模組導入失敗: {e}")
-
-    # 提供錯誤處理的替代函數
-    def show_data_sources_management() -> None:
-        st.error("資料來源管理模組不可用")
-
-    def show_data_update_management() -> None:
-        st.error("資料更新管理模組不可用")
-
-    def show_data_query_interface() -> None:
-        st.error("資料查詢介面模組不可用")
-
-    def show_data_quality_monitoring() -> None:
-        st.error("資料品質監控模組不可用")
-
-    def show_data_export_tools() -> None:
-        st.error("資料匯出工具模組不可用")
+# Module cache for performance
+_module_cache = {}
 
 
-def initialize_data_service() -> Optional[DataManagementService]:
-    """
-    初始化資料管理服務
-
-    Returns:
-        Optional[DataManagementService]: 資料管理服務實例，如果初始化失敗則返回 None
-
-    Example:
-        ```python
-        service = initialize_data_service()
-        if service:
-            print("資料管理服務初始化成功")
-        ```
-    """
-    if "data_service" not in st.session_state:
+@st.cache_resource
+def get_core_modules():
+    """Get core modules with caching"""
+    if 'core_modules' not in _module_cache:
         try:
-            if DataManagementService:
-                st.session_state.data_service = DataManagementService()
-            else:
-                st.session_state.data_service = None
-        except Exception as e:
-            st.error(f"初始化資料管理服務失敗: {e}")
-            st.session_state.data_service = None
+            from src.core.data_management_service import DataManagementService
+            from src.data_sources.taiwan_stock_list_manager import TaiwanStockListManager
+            
+            _module_cache['core_modules'] = {
+                'DataManagementService': DataManagementService,
+                'TaiwanStockListManager': TaiwanStockListManager
+            }
+        except ImportError as e:
+            logger.warning(f"Core modules not available: {e}")
+            _module_cache['core_modules'] = None
+    
+    return _module_cache['core_modules']
 
-    if "update_task_id" not in st.session_state:
-        st.session_state.update_task_id = None
 
-    return st.session_state.data_service
+@st.cache_data
+def get_stock_data_from_db(symbol: str, days: int = 180) -> pd.DataFrame:
+    """Get stock data from database with caching"""
+    try:
+        core_modules = get_core_modules()
+        if not core_modules or not core_modules.get('DataManagementService'):
+            return pd.DataFrame()
+        
+        service = core_modules['DataManagementService']()
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        df = service.get_stock_data(symbol, start_date, end_date)
+        return df if df is not None else pd.DataFrame()
+        
+    except Exception as e:
+        logger.error(f"Failed to get stock data for {symbol}: {e}")
+        return pd.DataFrame()
 
 
-def show() -> None:
-    """
-    顯示資料管理主頁面
+def calculate_basic_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate basic technical indicators without AI dependencies"""
+    if df.empty:
+        return df
+    
+    result = df.copy()
+    
+    try:
+        # Simple RSI calculation
+        delta = df['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        result['RSI'] = 100 - (100 / (1 + rs))
+        
+        # Simple MACD calculation
+        ema12 = df['close'].ewm(span=12).mean()
+        ema26 = df['close'].ewm(span=26).mean()
+        result['MACD'] = ema12 - ema26
+        result['MACD_signal'] = result['MACD'].ewm(span=9).mean()
+        
+        # Simple SMA calculation
+        result['SMA_20'] = df['close'].rolling(window=20).mean()
+        result['SMA_50'] = df['close'].rolling(window=50).mean()
+        
+    except Exception as e:
+        logger.error(f"Technical indicators calculation failed: {e}")
+    
+    return result
 
-    這是資料管理系統的主要入口點，提供完整的資料管理功能界面。
-    使用標籤頁組織不同的功能模組，確保界面清晰易用。
 
-    主要功能標籤：
-    - 資料來源: 管理和監控各種資料來源的狀態
-    - 資料更新: 手動觸發和監控資料更新任務
-    - 資料查詢: 查詢和瀏覽歷史資料
-    - 品質監控: 監控資料品質和異常檢測
-    - 資料匯出: 匯出資料和生成報告
+def show_basic_chart(df: pd.DataFrame, symbol: str, show_volume: bool = True) -> None:
+    """Display basic chart without AI features"""
+    if df.empty:
+        st.warning("No data available for chart display")
+        return
+    
+    try:
+        rows = 2 if show_volume else 1
+        subplot_titles = [f'{symbol} Stock Price']
+        if show_volume:
+            subplot_titles.append('Volume')
+        
+        fig = make_subplots(
+            rows=rows, cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.1,
+            subplot_titles=subplot_titles,
+            row_heights=[0.7, 0.3] if show_volume else [1.0]
+        )
+        
+        # Candlestick chart
+        fig.add_trace(
+            go.Candlestick(
+                x=df['date'],
+                open=df['open'],
+                high=df['high'],
+                low=df['low'],
+                close=df['close'],
+                name="Stock Price"
+            ),
+            row=1, col=1
+        )
+        
+        # Volume chart
+        if show_volume and 'volume' in df.columns:
+            colors = ['green' if close >= open else 'red' 
+                     for close, open in zip(df['close'], df['open'])]
+            
+            fig.add_trace(
+                go.Bar(
+                    x=df['date'],
+                    y=df['volume'],
+                    name='Volume',
+                    marker_color=colors,
+                    opacity=0.7
+                ),
+                row=2, col=1
+            )
+        
+        fig.update_layout(
+            title=f'{symbol} Stock Analysis',
+            xaxis_title='Date',
+            yaxis_title='Price',
+            template='plotly_white',
+            height=600,
+            showlegend=True
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+    except Exception as e:
+        logger.error(f"Chart display failed: {e}")
+        st.error(f"Chart display failed: {e}")
 
-    Returns:
-        None
 
-    Side Effects:
-        渲染完整的資料管理界面，包括所有子模組功能
+def show_technical_indicators(df: pd.DataFrame) -> None:
+    """Display basic technical indicators"""
+    if df.empty:
+        return
+    
+    try:
+        indicators_df = calculate_basic_technical_indicators(df)
+        
+        if not indicators_df.empty and len(indicators_df) > 0:
+            latest = indicators_df.iloc[-1]
+            
+            st.markdown("#### 📈 Technical Indicators")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if 'RSI' in indicators_df.columns and not pd.isna(latest.get('RSI')):
+                    rsi_val = latest['RSI']
+                    rsi_status = "Oversold" if rsi_val < 30 else "Overbought" if rsi_val > 70 else "Neutral"
+                    st.metric("RSI", f"{rsi_val:.1f}", help="Relative Strength Index")
+                    st.caption(f"Status: {rsi_status}")
+            
+            with col2:
+                if 'MACD' in indicators_df.columns and not pd.isna(latest.get('MACD')):
+                    macd_val = latest['MACD']
+                    macd_signal = latest.get('MACD_signal', 0)
+                    macd_status = "Bullish" if macd_val > macd_signal else "Bearish"
+                    st.metric("MACD", f"{macd_val:.4f}", help="Moving Average Convergence Divergence")
+                    st.caption(f"Status: {macd_status}")
+            
+            with col3:
+                if 'SMA_20' in indicators_df.columns and not pd.isna(latest.get('SMA_20')):
+                    sma_val = latest['SMA_20']
+                    current_price = df['close'].iloc[-1]
+                    sma_status = "Above SMA" if current_price > sma_val else "Below SMA"
+                    st.metric("SMA(20)", f"{sma_val:.2f}", help="20-day Simple Moving Average")
+                    st.caption(f"Price: {sma_status}")
+        
+    except Exception as e:
+        logger.error(f"Technical indicators display failed: {e}")
 
-    Example:
-        ```python
-        show()  # 顯示完整的資料管理界面
-        ```
 
-    Note:
-        包含完整的錯誤處理，確保在子模組不可用時
-        仍能提供基本的功能和友善的錯誤訊息。
-    """
-    st.title("📊 資料管理系統")
+def show_sample_stock_search() -> Optional[str]:
+    """Show sample stock search when stock manager is not available"""
+    # Sample Taiwan stocks for testing
+    sample_stocks = [
+        {'symbol': '2330.TW', 'name': '台積電', 'market': 'TWSE', 'industry': '半導體'},
+        {'symbol': '2317.TW', 'name': '鴻海', 'market': 'TWSE', 'industry': '電子'},
+        {'symbol': '2454.TW', 'name': '聯發科', 'market': 'TWSE', 'industry': '半導體'},
+        {'symbol': '2881.TW', 'name': '富邦金', 'market': 'TWSE', 'industry': '金融'},
+        {'symbol': '2412.TW', 'name': '中華電', 'market': 'TWSE', 'industry': '電信'},
+        {'symbol': '1301.TW', 'name': '台塑', 'market': 'TWSE', 'industry': '塑膠'},
+        {'symbol': '2303.TW', 'name': '聯電', 'market': 'TWSE', 'industry': '半導體'},
+        {'symbol': '1216.TW', 'name': '統一', 'market': 'TWSE', 'industry': '食品'},
+    ]
 
-    # 初始化資料管理服務
-    data_service = initialize_data_service()
+    stocks_df = pd.DataFrame(sample_stocks)
 
-    # 顯示服務狀態
-    if data_service:
-        st.success("✅ 資料管理服務已就緒")
-    else:
-        st.warning("⚠️ 資料管理服務未初始化，部分功能可能不可用")
-
-    # 創建標籤頁
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ["📡 資料來源", "🔄 資料更新", "🔍 資料查詢", "📈 品質監控", "📤 資料匯出"]
+    # Search input
+    search_term = st.text_input(
+        "輸入股票代碼或名稱:",
+        placeholder="例如: 2330 或 台積電",
+        help="按股票代碼或公司名稱搜尋（範例數據）"
     )
 
-    # 資料來源管理標籤
-    with tab1:
+    if search_term:
+        # Filter stocks
+        filtered_stocks = stocks_df[
+            stocks_df['symbol'].str.contains(search_term, case=False, na=False) |
+            stocks_df['name'].str.contains(search_term, case=False, na=False)
+        ]
+
+        if not filtered_stocks.empty:
+            # Display search results
+            selected_stock = st.selectbox(
+                "Select a stock:",
+                options=filtered_stocks['symbol'].tolist(),
+                format_func=lambda x: f"{x} - {filtered_stocks[filtered_stocks['symbol']==x]['name'].iloc[0]}"
+            )
+
+            return selected_stock
+        else:
+            st.warning("No stocks found matching your search")
+
+    return None
+
+
+def show_stock_search() -> Optional[str]:
+    """Show stock search interface"""
+    st.markdown("### 🔍 Stock Search")
+    
+    # Get available stocks
+    core_modules = get_core_modules()
+    if not core_modules or not core_modules.get('TaiwanStockListManager'):
+        st.warning("Stock list manager not available - using sample data")
+        return show_sample_stock_search()
+    
+    try:
+        stock_manager = core_modules['TaiwanStockListManager']()
+        stocks_list = stock_manager.get_all_stocks()
+
+        if not stocks_list:
+            st.warning("No stocks available")
+            return None
+
+        # Convert list of StockInfo objects to DataFrame
+        stocks_data = []
+        for stock in stocks_list:
+            stocks_data.append({
+                'symbol': stock.symbol,
+                'name': stock.name,
+                'market': stock.market,
+                'industry': stock.industry
+            })
+
+        stocks_df = pd.DataFrame(stocks_data)
+        
+        # Search input
+        search_term = st.text_input(
+            "Enter stock symbol or name:",
+            placeholder="e.g., 2330 or TSMC",
+            help="Search by stock symbol or company name"
+        )
+        
+        if search_term:
+            # Filter stocks
+            filtered_stocks = stocks_df[
+                stocks_df['symbol'].str.contains(search_term, case=False, na=False) |
+                stocks_df['name'].str.contains(search_term, case=False, na=False)
+            ]
+            
+            if not filtered_stocks.empty:
+                # Display search results
+                selected_stock = st.selectbox(
+                    "Select a stock:",
+                    options=filtered_stocks['symbol'].tolist(),
+                    format_func=lambda x: f"{x} - {filtered_stocks[filtered_stocks['symbol']==x]['name'].iloc[0]}"
+                )
+                
+                return selected_stock
+            else:
+                st.warning("No stocks found matching your search")
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"Stock search failed: {e}")
+        st.error(f"Stock search failed: {e}")
+        return None
+
+
+def show():
+    """Show data management page - backward compatibility function"""
+    main()
+
+
+def main():
+    """Main data management page"""
+    st.title("📊 數據管理")
+    st.markdown("*基礎版本 - 提供基本數據可視化功能*")
+    
+    # Initialize memory monitoring if available
+    if MEMORY_OPTIMIZER_AVAILABLE and "memory_monitoring_started" not in st.session_state:
         try:
-            show_data_sources_management()
+            start_memory_monitoring()
+            st.session_state.memory_monitoring_started = True
         except Exception as e:
-            st.error(f"資料來源管理功能發生錯誤: {e}")
-            with st.expander("錯誤詳情"):
-                st.code(str(e))
-
-    # 資料更新管理標籤
-    with tab2:
-        try:
-            show_data_update_management()
-        except Exception as e:
-            st.error(f"資料更新管理功能發生錯誤: {e}")
-            with st.expander("錯誤詳情"):
-                st.code(str(e))
-
-    # 資料查詢標籤
-    with tab3:
-        try:
-            show_data_query_interface()
-        except Exception as e:
-            st.error(f"資料查詢功能發生錯誤: {e}")
-            with st.expander("錯誤詳情"):
-                st.code(str(e))
-
-    # 品質監控標籤
-    with tab4:
-        try:
-            show_data_quality_monitoring()
-        except Exception as e:
-            st.error(f"品質監控功能發生錯誤: {e}")
-            with st.expander("錯誤詳情"):
-                st.code(str(e))
-
-    # 資料匯出標籤
-    with tab5:
-        try:
-            show_data_export_tools()
-        except Exception as e:
-            st.error(f"資料匯出功能發生錯誤: {e}")
-            with st.expander("錯誤詳情"):
-                st.code(str(e))
-
-
-def get_module_info() -> dict:
-    """
-    獲取模組資訊
-
-    Returns:
-        dict: 包含模組版本、功能和狀態的資訊字典
-
-    Example:
-        ```python
-        info = get_module_info()
-        print(f"模組版本: {info['version']}")
-        ```
-    """
-    return {
-        "name": "資料管理系統",
-        "version": "2.0.0",
-        "description": "重構版資料管理系統，採用模組化架構",
-        "modules": [
-            "data_sources - 資料來源管理",
-            "data_update - 資料更新管理",
-            "data_query - 資料查詢介面",
-            "data_quality - 資料品質監控",
-            "data_export - 資料匯出工具",
-        ],
-        "features": [
-            "模組化架構設計",
-            "完整的錯誤處理",
-            "100% 類型註解覆蓋",
-            "Google Style 文檔字符串",
-            "統一的異常處理模式",
-        ],
-        "status": "已重構完成",
-    }
+            logger.warning(f"Memory monitoring failed to start: {e}")
+    
+    # Stock search
+    selected_symbol = show_stock_search()
+    
+    if selected_symbol:
+        st.markdown(f"### 📈 {selected_symbol} Analysis")
+        
+        # Data period selection
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            st.info(f"Displaying data for {selected_symbol}")
+        
+        with col2:
+            days = st.selectbox(
+                "Data Period",
+                options=[30, 60, 90, 180, 365],
+                index=3,
+                help="Select number of days of historical data"
+            )
+        
+        # Get and display data
+        with st.spinner("Loading stock data..."):
+            df = get_stock_data_from_db(selected_symbol, days)
+        
+        if not df.empty:
+            # Display basic info
+            latest_data = df.iloc[-1]
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Latest Close", f"${latest_data['close']:.2f}")
+            
+            with col2:
+                change = latest_data['close'] - df.iloc[-2]['close'] if len(df) > 1 else 0
+                st.metric("Daily Change", f"${change:.2f}", delta=f"{change:.2f}")
+            
+            with col3:
+                st.metric("Volume", f"{latest_data.get('volume', 0):,.0f}")
+            
+            with col4:
+                st.metric("Data Points", len(df))
+            
+            # Chart options
+            show_volume = st.checkbox("Show Volume", value=True)
+            
+            # Display chart
+            show_basic_chart(df, selected_symbol, show_volume)
+            
+            # Display technical indicators
+            show_technical_indicators(df)
+            
+            # Risk disclaimer
+            st.markdown("#### ⚠️ Risk Disclaimer")
+            st.warning("""
+            **Important Notice:**
+            - This analysis is for reference only and does not constitute investment advice
+            - Technical indicators have limitations and may lag behind market movements
+            - Please conduct thorough research and risk management before making investment decisions
+            - Consider setting stop-loss levels to control investment risks
+            """)
+            
+        else:
+            st.error(f"No data available for {selected_symbol}")
+    
+    else:
+        st.info("👆 Please search and select a stock to view its analysis")
 
 
 if __name__ == "__main__":
-    # 用於測試模組
-    show()
+    main()

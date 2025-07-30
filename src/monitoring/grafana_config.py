@@ -25,13 +25,13 @@ except ImportError:
 
 try:
     from .grafana_modules import (
-        DashboardManager,
+        GrafanaDashboardManager,
         DatasourceManager,
         TemplateGenerator,
     )
 except ImportError:
     # 提供 fallback
-    DashboardManager = None
+    GrafanaDashboardManager = None
     DatasourceManager = None
     TemplateGenerator = None
 
@@ -91,8 +91,8 @@ class GrafanaConfigManager:
         """初始化各個子管理器"""
         try:
             # 初始化儀表板管理器
-            if DashboardManager is not None:
-                self.dashboard_manager = DashboardManager(
+            if GrafanaDashboardManager is not None:
+                self.dashboard_manager = GrafanaDashboardManager(
                     self.grafana_api, self.config_dir
                 )
                 module_logger.info("儀表板管理器初始化成功")

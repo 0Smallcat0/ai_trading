@@ -26,7 +26,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.config import CACHE_DIR, DATA_DIR, DB_PATH
-from src.data_sources.data_collector import DataCollector, RetryStrategy
+from src.data_sources.data_collector import DataCollector
+from src.utils.retry import ExponentialRetryStrategy, RetryStrategy
 from src.database.schema import MarketTick, MarketType, TimeGranularity
 
 # 設定日誌

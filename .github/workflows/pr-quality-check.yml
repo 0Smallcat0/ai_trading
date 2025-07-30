@@ -1,0 +1,190 @@
+name: PR Quality Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-quality-analysis:
+    name: PR Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 獲取完整歷史以進行差異分析
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+          
+      - name: Create reports directory
+        run: |
+          mkdir -p reports/pr
+          
+      - name: Analyze changed files
+        run: |
+          poetry run python scripts/analyze_pr_changes.py --output reports/pr/changes_analysis.json
+          
+      - name: Run quality checks on changed files
+        run: |
+          poetry run python scripts/pr_quality_check.py --output reports/pr/quality_report.md
+          
+      - name: Upload PR analysis report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-quality-report-${{ github.event.number }}
+          path: reports/pr/
+          
+      - name: Comment PR with quality report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const reportPath = 'reports/pr/quality_report.md';
+              if (fs.existsSync(reportPath)) {
+                const report = fs.readFileSync(reportPath, 'utf8');
+                
+                // 查找現有的品質報告評論
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                
+                const botComment = comments.data.find(comment => 
+                  comment.user.type === 'Bot' && 
+                  comment.body.includes('🔍 PR品質檢查報告')
+                );
+                
+                const commentBody = `🔍 **PR品質檢查報告**
+                
+${report}
+
+---
+*此報告由自動化系統生成 - 運行 #${context.runNumber}*`;
+                
+                if (botComment) {
+                  // 更新現有評論
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: botComment.id,
+                    body: commentBody
+                  });
+                } else {
+                  // 創建新評論
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body: commentBody
+                  });
+                }
+              }
+            } catch (error) {
+              console.log('無法讀取或發布品質報告:', error);
+            }
+            
+      - name: Add quality labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const analysisPath = 'reports/pr/changes_analysis.json';
+              if (fs.existsSync(analysisPath)) {
+                const analysis = JSON.parse(fs.readFileSync(analysisPath, 'utf8'));
+                
+                const labels = [];
+                
+                // 根據分析結果添加標籤
+                if (analysis.has_large_files) {
+                  labels.push('needs-refactoring');
+                }
+                
+                if (analysis.quality_score < 8.5) {
+                  labels.push('needs-improvement');
+                }
+                
+                if (analysis.test_coverage < 80) {
+                  labels.push('needs-tests');
+                }
+                
+                if (analysis.security_issues > 0) {
+                  labels.push('security-review');
+                }
+                
+                if (labels.length === 0) {
+                  labels.push('quality-approved');
+                }
+                
+                // 添加標籤
+                if (labels.length > 0) {
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    labels: labels
+                  });
+                }
+              }
+            } catch (error) {
+              console.log('無法添加品質標籤:', error);
+            }
+            
+      - name: Request changes if quality issues found
+        uses: actions/github-script@v7
+        if: failure()
+        with:
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'REQUEST_CHANGES',
+              body: `## ⚠️ 品質檢查發現問題
+
+此PR未通過自動化品質檢查，請修復以下問題後重新提交：
+
+- 檔案大小超過300行限制
+- Pylint分數低於8.5
+- 測試覆蓋率低於80%
+- 安全檢查發現問題
+
+請查看詳細的品質報告並修復相關問題。`
+            });
+            
+      - name: Approve if all checks pass
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'APPROVE',
+              body: `## ✅ 自動化品質檢查通過
+
+此PR已通過所有自動化品質檢查：
+
+- ✅ 檔案大小符合≤300行標準
+- ✅ Pylint分數≥8.5
+- ✅ 測試覆蓋率≥80%
+- ✅ 安全檢查通過
+
+可以進行人工審查和合併。`
+            });

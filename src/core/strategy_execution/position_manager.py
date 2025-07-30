@@ -31,7 +31,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class PositionManager:
+class StrategyPositionManager:
     """部位管理器
     
     負責計算最適的部位大小並進行風險控制。

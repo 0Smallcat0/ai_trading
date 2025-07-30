@@ -7,16 +7,22 @@
 import os
 import sys
 from pathlib import Path
+from typing import Callable, Dict, Any, Optional, Union
 
 from dotenv import load_dotenv
 
-# 導入配置驗證模組
-try:
-    from src.utils.config_validator import validate_and_exit_on_error
-except ImportError:
-    # 如果直接運行此文件，則使用相對導入
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from src.utils.config_validator import validate_and_exit_on_error
+
+def _get_config_validator() -> Callable[[], None]:
+    """延遲導入配置驗證器以避免循環導入"""
+    try:
+        from src.utils.config_validator import validate_and_exit_on_error
+        return validate_and_exit_on_error
+    except ImportError:
+        # 如果直接運行此文件，則使用相對導入
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from src.utils.config_validator import validate_and_exit_on_error
+        return validate_and_exit_on_error
+
 
 # 專案根目錄
 ROOT_DIR = Path(os.path.dirname(os.path.dirname(__file__)))
@@ -92,17 +98,23 @@ CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "60"))  # 檢查間隔（秒）
 # 其他設定
 DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() == "true"
 
+# 預設股票代碼列表
+DEFAULT_SYMBOLS = ["2330.TW", "2317.TW", "2454.TW", "2412.TW", "2308.TW"]
 
-def load_config_file(file_path, default=None):
+
+def load_config_file(
+    file_path: Union[str, Path],
+    default: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """
     載入配置文件
 
     Args:
-        file_path (str): 配置文件路徑
-        default (dict, optional): 默認配置，如果文件不存在則返回此配置
+        file_path (Union[str, Path]): 配置文件路徑
+        default (Optional[Dict[str, Any]]): 默認配置，如果文件不存在則返回此配置
 
     Returns:
-        dict: 配置字典
+        Dict[str, Any]: 配置字典
     """
     import json
 
@@ -120,9 +132,11 @@ def load_config_file(file_path, default=None):
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             if file_path.suffix.lower() in [".yaml", ".yml"]:
-                return yaml.safe_load(f)
+                result = yaml.safe_load(f)
+                return result if isinstance(result, dict) else default
             if file_path.suffix.lower() == ".json":
-                return json.load(f)
+                result = json.load(f)
+                return result if isinstance(result, dict) else default
 
             print(f"不支援的配置文件格式: {file_path.suffix}")
             return default
@@ -131,13 +145,14 @@ def load_config_file(file_path, default=None):
         return default
 
 
-def validate_config():
+def validate_config() -> None:
     """
     驗證配置
 
     如果配置無效，則輸出錯誤信息並退出程序。
     """
-    validate_and_exit_on_error()
+    validator = _get_config_validator()
+    validator()
 
 
 # 如果直接運行此文件，則驗證配置

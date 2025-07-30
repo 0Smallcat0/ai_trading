@@ -29,7 +29,7 @@ def test_basic_import():
 def test_service_initialization():
     """測試服務初始化"""
     try:
-        from src.core.backtest_service import BacktestService
+        from src.core.backtest.service import BacktestService
 
         service = BacktestService()
         print("✅ 成功初始化 BacktestService")
