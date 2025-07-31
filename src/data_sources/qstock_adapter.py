@@ -103,7 +103,13 @@ class QStockAdapter(BaseDataSource):
         ]
         
         logger.info(f"qstock適配器初始化完成，可用性: {self.qstock_available}")
-    
+
+    def _setup_connection(self):
+        """設定連接（實現 BaseDataSource 抽象方法）"""
+        self.qstock_available = self._import_qstock()
+        if not self.qstock_available:
+            raise RuntimeError("qstock 模組導入失敗，請安裝: pip install qstock")
+
     def _import_qstock(self) -> bool:
         """導入qstock模組"""
         try:

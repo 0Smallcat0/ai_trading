@@ -119,7 +119,7 @@ class UnifiedDataManager:
     支持自動容錯、數據質量檢查和智能源選擇。
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, lazy_init: bool = True):
         """
         初始化統一數據管理器
 
@@ -127,6 +127,7 @@ class UnifiedDataManager:
 
         Args:
             config: 配置參數
+            lazy_init: 是否使用懶加載初始化（提升性能）
         """
         warnings.warn(
             "UnifiedDataManager 已棄用，請使用新的模組化架構：\n"
@@ -137,15 +138,25 @@ class UnifiedDataManager:
             stacklevel=2
         )
         self.config = config or {}
-        
+        self.lazy_init = lazy_init
+
         # 初始化數據源
         self.data_sources = {}
-        self._initialize_data_sources()
+        self._initialized_sources = set()  # 追蹤已初始化的數據源
+
+        if not lazy_init:
+            # 立即初始化所有數據源（舊行為）
+            self._initialize_data_sources()
+        else:
+            # 懶加載模式：只初始化關鍵數據源
+            self._initialize_critical_sources()
 
         # 初始化原始項目數據源管理器
+        self.legacy_manager = None  # 先設置為 None
         try:
             legacy_config = self.config.get('legacy_sources', {})
             self.legacy_manager = LegacyDataSourceManager(legacy_config)
+            logger.info("原始數據源管理器初始化成功")
         except Exception as e:
             logger.warning(f"原始數據源管理器初始化失敗: {e}")
             self.legacy_manager = None
@@ -170,7 +181,57 @@ class UnifiedDataManager:
         self._initialize_router()
 
         logger.info("統一數據管理器初始化完成")
-    
+
+    def _initialize_critical_sources(self):
+        """初始化關鍵數據源（懶加載模式）"""
+        try:
+            # 只初始化最基本的數據源，其他按需加載
+            self.data_sources[DataSourceType.BROKER] = MockBrokerAdapter()
+            self._initialized_sources.add(DataSourceType.BROKER)
+
+            logger.info("關鍵數據源初始化完成（懶加載模式）")
+        except Exception as e:
+            logger.error(f"關鍵數據源初始化失敗: {e}")
+
+    def _ensure_source_initialized(self, source_type: DataSourceType, timeout: float = 3.0):
+        """確保指定數據源已初始化（懶加載）
+
+        Args:
+            source_type: 數據源類型
+            timeout: 初始化超時時間（秒）
+        """
+        if source_type in self._initialized_sources:
+            return
+
+        import time
+        start_time = time.time()
+
+        try:
+            if source_type == DataSourceType.YAHOO:
+                self.data_sources[source_type] = YahooAdapter()
+            elif source_type == DataSourceType.TWSE:
+                self.data_sources[source_type] = TWSECrawler()
+            elif source_type == DataSourceType.NEWS:
+                self.data_sources[source_type] = NewsSentimentCollector()
+            elif source_type == DataSourceType.QSTOCK:
+                self._initialize_qstock_adapter()
+            elif source_type == DataSourceType.TUSHARE:
+                self._initialize_tushare_adapter()
+            elif source_type == DataSourceType.BAOSTOCK:
+                self._initialize_baostock_adapter()
+
+            self._initialized_sources.add(source_type)
+
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                logger.warning(f"數據源 {source_type} 初始化耗時 {elapsed:.2f}s，超過預期 {timeout}s")
+            else:
+                logger.debug(f"數據源 {source_type} 初始化完成，耗時 {elapsed:.2f}s")
+
+        except Exception as e:
+            logger.error(f"數據源 {source_type} 初始化失敗: {e}")
+            # 不要讓單個數據源的失敗影響整個系統
+
     def _initialize_data_sources(self):
         """初始化數據源"""
         try:
@@ -201,6 +262,10 @@ class UnifiedDataManager:
 
     def _initialize_qstock_adapter(self):
         """初始化 QStock 適配器"""
+        import time
+        start_time = time.time()
+        timeout = 3.0  # 3秒超時
+
         try:
             from .base_data_source import DataSourceConfig
             qstock_config = DataSourceConfig(
@@ -208,10 +273,18 @@ class UnifiedDataManager:
                 cache_dir=self.config.get('cache_dir', 'cache'),
                 cache_ttl=self.config.get('cache_ttl', 3600)
             )
+
+            # 檢查是否超時
+            if time.time() - start_time > timeout:
+                logger.warning("qstock數據源初始化超時，跳過")
+                return
+
             self.data_sources[DataSourceType.QSTOCK] = QStockAdapter(qstock_config)
-            logger.info("qstock數據源初始化成功")
+            elapsed = time.time() - start_time
+            logger.info(f"qstock數據源初始化成功，耗時 {elapsed:.2f}s")
         except Exception as e:
-            logger.warning(f"qstock數據源初始化失敗: {e}")
+            elapsed = time.time() - start_time
+            logger.warning(f"qstock數據源初始化失敗 (耗時 {elapsed:.2f}s): {e}")
 
     def _initialize_tushare_adapter(self):
         """初始化 Tushare Pro 適配器"""

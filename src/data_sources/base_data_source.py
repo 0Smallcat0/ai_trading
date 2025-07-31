@@ -26,26 +26,30 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DataSourceConfig:
     """資料來源配置類別
-    
+
     Attributes:
         name: 資料來源名稱
         cache_dir: 快取目錄
         cache_ttl: 快取存活時間（秒）
         api_limits: API 限制配置
         retry_config: 重試配置
+        credentials: API 認證資訊
     """
     name: str
     cache_dir: str = "cache"
     cache_ttl: int = 3600
     api_limits: Dict[str, Any] = None
     retry_config: Dict[str, Any] = None
-    
+    credentials: Optional[Dict[str, Any]] = None
+
     def __post_init__(self):
         """初始化後處理"""
         if self.api_limits is None:
             self.api_limits = {"min_interval": 1.0}
         if self.retry_config is None:
             self.retry_config = {"max_retries": 3, "backoff_factor": 1.0}
+        if self.credentials is None:
+            self.credentials = {}
 
 
 class BaseDataSource(ABC):

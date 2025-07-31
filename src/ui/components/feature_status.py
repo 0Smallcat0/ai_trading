@@ -55,7 +55,8 @@ class FeatureStatusIndicator:
         """檢查數據管理功能"""
         try:
             from src.data_sources.unified_data_manager import UnifiedDataManager
-            manager = UnifiedDataManager()
+            # 使用懶加載模式，避免在狀態檢查時初始化所有數據源
+            manager = UnifiedDataManager(lazy_init=True)
             sources = manager.get_available_sources()
             
             if len(sources) >= 2:

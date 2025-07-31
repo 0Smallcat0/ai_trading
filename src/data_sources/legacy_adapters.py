@@ -279,59 +279,65 @@ class BaoStockAdapter(LegacyDataSourceAdapter):
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__("baostock", config)
-    
+        self.connection_manager = None
+
     def _initialize_source(self):
-        """初始化BaoStock數據源"""
+        """初始化BaoStock數據源（使用連接管理器）"""
         try:
-            # 嘗試導入BaoStock
-            import baostock as bs
-            
-            # 登錄BaoStock
-            lg = bs.login()
-            if lg.error_code != '0':
-                logger.error(f"BaoStock登錄失敗: {lg.error_msg}")
-                return
-            
-            self.bs = bs
-            self.is_available = True
-            logger.info("BaoStock數據源初始化成功")
-            
+            # 使用連接管理器檢查模組可用性
+            from .baostock_connection_manager import get_baostock_connection_manager
+
+            self.connection_manager = get_baostock_connection_manager()
+
+            # 只檢查模組可用性，不進行實際連接
+            if self.connection_manager.is_module_available():
+                self.is_available = True
+                logger.info("BaoStock模組可用，數據源已就緒（懶加載模式）")
+            else:
+                log_warning_once("BaoStock未安裝，請運行: pip install baostock")
+
         except ImportError:
             log_warning_once("BaoStock未安裝，請運行: pip install baostock")
         except Exception as e:
             logger.error(f"BaoStock數據源初始化失敗: {e}")
     
     async def get_data(self, symbols: List[str], start_date: datetime, end_date: datetime, **kwargs) -> pd.DataFrame:
-        """獲取BaoStock數據"""
-        if not self.is_available:
+        """獲取BaoStock數據（使用連接管理器）"""
+        if not self.is_available or not self.connection_manager:
             raise Exception("BaoStock數據源不可用")
-        
+
         try:
+            # 使用連接管理器獲取連接
+            bs = await self.connection_manager.get_connection()
+            if not bs:
+                raise Exception("無法建立BaoStock連接")
+
             all_data = []
-            
+
             for symbol in symbols:
                 data = await asyncio.get_event_loop().run_in_executor(
                     None,
                     self._get_baostock_data_sync,
+                    bs,
                     symbol,
                     start_date,
                     end_date
                 )
-                
+
                 if not data.empty:
                     all_data.append(data)
-            
+
             if all_data:
                 combined_data = pd.concat(all_data, ignore_index=True)
                 return self._standardize_data_format(combined_data)
             else:
                 return pd.DataFrame()
-                
+
         except Exception as e:
             logger.error(f"BaoStock數據獲取失敗: {e}")
             return pd.DataFrame()
     
-    def _get_baostock_data_sync(self, symbol: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    def _get_baostock_data_sync(self, bs, symbol: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
         """同步獲取BaoStock數據"""
         try:
             # 轉換股票代碼格式
@@ -339,9 +345,9 @@ class BaoStockAdapter(LegacyDataSourceAdapter):
                 bs_code = f"sh.{symbol}"
             else:
                 bs_code = f"sz.{symbol}"
-            
+
             # 獲取數據
-            rs = self.bs.query_history_k_data_plus(
+            rs = bs.query_history_k_data_plus(
                 bs_code,
                 "date,code,open,high,low,close,volume,amount",
                 start_date=start_date.strftime('%Y-%m-%d'),

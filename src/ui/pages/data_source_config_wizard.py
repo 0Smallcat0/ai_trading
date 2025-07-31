@@ -17,10 +17,11 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(o
 sys.path.insert(0, project_root)
 
 def initialize_config_service():
-    """初始化配置服務"""
+    """初始化配置服務（使用懶加載提升性能）"""
     try:
         from src.data_sources.unified_data_manager import UnifiedDataManager
-        return UnifiedDataManager()
+        # 使用懶加載模式，提升頁面加載性能
+        return UnifiedDataManager(lazy_init=True)
     except Exception as e:
         st.error(f"配置服務初始化失敗: {e}")
         return None

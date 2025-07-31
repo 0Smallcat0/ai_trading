@@ -65,23 +65,24 @@ class BaoStockAdapter(BaseDataSource):
     
     def __init__(self, config: DataSourceConfig):
         """初始化 BaoStock 適配器
-        
+
         Args:
             config: 數據源配置
-            
+
         Raises:
             ImportError: 當 baostock 模組未安裝時
         """
         super().__init__(config)
-        
-        # 初始化 BaoStock
-        self.bs = None
-        self.login_status = False
+
+        # 使用連接管理器
+        from .baostock_connection_manager import get_baostock_connection_manager
+        self.connection_manager = get_baostock_connection_manager()
         self.last_request_time = 0
         self.min_interval = config.api_limits.get('min_interval', 0.5)  # 最小請求間隔
-        
-        # 初始化 API
-        self._initialize_api()
+
+        # 檢查模組可用性（不進行實際連接）
+        if not self.connection_manager.is_module_available():
+            raise ImportError("請安裝 baostock: pip install baostock")
         
         # 數據格式映射
         self.column_mapping = {
@@ -103,59 +104,43 @@ class BaoStockAdapter(BaseDataSource):
         }
         
         logger.info(f"BaoStock適配器初始化完成，可用性: {self.is_available()}")
-    
-    def _initialize_api(self):
-        """初始化 BaoStock API"""
-        try:
-            import baostock as bs
-            self.bs = bs
-            logger.info("BaoStock 模組導入成功")
-        except ImportError as e:
-            logger.error(f"BaoStock 模組導入失敗: {e}")
-            raise ImportError("請安裝 baostock: pip install baostock") from e
-    
+
+    def _setup_connection(self):
+        """設定連接（實現 BaseDataSource 抽象方法）"""
+        # 使用連接管理器，無需在此處建立連接
+        # 連接將在需要時懶加載
+        pass
+
     def is_available(self) -> bool:
         """檢查數據源是否可用
-        
+
         Returns:
             數據源是否可用
         """
-        return self.bs is not None
+        return self.connection_manager.is_module_available()
     
     async def connect(self) -> bool:
-        """連接到數據源
-        
+        """連接到數據源（使用連接管理器）
+
         Returns:
             連接是否成功
         """
         if not self.is_available():
             return False
-        
+
         try:
-            # 登錄 BaoStock
-            lg = self.bs.login()
-            self.login_status = lg.error_code == '0'
-            
-            if self.login_status:
-                logger.info("BaoStock 登錄成功")
-            else:
-                logger.error(f"BaoStock 登錄失敗: {lg.error_msg}")
-            
-            return self.login_status
-            
+            # 使用連接管理器獲取連接
+            bs = await self.connection_manager.get_connection()
+            return bs is not None
+
         except Exception as e:
             logger.error(f"BaoStock 連接失敗: {e}")
             return False
-    
+
     async def disconnect(self):
-        """斷開連接"""
-        if self.bs and self.login_status:
-            try:
-                self.bs.logout()
-                self.login_status = False
-                logger.info("BaoStock 登出成功")
-            except Exception as e:
-                logger.warning(f"BaoStock 登出失敗: {e}")
+        """斷開連接（由連接管理器管理）"""
+        # 連接由管理器統一管理，無需手動斷開
+        pass
     
     async def get_daily_data(
         self, 
@@ -182,13 +167,11 @@ class BaoStockAdapter(BaseDataSource):
         """
         if not self.is_available():
             raise RuntimeError("BaoStock 數據源不可用")
-        
-        # 確保已登錄
-        if not self.login_status:
-            await self.connect()
-        
-        if not self.login_status:
-            raise RuntimeError("BaoStock 登錄失敗")
+
+        # 使用連接管理器獲取連接
+        bs = await self.connection_manager.get_connection()
+        if not bs:
+            raise RuntimeError("無法建立 BaoStock 連接")
         
         # 控制請求頻率
         await self._rate_limit()
@@ -202,7 +185,7 @@ class BaoStockAdapter(BaseDataSource):
             fields = self._get_fields()
             
             # 調用 BaoStock API
-            rs = self.bs.query_history_k_data_plus(
+            rs = bs.query_history_k_data_plus(
                 symbol,
                 fields,
                 start_date=start_date,
@@ -264,17 +247,16 @@ class BaoStockAdapter(BaseDataSource):
         Returns:
             股票基本信息
         """
-        if not self.login_status:
-            await self.connect()
-        
-        if not self.login_status:
-            raise RuntimeError("BaoStock 登錄失敗")
-        
+        # 使用連接管理器獲取連接
+        bs = await self.connection_manager.get_connection()
+        if not bs:
+            raise RuntimeError("無法建立 BaoStock 連接")
+
         try:
             if date is None:
                 date = datetime.now().strftime('%Y-%m-%d')
-            
-            rs = self.bs.query_all_stock(day=date)
+
+            rs = bs.query_all_stock(day=date)
             
             if rs.error_code != '0':
                 raise RuntimeError(f"查詢股票基本信息失敗: {rs.error_msg}")
@@ -405,7 +387,42 @@ class BaoStockAdapter(BaseDataSource):
             'data_types': ['歷史K線', '基本信息', '財務數據'],
             'cost': '免費'
         }
-    
+
+    def get_historical_data(
+        self,
+        symbol: str,
+        start_date: str,
+        end_date: str,
+        **kwargs
+    ) -> pd.DataFrame:
+        """獲取歷史數據（實現 BaseDataSource 抽象方法）
+
+        這是同步版本的 get_daily_data 包裝器
+
+        Args:
+            symbol: 股票代碼
+            start_date: 開始日期
+            end_date: 結束日期
+            **kwargs: 其他參數
+
+        Returns:
+            歷史數據 DataFrame
+        """
+        import asyncio
+
+        # 如果已經在事件循環中，直接調用同步版本
+        try:
+            loop = asyncio.get_running_loop()
+            # 在已有事件循環中，使用 run_in_executor
+            return loop.run_until_complete(
+                self.get_daily_data(symbol, start_date, end_date, **kwargs)
+            )
+        except RuntimeError:
+            # 沒有事件循環，創建新的
+            return asyncio.run(
+                self.get_daily_data(symbol, start_date, end_date, **kwargs)
+            )
+
     def __del__(self):
         """析構函數，確保登出"""
         if hasattr(self, 'bs') and hasattr(self, 'login_status') and self.login_status:
