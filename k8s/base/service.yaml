@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-trading-app-service
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9091"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http-ui
+    port: 8501
+    targetPort: 8501
+    protocol: TCP
+  - name: http-api
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 9091
+    targetPort: 9091
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: app
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: database
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: database
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: cache
+spec:
+  type: ClusterIP
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: cache
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: prometheus
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: monitoring
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: grafana
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: monitoring
+
+---
+# LoadBalancer 服務用於外部訪問
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-trading-app-lb
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+    service-type: loadbalancer
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http-ui
+    port: 80
+    targetPort: 8501
+    protocol: TCP
+  - name: https-ui
+    port: 443
+    targetPort: 8501
+    protocol: TCP
+  - name: http-api
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: app
+  loadBalancerSourceRanges:
+  - 0.0.0.0/0  # 在生產環境中應該限制為特定 IP 範圍
+
+---
+# NodePort 服務用於開發環境
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-trading-app-nodeport
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: app
+    service-type: nodeport
+spec:
+  type: NodePort
+  ports:
+  - name: http-ui
+    port: 8501
+    targetPort: 8501
+    nodePort: 30501
+    protocol: TCP
+  - name: http-api
+    port: 8000
+    targetPort: 8000
+    nodePort: 30500
+    protocol: TCP
+  selector:
+    app: ai-trading-system
+    component: app

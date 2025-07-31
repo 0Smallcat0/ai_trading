@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-trading-data-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: application-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd  # 根據實際環境調整
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-trading-logs-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: logs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard  # 日誌可以使用較慢的儲存
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-trading-uploads-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: uploads
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: fast-ssd  # 資料庫需要高效能儲存
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: fast-ssd  # Redis 需要高效能儲存
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 15Gi
+  storageClassName: standard  # 監控資料可以使用標準儲存
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    component: storage
+    data-type: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard

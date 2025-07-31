@@ -1,0 +1,488 @@
+{
+  "name": "Continuous Optimization Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "minutesInterval": 1440
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// 獲取當前日期\nconst now = new Date();\nconst dayOfWeek = now.getDay(); // 0 = 星期日, 1 = 星期一, ...\n\n// 決定要執行的任務\nlet taskToRun = \"none\";\n\n// 星期一：執行性能優化\nif (dayOfWeek === 1) {\n  taskToRun = \"performance\";\n}\n// 星期二：執行 API 兼容性檢查\nelse if (dayOfWeek === 2) {\n  taskToRun = \"api_compatibility\";\n}\n// 星期三：檢查模型性能\nelse if (dayOfWeek === 3) {\n  taskToRun = \"model_performance\";\n}\n// 星期四：檢查策略性能\nelse if (dayOfWeek === 4) {\n  taskToRun = \"strategy_performance\";\n}\n// 星期五：生成週報\nelse if (dayOfWeek === 5) {\n  taskToRun = \"weekly_report\";\n}\n\nreturn {\n  taskToRun\n};"
+      },
+      "name": "Determine Task",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Determine Task\"].json[\"taskToRun\"] }}",
+              "operation": "equal",
+              "value2": "performance"
+            }
+          ]
+        }
+      },
+      "name": "Performance Task?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Determine Task\"].json[\"taskToRun\"] }}",
+              "operation": "equal",
+              "value2": "api_compatibility"
+            }
+          ]
+        }
+      },
+      "name": "API Compatibility Task?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Determine Task\"].json[\"taskToRun\"] }}",
+              "operation": "equal",
+              "value2": "model_performance"
+            }
+          ]
+        }
+      },
+      "name": "Model Performance Task?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Determine Task\"].json[\"taskToRun\"] }}",
+              "operation": "equal",
+              "value2": "strategy_performance"
+            }
+          ]
+        }
+      },
+      "name": "Strategy Performance Task?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Determine Task\"].json[\"taskToRun\"] }}",
+              "operation": "equal",
+              "value2": "weekly_report"
+            }
+          ]
+        }
+      },
+      "name": "Weekly Report Task?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/maintenance/optimize-performance",
+        "options": {}
+      },
+      "name": "Optimize Performance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/maintenance/check-api-compatibility",
+        "options": {}
+      },
+      "name": "Check API Compatibility",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/maintenance/check-model-performance",
+        "options": {}
+      },
+      "name": "Check Model Performance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/maintenance/check-strategy-performance",
+        "options": {}
+      },
+      "name": "Check Strategy Performance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/maintenance/generate-weekly-report",
+        "options": {}
+      },
+      "name": "Generate Weekly Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Optimize Performance\"].json[\"success\"] || $node[\"Check API Compatibility\"].json[\"success\"] || $node[\"Check Model Performance\"].json[\"success\"] || $node[\"Check Strategy Performance\"].json[\"success\"] || $node[\"Generate Weekly Report\"].json[\"success\"] }}",
+              "operation": "equal",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "maintenance",
+        "text": "=Continuous Optimization Task Completed Successfully\n\nTask: {{ $node[\"Determine Task\"].json[\"taskToRun\"] }}\nTimestamp: {{ $now }}\n\nResults: {{ $json[\"results\"] }}",
+        "attachments": [],
+        "otherOptions": {}
+      },
+      "name": "Send Success Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "maintenance-alerts",
+        "text": "=⚠️ Continuous Optimization Task Failed\n\nTask: {{ $node[\"Determine Task\"].json[\"taskToRun\"] }}\nTimestamp: {{ $now }}\n\nError: {{ $json[\"error\"] }}",
+        "attachments": [],
+        "otherOptions": {}
+      },
+      "name": "Send Error Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// 記錄執行結果\nconst taskToRun = $node[\"Determine Task\"].json[\"taskToRun\"];\nconst timestamp = new Date().toISOString();\nlet result;\n\n// 根據任務類型獲取結果\nswitch (taskToRun) {\n  case \"performance\":\n    result = $node[\"Optimize Performance\"].json;\n    break;\n  case \"api_compatibility\":\n    result = $node[\"Check API Compatibility\"].json;\n    break;\n  case \"model_performance\":\n    result = $node[\"Check Model Performance\"].json;\n    break;\n  case \"strategy_performance\":\n    result = $node[\"Check Strategy Performance\"].json;\n    break;\n  case \"weekly_report\":\n    result = $node[\"Generate Weekly Report\"].json;\n    break;\n  default:\n    result = { message: \"No task executed\" };\n}\n\nreturn {\n  taskToRun,\n  timestamp,\n  result,\n  executionId: $execution.id\n};"
+      },
+      "name": "Log Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/data/logs/continuous_optimization_logs.json",
+        "options": {
+          "append": true
+        }
+      },
+      "name": "Write Log File",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Determine Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Task": {
+      "main": [
+        [
+          {
+            "node": "Performance Task?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "API Compatibility Task?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Model Performance Task?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Strategy Performance Task?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Weekly Report Task?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Performance Task?": {
+      "main": [
+        [
+          {
+            "node": "Optimize Performance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "API Compatibility Task?": {
+      "main": [
+        [
+          {
+            "node": "Check API Compatibility",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Model Performance Task?": {
+      "main": [
+        [
+          {
+            "node": "Check Model Performance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Strategy Performance Task?": {
+      "main": [
+        [
+          {
+            "node": "Check Strategy Performance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Weekly Report Task?": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Optimize Performance": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check API Compatibility": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Model Performance": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Strategy Performance": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Report": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success?": {
+      "main": [
+        [
+          {
+            "node": "Send Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Success Notification": {
+      "main": [
+        [
+          {
+            "node": "Log Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Error Notification": {
+      "main": [
+        [
+          {
+            "node": "Log Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Results": {
+      "main": [
+        [
+          {
+            "node": "Write Log File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

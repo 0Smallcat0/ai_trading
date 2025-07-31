@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AI 交易系統 - 交易效能監控",
+    "tags": [
+      "trading",
+      "performance",
+      "monitoring"
+    ],
+    "timezone": "Asia/Taipei",
+    "panels": [
+      {
+        "id": 1,
+        "title": "訂單成功率",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "trading_order_success_rate",
+            "legendFormat": "{{order_type}} 成功率"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 80
+                },
+                {
+                  "color": "green",
+                  "value": 95
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 0
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  },
+  "overwrite": true
+}

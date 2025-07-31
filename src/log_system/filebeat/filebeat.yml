@@ -1,0 +1,22 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /logs/*/*.log
+  json.keys_under_root: true
+  json.add_error_key: true
+  json.message_key: message
+  fields:
+    type: filebeat
+  fields_under_root: true
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+setup.dashboards.enabled: true
+setup.kibana:
+  host: "${KIBANA_HOST}"
+
+output.logstash:
+  hosts: ["logstash:5044"]

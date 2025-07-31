@@ -1,0 +1,93 @@
+name: Weekly Quality Report
+
+on:
+  schedule:
+    # 每週一早上8點 (UTC) 執行
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    # 允許手動觸發
+
+jobs:
+  generate-weekly-report:
+    name: Generate Weekly Quality Report
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 獲取完整歷史以進行趨勢分析
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+          
+      - name: Create reports directory
+        run: |
+          mkdir -p reports/weekly
+          mkdir -p reports/ci
+          
+      - name: Generate file size report
+        run: |
+          poetry run python scripts/analyze_file_sizes.py --threshold 300 --output reports/weekly/file_size_analysis.json
+          
+      - name: Run Pylint analysis
+        run: |
+          poetry run pylint src/ --rcfile=config/pylint.ini --output-format=json > reports/weekly/pylint_report.json || true
+          
+      - name: Run test coverage analysis
+        run: |
+          poetry run python scripts/run_tests.py --unit-tests --coverage --min-coverage 80 --output reports/weekly/coverage_report.json || true
+          
+      - name: Generate weekly quality report
+        run: |
+          poetry run python scripts/generate_weekly_report.py --output reports/weekly/quality_report_$(date +%Y-%m-%d).md
+          
+      - name: Upload weekly report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-quality-report-${{ github.run_number }}
+          path: reports/weekly/
+          retention-days: 90
+          
+      - name: Commit and push report
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add reports/weekly/
+          git commit -m "📊 Weekly quality report $(date +%Y-%m-%d)" || exit 0
+          git push
+          
+      - name: Create issue if quality degraded
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ 代碼品質週報警告',
+              body: `
+              ## 代碼品質檢查失敗
+              
+              本週的代碼品質檢查發現以下問題：
+              
+              - 檔案大小檢查失敗
+              - Pylint分數低於8.5
+              - 測試覆蓋率低於80%
+              
+              請檢查詳細報告並及時修復。
+              
+              **執行時間**: ${new Date().toISOString()}
+              **工作流程**: ${context.workflow}
+              **運行編號**: ${context.runNumber}
+              `,
+              labels: ['quality', 'weekly-report', 'needs-attention']
+            })

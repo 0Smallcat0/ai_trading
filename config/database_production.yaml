@@ -1,0 +1,194 @@
+# AI 交易系統生產環境資料庫配置
+# 版本: v1.0
+# 最後更新: 2024-12-25
+
+# 主資料庫配置
+primary_database:
+  # 連接配置
+  connection:
+    host: "${DB_HOST:-localhost}"
+    port: "${DB_PORT:-5432}"
+    database: "${DB_NAME:-ai_trading_prod}"
+    username: "${DB_USER:-postgres}"
+    password: "${DB_PASSWORD}"
+    
+  # 連接池配置 (生產環境優化)
+  pool:
+    pool_size: 20                    # 連接池大小
+    max_overflow: 40                 # 最大溢出連接數
+    pool_timeout: 60                 # 連接超時時間 (秒)
+    pool_recycle: 3600              # 連接回收時間 (秒)
+    pool_pre_ping: true             # 連接前預檢
+    pool_reset_on_return: "commit"  # 連接返回時重置方式
+    
+  # 查詢優化配置
+  query_optimization:
+    statement_timeout: 30000        # 語句超時 (毫秒)
+    lock_timeout: 10000            # 鎖超時 (毫秒)
+    idle_in_transaction_timeout: 60000  # 事務空閒超時 (毫秒)
+    
+  # 索引配置
+  indexes:
+    auto_create: true
+    maintenance_schedule: "0 2 * * 0"  # 每週日凌晨2點維護索引
+    
+  # 分區配置
+  partitioning:
+    enabled: true
+    strategy: "time_based"
+    partition_interval: "1 month"
+    retention_period: "2 years"
+
+# 備份資料庫配置 (讀取副本)
+replica_database:
+  connection:
+    host: "${DB_REPLICA_HOST:-localhost}"
+    port: "${DB_REPLICA_PORT:-5433}"
+    database: "${DB_NAME:-ai_trading_prod}"
+    username: "${DB_REPLICA_USER:-postgres}"
+    password: "${DB_REPLICA_PASSWORD}"
+    
+  pool:
+    pool_size: 10
+    max_overflow: 20
+    pool_timeout: 30
+    pool_recycle: 3600
+
+# 備份配置
+backup:
+  # 自動備份設定
+  automatic:
+    enabled: true
+    schedule:
+      full_backup: "0 2 * * *"      # 每日凌晨2點完整備份
+      incremental: "0 */6 * * *"    # 每6小時增量備份
+      log_backup: "*/15 * * * *"    # 每15分鐘日誌備份
+      
+  # 備份存儲配置
+  storage:
+    local_path: "/opt/ai_trading/backups/database"
+    cloud_enabled: true
+    cloud_provider: "aws_s3"  # 或 "azure_blob", "gcp_storage"
+    cloud_bucket: "${BACKUP_BUCKET:-ai-trading-backups}"
+    encryption_enabled: true
+    compression_enabled: true
+    compression_level: 6
+    
+  # 備份保留策略
+  retention:
+    daily_backups: 30             # 保留30天的日備份
+    weekly_backups: 12            # 保留12週的週備份
+    monthly_backups: 12           # 保留12個月的月備份
+    yearly_backups: 5             # 保留5年的年備份
+    
+  # 備份驗證
+  verification:
+    enabled: true
+    schedule: "0 4 * * *"         # 每日凌晨4點驗證備份
+    test_restore: true            # 測試恢復功能
+    checksum_validation: true     # 校驗和驗證
+    
+# 監控配置
+monitoring:
+  # 性能監控
+  performance:
+    enabled: true
+    metrics_collection_interval: 60  # 秒
+    slow_query_threshold: 5000       # 慢查詢閾值 (毫秒)
+    connection_monitoring: true
+    lock_monitoring: true
+    
+  # 健康檢查
+  health_check:
+    enabled: true
+    interval: 30                     # 秒
+    timeout: 10                      # 秒
+    
+  # 告警配置
+  alerts:
+    connection_pool_usage: 80        # 連接池使用率告警閾值 (%)
+    slow_query_count: 10             # 慢查詢數量告警閾值
+    disk_usage: 85                   # 磁碟使用率告警閾值 (%)
+    replication_lag: 60              # 複製延遲告警閾值 (秒)
+
+# 安全配置
+security:
+  # SSL/TLS 配置
+  ssl:
+    enabled: true
+    mode: "require"                  # require, verify-ca, verify-full
+    cert_file: "/etc/ssl/certs/postgresql.crt"
+    key_file: "/etc/ssl/private/postgresql.key"
+    ca_file: "/etc/ssl/certs/ca.crt"
+    
+  # 存取控制
+  access_control:
+    max_connections: 200
+    allowed_hosts:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+    
+  # 審計配置
+  audit:
+    enabled: true
+    log_connections: true
+    log_disconnections: true
+    log_statement: "mod"             # none, ddl, mod, all
+    log_duration: true
+    log_min_duration_statement: 1000 # 毫秒
+
+# 維護配置
+maintenance:
+  # 自動維護
+  auto_maintenance:
+    enabled: true
+    schedule: "0 3 * * 0"           # 每週日凌晨3點
+    vacuum_enabled: true
+    analyze_enabled: true
+    reindex_enabled: true
+    
+  # 清理配置
+  cleanup:
+    old_logs_retention: 90          # 天
+    temp_files_cleanup: true
+    dead_tuples_threshold: 20       # %
+
+# 災難恢復配置
+disaster_recovery:
+  # 恢復目標
+  rto: 240                          # 恢復時間目標 (分鐘)
+  rpo: 15                           # 恢復點目標 (分鐘)
+  
+  # 故障轉移
+  failover:
+    enabled: true
+    automatic: false                # 手動故障轉移
+    health_check_interval: 30       # 秒
+    failure_threshold: 3            # 失敗次數閾值
+    
+  # 恢復測試
+  recovery_testing:
+    enabled: true
+    schedule: "0 1 1 * *"          # 每月1號凌晨1點
+    test_environment: "staging"
+
+# 日誌配置
+logging:
+  level: "INFO"
+  format: "json"
+  file_path: "/var/log/ai_trading/database.log"
+  max_file_size: "100MB"
+  backup_count: 10
+  
+# 環境特定配置
+environment:
+  name: "production"
+  debug: false
+  testing: false
+  
+# 版本控制
+version:
+  config_version: "1.0"
+  last_updated: "2024-12-25"
+  updated_by: "system_admin"

@@ -1,0 +1,38 @@
+# Bandit 安全掃描配置文件
+skips:
+  - B101  # assert_used
+  - B601  # paramiko_calls
+  - B602  # subprocess_popen_with_shell_equals_true
+  - B603  # subprocess_without_shell_equals_true
+  - B607  # start_process_with_partial_path
+
+exclude_dirs:
+  - .venv
+  - venv
+  - env
+  - .env
+  - __pycache__
+  - .pytest_cache
+  - .git
+  - .github
+  - node_modules
+  - build
+  - dist
+  - .tox
+  - .coverage
+  - htmlcov
+  - logs
+  - temp
+  - tmp
+
+exclude:
+  - "*/tests/*"
+  - "*/test_*"
+  - "*_test.py"
+  - "*/migrations/*"
+  - "*/venv/*"
+  - "*/.venv/*"
+  - "*/build/*"
+  - "*/dist/*"
+
+
