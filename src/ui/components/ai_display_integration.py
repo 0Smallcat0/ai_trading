@@ -210,9 +210,6 @@ class AIDisplayIntegration:
                 fig = self._create_technical_chart(df, symbol, indicators_data)
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # 顯示指標解釋
-                self._show_indicator_explanations(selected_indicators)
-                
             except Exception as e:
                 st.error(f"❌ 技術指標計算失敗: {e}")
                 
@@ -640,32 +637,7 @@ class AIDisplayIntegration:
                 st.metric("波動率", f"{volatility:.2f}%")
                 st.metric("數據天數", f"{len(df)}")
 
-    def _show_indicator_explanations(self, indicators: List[str]) -> None:
-        """顯示技術指標說明"""
-        with st.expander("📚 技術指標說明"):
-            for indicator in indicators:
-                if indicator == 'RSI':
-                    st.markdown("""
-                    **RSI (相對強弱指標)**:
-                    - RSI > 70: 超買區域，可能面臨回調
-                    - RSI < 30: 超賣區域，可能出現反彈
-                    - RSI 在 30-70 之間: 正常波動區間
-                    """)
-                elif indicator == 'MACD':
-                    st.markdown("""
-                    **MACD (指數平滑移動平均收斂發散)**:
-                    - MACD線上穿信號線: 買入訊號
-                    - MACD線下穿信號線: 賣出訊號
-                    - 柱狀圖正值: 上升動能
-                    - 柱狀圖負值: 下降動能
-                    """)
-                elif indicator in ['SMA', 'EMA']:
-                    st.markdown(f"""
-                    **{indicator} (移動平均線)**:
-                    - 價格在移動平均線之上: 上升趨勢
-                    - 價格在移動平均線之下: 下降趨勢
-                    - 移動平均線斜率: 趨勢強度指標
-                    """)
+
 
     def _generate_ai_signals(self, df: pd.DataFrame, indicators: List[str],
                            confidence_threshold: float) -> List[Dict[str, Any]]:

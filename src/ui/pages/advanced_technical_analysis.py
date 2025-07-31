@@ -210,57 +210,6 @@ def create_indicator_tooltip(indicator_name: str) -> str:
     }
     return tooltips.get(indicator_name, "技術指標")
 
-def show_indicator_explanation(indicator_name: str):
-    """顯示指標詳細說明"""
-    explanations = {
-        "Williams %R": {
-            "description": "威廉指標是一個動量指標，範圍從 -100 到 0，用於識別超買和超賣條件。",
-            "formula": "%R = (最高價 - 收盤價) / (最高價 - 最低價) × (-100)",
-            "signals": "超買: -20 以上 | 超賣: -80 以下",
-            "usage": "當指標從超賣區域向上突破時考慮買入，從超買區域向下跌破時考慮賣出。",
-            "tips": "注意背離現象，往往預示趨勢反轉。避免在震盪市場中頻繁交易。"
-        },
-        "Stochastic": {
-            "description": "隨機指標包含 %K 和 %D 兩條線，範圍 0-100，用於識別超買超賣和交叉信號。",
-            "formula": "%K = (收盤價 - 最低價) / (最高價 - 最低價) × 100；%D = %K 的移動平均",
-            "signals": "超買: 80 以上 | 超賣: 20 以下 | 金叉: %K 向上穿越 %D",
-            "usage": "在超賣區域出現金叉時買入，在超買區域出現死叉時賣出。",
-            "tips": "優先使用慢速隨機指標，信號更可靠。結合價格形態分析提高準確性。"
-        },
-        "CCI": {
-            "description": "商品通道指數測量價格偏離統計平均值的程度，無上下限制。",
-            "formula": "CCI = (典型價格 - 典型價格的移動平均) / (0.015 × 平均絕對偏差)",
-            "signals": "超買: +100 以上 | 超賣: -100 以下",
-            "usage": "從 -100 以下向上突破時買入，從 +100 以上向下跌破時賣出。",
-            "tips": "CCI 沒有上下限，適合捕捉強勢突破。在趨勢市場中效果較好。"
-        },
-        "ATR": {
-            "description": "平均真實範圍是波動性指標，用於測量市場波動程度，常用於設置止損。",
-            "formula": "TR = max(高-低, abs(高-前收), abs(低-前收))；ATR = TR 的移動平均",
-            "signals": "ATR 上升表示波動性增加，ATR 下降表示波動性減少",
-            "usage": "使用 ATR 的倍數來設置止損距離，如當前價格 ± (2 × ATR)。",
-            "tips": "ATR 不是交易信號，而是風險管理工具。在高波動期間適當放寬止損。"
-        }
-    }
-
-    if indicator_name in explanations:
-        info = explanations[indicator_name]
-        with st.expander(f"📖 {indicator_name} 詳細說明", expanded=False):
-            st.markdown(f"**📋 原理說明**")
-            st.markdown(info['description'])
-
-            st.markdown(f"**🧮 計算公式**")
-            st.code(info['formula'])
-
-            st.markdown(f"**📊 交易信號**")
-            st.markdown(info['signals'])
-
-            st.markdown(f"**💡 使用方法**")
-            st.markdown(info['usage'])
-
-            st.markdown(f"**⚠️ 實戰技巧**")
-            st.markdown(info['tips'])
-
 def show():
     """主顯示函數"""
     # 應用深色主題
@@ -383,8 +332,6 @@ def show():
         
         for indicator in selected_indicators:
             with st.expander(f"📊 {indicator} 分析", expanded=True):
-                # 顯示指標詳細說明
-                show_indicator_explanation(indicator)
 
                 try:
                     if indicator == "Williams %R":
@@ -534,9 +481,7 @@ def show():
     
     with tab2:
         st.subheader("📚 技術指標使用說明")
-        for indicator in selected_indicators:
-            show_indicator_explanation(indicator)
-            st.markdown("---")
+        st.info("指標說明功能已移除")
 
 if __name__ == "__main__":
     show()
