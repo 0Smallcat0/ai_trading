@@ -1,0 +1,113 @@
+# AI Trading System - Production Requirements
+# 生產環境依賴清單 - 包含代碼品質審計後的改進
+
+# Core Framework Dependencies
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+streamlit>=1.28.0
+pydantic>=2.5.0
+
+# Authentication & Security (代碼品質審計後添加)
+bcrypt>=4.1.2  # 生產環境密碼雜湊 - 修復 API 認證模組依賴
+PyJWT>=2.8.0
+cryptography>=41.0.7
+pyotp>=2.9.0  # 兩步驗證支援
+
+# Database & ORM
+sqlalchemy>=2.0.23
+alembic>=1.13.0
+psycopg2-binary>=2.9.9  # PostgreSQL 生產環境
+redis>=5.0.1  # 快取和會話管理
+
+# Data Processing & Analysis
+pandas>=2.1.4
+numpy>=1.25.2
+scikit-learn>=1.3.2
+ta-lib>=0.4.28  # 技術分析指標
+
+# Machine Learning & AI
+tensorflow>=2.15.0
+torch>=2.1.0
+xgboost>=2.0.2
+lightgbm>=4.1.0
+
+# Financial Data & Trading
+yfinance>=0.2.28
+ccxt>=4.1.0  # 加密貨幣交易所 API
+alpha-vantage>=2.3.1
+
+# Web & API
+requests>=2.31.0
+aiohttp>=3.9.1
+websockets>=12.0
+
+# Monitoring & Logging (效能監控實施)
+structlog>=23.2.0  # 結構化日誌
+prometheus-client>=0.19.0  # 指標收集
+sentry-sdk[fastapi]>=1.38.0  # 錯誤追蹤
+
+# Development & Quality Tools (代碼品質標準)
+pylint>=3.0.3  # 靜態代碼分析 ≥9.0/10 標準
+black>=23.11.0  # 代碼格式化
+flake8>=6.1.0  # 代碼風格檢查
+mypy>=1.7.1  # 類型檢查
+pytest>=7.4.3  # 測試框架
+pytest-cov>=4.1.0  # 測試覆蓋率
+pytest-asyncio>=0.21.1  # 異步測試
+
+# Configuration & Environment
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+click>=8.1.7
+
+# Image Processing (QR Code for 2FA)
+qrcode[pil]>=7.4.2
+Pillow>=10.1.0
+
+# Utilities
+python-dateutil>=2.8.2
+pytz>=2023.3
+schedule>=1.2.0
+
+# Production Server & Deployment
+gunicorn>=21.2.0  # WSGI 服務器
+supervisor>=4.2.5  # 進程管理
+
+# Health Checks & Monitoring
+psutil>=5.9.6  # 系統監控
+healthcheck>=1.3.3  # 健康檢查
+
+# Email & Notifications (認證服務支援)
+smtplib-ssl>=1.0.0
+email-validator>=2.1.0
+
+# Data Validation & Serialization
+marshmallow>=3.20.1
+cerberus>=1.3.5
+
+# Async & Concurrency
+asyncio-mqtt>=0.16.1
+aiofiles>=23.2.1
+
+# Production Optimizations
+orjson>=3.9.10  # 快速 JSON 序列化
+httpx>=0.25.2  # 高效能 HTTP 客戶端
+
+# Security Enhancements
+python-jose[cryptography]>=3.3.0  # JWT 處理
+passlib[bcrypt]>=1.7.4  # 密碼雜湊庫
+
+# Database Connection Pooling
+sqlalchemy-pool>=1.3.0
+asyncpg>=0.29.0  # PostgreSQL 異步驅動
+
+# Caching & Performance
+aiocache>=0.12.2
+redis-py-cluster>=2.1.3
+
+# API Documentation
+swagger-ui-bundle>=0.0.9
+redoc>=2.1.0
+
+# Environment-specific
+python-multipart>=0.0.6  # 文件上傳支援

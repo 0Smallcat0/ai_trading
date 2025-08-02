@@ -1,0 +1,383 @@
+# 開發環境 Docker Compose 配置
+# 專為開發環境優化，包含熱重載、除錯工具等
+
+version: '3.8'
+
+services:
+  # 開發環境主應用
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_trading_app_dev
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - DATABASE_URL=postgresql://postgres:${DEV_POSTGRES_PASSWORD:-dev_password}@postgres:5432/ai_trading_dev
+      - REDIS_URL=redis://redis:6379/0
+      - API_RELOAD=true
+      - CACHE_ENABLED=false
+      - MOCK_EXTERNAL_APIS=true
+    volumes:
+      # 掛載原始碼以支援熱重載
+      - .:/app
+      - dev_data:/app/data
+      - dev_logs:/app/logs
+      - dev_uploads:/app/uploads
+    ports:
+      - "8501:8501"  # Streamlit UI
+      - "8000:8000"  # FastAPI
+      - "5678:5678"  # Python 除錯埠
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    command: >
+      sh -c "
+        echo '🚀 啟動開發環境...' &&
+        python -m streamlit run src/ui/web_ui.py
+        --server.address=0.0.0.0
+        --server.port=8501
+        --server.headless=false
+        --server.runOnSave=true
+        --server.fileWatcherType=auto
+      "
+
+  # 開發用 PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai_trading_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_trading_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DEV_POSTGRES_PASSWORD:-dev_password}
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/database/init_dev.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"  # 使用不同埠避免衝突
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_trading_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+
+  # 開發用 Redis
+  redis:
+    image: redis:7-alpine
+    container_name: ai_trading_redis_dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"  # 使用不同埠避免衝突
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+        reservations:
+          memory: 128M
+          cpus: '0.05'
+
+  # Jupyter Lab 開發環境
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_trading_jupyter_dev
+    restart: unless-stopped
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=dev_token
+    volumes:
+      - .:/app
+      - jupyter_dev_data:/root/.jupyter
+    ports:
+      - "8888:8888"
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    command: >
+      sh -c "
+        echo '📓 啟動 Jupyter Lab...' &&
+        jupyter lab
+        --ip=0.0.0.0
+        --port=8888
+        --no-browser
+        --allow-root
+        --NotebookApp.token=dev_token
+      "
+
+  # 開發用監控 (輕量版)
+  prometheus-dev:
+    image: prom/prometheus:latest
+    container_name: ai_trading_prometheus_dev
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=24h'  # 開發環境只保留 24 小時
+    volumes:
+      - ./config/monitoring/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_dev_data:/prometheus
+    ports:
+      - "9091:9090"  # 使用不同埠
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+
+  # 開發用 Grafana
+  grafana-dev:
+    image: grafana/grafana:latest
+    container_name: ai_trading_grafana_dev
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: dev
+      GF_SECURITY_ADMIN_PASSWORD: dev
+      GF_USERS_ALLOW_SIGN_UP: true
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+      - ./config/monitoring/grafana/dev-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/monitoring/grafana/dev-datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3001:3000"  # 使用不同埠
+    networks:
+      - dev_network
+    depends_on:
+      - prometheus-dev
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+        reservations:
+          memory: 128M
+          cpus: '0.05'
+
+  # 郵件測試服務 (MailHog)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: ai_trading_mailhog_dev
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.05'
+        reservations:
+          memory: 64M
+          cpus: '0.025'
+
+  # 開發用檔案瀏覽器
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: ai_trading_filebrowser_dev
+    restart: unless-stopped
+    volumes:
+      - .:/srv
+      - ./config/filebrowser/database.db:/database.db
+      - ./config/filebrowser/settings.json:/config/settings.json
+    ports:
+      - "8080:80"
+    networks:
+      - dev_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.05'
+        reservations:
+          memory: 64M
+          cpus: '0.025'
+
+  # 程式碼品質檢查服務
+  code-quality:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_trading_code_quality_dev
+    restart: "no"
+    volumes:
+      - .:/app
+    networks:
+      - dev_network
+    profiles:
+      - tools
+    healthcheck:
+      test: ["CMD", "echo", "Code quality check service"]
+      interval: 30s
+      timeout: 5s
+      retries: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    command: >
+      sh -c "
+        echo '🔍 執行程式碼品質檢查...' &&
+        python scripts/improve_code_quality.py &&
+        echo '✅ 程式碼品質檢查完成'
+      "
+
+  # 測試執行服務
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    container_name: ai_trading_test_runner_dev
+    restart: "no"
+    environment:
+      - ENVIRONMENT=testing
+      - TEST_DATABASE_URL=postgresql://postgres:${DEV_POSTGRES_PASSWORD:-dev_password}@postgres:5432/ai_trading_test
+      - TEST_REDIS_URL=redis://redis:6379/1
+    volumes:
+      - .:/app
+      - test_results:/app/test_results
+    networks:
+      - dev_network
+    profiles:
+      - tools
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "echo", "Test runner service"]
+      interval: 30s
+      timeout: 5s
+      retries: 1
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    command: >
+      sh -c "
+        echo '🧪 執行綜合測試...' &&
+        python scripts/run_comprehensive_tests.py &&
+        echo '✅ 測試執行完成'
+      "
+
+networks:
+  dev_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  prometheus_dev_data:
+    driver: local
+  grafana_dev_data:
+    driver: local
+  jupyter_dev_data:
+    driver: local
+  dev_data:
+    driver: local
+  dev_logs:
+    driver: local
+  dev_uploads:
+    driver: local
+  test_results:
+    driver: local

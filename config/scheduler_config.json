@@ -1,0 +1,72 @@
+{
+  "daily_update": {
+    "enabled": true,
+    "time": "08:00",
+    "retry_times": 3,
+    "retry_interval": 300,
+    "timeout": 3600,
+    "description": "每日早上8點自動更新股票數據"
+  },
+  "weekly_full_update": {
+    "enabled": true,
+    "day": "sunday",
+    "time": "02:00",
+    "retry_times": 5,
+    "retry_interval": 600,
+    "timeout": 7200,
+    "description": "每週日凌晨2點執行完整數據更新"
+  },
+  "health_check": {
+    "enabled": true,
+    "interval": 3600,
+    "alert_threshold": 0.8,
+    "description": "每小時執行系統健康檢查，成功率低於80%時告警"
+  },
+  "notification": {
+    "enabled": true,
+    "email": null,
+    "webhook": null,
+    "description": "通知設置，可配置郵件或Webhook"
+  },
+  "stock_universe": [
+    "2330.TW",
+    "2317.TW", 
+    "2454.TW",
+    "2412.TW",
+    "2882.TW",
+    "2308.TW",
+    "2303.TW",
+    "1303.TW",
+    "1301.TW",
+    "2002.TW",
+    "2379.TW",
+    "3008.TW",
+    "2357.TW",
+    "2382.TW",
+    "2395.TW",
+    "2891.TW",
+    "2892.TW",
+    "2880.TW",
+    "2881.TW",
+    "2886.TW",
+    "1216.TW",
+    "1101.TW",
+    "2207.TW",
+    "2105.TW",
+    "9904.TW"
+  ],
+  "data_quality": {
+    "completeness_threshold": 95.0,
+    "accuracy_threshold": 95.0,
+    "timeliness_threshold": 90.0,
+    "consistency_threshold": 95.0,
+    "description": "數據品質閾值設定"
+  },
+  "system": {
+    "max_concurrent_requests": 5,
+    "request_delay": 2,
+    "max_retries": 3,
+    "timeout": 30,
+    "description": "系統性能參數"
+  }
+}

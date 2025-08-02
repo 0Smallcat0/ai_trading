@@ -1,0 +1,30 @@
+# 股票列表配置文件
+# 用於手動指定要下載的股票列表
+
+# 自動更新設置
+auto_update: true
+update_interval_hours: 24
+
+# 數據源優先級
+data_sources:
+  - taiwan_stock_list_manager  # 台股清單管理器（優先）
+  - database_query            # 數據庫查詢
+  - default_list             # 預設列表（備用）
+
+# 市場設置
+markets:
+  twse: true    # 上市
+  tpex: true    # 上櫃
+
+# 股票過濾設置
+filters:
+  exclude_etf: false        # 是否排除ETF
+  exclude_warrant: true     # 是否排除權證
+  min_market_cap: 0         # 最小市值（億元）
+  
+# 手動股票列表（當自動獲取失敗時使用）
+manual_stock_list:
+  - "2330.TW"  # 台積電
+  - "2317.TW"  # 鴻海
+  - "2454.TW"  # 聯發科
+  # ... 可以添加更多股票

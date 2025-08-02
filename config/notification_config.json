@@ -1,0 +1,44 @@
+{
+  "slack": {
+    "enabled": true,
+    "channel": "#code-quality",
+    "username": "Quality Bot",
+    "webhook_url": null
+  },
+  "teams": {
+    "enabled": true,
+    "webhook_url": null
+  },
+  "github": {
+    "enabled": true,
+    "repo": "Cookieeeeeeeeeeeeeee/ai_trading",
+    "token": null
+  },
+  "thresholds": {
+    "pylint_critical": 7.0,
+    "pylint_warning": 8.0,
+    "coverage_critical": 70.0,
+    "coverage_warning": 75.0,
+    "complexity_critical": 20.0,
+    "complexity_warning": 15.0,
+    "maintainability_critical": 10.0,
+    "maintainability_warning": 20.0
+  },
+  "schedule": {
+    "daily_report": "09:00",
+    "weekly_report": "monday:09:00",
+    "timezone": "Asia/Taipei"
+  },
+  "features": {
+    "quality_alerts": true,
+    "daily_reports": true,
+    "weekly_reports": true,
+    "pr_comments": true,
+    "trend_analysis": true
+  },
+  "filters": {
+    "min_severity": "warning",
+    "exclude_modules": [],
+    "include_only": []
+  }
+}

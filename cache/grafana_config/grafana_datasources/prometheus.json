@@ -1,0 +1,17 @@
+{
+  "name": "Prometheus",
+  "type": "prometheus",
+  "url": "http://localhost:9090",
+  "access": "proxy",
+  "isDefault": true,
+  "basicAuth": false,
+  "jsonData": {
+    "httpMethod": "POST",
+    "timeInterval": "15s",
+    "queryTimeout": "60s",
+    "httpHeaderName1": "X-Custom-Header"
+  },
+  "secureJsonData": {
+    "httpHeaderValue1": "custom-value"
+  }
+}

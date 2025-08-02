@@ -1,0 +1,338 @@
+[MASTER]
+# 指定要載入的 Pylint 插件
+load-plugins=pylint.extensions.docparams,
+             pylint.extensions.docstyle,
+             pylint.extensions.mccabe
+
+# 使用多個進程來加速 Pylint
+jobs=0
+
+# 控制 Pylint 的輸出
+persistent=yes
+
+# 快取檔案位置 (removed - not supported in newer pylint versions)
+# cache-size=500
+
+# 允許載入任意 C 擴展
+unsafe-load-any-extension=no
+
+# 擴展名列表
+extension-pkg-whitelist=
+
+# 忽略的檔案或目錄
+ignore=CVS,
+       .git,
+       __pycache__,
+       .pytest_cache,
+       .mypy_cache,
+       build,
+       dist,
+       *.egg-info,
+       venv,
+       .venv,
+       env,
+       .env,
+       backup,
+       migrations,
+       node_modules
+
+# 忽略的檔案模式
+ignore-patterns=test_.*\.py$,
+                .*_test\.py$,
+                conftest\.py$,
+                setup\.py$,
+                __init__\.py$
+
+[MESSAGES CONTROL]
+# 啟用的檢查
+enable=all
+
+# 禁用的檢查
+disable=raw-checker-failed,
+        bad-inline-option,
+        locally-disabled,
+        file-ignored,
+        suppressed-message,
+        useless-suppression,
+        deprecated-pragma,
+        use-symbolic-message-instead,
+        # 以下是針對專案特性的禁用
+        too-few-public-methods,
+        too-many-arguments,
+        too-many-locals,
+        too-many-branches,
+        too-many-statements,
+        too-many-instance-attributes,
+        too-many-public-methods,
+        # 文檔相關 (暫時禁用，後續會啟用)
+        missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        # 命名相關
+        invalid-name,
+        # 導入相關
+        wrong-import-order,
+        ungrouped-imports,
+        # 其他
+        fixme,
+        broad-except,
+        global-statement
+
+[REPORTS]
+# 設定輸出格式
+output-format=text
+
+# 包含訊息 ID (removed - not supported in newer pylint versions)
+# include-ids=yes
+
+# 包含符號名稱 (removed - not supported in newer pylint versions)
+# include-symbols=no
+
+# 報告檔案
+reports=yes
+
+# 評估表達式
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+
+[REFACTORING]
+# 最大嵌套層級
+max-nested-blocks=5
+
+# 從不返回的函數
+never-returning-functions=sys.exit
+
+[LOGGING]
+# 日誌模組名稱
+logging-modules=logging
+
+[SPELLING]
+# 拼寫檢查
+spelling-dict=
+
+# 私有字典檔案
+spelling-private-dict-file=
+
+# 拼寫檢查的最小長度 (removed - not supported in newer pylint versions)
+# spelling-min-length=4
+
+[MISCELLANEOUS]
+# 註釋中的 TODO、FIXME 等標記
+notes=FIXME,
+      XXX,
+      TODO
+
+[TYPECHECK]
+# 忽略的模組
+ignored-modules=
+
+# 忽略的類別
+ignored-classes=optparse.Values,thread._local,_thread._local
+
+# 生成的成員
+generated-members=
+
+# 上下文管理器
+contextmanager-decorators=contextlib.contextmanager
+
+# 忽略 mixin 類別的成員
+ignore-mixin-members=yes
+
+# 忽略 none 的成員
+ignore-none=yes
+
+# 忽略導入錯誤
+ignore-on-opaque-inference=yes
+
+# 缺失成員提示
+missing-member-hint=yes
+
+# 缺失成員提示距離
+missing-member-hint-distance=1
+
+# 缺失成員最大選擇
+missing-member-max-choices=1
+
+[VARIABLES]
+# 告訴 Pylint 哪些變數名稱是可以的
+good-names=i,
+           j,
+           k,
+           ex,
+           Run,
+           _,
+           id,
+           pk,
+           db,
+           ui,
+           df,
+           ax,
+           fig
+
+# 壞的變數名稱
+bad-names=foo,
+          bar,
+          baz,
+          toto,
+          tutu,
+          tata
+
+# 包含變數名稱的正則表達式
+include-naming-hint=no
+
+# 變數名稱的正則表達式
+variable-rgx=[a-z_][a-z0-9_]{2,30}$
+
+# 常數名稱的正則表達式
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
+
+# 屬性名稱的正則表達式
+attr-rgx=[a-z_][a-z0-9_]{2,30}$
+
+# 參數名稱的正則表達式
+argument-rgx=[a-z_][a-z0-9_]{2,30}$
+
+# 類別屬性名稱的正則表達式
+class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{2,30}|(__.*__))$
+
+# 內聯變數名稱的正則表達式
+inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
+
+# 類別名稱的正則表達式
+class-rgx=[A-Z_][a-zA-Z0-9]+$
+
+# 函數名稱的正則表達式
+function-rgx=[a-z_][a-z0-9_]{2,30}$
+
+# 方法名稱的正則表達式
+method-rgx=[a-z_][a-z0-9_]{2,30}$
+
+# 模組名稱的正則表達式
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+
+# 允許重新定義的內建函數 (removed - not supported in newer pylint versions)
+# redefining-builtins-allowed=id
+
+[FORMAT]
+# 最大行長度
+max-line-length=88
+
+# 忽略長行的正則表達式
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+
+# 單行 if 語句
+single-line-if-stmt=no
+
+# 最大模組行數
+max-module-lines=1000
+
+# 縮排字串
+indent-string='    '
+
+# 縮排後的續行
+indent-after-paren=4
+
+# 期望的行結束格式
+expected-line-ending-format=
+
+[SIMILARITIES]
+# 最小相似行數
+min-similarity-lines=4
+
+# 忽略註釋
+ignore-comments=yes
+
+# 忽略文檔字串
+ignore-docstrings=yes
+
+# 忽略導入
+ignore-imports=no
+
+[BASIC]
+# 命名風格 (removed - not supported in newer pylint versions)
+# naming-style=snake_case
+
+# 類別命名風格
+class-naming-style=PascalCase
+
+# 常數命名風格
+const-naming-style=UPPER_CASE
+
+# 函數命名風格
+function-naming-style=snake_case
+
+# 方法命名風格
+method-naming-style=snake_case
+
+# 模組命名風格
+module-naming-style=snake_case
+
+# 變數命名風格
+variable-naming-style=snake_case
+
+# 屬性命名風格
+attr-naming-style=snake_case
+
+# 參數命名風格
+argument-naming-style=snake_case
+
+# 類別屬性命名風格
+class-attribute-naming-style=any
+
+# 內聯變數命名風格
+inlinevar-naming-style=any
+
+[DESIGN]
+# 最大參數數量
+max-args=7
+
+# 最大本地變數數量
+max-locals=15
+
+# 最大返回語句數量
+max-returns=6
+
+# 最大分支數量
+max-branches=12
+
+# 最大語句數量
+max-statements=50
+
+# 最大屬性數量
+max-attributes=7
+
+# 最大公共方法數量
+max-public-methods=20
+
+# 最小公共方法數量
+min-public-methods=2
+
+# 最大布爾表達式數量
+max-bool-expr=5
+
+[CLASSES]
+# 有效的類別裝飾器名稱列表
+valid-classmethod-first-arg=cls
+
+# 有效的元類別名稱列表
+valid-metaclass-classmethod-first-arg=mcs
+
+# 排除受保護的成員訪問警告
+exclude-protected=_asdict,
+                  _fields,
+                  _replace,
+                  _source,
+                  _make
+
+[IMPORTS]
+# 已知的第三方模組
+known-third-party=
+
+# 已知的標準庫模組
+known-standard-library=
+
+# 強制導入順序 (removed - not supported in newer pylint versions)
+# force-alphabetical-sort-within-sections=no
+
+[EXCEPTIONS]
+# 可以捕獲的異常
+overgeneral-exceptions=builtins.Exception
